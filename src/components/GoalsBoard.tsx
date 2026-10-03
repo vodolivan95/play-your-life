@@ -21,6 +21,7 @@ import {
 import { GoalForm, StageForm, TaskForm } from './PlanningForms';
 import TickTickTransfer from './TickTickTransfer';
 import Icon from './Icon';
+import GameArt from './GameArt';
 type Editor =
   | { kind: 'goal' }
   | { kind: 'stage'; stage?: GoalStage }
@@ -182,7 +183,11 @@ export default function GoalsBoard({
             return (
               <section className="panel goal-card" key={g.id}>
                 <div className="section-heading">
-                  <span className="sphere-icon">{sphere.icon}</span>
+                  <span className="sphere-icon">
+                    <GameArt
+                      kind={g.sphere === 'english' ? 'target' : g.sphere}
+                    />
+                  </span>
                   <span
                     className={`mini-pill ${goalStatus(g) === 'Срок прошёл' ? 'overdue-pill' : ''}`}
                   >
@@ -192,16 +197,15 @@ export default function GoalsBoard({
                 <small className="muted">
                   {sphere.name} · {durationLabel(g.startsAt, g.dueAt)}
                 </small>
-                <h2>{g.name}</h2>
-                <button
-                  className="text-button main-goal-button"
-                  aria-pressed={mainGoal?.id === g.id}
-                  onClick={() => main(g.id)}
-                >
-                  {mainGoal?.id === g.id
-                    ? '★ Главная цель'
-                    : '☆ Сделать главной'}
-                </button>
+                <h2>
+                  <button
+                    className="goal-title-link"
+                    onClick={() => onSelect(g.id)}
+                  >
+                    {g.name}
+                  </button>
+                </h2>
+
                 <div className="goal-progress-label">
                   <span>
                     {g.progressMode === 'tasks'
@@ -214,7 +218,16 @@ export default function GoalsBoard({
                   <span style={{ width: `${progress(g)}%` }} />
                 </div>
                 <details className="goal-controls">
-                  <summary>Прогресс и сроки</summary>
+                  <summary>Прогресс и сроки</summary>{' '}
+                  <button
+                    className="text-button main-goal-button"
+                    aria-pressed={mainGoal?.id === g.id}
+                    onClick={() => main(g.id)}
+                  >
+                    {mainGoal?.id === g.id
+                      ? '★ Главная цель'
+                      : '☆ Сделать главной'}
+                  </button>
                   {g.progressMode !== 'tasks' && (
                     <label className="goal-input">
                       Текущий прогресс

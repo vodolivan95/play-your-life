@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, FormEvent } from 'react';
 import Icon from './components/Icon';
+import GameArt from './components/GameArt';
 import Avatar from './components/Avatar';
 import Statistics from './components/Statistics';
 import Onboarding, { ProfileEditor } from './components/Onboarding';
@@ -71,11 +72,16 @@ export default function App() {
   const [modal, setModal] = useState<
     'quest' | 'goal' | 'streak' | 'start' | 'profile' | null
   >(() => (state.profile.onboardingComplete ? null : 'start'));
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('today');
   const [achievementFilter, setAchievementFilter] = useState('all');
   const [treeView, setTreeView] = useState('map');
   const [sphereTab, setSphereTab] = useState('quests');
-  const [questDifficulty, setQuestDifficulty] = useState('Medium');
+  const [questDifficulty, setQuestDifficulty] = useState('Simple');
+  const [questSphere, setQuestSphere] = useState('english');
+  const [questTemplate, setQuestTemplate] = useState<{
+    name: string;
+    sphere: string;
+  } | null>(null);
   const [toast, setToast] = useState('');
   const [storageError, setStorageError] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -137,6 +143,12 @@ export default function App() {
     progress: levelProgress,
     title: levelTitle,
   } = playerProgress(state);
+  function newQuest() {
+    setQuestTemplate(null);
+    setQuestDifficulty('Simple');
+    setQuestSphere(selected || 'english');
+    setModal('quest');
+  }
   function closeModal() {
     if (!state.profile.onboardingComplete && modal === 'start') return;
     setModal(null);
@@ -153,15 +165,11 @@ export default function App() {
     return (
       <div className={`quest-row ${quest.done ? 'completed' : ''}`}>
         <span className="quest-icon" style={{ background: `${info.color}15` }}>
-          {info.icon}
+          <GameArt kind={info.id} />
         </span>
         <div className="quest-info">
           <strong>{quest.name}</strong>
-          <small>
-            {info.name}
-            <span>•</span>
-            {quest.difficulty}
-          </small>
+          <small>{info.name}</small>
         </div>
         <span className="xp-tag">+{quest.xp} XP</span>
         <button
@@ -199,7 +207,9 @@ export default function App() {
         style={{ '--sphere-color': info.color } as CSSProperties}
       >
         <div className="sphere-top">
-          <span className="sphere-icon">{info.icon}</span>
+          <span className="sphere-icon">
+            <GameArt kind={info.id} />
+          </span>
           <span className="level-chip">LVL {sphereLevel(data.xp)}</span>
         </div>
         <h3>{info.name}</h3>
@@ -255,7 +265,9 @@ export default function App() {
   }
   return (
     <TickTickContext.Provider value={tickTick}>
-      <div className="app-shell">
+      <div
+        className={`app-shell app-page-${page} ${modal === 'quest' ? 'quest-dialog-open' : ''}`}
+      >
         <aside className="sidebar">
           <a
             className="brand"
@@ -320,6 +332,13 @@ export default function App() {
         </aside>
         <div className="main-wrap">
           <header className="topbar">
+            <button
+              className="icon-button mobile-settings"
+              aria-label="Личный профиль"
+              onClick={() => setModal('profile')}
+            >
+              <Icon name="settings" size={19} />
+            </button>
             <div className="mobile-brand">
               PLAY YOUR LIFE<small>Your Life. Your Game.</small>
             </div>
@@ -353,11 +372,16 @@ export default function App() {
               <div>
                 <div className="eyebrow">ТВОЯ ЖИЗНЬ. ТВОИ ПРАВИЛА.</div>
                 <h1>
-                  {sphere
-                    ? `${sphere.icon} ${sphere.name}`
-                    : page === 'home'
-                      ? `Привет, ${state.profile.name}`
-                      : navigation.find((n) => n.id === page)?.label}
+                  {sphere ? (
+                    <>
+                      <GameArt kind={sphere.id} />
+                      <span>{sphere.name}</span>
+                    </>
+                  ) : page === 'home' ? (
+                    `Привет, ${state.profile.name}`
+                  ) : (
+                    navigation.find((n) => n.id === page)?.label
+                  )}
                   <span className="heading-dot">.</span>
                 </h1>
                 <p>
@@ -458,30 +482,36 @@ export default function App() {
                     </div>
                     <div className="player-rewards">
                       <span>
-                        <b>🪙 {state.coins.toLocaleString('ru')}</b>
+                        <b>
+                          <GameArt kind="coin" />{' '}
+                          {state.coins.toLocaleString('ru')}
+                        </b>
                         <small>Монеты</small>
                       </span>
                       <button onClick={() => setModal('streak')}>
-                        <b>🔥 {streak(state.activeDates)}</b>
+                        <b>
+                          <GameArt kind="fire" /> {streak(state.activeDates)}
+                        </b>
                         <small>Серия дней</small>
                       </button>
                       <button onClick={() => navigate('achievements')}>
-                        <b>🏆 {unlocked}</b>
+                        <b>
+                          <GameArt kind="trophy" /> {unlocked}
+                        </b>
                         <small>Достижения</small>
                       </button>
                     </div>
                   </section>
                   <section className="goal-highlight">
                     <div className="card-kicker">
-                      <span>🎯 ГЛАВНАЯ ЦЕЛЬ</span>
+                      <span>Главная цель</span>
                       <span className="mini-pill">
                         {mainGoal?.rewarded ? 'Достигнута ✓' : 'В процессе'}
                       </span>
                     </div>
                     <div className="goal-art">
                       <span>
-                        {spheres.find((s) => s.id === mainGoal?.sphere)?.icon ||
-                          '🎯'}
+                        <GameArt kind="target" />
                       </span>
                       <i>✦</i>
                       <b>
@@ -531,7 +561,7 @@ export default function App() {
                       <button
                         className="icon-button outlined"
                         aria-label="Создать квест"
-                        onClick={() => setModal('quest')}
+                        onClick={newQuest}
                       >
                         <Icon name="plus" />
                       </button>
@@ -605,22 +635,6 @@ export default function App() {
                 >
                   ← Все сферы
                 </button>
-                <div className="tabs sphere-tabs">
-                  {[
-                    ['quests', 'Квесты'],
-                    ['goals', 'Цели'],
-                    ['history', 'История'],
-                    ['statistics', 'Статистика'],
-                  ].map(([id, name]) => (
-                    <button
-                      key={id}
-                      className={sphereTab === id ? 'selected' : ''}
-                      onClick={() => setSphereTab(id)}
-                    >
-                      {name}
-                    </button>
-                  ))}
-                </div>
                 <div className={`detail-grid sphere-tab-${sphereTab}`}>
                   <section className="panel">
                     <div className="section-heading">
@@ -712,43 +726,64 @@ export default function App() {
                       </p>
                     </details>
                   </section>
-                  <section
-                    className="panel sphere-goals"
-                    hidden={sphereTab !== 'goals'}
-                  >
-                    <h2>Активные цели</h2>
-                    {state.goals
-                      .filter((g) => g.sphere === sphere.id && !g.rewarded)
-                      .map((g) => (
-                        <div className="detail-goal" key={g.id}>
-                          <h3>{g.name}</h3>
-                          <Progress value={(g.current / g.target) * 100} />
-                          <p>
-                            {g.current} / {g.target}
-                          </p>
-                        </div>
-                      ))}
-                    {!state.goals.some(
-                      (g) => g.sphere === sphere.id && !g.rewarded,
-                    ) && <p className="muted">Поставь цель для этой сферы.</p>}
-                    <button
-                      className="primary-button"
-                      onClick={() => setModal('goal')}
-                    >
-                      <Icon name="plus" size={17} /> Новая цель
-                    </button>
-                  </section>
                 </div>
+                <div className="tabs sphere-tabs">
+                  {[
+                    ['quests', 'Квесты'],
+                    ['goals', 'Цели'],
+                    ['history', 'История'],
+                    ['statistics', 'Статистика'],
+                  ].map(([id, name]) => (
+                    <button
+                      key={id}
+                      className={sphereTab === id ? 'selected' : ''}
+                      onClick={() => setSphereTab(id)}
+                    >
+                      {name}
+                    </button>
+                  ))}
+                </div>
+                <section
+                  className="panel sphere-goals"
+                  hidden={!['goals', 'quests'].includes(sphereTab)}
+                >
+                  <h2>Активные цели</h2>
+                  {state.goals
+                    .filter((g) => g.sphere === sphere.id && !g.rewarded)
+                    .map((g) => (
+                      <button
+                        className="detail-goal"
+                        key={g.id}
+                        onClick={() => {
+                          navigate('goals');
+                          setFocusedGoalId(g.id);
+                        }}
+                      >
+                        <span className="detail-goal-icon">
+                          <GameArt kind="target" />
+                        </span>
+                        <h3>{g.name}</h3>
+                        <Progress value={(g.current / g.target) * 100} />
+                        <p>{Math.round((g.current / g.target) * 100)}%</p>
+                      </button>
+                    ))}
+                  {!state.goals.some(
+                    (g) => g.sphere === sphere.id && !g.rewarded,
+                  ) && <p className="muted">Поставь цель для этой сферы.</p>}
+                  <button
+                    className="primary-button"
+                    onClick={() => setModal('goal')}
+                  >
+                    <Icon name="plus" size={17} /> Новая цель
+                  </button>
+                </section>
                 <section
                   className="panel section-gap"
                   hidden={sphereTab !== 'quests'}
                 >
                   <div className="section-heading">
                     <h2>Активные квесты</h2>
-                    <button
-                      className="text-button"
-                      onClick={() => setModal('quest')}
-                    >
+                    <button className="text-button" onClick={newQuest}>
                       + Добавить
                     </button>
                   </div>
@@ -826,15 +861,21 @@ export default function App() {
                 </section>
                 <div className="player-rewards profile-rewards">
                   <span>
-                    <b>🪙 {state.coins}</b>
+                    <b>
+                      <GameArt kind="coin" /> {state.coins}
+                    </b>
                     <small>Монеты</small>
                   </span>
                   <button onClick={() => setModal('streak')}>
-                    <b>🔥 {streak(state.activeDates)}</b>
+                    <b>
+                      <GameArt kind="fire" /> {streak(state.activeDates)}
+                    </b>
                     <small>Серия</small>
                   </button>
                   <button onClick={() => navigate('achievements')}>
-                    <b>🏆 {unlocked}</b>
+                    <b>
+                      <GameArt kind="trophy" /> {unlocked}
+                    </b>
                     <small>Достижения</small>
                   </button>
                 </div>
@@ -867,6 +908,7 @@ export default function App() {
                 <div className="page-toolbar">
                   <div className="tabs">
                     {[
+                      ['today', 'Сегодня'],
                       ['all', 'Все'],
                       ['active', 'Активные'],
                       ['done', 'Выполненные'],
@@ -880,19 +922,17 @@ export default function App() {
                       </button>
                     ))}
                   </div>
-                  <button
-                    className="primary-button"
-                    onClick={() => setModal('quest')}
-                  >
-                    <Icon name="plus" size={18} /> Новый квест
-                  </button>
                 </div>
                 <section className="panel">
                   {state.quests
                     .filter(
                       (q) =>
                         filter === 'all' ||
-                        (filter === 'done' ? q.done : !q.done),
+                        (filter === 'today'
+                          ? todayTasks.some((t) => t.id === q.id)
+                          : filter === 'done'
+                            ? q.done
+                            : !q.done),
                     )
                     .map((q) => (
                       <QuestRow key={q.id} quest={q} removable />
@@ -900,7 +940,11 @@ export default function App() {
                   {!state.quests.some(
                     (q) =>
                       filter === 'all' ||
-                      (filter === 'done' ? q.done : !q.done),
+                      (filter === 'today'
+                        ? todayTasks.some((t) => t.id === q.id)
+                        : filter === 'done'
+                          ? q.done
+                          : !q.done),
                   ) && (
                     <div className="empty">
                       <span>✨</span>
@@ -908,6 +952,49 @@ export default function App() {
                       <p>Каждое приключение начинается с первого шага.</p>
                     </div>
                   )}
+                </section>
+                <button className="primary-button" onClick={newQuest}>
+                  <Icon name="plus" size={18} /> Новый квест
+                </button>
+                <section className="quest-templates">
+                  <div className="section-heading">
+                    <h2>Шаблоны квестов</h2>
+                    <span className="muted">Выбери первый шаг</span>
+                  </div>
+                  {[
+                    { name: 'Медитация 10 минут', sphere: 'health', xp: 10 },
+                    { name: 'Изучение нового слова', sphere: 'english', xp: 5 },
+                    { name: 'Прочитать 20 страниц', sphere: 'growth', xp: 20 },
+                  ].map((t) => (
+                    <button
+                      className="template-row"
+                      key={t.name}
+                      onClick={() => {
+                        setQuestTemplate(t);
+                        setQuestSphere(t.sphere);
+                        setQuestDifficulty(
+                          t.xp === 5
+                            ? 'Micro'
+                            : t.xp === 10
+                              ? 'Simple'
+                              : 'Medium',
+                        );
+                        setModal('quest');
+                      }}
+                    >
+                      <span>
+                        <GameArt kind={t.sphere} />
+                      </span>
+                      <div>
+                        <strong>{t.name}</strong>
+                        <small>
+                          {spheres.find((sp) => sp.id === t.sphere)?.name}
+                        </small>
+                      </div>
+                      <b>+{t.xp} XP</b>
+                      <Icon name="arrow" size={14} />
+                    </button>
+                  ))}
                 </section>
                 <div className="difficulty-legend">
                   {Object.entries(difficulties).map(([name, xp]) => (
@@ -959,15 +1046,17 @@ export default function App() {
                 {treeView === 'map' && (
                   <section className="panel life-tree">
                     <div className="tree-root">
-                      <span>👑</span>
+                      <span>
+                        <GameArt kind="crown" />
+                      </span>
                       <strong>Личная эффективность</strong>
                       <small>LEVEL {currentLevel}</small>
                     </div>
                     <div className="tree-map-branches">
                       {[
-                        spheres.slice(0, 3),
-                        spheres.slice(3, 6),
-                        spheres.slice(6, 9),
+                        spheres.filter((_, i) => i % 3 === 0),
+                        spheres.filter((_, i) => i % 3 === 1),
+                        spheres.filter((_, i) => i % 3 === 2),
                       ].map((group, i) => (
                         <div className="tree-map-branch" key={i}>
                           {group.map((sp) => (
@@ -979,7 +1068,9 @@ export default function App() {
                                 setPage('spheres');
                               }}
                             >
-                              <span>{sp.icon}</span>
+                              <span>
+                                <GameArt kind={sp.id} />
+                              </span>
                               <strong>{sp.name}</strong>
                               <small>
                                 LVL {sphereLevel(state.spheres[sp.id].xp)}
@@ -1077,12 +1168,28 @@ export default function App() {
                         className={`panel achievement ${a.unlocked(state) ? 'unlocked' : ''}`}
                         key={a.name}
                       >
-                        <span className="achievement-icon">{a.icon}</span>
+                        <span className="achievement-icon">
+                          <GameArt kind="trophy" />
+                        </span>
                         <span className="mini-pill">
                           {a.unlocked(state) ? 'Получено ✓' : 'Впереди'}
                         </span>
                         <h2>{a.name}</h2>
                         <p>{a.description}</p>
+                        <div className="achievement-progress">
+                          <Progress
+                            value={
+                              a.unlocked(state)
+                                ? 100
+                                : Math.round(a.progress(state) * 100)
+                            }
+                          />
+                          <small>
+                            {a.unlocked(state)
+                              ? '✓'
+                              : `${Math.round(a.progress(state) * 100)}%`}
+                          </small>
+                        </div>
                       </section>
                     ))}
                 </div>
@@ -1099,7 +1206,14 @@ export default function App() {
             .map((n) => (
               <button
                 key={n.id}
-                className={page === n.id ? 'active' : ''}
+                className={
+                  page === n.id ||
+                  (page === 'spheres' && n.id === 'home') ||
+                  (['plan', 'monthly', 'tree', 'achievements'].includes(page) &&
+                    n.id === 'profile')
+                    ? 'active'
+                    : ''
+                }
                 onClick={() => navigate(n.id)}
               >
                 <Icon name={n.icon} size={20} />
@@ -1114,6 +1228,7 @@ export default function App() {
             ))}
         </nav>
         <dialog
+          className={modal === 'quest' ? 'quest-creation-dialog' : undefined}
           ref={dialog}
           onCancel={(event) => {
             event.preventDefault();
@@ -1130,7 +1245,7 @@ export default function App() {
                 aria-label="Закрыть"
                 onClick={closeModal}
               >
-                <Icon name="close" />
+                <Icon name={modal === 'quest' ? 'back' : 'close'} />
               </button>
             )}
             {modal === 'start' ? (
@@ -1204,6 +1319,7 @@ export default function App() {
                   <input
                     autoFocus
                     name="name"
+                    defaultValue={questTemplate?.name ?? ''}
                     required
                     maxLength={100}
                     placeholder={
@@ -1213,12 +1329,19 @@ export default function App() {
                     }
                   />
                 </label>
-                <label>
+                <label className="quest-sphere-field">
                   Сфера жизни
-                  <select name="sphere" defaultValue={selected || 'english'}>
+                  <span className="quest-field-art">
+                    <GameArt kind={questSphere} />
+                  </span>
+                  <select
+                    name="sphere"
+                    value={questSphere}
+                    onChange={(e) => setQuestSphere(e.target.value)}
+                  >
                     {spheres.map((s) => (
                       <option key={s.id} value={s.id}>
-                        {s.icon} {s.name}
+                        {s.name}
                       </option>
                     ))}
                   </select>

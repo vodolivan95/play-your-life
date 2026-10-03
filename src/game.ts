@@ -193,7 +193,7 @@ export type PlayerProfile = {
 };
 export const defaultProfile: PlayerProfile = {
   name: 'Игрок',
-  avatar: avatars[0].icon,
+  avatar: 'character',
   mode: 'demo',
   onboardingComplete: false,
 };
@@ -551,20 +551,25 @@ export const achievements = [
     icon: '👟',
     description: 'Выполни свой первый квест',
     unlocked: (s: GameState) => s.completed >= 1,
+    progress: (s: GameState) => Math.min(1, s.completed),
   },
   {
     name: 'В ритме',
     icon: '🔥',
     description: 'Будь активен 3 дня подряд',
     unlocked: (s: GameState) => streak(s.activeDates) >= 3,
+    progress: (s: GameState) => Math.min(1, streak(s.activeDates) / 3),
   },
   {
     name: 'На волне',
     icon: '⚡',
     description: 'Выполни 10 квестов',
     unlocked: (s: GameState) => s.completed >= 10,
+    progress: (s: GameState) => Math.min(1, s.completed / 10),
   },
   {
+    progress: (s: GameState) =>
+      Math.min(1, Math.max(0, ...s.goals.map((g) => g.current / g.target))),
     name: 'Новый горизонт',
     icon: '🏔️',
     description: 'Заверши большую цель',
@@ -578,8 +583,14 @@ export const achievements = [
     icon: '♟️',
     description: 'Достигни 12 уровня',
     unlocked: (s: GameState) => playerProgress(s).level >= 12,
+    progress: (s: GameState) => Math.min(1, playerProgress(s).level / 12),
   },
   {
+    progress: (s: GameState) =>
+      Math.min(
+        1,
+        Math.max(0, ...Object.values(s.spheres).map((sp) => sp.score)) / 9,
+      ),
     name: 'Личный стандарт',
     icon: '💎',
     description: 'Достигни Life Score 9',

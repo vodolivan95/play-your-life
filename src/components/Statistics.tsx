@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import GameArt from './GameArt';
 import { dateKey, spheres, streak } from '../game';
 import type { GameState } from '../game';
 
@@ -136,7 +137,9 @@ export default function Statistics({
                 .reduce((sum, e) => sum + e.xp, 0);
               return (
                 <div className="development-row" key={s.id}>
-                  <span>{s.icon}</span>
+                  <span>
+                    <GameArt kind={s.id} />
+                  </span>
                   <strong>{s.name}</strong>
                   <div className="progress">
                     <span

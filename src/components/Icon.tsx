@@ -83,6 +83,7 @@ export default function Icon({
         <circle cx="19" cy="12" r="1" />
       </>
     ),
+    back: <path d="m15 5-7 7 7 7" />,
     arrow: <path d="m9 5 7 7-7 7" />,
     check: <path d="m5 12 4 4L19 6" />,
     plus: <path d="M12 5v14M5 12h14" />,

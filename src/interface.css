@@ -1754,3 +1754,1021 @@ textarea:focus-visible {
   outline-offset: 2px;
   border-color: #35b1ed;
 }
+/* Reference composition: compact white cards and cyan game controls. */
+:root {
+  --blue: #009fed;
+  color: #233547;
+  background: #f3faff;
+}
+body {
+  background: #f3faff;
+}
+.game-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 2px 2px #409ed224);
+}
+.sphere-icon,
+.quest-icon {
+  background: transparent !important;
+  padding: 2px;
+}
+.quest-icon .game-art {
+  padding: 2px;
+}
+.sphere-card {
+  padding: 13px 14px;
+  border-radius: 13px;
+  box-shadow: 0 3px 12px #426b8510;
+}
+.sphere-top {
+  margin-bottom: 5px;
+}
+.sphere-icon {
+  width: 40px;
+  height: 40px;
+}
+.sphere-card h3 {
+  margin-bottom: 5px;
+  font-size: 12px;
+}
+.sphere-xp {
+  margin-bottom: 5px;
+}
+.sphere-score {
+  border: 0;
+  margin-top: 6px;
+  padding-top: 0;
+}
+.sphere-score b {
+  color: #30495a;
+}
+.sphere-card .progress > span {
+  background: #29bf7d !important;
+}
+.sphere-card:has(.negative) .progress > span {
+  background: #f07c9c !important;
+}
+.panel,
+.goal-highlight {
+  border-radius: 14px;
+  box-shadow: 0 3px 14px #367a9e0b;
+}
+.page-heading {
+  margin-bottom: 16px;
+}
+.page-heading h1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.page-heading h1 > .game-art {
+  width: 31px;
+  height: 31px;
+}
+.player-rewards b {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.player-rewards .game-art {
+  width: 25px;
+  height: 25px;
+}
+.hero-grid {
+  gap: 12px;
+}
+.goal-highlight {
+  padding: 16px;
+}
+.card-kicker {
+  font-weight: 700;
+  font-size: 12px;
+  color: #334c61;
+}
+.goal-art {
+  width: 46px;
+  height: 46px;
+  top: 46px;
+  left: 13px;
+}
+.goal-art > span {
+  padding: 2px;
+  background: transparent;
+}
+.goal-highlight .text-button {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  width: 100%;
+  border-radius: 14px;
+}
+.goal-highlight:focus-within {
+  outline: 3px solid #91d5f7;
+}
+.goal-highlight h2 {
+  padding-left: 53px;
+  margin-bottom: 10px;
+}
+.goal-highlight > .progress {
+  margin-left: 53px;
+}
+.goal-highlight .goal-progress-label {
+  padding-left: 53px;
+}
+.goal-progress-label > span {
+  font-size: 10px;
+}
+.quest-row {
+  min-height: 49px;
+  padding: 9px 0;
+}
+.quest-info small > span,
+.quest-info small {
+  font-size: 9px;
+}
+.quest-info small > span {
+  display: none;
+}
+.quest-info small {
+  font-size: 0;
+}
+.quest-info small::first-line {
+  font-size: 9px;
+}
+.quests-panel {
+  padding: 14px;
+}
+.quests-panel .all-link {
+  padding: 12px 0 0;
+  font-size: 10px;
+}
+.screen-quests > .panel {
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+  padding: 0;
+}
+.screen-quests > .panel .quest-row {
+  background: white;
+  border: 1px solid #e9f3fa;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  padding: 11px 12px;
+}
+.screen-quests > .primary-button {
+  width: 100%;
+  margin: 8px 0 22px;
+}
+.quest-templates .section-heading h2 {
+  font-size: 15px;
+}
+.quest-templates .section-heading .muted {
+  font-size: 10px;
+}
+.template-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  width: 100%;
+  background: #fff;
+  border-radius: 12px;
+  padding: 11px 12px;
+  margin: 8px 0;
+  color: #314c60;
+}
+.template-row > span {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
+.template-row > div {
+  flex: 1;
+  min-width: 0;
+}
+.template-row strong {
+  display: block;
+  font-size: 12px;
+}
+.template-row small {
+  display: block;
+  font-size: 10px;
+  color: #9baeba;
+  margin-top: 4px;
+}
+.template-row b {
+  font-size: 10px;
+  color: #279dca;
+  white-space: nowrap;
+}
+.difficulty-legend {
+  display: none;
+}
+.goal-title-link {
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  font-weight: 750;
+  background: transparent;
+  text-align: left;
+}
+.goal-card {
+  display: grid;
+  grid-template-columns: 45px 1fr;
+  gap: 2px 10px;
+  padding: 15px;
+}
+.goal-card > .section-heading {
+  grid-column: 1;
+  grid-row: 1 / 4;
+  margin: 0;
+}
+.goal-card > .section-heading .mini-pill,
+.goal-card > small.muted {
+  display: none;
+}
+.goal-card h2 {
+  grid-column: 2;
+  font-size: 13px;
+  margin: 3px 0 7px;
+}
+.goal-card > .goal-progress-label {
+  grid-column: 2;
+  grid-row: 3;
+  margin: 0;
+  font-size: 10px;
+}
+.goal-card > .goal-progress-label > span {
+  display: none;
+}
+.goal-card > .goal-progress-label b {
+  position: absolute;
+  right: 16px;
+  margin-top: -8px;
+  color: #94a6b4;
+  font-size: 10px;
+}
+.goal-card > .progress {
+  grid-column: 2;
+  grid-row: 3;
+  margin-right: 36px;
+}
+.goal-card {
+  position: relative;
+}
+.goal-controls {
+  grid-column: 2;
+  margin: 9px 0 0;
+}
+.goal-card .goal-plan-button {
+  grid-column: 2;
+  padding: 0;
+  min-height: 22px;
+  text-align: left;
+  justify-content: flex-start;
+  width: fit-content;
+  background: transparent;
+  font-size: 10px;
+  margin: 5px 0 0;
+}
+.goal-controls .main-goal-button {
+  margin: 10px 0;
+}
+.goal-tabs {
+  margin-bottom: 15px;
+}
+.detail-grid > .panel:first-child {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0 4px 12px;
+}
+.detail-grid .sphere-goals {
+  grid-column: 1 / -1;
+  border: 0;
+  padding: 12px 0;
+  background: transparent;
+  box-shadow: none;
+}
+.detail-grid {
+  gap: 0;
+}
+.sphere-tab-goals {
+  grid-template-columns: 1fr;
+}
+.sphere-goals h2 {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+.sphere-goals > .primary-button {
+  background: #e6f5fd;
+  box-shadow: none;
+  color: #2394c4;
+  min-height: 30px;
+  font-size: 10px;
+  padding: 7px 11px;
+  margin-top: 7px;
+}
+.detail-goal {
+  display: grid;
+  grid-template-columns: 35px 1fr 30px;
+  gap: 6px 9px;
+  text-align: left;
+  background: white;
+  border: 1px solid #e3eff8;
+  width: 100%;
+  padding: 12px;
+}
+.detail-goal-icon {
+  grid-row: 1 / 3;
+  width: 35px;
+  height: 35px;
+}
+.detail-goal h3 {
+  font-size: 12px;
+  grid-column: 2 / 4;
+}
+.detail-goal .progress {
+  grid-column: 2;
+}
+.detail-goal p {
+  grid-column: 3;
+  grid-row: 2;
+  font-size: 10px;
+  margin: 0;
+  color: #328ab1;
+  line-height: 1;
+}
+.sphere-health-stats {
+  margin: 16px 0 4px;
+}
+.score-circle {
+  width: 53px;
+  height: 53px;
+}
+.score-circle b {
+  font-size: 14px;
+}
+.score-editor summary {
+  font-size: 10px;
+}
+.sphere-tabs {
+  margin-top: 8px;
+}
+.screen-sphere-detail > .section-gap {
+  padding: 14px;
+  margin-top: 14px;
+}
+.screen-sphere-detail .section-heading h2 {
+  font-size: 14px;
+}
+.achievement-grid {
+  gap: 8px;
+}
+.achievement {
+  padding: 12px;
+  min-height: 78px;
+  grid-template-columns: 45px 1fr;
+  gap: 4px 12px;
+  border-radius: 12px;
+}
+.achievement-icon {
+  width: 43px;
+  height: 51px;
+  padding: 7px;
+  background: linear-gradient(155deg, #fff2ba, #ffc943);
+  box-shadow: inset 0 -3px 0 #ecb32c;
+  clip-path: polygon(50% 0, 96% 20%, 90% 74%, 50% 100%, 10% 74%, 4% 20%);
+}
+.achievement.unlocked .achievement-icon {
+  border-radius: 12px;
+}
+.achievement h2 {
+  margin: 4px 0 0;
+  font-size: 13px;
+}
+.achievement p {
+  line-height: 1.45;
+}
+.life-tree {
+  padding: 20px 12px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.tree-map-node > span,
+.tree-root > span {
+  padding: 8px;
+  width: 50px;
+  height: 50px;
+}
+.tree-map-node > span {
+  background: #eef8ff;
+}
+.profile-menu {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+.profile-menu button {
+  background: white;
+  border: 1px solid #eaf2f7;
+  border-radius: 11px;
+  padding: 13px;
+  margin-bottom: 6px;
+}
+.profile-hero {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 10px 0;
+}
+.tabs {
+  border-radius: 9px;
+  padding: 3px;
+}
+.tabs button {
+  border-radius: 7px;
+}
+.primary-button {
+  border-radius: 10px;
+}
+@media (max-width: 760px) {
+  main {
+    padding: 19px 17px 85px;
+  }
+  .topbar {
+    height: 60px;
+    padding: 0 20px;
+    background: transparent;
+  }
+  .mobile-brand {
+    text-align: center;
+    font-size: 15px;
+    flex: 1;
+    padding-left: 35px;
+  }
+  .topbar-actions > .profile-trigger {
+    display: none;
+  }
+  .topbar-actions > .icon-button {
+    width: 30px;
+  }
+  .app-page-home .page-heading {
+    display: none;
+  }
+  .app-shell:not(.app-page-home) .topbar {
+    display: none;
+  }
+  .page-heading {
+    margin: 5px 0 20px;
+  }
+  .page-heading h1 {
+    font-size: 18px;
+  }
+  .personal-banner {
+    background: transparent;
+    border: 0;
+    padding: 0 3px;
+    margin-bottom: 9px;
+  }
+  .personal-banner > span {
+    font-size: 8px;
+  }
+  .personal-banner strong {
+    font-weight: 500;
+    color: #87a1b5;
+    font-size: 9px;
+  }
+  .player-card {
+    padding: 8px 8px 14px;
+  }
+  .player-avatar,
+  .avatar-orbit {
+    width: 72px;
+    height: 72px;
+  }
+  .avatar-orbit {
+    flex-basis: 72px;
+  }
+  .player-content h2 {
+    font-size: 20px;
+  }
+  .player-content p {
+    display: none;
+  }
+  .player-content .progress {
+    margin-top: 8px;
+  }
+  .player-rewards {
+    margin-top: 18px;
+  }
+  .player-rewards b {
+    font-size: 16px;
+    gap: 4px;
+  }
+  .player-rewards .game-art {
+    width: 22px;
+    height: 22px;
+  }
+  .player-rewards small {
+    font-size: 9px;
+  }
+  .goal-highlight {
+    padding: 13px 14px;
+    min-height: 107px;
+  }
+  .card-kicker {
+    margin-bottom: 12px;
+    font-size: 11px;
+  }
+  .goal-art {
+    top: 40px;
+    left: 12px;
+  }
+  .goal-highlight h2 {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+  .goal-highlight .goal-progress-label {
+    padding-left: 53px;
+    margin-bottom: 6px;
+  }
+  .goal-highlight .goal-progress-label > span {
+    display: none;
+  }
+  .goal-highlight .goal-progress-label b {
+    font-size: 10px;
+  }
+  .goal-highlight > .progress {
+    margin-left: 53px;
+  }
+  .home-lower {
+    margin-top: 18px;
+  }
+  .home-lower .compact-statistics,
+  .screen-home .spheres-section {
+    display: none;
+  }
+  .screen-home .footer {
+    display: none;
+  }
+  .quests-panel {
+    padding: 14px;
+  }
+  .quests-panel .section-heading {
+    margin-bottom: 4px;
+  }
+  .quests-panel .section-heading .icon-button {
+    height: 25px;
+    padding: 3px;
+    border: 0;
+  }
+  .quests-panel .quest-row {
+    min-height: 46px;
+    padding: 9px 0;
+  }
+  .quest-info strong {
+    font-size: 11px;
+  }
+  .quests-panel .quest-info small {
+    display: none;
+  }
+  .sphere-grid {
+    gap: 10px;
+  }
+  .all-spheres {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .all-spheres .sphere-card {
+    grid-column: span 3;
+  }
+  .all-spheres .sphere-card:nth-child(n + 7) {
+    grid-column: span 2;
+    padding: 11px 9px;
+  }
+  .all-spheres .sphere-card:nth-child(n + 7) .level-chip {
+    display: none;
+  }
+  .all-spheres .sphere-card:nth-child(n + 7) .sphere-score > span:first-child {
+    font-size: 0;
+  }
+  .all-spheres .sphere-card:nth-child(n + 7) .sphere-xp {
+    font-size: 8px;
+  }
+  .all-spheres .sphere-card:nth-child(n + 7) h3 {
+    font-size: 10px;
+  }
+  .all-spheres .sphere-card:nth-child(n + 7) .sphere-score b {
+    margin-left: 0;
+  }
+  .app-page-spheres:not(:has(.screen-sphere-detail)) .balance-banner {
+    display: none;
+  }
+  .sphere-card .sphere-score > span:first-child {
+    font-size: 0;
+  }
+  .sphere-card .sphere-score b {
+    font-size: 12px;
+    margin: 0;
+  }
+  .sphere-card .sphere-score small {
+    font-size: 9px;
+  }
+  .sphere-card .sphere-top {
+    margin-bottom: 5px;
+  }
+  .sphere-card .sphere-icon {
+    width: 38px;
+    height: 38px;
+  }
+  .sphere-card .sphere-score {
+    margin-top: 4px;
+  }
+  .sphere-card h3 {
+    font-size: 11px;
+  }
+  .sphere-card .sphere-xp {
+    font-size: 8px;
+  }
+  .screen-quests .page-toolbar > .tabs button {
+    padding: 8px 6px;
+    font-size: 10px;
+  }
+  .screen-goals .page-toolbar > div:first-child > p {
+    display: none;
+  }
+  .screen-goals .page-toolbar {
+    margin-bottom: 0;
+  }
+  .screen-goals > .page-toolbar > .primary-button {
+    margin-top: 13px;
+  }
+  .screen-goals .goal-tabs {
+    margin-top: 14px;
+  }
+  .goal-card {
+    padding: 13px;
+    gap: 2px 9px;
+  }
+  .goal-card .goal-input {
+    margin: 12px 0;
+  }
+  .goal-card h2 {
+    font-size: 12px;
+  }
+  .goal-controls summary {
+    font-size: 9px;
+  }
+  .goal-card .goal-plan-button {
+    font-size: 9px;
+  }
+  .profile-hero .player-avatar {
+    width: 70px;
+    height: 70px;
+  }
+  .profile-menu button {
+    padding: 12px;
+  }
+  .profile-rewards {
+    margin: 14px 0 22px;
+  }
+  .profile-hero small {
+    font-size: 9px;
+  }
+  .app-page-achievements .balance-banner {
+    display: none;
+  }
+  .achievement h2 {
+    font-size: 12px;
+  }
+  .achievement p {
+    font-size: 10px;
+  }
+  .achievement .mini-pill {
+    font-size: 8px;
+  }
+  .statistics-view .panel {
+    padding: 16px;
+  }
+  .statistics-summary {
+    margin: 10px 0;
+    gap: 10px;
+  }
+  .sphere-development .development-row .game-art {
+    width: 22px;
+    height: 22px;
+  }
+  .life-tree {
+    margin-top: 12px;
+  }
+  .quest-creation-dialog {
+    position: fixed;
+    inset: 0;
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    background: #f4faff;
+  }
+  .quest-creation-dialog .dialog-content {
+    max-width: 520px;
+    margin: auto;
+    min-height: 100%;
+    padding: 25px 20px;
+  }
+  .quest-creation-dialog .eyebrow {
+    display: none;
+  }
+  .quest-creation-dialog h2 {
+    text-align: center;
+    font-size: 18px;
+    margin-bottom: 24px;
+  }
+  .quest-creation-dialog .modal-close {
+    top: 23px;
+    left: 15px;
+    right: auto;
+  }
+  .quest-creation-dialog form {
+    min-height: calc(100dvh - 50px);
+    display: flex;
+    flex-direction: column;
+  }
+  .quest-creation-dialog form > label {
+    margin-top: 12px;
+  }
+  .quest-creation-dialog .submit-button {
+    margin-top: auto;
+  }
+  .quest-creation-dialog .quest-xp-preview {
+    margin: 10px 0 20px;
+  }
+  .mobile-nav {
+    padding-top: 10px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}
+@media (min-width: 761px) {
+  .game-art {
+    max-width: 64px;
+  }
+  .detail-grid {
+    max-width: 720px;
+    margin: auto;
+  }
+  .sphere-tabs {
+    max-width: 720px;
+    margin: 14px auto 16px;
+  }
+  .sphere-development .game-art {
+    width: 28px;
+    height: 28px;
+  }
+  .screen-quests > .primary-button {
+    max-width: 440px;
+    display: flex;
+    margin-inline: auto;
+  }
+  .screen-quests .quest-templates {
+    max-width: 720px;
+    margin: auto;
+  }
+  .goal-card > .goal-plan-button {
+    font-size: 11px;
+  }
+}
+@media (max-width: 359px) {
+  main {
+    padding-inline: 13px;
+  }
+  .all-spheres .sphere-card:nth-child(n + 7) {
+    padding-inline: 7px;
+  }
+  .all-spheres .sphere-card:nth-child(n + 7) .sphere-xp > svg {
+    display: none;
+  }
+  .quest-info strong {
+    font-size: 10px;
+  }
+  .game-art {
+    min-width: 0;
+  }
+}
+.character-avatar {
+  transform: none;
+  object-fit: contain;
+  object-position: center bottom;
+}
+.screen-goals:has(.goals-grid) {
+  display: flex;
+  flex-direction: column;
+}
+.screen-goals:has(.goals-grid) > .page-heading {
+  order: 0;
+}
+.screen-goals:has(.goals-grid) > .goal-tabs {
+  order: 1;
+}
+.screen-goals:has(.goals-grid) > .goals-grid {
+  order: 2;
+}
+.screen-goals:has(.goals-grid) > .page-toolbar {
+  order: 3;
+  margin-top: 18px;
+}
+.screen-goals:has(.goals-grid) > .page-toolbar > div:first-child {
+  display: none;
+}
+.screen-goals:has(.goals-grid) > .footer {
+  order: 4;
+}
+.screen-goals:has(.goals-grid) .goal-plan-button {
+  position: absolute;
+  right: 10px;
+  top: 11px;
+  font-size: 0;
+}
+.screen-goals:has(.goals-grid) .goal-card h2 {
+  padding-right: 12px;
+}
+@media (max-width: 760px) {
+  .screen-goals:has(.goals-grid) .goal-tabs {
+    margin-top: 0;
+  }
+  .screen-goals:has(.goals-grid) > .page-toolbar > .primary-button {
+    margin-top: 0;
+  }
+  .all-spheres .sphere-card {
+    display: flex;
+    flex-direction: column;
+  }
+  .sphere-card .sphere-score {
+    order: 3;
+    margin-bottom: 5px;
+  }
+  .sphere-card .progress {
+    order: 4;
+  }
+  .sphere-card .sphere-xp {
+    order: 5;
+    margin: 5px 0 0;
+  }
+}
+.mobile-settings {
+  display: none;
+}
+.achievement-progress {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.achievement-progress .progress {
+  flex: 1;
+  height: 4px;
+}
+.achievement-progress small {
+  font-size: 9px;
+  color: #8da4b5;
+}
+.achievement .mini-pill {
+  font-size: 0;
+  right: 12px;
+  top: 18px;
+}
+.achievement .mini-pill:after {
+  content: '›';
+  font-size: 18px;
+  color: #a0b2bd;
+}
+.achievement.unlocked .mini-pill:after {
+  content: '✓';
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  background: #35c97f;
+  border-radius: 50%;
+  color: white;
+  font-size: 10px;
+}
+@media (max-width: 760px) {
+  .mobile-settings {
+    display: inline-flex;
+    position: absolute;
+    left: 18px;
+  }
+  .topbar {
+    position: relative;
+  }
+  .mobile-brand {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .topbar-actions {
+    position: absolute;
+    right: 16px;
+  }
+}
+.screen-sphere-detail > .sphere-goals {
+  padding: 4px 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.screen-sphere-detail > .sphere-goals > .primary-button {
+  padding: 5px 10px;
+  min-height: 28px;
+  margin-top: 8px;
+}
+.goal-highlight {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  column-gap: 12px;
+  align-content: center;
+}
+.goal-highlight .card-kicker {
+  grid-column: 1 / -1;
+  margin: 0 0 12px;
+}
+.goal-highlight .goal-art {
+  position: static;
+  grid-column: 1;
+  grid-row: 2 / 5;
+  margin: 0;
+  width: 44px;
+  height: 44px;
+}
+.goal-highlight .goal-art > span {
+  width: 44px;
+  height: 44px;
+}
+.goal-highlight h2 {
+  grid-column: 2;
+  grid-row: 2;
+  padding: 0;
+  margin: 0 0 10px;
+}
+.goal-highlight .goal-progress-label {
+  grid-column: 2;
+  grid-row: 3;
+  padding: 0;
+  margin-bottom: 6px;
+}
+.goal-highlight > .progress {
+  grid-column: 2;
+  grid-row: 4;
+  margin: 0;
+}
+@media (max-width: 760px) {
+  .all-spheres .sphere-card {
+    padding: 13px 14px;
+  }
+  .all-spheres .sphere-card:nth-child(n + 7) {
+    padding: 11px 9px;
+  }
+}
+.quest-sphere-field {
+  position: relative;
+}
+.quest-sphere-field select {
+  padding-left: 44px;
+}
+.quest-field-art {
+  position: absolute;
+  left: 11px;
+  bottom: 9px;
+  width: 25px;
+  height: 25px;
+  pointer-events: none;
+}
+@media (max-width: 760px) {
+  .all-spheres .sphere-card:nth-child(n + 7) .level-chip {
+    display: inline;
+    font-size: 7px;
+    padding: 2px;
+  }
+}
+@media (max-width: 760px) {
+  .footer {
+    display: none;
+  }
+}
+.quest-info small,
+.quest-info small::first-line {
+  font-size: 9px;
+}
+.quest-info small {
+  display: block;
+}

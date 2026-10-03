@@ -6,6 +6,23 @@ export default function Icon({
   size?: number;
 }) {
   const paths: Record<string, React.ReactNode> = {
+    profile: (
+      <>
+        <circle cx="12" cy="7" r="4" />
+        <path d="M5 21v-3a7 7 0 0 1 14 0v3z" />
+      </>
+    ),
+    statistics: (
+      <>
+        <path d="M4 21V12h4v9M10 21V7h4v14M16 21V3h4v18" />
+      </>
+    ),
+    settings: (
+      <>
+        <circle cx="12" cy="12" r="4" />
+        <path d="m9 3 6 0 1 3 3 1 2 5-2 5-3 1-1 3H9l-1-3-3-1-2-5 2-5 3-1z" />
+      </>
+    ),
     home: (
       <>
         <path d="m3 10 9-7 9 7v10H3z" />

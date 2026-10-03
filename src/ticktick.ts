@@ -1,4 +1,4 @@
-import { completeQuest } from './game.ts';
+import { completeQuest, spheres } from './game.ts';
 import type { GameState, Quest } from './game.ts';
 import { isGoalTask, saveTask } from './planning.ts';
 export type RemoteTask = {
@@ -17,11 +17,13 @@ export type TickTickLink = {
   remote: string;
   done?: boolean;
   goalId?: string;
+  projectId?: string;
 };
 export type TickTickConnection = {
   url: string;
   key: string;
-  projectId: string;
+  projectId: string; // Legacy single-list setting; retained for existing links.
+  sphereLists?: Record<string, string>;
   auto: boolean;
   deleteRemote: boolean;
   links: Record<string, TickTickLink>;
@@ -48,11 +50,61 @@ export function newConnection(url: string): TickTickConnection {
       n.toString(16).padStart(2, '0'),
     ).join(''),
     projectId: '',
+    sphereLists: {},
     auto: true,
     deleteRemote: false,
     links: {},
     dismissed: [],
   };
+}
+// Preferred existing list names supplied by the user; names are not API IDs.
+export const tickTickListNames: Record<string, string> = {
+  health: 'Здоровье',
+  sport: 'Спорт',
+  growth: 'Саморазвитие',
+  english: 'Английский язык',
+  finance: 'Финансы',
+  together: 'Совместные задачи',
+  driving: 'Вождение',
+  tasks: 'Задачи',
+  hobby: 'Досуг и хобби',
+};
+export function matchSphereLists(
+  projects: { id: string; name: string }[],
+  current: Record<string, string> = {},
+) {
+  const normalize = (name: string) =>
+    name
+      .toLocaleLowerCase('ru-RU')
+      .replace(/[^\p{L}\p{N}]+/gu, ' ')
+      .trim();
+  const mappings = { ...current };
+  for (const sphere of spheres) {
+    if (Object.hasOwn(current, sphere.id)) continue;
+    // Prefer the user's exact list name; fall back to the application label.
+    for (const name of [tickTickListNames[sphere.id], sphere.name]) {
+      const matches = projects.filter(
+        (project) => normalize(project.name) === normalize(name),
+      );
+      if (matches.length === 1) {
+        mappings[sphere.id] = matches[0].id;
+        break;
+      }
+      if (matches.length > 1) break;
+    }
+  }
+  return mappings;
+}
+export function hasTickTickTargets(connection: TickTickConnection) {
+  return (
+    Object.values(connection.sphereLists ?? {}).some(Boolean) ||
+    Object.values(connection.links).some(
+      (link) => link.projectId || connection.projectId,
+    )
+  );
+}
+function taskProject(connection: TickTickConnection, task: Quest) {
+  return connection.sphereLists?.[task.sphere];
 }
 export async function bridgeRequest<T>(
   connection: TickTickConnection,
@@ -175,14 +227,11 @@ export type TickTickResult = {
   }[];
   warnings: string[];
 };
-export async function syncTickTick(
+async function syncTickTickProject(
   state: GameState,
   connection: TickTickConnection,
-  request: <T>(path: string, method?: string, body?: unknown) => Promise<T> = (
-    path,
-    method,
-    body,
-  ) => bridgeRequest(connection, path, method, body),
+  request: <T>(path: string, method?: string, body?: unknown) => Promise<T>,
+  allLinks: TickTickConnection['links'],
 ): Promise<TickTickResult> {
   if (!connection.projectId)
     throw new Error('Выбери список TickTick для синхронизации.');
@@ -285,10 +334,15 @@ export async function syncTickTick(
       remote: remoteFingerprint(remote),
       done: local.done || wasCompleted,
       goalId: local.goalId,
+      projectId: connection.projectId,
     };
   }
   for (const local of state.quests.filter(
-    (q) => !q.done && isGoalTask(state, q) && !connection.links[q.id],
+    (q) =>
+      !q.done &&
+      isGoalTask(state, q) &&
+      !allLinks[q.id] &&
+      taskProject(connection, q) === connection.projectId,
   )) {
     const remote = await request<RemoteTask>('/create', 'POST', {
       ...remotePayload(local, state, connection),
@@ -300,6 +354,7 @@ export async function syncTickTick(
       local: localFingerprint(local, state),
       remote: remoteFingerprint(remote),
       goalId: local.goalId,
+      projectId: connection.projectId,
     };
     if (remote.status === 2)
       result.changes.push({
@@ -307,6 +362,73 @@ export async function syncTickTick(
         snapshot: localFingerprint(local, state),
         remote,
       });
+  }
+  result.connection.lastSync = new Date().toISOString();
+  return result;
+}
+export async function syncTickTick(
+  state: GameState,
+  connection: TickTickConnection,
+  request: <T>(path: string, method?: string, body?: unknown) => Promise<T> = (
+    path,
+    method,
+    body,
+  ) => bridgeRequest(connection, path, method, body),
+): Promise<TickTickResult> {
+  if (!hasTickTickTargets(connection))
+    throw new Error('Сопоставь сферу жизни со списком TickTick.');
+  const result: TickTickResult = {
+    connection: {
+      ...connection,
+      links: { ...connection.links },
+      dismissed: [...connection.dismissed],
+    },
+    changes: [],
+    warnings: [],
+  };
+  const projects = new Set<string>();
+  for (const task of state.quests) {
+    if (task.done || !isGoalTask(state, task) || connection.links[task.id])
+      continue;
+    const project = taskProject(connection, task);
+    if (project) projects.add(project);
+    else
+      result.warnings.push(
+        `${task.name}: для сферы «${spheres.find((s) => s.id === task.sphere)?.name ?? task.sphere}» не выбран список TickTick. Задача остаётся здесь.`,
+      );
+  }
+  for (const link of Object.values(connection.links)) {
+    const project = link.projectId || connection.projectId;
+    if (project) projects.add(project);
+  }
+  for (const projectId of projects) {
+    const links = Object.fromEntries(
+      Object.entries(connection.links).filter(
+        ([, link]) => (link.projectId || connection.projectId) === projectId,
+      ),
+    );
+    try {
+      const batch = await syncTickTickProject(
+        state,
+        { ...connection, projectId, links },
+        request,
+        connection.links,
+      );
+      for (const id of Object.keys(links)) delete result.connection.links[id];
+      Object.assign(result.connection.links, batch.connection.links);
+      result.connection.dismissed = [
+        ...new Set([
+          ...result.connection.dismissed,
+          ...batch.connection.dismissed,
+        ]),
+      ];
+      result.changes.push(...batch.changes);
+      result.warnings.push(...batch.warnings);
+    } catch (error) {
+      result.warnings.push(
+        `Список TickTick ${projectId}: ${error instanceof Error ? error.message : 'не удалось обновить задачи'}`,
+      );
+    }
   }
   result.connection.lastSync = new Date().toISOString();
   return result;

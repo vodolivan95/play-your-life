@@ -41,6 +41,7 @@ export default function GoalsBoard({
   onNew: () => void;
   onNotify: (message: string) => void;
 }) {
+  const [goalFilter, setGoalFilter] = useState('active');
   const [editor, setEditor] = useState<Editor | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -129,6 +130,11 @@ export default function GoalsBoard({
       </div>
     );
   }
+  const visibleGoals = state.goals.filter(
+    (g) =>
+      goalFilter === 'all' ||
+      (goalFilter === 'done' ? g.current >= g.target : g.current < g.target),
+  );
   const progress = (g: Goal) => Math.round((g.current / g.target) * 100);
   return (
     <>
@@ -152,9 +158,26 @@ export default function GoalsBoard({
           <Icon name="plus" size={17} /> Новая цель
         </button>
       </div>
+      {!goal && (
+        <div className="tabs goal-tabs">
+          {[
+            ['active', 'Активные'],
+            ['done', 'Достигнутые'],
+            ['all', 'Все'],
+          ].map(([id, name]) => (
+            <button
+              key={id}
+              className={goalFilter === id ? 'selected' : ''}
+              onClick={() => setGoalFilter(id)}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
       {!goal ? (
         <div className="goals-grid">
-          {state.goals.map((g) => {
+          {visibleGoals.map((g) => {
             const sphere = spheres.find((s) => s.id === g.sphere)!;
             return (
               <section className="panel goal-card" key={g.id}>
@@ -190,35 +213,38 @@ export default function GoalsBoard({
                 <div className="progress">
                   <span style={{ width: `${progress(g)}%` }} />
                 </div>
-                {g.progressMode !== 'tasks' && (
-                  <label className="goal-input">
-                    Текущий прогресс
-                    <input
-                      type="number"
-                      min="0"
-                      max={g.target}
-                      value={g.current}
-                      onChange={(e) => {
-                        const next = updateGoal(
-                          state,
-                          g.id,
-                          Number(e.target.value),
-                        );
-                        onChange(next);
-                        if (next.xp > state.xp)
-                          onNotify(
-                            `Цель достигнута! +${next.xp - state.xp} XP`,
+                <details className="goal-controls">
+                  <summary>Прогресс и сроки</summary>
+                  {g.progressMode !== 'tasks' && (
+                    <label className="goal-input">
+                      Текущий прогресс
+                      <input
+                        type="number"
+                        min="0"
+                        max={g.target}
+                        value={g.current}
+                        onChange={(e) => {
+                          const next = updateGoal(
+                            state,
+                            g.id,
+                            Number(e.target.value),
                           );
-                      }}
-                    />
-                  </label>
-                )}
-                <div className="goal-dates-summary">
-                  <small>Срок: {formatDate(g.dueAt)}</small>
-                  <span>
-                    🏆 {g.reward} XP {g.rewarded ? '· Получены' : ''}
-                  </span>
-                </div>
+                          onChange(next);
+                          if (next.xp > state.xp)
+                            onNotify(
+                              `Цель достигнута! +${next.xp - state.xp} XP`,
+                            );
+                        }}
+                      />
+                    </label>
+                  )}
+                  <div className="goal-dates-summary">
+                    <small>Срок: {formatDate(g.dueAt)}</small>
+                    <span>
+                      🏆 {g.reward} XP {g.rewarded ? '· Получены' : ''}
+                    </span>
+                  </div>
+                </details>
                 <button
                   className="primary-button goal-plan-button"
                   onClick={() => onSelect(g.id)}
@@ -229,10 +255,14 @@ export default function GoalsBoard({
               </section>
             );
           })}
-          {state.goals.length === 0 && (
+          {visibleGoals.length === 0 && (
             <div className="panel empty">
               <span>🎯</span>
-              <h3>Начни с того, что важно</h3>
+              <h3>
+                {goalFilter === 'done'
+                  ? 'Твои победы ещё впереди'
+                  : 'Начни с того, что важно'}
+              </h3>
               <p>Поставь цель, выбери срок и добавь первый реальный шаг.</p>
             </div>
           )}

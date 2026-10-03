@@ -183,6 +183,7 @@ export const avatars = [
   { icon: '🐼', name: 'Панда' },
   { icon: '🦁', name: 'Лев' },
   { icon: '🦉', name: 'Сова' },
+  { icon: 'character', name: 'Мой персонаж' },
 ];
 export type PlayerProfile = {
   name: string;

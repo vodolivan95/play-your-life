@@ -1,5 +1,11 @@
 import { useContext, useState } from 'react';
 import { TickTickContext } from '../tickTickContext';
+import { spheres } from '../game';
+import {
+  hasTickTickTargets,
+  matchSphereLists,
+  tickTickListNames,
+} from '../ticktick';
 export default function TickTickConnection({ demo }: { demo: boolean }) {
   const manager = useContext(TickTickContext);
   const [url, setUrl] = useState(
@@ -24,8 +30,9 @@ export default function TickTickConnection({ demo }: { demo: boolean }) {
       <div className="eyebrow">ТВОЙ АККАУНТ. ОБЩИЙ ПЛАН.</div>
       <h3>Синхронизация TickTick</h3>
       <p className="muted">
-        Новые подзадачи целей отправляются в выбранный список TickTick. Цели,
-        проекты и этапы остаются в PLAY YOUR LIFE. Выполнение подзадачи в
+        Новые подзадачи целей отправляются в список TickTick своей сферы:
+        здоровье — в «Здоровье», английский — в выбранный список английского.
+        Цели, проекты и этапы остаются в PLAY YOUR LIFE. Выполнение подзадачи в
         TickTick обновляет её прогресс здесь.
       </p>
       {demo ? (
@@ -68,38 +75,70 @@ export default function TickTickConnection({ demo }: { demo: boolean }) {
           </div>
           {c && (
             <>
-              <label>
-                Список для синхронизации
-                <select
-                  value={c.projectId}
+              <div className="sphere-list-mappings">
+                <h4>Сфера жизни → список TickTick</h4>
+                <p className="muted">
+                  Выбери, куда отправлять конкретные подзадачи каждой сферы.
+                </p>
+                <button
+                  className="text-button"
                   disabled={manager.busy || !manager.projects.length}
-                  onChange={(e) => {
-                    if (
-                      Object.keys(c.links).length &&
-                      !window.confirm(
-                        'Сменить список? Связи сбросятся; активные подзадачи целей будут переданы в новый список.',
-                      )
-                    )
-                      return;
+                  onClick={() =>
                     manager.update({
-                      projectId: e.target.value,
-                      links: {},
-                      dismissed: [],
-                    });
-                  }}
+                      sphereLists: matchSphereLists(
+                        manager.projects,
+                        c.sphereLists,
+                      ),
+                    })
+                  }
                 >
-                  <option value="">Выбрать список TickTick</option>
-                  {c.projectId &&
-                    !manager.projects.some((p) => p.id === c.projectId) && (
-                      <option value={c.projectId}>Выбранный список</option>
-                    )}
-                  {manager.projects.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  Сопоставить по названиям
+                </button>
+                {spheres.map((sphere) => {
+                  const projectId = c.sphereLists?.[sphere.id] ?? '';
+                  return (
+                    <label className="sphere-list-mapping" key={sphere.id}>
+                      <span>
+                        {sphere.icon} {sphere.name}
+                      </span>
+                      <select
+                        aria-label={`Список TickTick: ${sphere.name}`}
+                        value={projectId}
+                        disabled={manager.busy || !manager.projects.length}
+                        onChange={(e) =>
+                          manager.update({
+                            sphereLists: {
+                              ...c.sphereLists,
+                              [sphere.id]: e.target.value,
+                            },
+                          })
+                        }
+                      >
+                        <option value="">
+                          Не подключено · {tickTickListNames[sphere.id]}
+                        </option>
+                        {projectId &&
+                          !manager.projects.some((p) => p.id === projectId) && (
+                            <option value={projectId}>
+                              Сохранённый список (проверь доступ)
+                            </option>
+                          )}
+                        {manager.projects.map((project) => (
+                          <option key={project.id} value={project.id}>
+                            {project.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  );
+                })}
+                <p className="score-note">
+                  Список «Работа» пока не связан со сферой. Без сопоставления
+                  новые задачи сферы остаются здесь. Уже отправленные задачи
+                  сохраняют свой список и связь; смена сопоставления применяется
+                  к новым задачам.
+                </p>
+              </div>
               <label className="include-shared">
                 <input
                   type="checkbox"
@@ -116,7 +155,7 @@ export default function TickTickConnection({ demo }: { demo: boolean }) {
                     if (
                       e.target.checked &&
                       !window.confirm(
-                        'Удалённые здесь связанные задачи также будут удаляться из выбранного списка TickTick. Включить?',
+                        'Удалённые здесь связанные задачи также будут удаляться из своих списков TickTick. Включить?',
                       )
                     )
                       return;
@@ -135,7 +174,7 @@ export default function TickTickConnection({ demo }: { demo: boolean }) {
               <div className="account-buttons">
                 <button
                   className="secondary-button"
-                  disabled={manager.busy || !c.projectId}
+                  disabled={manager.busy || !hasTickTickTargets(c)}
                   onClick={() => action(manager.sync)}
                 >
                   {manager.busy ? 'Обновляю…' : 'Синхронизировать сейчас'}

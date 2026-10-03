@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, FormEvent } from 'react';
 import Icon from './components/Icon';
+import Avatar from './components/Avatar';
+import Statistics from './components/Statistics';
 import Onboarding, { ProfileEditor } from './components/Onboarding';
 import MonthlyReview from './components/MonthlyReview';
 import GoalsBoard from './components/GoalsBoard';
@@ -33,8 +35,10 @@ const navigation = [
   { id: 'monthly', label: 'Итоги месяца', icon: 'calendar' },
   { id: 'tree', label: 'Skill Tree', icon: 'tree' },
   { id: 'achievements', label: 'Достижения', icon: 'trophy' },
+  { id: 'statistics', label: 'Статистика', icon: 'statistics' },
+  { id: 'profile', label: 'Профиль', icon: 'profile' },
 ];
-const mobileIds = ['home', 'plan', 'goals', 'quests', 'monthly'];
+const mobileIds = ['home', 'goals', 'quests', 'statistics', 'profile'];
 function Progress({ value, color }: { value: number; color?: string }) {
   return (
     <div
@@ -65,9 +69,13 @@ export default function App() {
   const [focusedGoalId, setFocusedGoalId] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [modal, setModal] = useState<
-    'quest' | 'goal' | 'streak' | 'start' | 'profile' | 'more' | null
+    'quest' | 'goal' | 'streak' | 'start' | 'profile' | null
   >(() => (state.profile.onboardingComplete ? null : 'start'));
   const [filter, setFilter] = useState('all');
+  const [achievementFilter, setAchievementFilter] = useState('all');
+  const [treeView, setTreeView] = useState('map');
+  const [sphereTab, setSphereTab] = useState('quests');
+  const [questDifficulty, setQuestDifficulty] = useState('Medium');
   const [toast, setToast] = useState('');
   const [storageError, setStorageError] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -97,6 +105,7 @@ export default function App() {
   function navigate(id: string) {
     setPage(id);
     setSelected(null);
+    setSphereTab('quests');
     setFocusedGoalId(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -184,6 +193,7 @@ export default function App() {
         className="sphere-card"
         onClick={() => {
           setSelected(id);
+          setSphereTab('quests');
           setPage('spheres');
         }}
         style={{ '--sphere-color': info.color } as CSSProperties}
@@ -234,6 +244,7 @@ export default function App() {
             sphere: sphereId,
             xp: difficulties[difficulty],
             difficulty,
+            notes: String(data.get('notes') || '').trim(),
             done: false,
           },
         ],
@@ -295,7 +306,9 @@ export default function App() {
             aria-label="Личный профиль"
             onClick={() => setModal('profile')}
           >
-            <span className="avatar small">{state.profile.avatar}</span>
+            <span className="avatar small">
+              <Avatar value={state.profile.avatar} />
+            </span>
             <div>
               <strong>{state.profile.name}</strong>
               <small>
@@ -329,11 +342,13 @@ export default function App() {
                 aria-label="Личный профиль"
                 onClick={() => setModal('profile')}
               >
-                {state.profile.avatar}
+                <Avatar value={state.profile.avatar} />
               </button>
             </div>
           </header>
-          <main>
+          <main
+            className={`screen-${page} ${sphere ? 'screen-sphere-detail' : ''}`}
+          >
             <div className="page-heading">
               <div>
                 <div className="eyebrow">ТВОЯ ЖИЗНЬ. ТВОИ ПРАВИЛА.</div>
@@ -341,7 +356,7 @@ export default function App() {
                   {sphere
                     ? `${sphere.icon} ${sphere.name}`
                     : page === 'home'
-                      ? 'Время стать сильнее'
+                      ? `Привет, ${state.profile.name}`
                       : navigation.find((n) => n.id === page)?.label}
                   <span className="heading-dot">.</span>
                 </h1>
@@ -384,9 +399,11 @@ export default function App() {
             {page === 'home' && (
               <div className="personal-banner">
                 <span>
-                  {state.profile.mode === 'demo'
-                    ? 'ДЕМО'
-                    : state.profile.avatar}
+                  {state.profile.mode === 'demo' ? (
+                    'ДЕМО'
+                  ) : (
+                    <Avatar value={state.profile.avatar} />
+                  )}
                 </span>
                 <div>
                   <strong>
@@ -417,51 +434,41 @@ export default function App() {
               <>
                 <div className="hero-grid">
                   <section className="player-card">
-                    <div className="player-card-top">
-                      <span className="pill">✦ ТВОЙ ПЕРСОНАЖ</span>
-                      <span className="hero-spark">✧</span>
-                    </div>
                     <div className="player-content">
-                      <div>
-                        <div className="level-label">LEVEL {currentLevel}</div>
-                        <h2
-                          className={
-                            levelTitle.length > 8 ? 'compact-title' : undefined
-                          }
-                        >
-                          {levelTitle}
-                        </h2>
-                        <p>
-                          {state.profile.name} · Всего {state.xp} XP
-                        </p>
-                      </div>
                       <div className="avatar-orbit">
-                        <span className="orbit-star one">✦</span>
                         <span className="player-avatar">
-                          {state.profile.avatar}
+                          <Avatar value={state.profile.avatar} />
                         </span>
-                        <span className="avatar-level">{currentLevel}</span>
-                        <span className="orbit-star two">✧</span>
+                      </div>
+                      <div className="player-summary">
+                        <div className="level-label">LEVEL {currentLevel}</div>
+                        <h2>{levelTitle}</h2>
+                        <p>{state.profile.name}</p>
+                        <Progress value={levelProgress} />
+                        <div className="hero-progress-label">
+                          <b>
+                            {state.profile.mode === 'personal'
+                              ? state.xp % 200
+                              : state.xp}{' '}
+                            / {state.profile.mode === 'personal' ? 200 : nextXP}{' '}
+                            XP
+                          </b>
+                        </div>
                       </div>
                     </div>
-                    <div className="hero-progress-label">
-                      <span>До следующего уровня</span>
-                      <b>
-                        {state.profile.mode === 'personal'
-                          ? state.xp % 200
-                          : state.xp}{' '}
-                        <span>
-                          / {state.profile.mode === 'personal' ? 200 : nextXP}{' '}
-                          XP
-                        </span>
-                      </b>
-                    </div>
-                    <Progress value={levelProgress} />
-                    <div className="hero-footer">
+                    <div className="player-rewards">
                       <span>
-                        ⚡ Ещё {nextXP - state.xp} XP до нового уровня
+                        <b>🪙 {state.coins.toLocaleString('ru')}</b>
+                        <small>Монеты</small>
                       </span>
-                      <Icon name="arrow" size={16} />
+                      <button onClick={() => setModal('streak')}>
+                        <b>🔥 {streak(state.activeDates)}</b>
+                        <small>Серия дней</small>
+                      </button>
+                      <button onClick={() => navigate('achievements')}>
+                        <b>🏆 {unlocked}</b>
+                        <small>Достижения</small>
+                      </button>
                     </div>
                   </section>
                   <section className="goal-highlight">
@@ -509,53 +516,6 @@ export default function App() {
                     </button>
                   </section>
                 </div>
-                <div className="stats-grid">
-                  <button
-                    className="stat-card"
-                    onClick={() => setModal('streak')}
-                  >
-                    <span className="stat-icon orange">🔥</span>
-                    <div>
-                      <b>
-                        {streak(state.activeDates)} <small>дней</small>
-                      </b>
-                      <p>Текущая серия</p>
-                    </div>
-                    <span className="stat-end">
-                      <Icon name="arrow" size={16} />
-                    </span>
-                  </button>
-                  <button
-                    className="stat-card"
-                    onClick={() => navigate('spheres')}
-                  >
-                    <span className="stat-icon blue">✦</span>
-                    <div>
-                      <b>
-                        {lifeScore} <small>/ 9</small>
-                      </b>
-                      <p>Общий Life Score</p>
-                    </div>
-                    <span className="stat-end">
-                      <Icon name="arrow" size={16} />
-                    </span>
-                  </button>
-                  <button
-                    className="stat-card"
-                    onClick={() => navigate('achievements')}
-                  >
-                    <span className="stat-icon purple">🏆</span>
-                    <div>
-                      <b>
-                        {unlocked} <small>/ {achievements.length}</small>
-                      </b>
-                      <p>Достижения</p>
-                    </div>
-                    <span className="stat-end">
-                      <Icon name="arrow" size={16} />
-                    </span>
-                  </button>
-                </div>
                 <div className="home-lower">
                   <section className="panel quests-panel">
                     <div className="section-heading">
@@ -591,27 +551,11 @@ export default function App() {
                       Все квесты <Icon name="arrow" size={16} />
                     </button>
                   </section>
-                  <section className="daily-card">
-                    <span className="daily-label">МЫСЛЬ ДНЯ</span>
-                    <div className="daily-illustration">
-                      🌱<span>✧</span>
-                    </div>
-                    <h2>
-                      Не идеально.
-                      <br />
-                      Но каждый день.
-                    </h2>
-                    <p>
-                      Прогресс — это не большой рывок.
-                      <br />
-                      Это маленькие действия,
-                      <br />
-                      которые ты выбираешь сегодня.
-                    </p>
-                    <div className="daily-bottom">
-                      <span /> ТЫ НА ПРАВИЛЬНОМ ПУТИ
-                    </div>
-                  </section>
+                  <Statistics
+                    state={state}
+                    compact
+                    onMonthly={() => navigate('monthly')}
+                  />
                 </div>
                 <section className="spheres-section">
                   <div className="section-heading">
@@ -661,7 +605,23 @@ export default function App() {
                 >
                   ← Все сферы
                 </button>
-                <div className="detail-grid">
+                <div className="tabs sphere-tabs">
+                  {[
+                    ['quests', 'Квесты'],
+                    ['goals', 'Цели'],
+                    ['history', 'История'],
+                    ['statistics', 'Статистика'],
+                  ].map(([id, name]) => (
+                    <button
+                      key={id}
+                      className={sphereTab === id ? 'selected' : ''}
+                      onClick={() => setSphereTab(id)}
+                    >
+                      {name}
+                    </button>
+                  ))}
+                </div>
+                <div className={`detail-grid sphere-tab-${sphereTab}`}>
                   <section className="panel">
                     <div className="section-heading">
                       <h2>LEVEL {sphereLevel(state.spheres[sphere.id].xp)}</h2>
@@ -677,58 +637,85 @@ export default function App() {
                       {200 - (state.spheres[sphere.id].xp % 200)} XP до
                       следующего уровня · Коэффициент {sphere.coefficient}
                     </p>
-                    <h3>
-                      Твой Life Score{' '}
-                      <span className="score-big">
-                        {state.spheres[sphere.id].score}/9
+                    <div className="sphere-health-stats">
+                      <span
+                        className="score-circle"
+                        style={{
+                          background: `conic-gradient(#33c5a6 ${(state.spheres[sphere.id].score / 9) * 360}deg, #e7f3f7 0)`,
+                        }}
+                      >
+                        <b>{state.spheres[sphere.id].score}/9</b>
                       </span>
-                    </h3>
-                    <div className="score-selector">
-                      {Array.from({ length: 10 }, (_, n) => (
-                        <button
-                          key={n}
-                          className={
-                            state.spheres[sphere.id].score === n
-                              ? 'selected'
-                              : ''
-                          }
-                          onClick={() => {
-                            const next = changeScore(state, sphere.id, n);
-                            setState(next);
-                            notify(
-                              next.xp > state.xp
-                                ? `+${next.xp - state.xp} XP · Новый личный результат!`
-                                : 'Оценка сохранена',
-                            );
-                          }}
-                        >
-                          {n}
-                        </button>
-                      ))}
+                      <div>
+                        <strong>Life Score</strong>
+                        <small>
+                          {state.spheres[sphere.id].score >
+                          state.spheres[sphere.id].previousScore
+                            ? `↗ +${state.spheres[sphere.id].score - state.spheres[sphere.id].previousScore}`
+                            : state.spheres[sphere.id].score <
+                                state.spheres[sphere.id].previousScore
+                              ? `↘ ${state.spheres[sphere.id].score - state.spheres[sphere.id].previousScore}`
+                              : 'Без изменений'}
+                        </small>
+                      </div>
+                      <div className="sphere-coefficient">
+                        <span>⚡</span>
+                        <small>Коэффициент</small>
+                        <strong>{sphere.coefficient} XP</strong>
+                      </div>
                     </div>
-                    <p className="muted">
-                      {
-                        [
-                          'Сфера практически отсутствует',
-                          'Очень низкий уровень',
-                          'Очень низкий уровень',
-                          'Нестабильно / требует развития',
-                          'Нестабильно / требует развития',
-                          'Нормальная базовая точка',
-                          'Хороший уровень',
-                          'Стабильный хороший результат',
-                          'Очень высокий уровень',
-                          'Достигнут личный целевой стандарт',
-                        ][state.spheres[sphere.id].score]
-                      }
-                    </p>
-                    <p className="score-note">
-                      XP за рост выше твоего лучшего результата (
-                      {state.spheres[sphere.id].highScore}). Повторная оценка не
-                      приносит бонус.
-                    </p>
+                    <details className="score-editor">
+                      <summary>Изменить Life Score</summary>
+                      <div className="score-selector">
+                        {Array.from({ length: 10 }, (_, n) => (
+                          <button
+                            key={n}
+                            className={
+                              state.spheres[sphere.id].score === n
+                                ? 'selected'
+                                : ''
+                            }
+                            onClick={() => {
+                              const next = changeScore(state, sphere.id, n);
+                              setState(next);
+                              notify(
+                                next.xp > state.xp
+                                  ? `+${next.xp - state.xp} XP · Новый личный результат!`
+                                  : 'Оценка сохранена',
+                              );
+                            }}
+                          >
+                            {n}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="muted">
+                        {
+                          [
+                            'Сфера практически отсутствует',
+                            'Очень низкий уровень',
+                            'Очень низкий уровень',
+                            'Нестабильно / требует развития',
+                            'Нестабильно / требует развития',
+                            'Нормальная базовая точка',
+                            'Хороший уровень',
+                            'Стабильный хороший результат',
+                            'Очень высокий уровень',
+                            'Достигнут личный целевой стандарт',
+                          ][state.spheres[sphere.id].score]
+                        }
+                      </p>
+                      <p className="score-note">
+                        XP за рост выше твоего лучшего результата (
+                        {state.spheres[sphere.id].highScore}). Повторная оценка
+                        не приносит бонус.
+                      </p>
+                    </details>
                   </section>
-                  <section className="panel">
+                  <section
+                    className="panel sphere-goals"
+                    hidden={sphereTab !== 'goals'}
+                  >
                     <h2>Активные цели</h2>
                     {state.goals
                       .filter((g) => g.sphere === sphere.id && !g.rewarded)
@@ -752,7 +739,10 @@ export default function App() {
                     </button>
                   </section>
                 </div>
-                <section className="panel section-gap">
+                <section
+                  className="panel section-gap"
+                  hidden={sphereTab !== 'quests'}
+                >
                   <div className="section-heading">
                     <h2>Активные квесты</h2>
                     <button
@@ -773,7 +763,10 @@ export default function App() {
                     </p>
                   )}
                 </section>
-                <section className="panel section-gap">
+                <section
+                  className="panel section-gap"
+                  hidden={sphereTab !== 'history'}
+                >
                   <h2>История прогресса и последние действия</h2>
                   {state.events
                     .filter((e) => e.sphere === sphere.id)
@@ -797,6 +790,77 @@ export default function App() {
                   )}
                 </section>
               </>
+            )}
+            {sphere && sphereTab === 'statistics' && (
+              <Statistics
+                state={{
+                  ...state,
+                  events: state.events.filter((e) => e.sphere === sphere.id),
+                }}
+              />
+            )}
+            {page === 'statistics' && (
+              <Statistics state={state} onMonthly={() => navigate('monthly')} />
+            )}
+            {page === 'profile' && (
+              <div className="profile-page">
+                <section className="panel profile-hero">
+                  <span className="player-avatar">
+                    <Avatar value={state.profile.avatar} />
+                  </span>
+                  <div>
+                    <h2>{state.profile.name}</h2>
+                    <strong>{levelTitle}</strong>
+                    <small>
+                      LEVEL {currentLevel} · {state.xp} XP
+                    </small>
+                    <Progress value={levelProgress} />
+                  </div>
+                  <button
+                    className="icon-button"
+                    aria-label="Изменить профиль"
+                    onClick={() => setModal('profile')}
+                  >
+                    <Icon name="settings" />
+                  </button>
+                </section>
+                <div className="player-rewards profile-rewards">
+                  <span>
+                    <b>🪙 {state.coins}</b>
+                    <small>Монеты</small>
+                  </span>
+                  <button onClick={() => setModal('streak')}>
+                    <b>🔥 {streak(state.activeDates)}</b>
+                    <small>Серия</small>
+                  </button>
+                  <button onClick={() => navigate('achievements')}>
+                    <b>🏆 {unlocked}</b>
+                    <small>Достижения</small>
+                  </button>
+                </div>
+                <section className="panel profile-menu">
+                  {navigation
+                    .filter((n) => !['home', 'profile'].includes(n.id))
+                    .map((n) => (
+                      <button key={n.id} onClick={() => navigate(n.id)}>
+                        <Icon name={n.icon} />
+                        <strong>{n.label}</strong>
+                        <Icon name="arrow" size={17} />
+                      </button>
+                    ))}
+                  <button onClick={() => setModal('profile')}>
+                    <Icon name="settings" />
+                    <strong>Настройки персонажа</strong>
+                    <Icon name="arrow" size={17} />
+                  </button>
+                </section>
+                <button
+                  className="secondary-button"
+                  onClick={() => navigate('plan')}
+                >
+                  Планирование и TickTick <Icon name="arrow" size={16} />
+                </button>
+              </div>
             )}
             {page === 'quests' && (
               <>
@@ -878,12 +942,61 @@ export default function App() {
             )}
             {page === 'tree' && (
               <>
-                <div className="tree-intro">
+                <div className="tabs">
+                  <button
+                    className={treeView === 'map' ? 'selected' : ''}
+                    onClick={() => setTreeView('map')}
+                  >
+                    Карта
+                  </button>
+                  <button
+                    className={treeView === 'skills' ? 'selected' : ''}
+                    onClick={() => setTreeView('skills')}
+                  >
+                    Навыки
+                  </button>
+                </div>
+                {treeView === 'map' && (
+                  <section className="panel life-tree">
+                    <div className="tree-root">
+                      <span>👑</span>
+                      <strong>Личная эффективность</strong>
+                      <small>LEVEL {currentLevel}</small>
+                    </div>
+                    <div className="tree-map-branches">
+                      {[
+                        spheres.slice(0, 3),
+                        spheres.slice(3, 6),
+                        spheres.slice(6, 9),
+                      ].map((group, i) => (
+                        <div className="tree-map-branch" key={i}>
+                          {group.map((sp) => (
+                            <button
+                              className="tree-map-node"
+                              key={sp.id}
+                              onClick={() => {
+                                setSelected(sp.id);
+                                setPage('spheres');
+                              }}
+                            >
+                              <span>{sp.icon}</span>
+                              <strong>{sp.name}</strong>
+                              <small>
+                                LVL {sphereLevel(state.spheres[sp.id].xp)}
+                              </small>
+                            </button>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+                <div className="tree-intro" hidden={treeView !== 'skills'}>
                   <span>🌳</span>
                   <h2>Всё начинается с тебя</h2>
                   <p>9 веток. Бесконечно много возможностей.</p>
                 </div>
-                <div className="skill-grid">
+                <div className="skill-grid" hidden={treeView !== 'skills'}>
                   {spheres.map((s) => {
                     const lvl = sphereLevel(state.spheres[s.id].xp);
                     return (
@@ -935,20 +1048,43 @@ export default function App() {
                     <p>Каждая награда — часть твоей истории.</p>
                   </div>
                 </div>
-                <div className="achievement-grid">
-                  {achievements.map((a) => (
-                    <section
-                      className={`panel achievement ${a.unlocked(state) ? 'unlocked' : ''}`}
-                      key={a.name}
+                <div className="tabs achievement-tabs">
+                  {[
+                    ['all', 'Все'],
+                    ['open', 'Открытые'],
+                    ['locked', 'В процессе'],
+                  ].map(([id, name]) => (
+                    <button
+                      key={id}
+                      className={achievementFilter === id ? 'selected' : ''}
+                      onClick={() => setAchievementFilter(id)}
                     >
-                      <span className="achievement-icon">{a.icon}</span>
-                      <span className="mini-pill">
-                        {a.unlocked(state) ? 'Получено ✓' : 'Впереди'}
-                      </span>
-                      <h2>{a.name}</h2>
-                      <p>{a.description}</p>
-                    </section>
+                      {name}
+                    </button>
                   ))}
+                </div>
+                <div className="achievement-grid">
+                  {achievements
+                    .filter(
+                      (a) =>
+                        achievementFilter === 'all' ||
+                        (achievementFilter === 'open'
+                          ? a.unlocked(state)
+                          : !a.unlocked(state)),
+                    )
+                    .map((a) => (
+                      <section
+                        className={`panel achievement ${a.unlocked(state) ? 'unlocked' : ''}`}
+                        key={a.name}
+                      >
+                        <span className="achievement-icon">{a.icon}</span>
+                        <span className="mini-pill">
+                          {a.unlocked(state) ? 'Получено ✓' : 'Впереди'}
+                        </span>
+                        <h2>{a.name}</h2>
+                        <p>{a.description}</p>
+                      </section>
+                    ))}
                 </div>
               </>
             )}
@@ -976,17 +1112,6 @@ export default function App() {
                 </span>
               </button>
             ))}
-          <button
-            className={
-              !mobileIds.includes(page) || modal === 'more' ? 'active' : ''
-            }
-            aria-label="Ещё"
-            aria-expanded={modal === 'more'}
-            onClick={() => setModal('more')}
-          >
-            <Icon name="more" size={20} />
-            <span>Ещё</span>
-          </button>
         </nav>
         <dialog
           ref={dialog}
@@ -1026,31 +1151,6 @@ export default function App() {
                   setModal(null);
                 }}
               />
-            ) : modal === 'more' ? (
-              <div className="more-menu">
-                <div className="eyebrow">ТВОЁ ПРИКЛЮЧЕНИЕ</div>
-                <h2>Ещё в твоей игре</h2>
-                {navigation
-                  .filter((n) => !mobileIds.includes(n.id))
-                  .map((n) => (
-                    <button
-                      key={n.id}
-                      onClick={() => {
-                        navigate(n.id);
-                        setModal(null);
-                      }}
-                    >
-                      <Icon name={n.icon} />
-                      <strong>{n.label}</strong>
-                      <Icon name="arrow" size={17} />
-                    </button>
-                  ))}
-                <button onClick={() => setModal('profile')}>
-                  <span>{state.profile.avatar}</span>
-                  <strong>Личный профиль</strong>
-                  <Icon name="arrow" size={17} />
-                </button>
-              </div>
             ) : modal === 'profile' ? (
               <ProfileEditor
                 key="profile"
@@ -1124,15 +1224,40 @@ export default function App() {
                   </select>
                 </label>
                 <label>
-                  Сложность и награда
-                  <select name="difficulty" defaultValue="Medium">
-                    {Object.entries(difficulties).map(([name, xp]) => (
-                      <option key={name} value={name}>
-                        {name} — {xp} XP
-                      </option>
-                    ))}
-                  </select>
+                  Описание (необязательно)
+                  <textarea
+                    name="notes"
+                    placeholder="Короткое описание квеста"
+                    maxLength={2000}
+                  />
                 </label>
+                <fieldset className="difficulty-picker">
+                  <legend>Сложность</legend>
+                  {Object.entries(difficulties).map(([name, xp]) => (
+                    <label
+                      key={name}
+                      className={questDifficulty === name ? 'selected' : ''}
+                    >
+                      <input
+                        type="radio"
+                        name="difficulty"
+                        value={name}
+                        checked={questDifficulty === name}
+                        onChange={() => setQuestDifficulty(name)}
+                      />
+                      <strong>{name}</strong>
+                      <span>{xp} XP</span>
+                    </label>
+                  ))}
+                </fieldset>
+                <div className="quest-xp-preview">
+                  <small>XP за выполнение</small>
+                  <b>
+                    ⚡{' '}
+                    {difficulties[questDifficulty as keyof typeof difficulties]}{' '}
+                    XP
+                  </b>
+                </div>
                 <button className="primary-button submit-button" type="submit">
                   Добавить квест <Icon name="arrow" size={18} />
                 </button>

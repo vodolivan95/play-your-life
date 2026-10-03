@@ -6,6 +6,7 @@ import {
   applyTickTickResult,
   newConnection,
   syncTickTick,
+  matchSphereLists,
 } from '../src/ticktick.ts';
 import type { RemoteTask } from '../src/ticktick.ts';
 function setup() {
@@ -18,6 +19,7 @@ function setup() {
   state.quests = [{ ...state.quests[0], goalId: 'b2' }];
   const connection = newConnection('https://bridge.example/');
   connection.projectId = 'life';
+  connection.sphereLists = { english: 'life' };
   return { state, connection };
 }
 function upstream(initial: RemoteTask[] = []) {
@@ -31,14 +33,20 @@ function upstream(initial: RemoteTask[] = []) {
     calls.push({ path, method, body });
     let result: unknown;
     const payload = body as Partial<RemoteTask> & { localId?: string };
-    if (path === '/api/project/life/data')
-      result = { tasks: [...tasks.values()].filter((t) => t.status !== 2) };
+    if (/^\/api\/project\/[^/]+\/data$/.test(path))
+      result = {
+        tasks: [...tasks.values()].filter(
+          (t) =>
+            t.status !== 2 &&
+            t.projectId === decodeURIComponent(path.split('/')[3]),
+        ),
+      };
     else if (path === '/create') {
       const id = `remote-${tasks.size + 1}`;
       const task = {
         ...payload,
         id,
-        projectId: 'life',
+        projectId: payload.projectId!,
         status: 0,
       } as RemoteTask;
       tasks.set(id, task);
@@ -51,7 +59,8 @@ function upstream(initial: RemoteTask[] = []) {
     } else {
       const id = path.split('/').at(path.endsWith('/complete') ? -2 : -1)!;
       const task = tasks.get(id);
-      if (!task) throw new Error('Не найдено (404)');
+      if (!task || task.projectId !== decodeURIComponent(path.split('/')[3]))
+        throw new Error('Не найдено (404)');
       if (path.endsWith('/complete')) {
         task.status = 2;
         result = null;
@@ -166,8 +175,7 @@ test('посторонние задачи TickTick не импортируютс
   );
   assert.equal(result.state.quests.length, 0);
   assert.equal(Object.keys(result.connection.links).length, 0);
-  assert.equal(api.calls.length, 1);
-  assert.equal(api.calls[0].method, 'GET');
+  assert.equal(api.calls.length, 0);
   assert.deepEqual(api.tasks.get('foreign'), remote('foreign'));
 });
 test('одновременная правка сохраняет локальный план, подтверждённое выполнение выигрывает', async () => {
@@ -446,4 +454,208 @@ test('ответ TickTick не завершает задачу, отвязанн
   const result = applyTickTickResult(detached, pending);
   assert.equal(result.state.quests[0].done, false);
   assert.equal(result.state.xp, state.xp);
+});
+
+test('сопоставление по названиям учитывает эмодзи и регистр, сохраняет ручной выбор и пропускает неоднозначность', () => {
+  const mappings = matchSphereLists(
+    [
+      { id: 'health-list', name: '❤️ ЗДОРОВЬЕ ' },
+      { id: 'english-list', name: 'Английский' },
+      { id: 'sport-1', name: 'Спорт' },
+      { id: 'sport-2', name: '🏃 Спорт' },
+    ],
+    { english: 'manual-list', finance: '' },
+  );
+  assert.equal(mappings.health, 'health-list');
+  assert.equal(mappings.english, 'manual-list');
+  assert.equal(mappings.finance, '');
+  assert.equal(mappings.sport, undefined);
+  assert.equal(mappings.hobby, undefined);
+});
+function withHealthGoal(state: ReturnType<typeof initialState>) {
+  let next = saveGoal(state, {
+    name: 'Забота о здоровье',
+    sphere: 'health',
+    target: 100,
+    reward: 200,
+    progressMode: 'tasks',
+  });
+  const goalId = next.goals.at(-1)!.id;
+  for (const name of ['Прогулка 30 минут', 'Утренняя зарядка'])
+    next = saveTask(next, {
+      name,
+      sphere: 'health',
+      difficulty: 'Medium',
+      goalId,
+    });
+  return next;
+}
+test('подзадачи здоровья и английского попадают в свои списки, выполнение обновляет только нужную цель', async () => {
+  const fixture = setup();
+  let state = fixture.state;
+  const connection = fixture.connection;
+  state = withHealthGoal(state);
+  connection.sphereLists = { health: 'health-list', english: 'english-list' };
+  const api = upstream();
+  let applied = applyTickTickResult(
+    state,
+    await syncTickTick(state, connection, api.request),
+  );
+  const english = applied.state.quests.find((q) => q.sphere === 'english')!;
+  const health = applied.state.quests.find((q) => q.sphere === 'health')!;
+  assert.equal(
+    api.tasks.get(applied.connection.links[english.id].remoteId)!.projectId,
+    'english-list',
+  );
+  const healthRemote = applied.connection.links[health.id].remoteId;
+  assert.equal(api.tasks.get(healthRemote)!.projectId, 'health-list');
+  api.tasks.get(healthRemote)!.status = 2;
+  const before = applied.state;
+  applied = applyTickTickResult(
+    applied.state,
+    await syncTickTick(applied.state, applied.connection, api.request),
+  );
+  assert.equal(applied.state.goals.at(-1)!.current, 50);
+  assert.equal(applied.state.spheres.health.xp - before.spheres.health.xp, 20);
+  assert.equal(applied.state.spheres.english.xp, before.spheres.english.xp);
+  assert.equal(
+    applied.state.quests.find((q) => q.id === english.id)!.done,
+    false,
+  );
+});
+test('без сопоставления сферы новая задача не отправляется в старый общий список', async () => {
+  const fixture = setup();
+  let state = fixture.state;
+  const connection = fixture.connection;
+  state = withHealthGoal(state);
+  connection.sphereLists = { health: 'health-list' };
+  const api = upstream();
+  const result = await syncTickTick(state, connection, api.request);
+  assert.equal(api.tasks.size, 2);
+  assert.ok(
+    [...api.tasks.values()].every((q) => q.projectId === 'health-list'),
+  );
+  assert.equal(result.warnings.length, 1);
+  assert.equal(
+    Object.keys(result.connection.links).some((id) => id === 'english-1'),
+    false,
+  );
+  assert.equal(
+    api.calls.some((c) => c.path.includes('/life/')),
+    false,
+  );
+});
+test('сферы могут использовать один существующий список без повторных запросов и дублей', async () => {
+  const fixture = setup();
+  let state = fixture.state;
+  const connection = fixture.connection;
+  state = withHealthGoal(state);
+  connection.sphereLists = { english: 'shared', health: 'shared' };
+  const api = upstream();
+  let result = applyTickTickResult(
+    state,
+    await syncTickTick(state, connection, api.request),
+  );
+  assert.equal(api.tasks.size, 3);
+  assert.equal(
+    api.calls.filter((c) => c.path === '/api/project/shared/data').length,
+    1,
+  );
+  result = applyTickTickResult(
+    result.state,
+    await syncTickTick(result.state, result.connection, api.request),
+  );
+  assert.equal(api.tasks.size, 3);
+  assert.equal(Object.keys(result.connection.links).length, 3);
+});
+test('смена сопоставления направляет новые подзадачи в новый список и сохраняет старые связи', async () => {
+  const { state, connection } = setup();
+  const api = upstream();
+  const first = applyTickTickResult(
+    state,
+    await syncTickTick(state, connection, api.request),
+  );
+  const next = saveTask(first.state, {
+    name: 'Новая подзадача английского',
+    sphere: 'english',
+    difficulty: 'Medium',
+    goalId: 'b2',
+  });
+  const result = applyTickTickResult(
+    next,
+    await syncTickTick(
+      next,
+      { ...first.connection, sphereLists: { english: 'new-english' } },
+      api.request,
+    ),
+  );
+  assert.equal(result.connection.links['english-1'].projectId, 'life');
+  assert.equal(api.tasks.size, 2);
+  assert.equal(
+    api.tasks.get(result.connection.links[next.quests.at(-1)!.id].remoteId)!
+      .projectId,
+    'new-english',
+  );
+});
+test('старые сохранённые связи читаются из прежнего списка без создания новых задач', async () => {
+  const { state, connection } = setup();
+  const api = upstream();
+  const first = applyTickTickResult(
+    state,
+    await syncTickTick(state, connection, api.request),
+  );
+  const legacy = structuredClone(first.connection);
+  delete legacy.sphereLists;
+  for (const link of Object.values(legacy.links)) delete link.projectId;
+  const remoteId = legacy.links['english-1'].remoteId;
+  api.tasks.get(remoteId)!.status = 2;
+  const result = applyTickTickResult(
+    first.state,
+    await syncTickTick(first.state, legacy, api.request),
+  );
+  assert.equal(result.state.quests[0].done, true);
+  assert.equal(result.connection.links['english-1'].projectId, 'life');
+  assert.equal(api.tasks.size, 1);
+});
+test('ошибка одного списка не мешает отправке задач в другой', async () => {
+  const fixture = setup();
+  let state = fixture.state;
+  const connection = fixture.connection;
+  state = withHealthGoal(state);
+  connection.sphereLists = { english: 'life', health: 'health-list' };
+  const api = upstream();
+  const request = async <T>(
+    path: string,
+    method?: string,
+    body?: unknown,
+  ): Promise<T> => {
+    if (path === '/api/project/life/data') throw new Error('Список недоступен');
+    return api.request<T>(path, method, body);
+  };
+  const result = await syncTickTick(state, connection, request);
+  assert.equal(api.tasks.size, 2);
+  assert.equal(Object.keys(result.connection.links).length, 2);
+  assert.equal(result.warnings.length, 1);
+});
+
+test('названия списков с фотографии сопоставляют девять сфер, английский предпочитает «Английский язык», работа остаётся отдельно', () => {
+  const names = [
+    'Здоровье',
+    'Спорт',
+    'Саморазвитие',
+    'Английский язык',
+    'Финансы',
+    'Работа',
+    'Совместные задачи',
+    'Вождение',
+    'Задачи',
+    'Досуг и хобби',
+  ];
+  const projects = names.map((name, i) => ({ id: `list-${i}`, name }));
+  projects.push({ id: 'legacy-english', name: 'Английский' });
+  const mapping = matchSphereLists(projects);
+  assert.equal(Object.keys(mapping).length, 9);
+  assert.equal(mapping.english, 'list-3');
+  assert.equal(mapping.health, 'list-0');
+  assert.equal(Object.values(mapping).includes('list-5'), false);
 });

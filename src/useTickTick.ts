@@ -6,6 +6,8 @@ import {
   bridgeRequest,
   connectionStorageKey,
   newConnection,
+  hasTickTickTargets,
+  matchSphereLists,
   syncTickTick,
 } from './ticktick';
 import type { TickTickConnection } from './ticktick';
@@ -79,8 +81,19 @@ export default function useTickTick(
       >(connection, '/api/project');
       if (!Array.isArray(result))
         throw new Error('Не удалось прочитать списки TickTick.');
-      setProjects(result.filter((p) => p.kind !== 'NOTE'));
-      setStatus('Аккаунт подключён. Выбери отдельный список для своего плана.');
+      const taskLists = result.filter((p) => p.kind !== 'NOTE');
+      setProjects(taskLists);
+      setConnection((current) =>
+        current
+          ? {
+              ...current,
+              sphereLists: matchSphereLists(taskLists, current.sphereLists),
+            }
+          : current,
+      );
+      setStatus(
+        'Аккаунт подключён. Совпадающие списки сопоставлены; проверь выбор для каждой сферы.',
+      );
     } catch (error) {
       setStatus(
         error instanceof Error ? error.message : 'Не удалось подключиться.',
@@ -91,14 +104,29 @@ export default function useTickTick(
   }
   async function sync() {
     const { state: s, connection: c } = latest.current;
-    if (working.current || !c?.projectId || s.profile.mode === 'demo') return;
+    if (
+      working.current ||
+      !c ||
+      !hasTickTickTargets(c) ||
+      s.profile.mode === 'demo'
+    )
+      return;
     working.current = true;
     setBusy(true);
     try {
       const result = await syncTickTick(s, c);
       const applied = applyTickTickResult(latest.current.state, result);
       onChange(applied.state);
-      setConnection(applied.connection);
+      setConnection((current) =>
+        current
+          ? {
+              ...current,
+              links: applied.connection.links,
+              dismissed: applied.connection.dismissed,
+              lastSync: applied.connection.lastSync,
+            }
+          : current,
+      );
       setStatus(
         applied.warnings.length
           ? applied.warnings.join('\n')
@@ -125,7 +153,7 @@ export default function useTickTick(
   useEffect(() => {
     if (
       !connection?.auto ||
-      !connection.projectId ||
+      !hasTickTickTargets(connection) ||
       state.profile.mode === 'demo'
     )
       return;
@@ -134,7 +162,13 @@ export default function useTickTick(
     }, 1800);
     return () => clearTimeout(timer); // Ref supplies the latest state without restarting on status updates.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.quests, state.goals, connection?.auto, connection?.projectId]);
+  }, [
+    state.quests,
+    state.goals,
+    connection?.auto,
+    connection?.projectId,
+    connection?.sphereLists,
+  ]);
   useEffect(() => {
     const timer = setInterval(() => {
       if (
@@ -164,7 +198,7 @@ export default function useTickTick(
     queueMicrotask(() => {
       setStatus(
         connected
-          ? 'Аккаунт подключён. Нажми «Проверить подключение» и выбери список.'
+          ? 'Аккаунт подключён. Нажми «Проверить подключение» и сопоставь сферы со списками.'
           : 'Подключение отменено.',
       );
     });

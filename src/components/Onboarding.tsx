@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { avatars, personalState, spheres } from '../game';
 import type { GameState, PlayerProfile } from '../game';
 import Icon from './Icon';
+import Avatar from './Avatar';
 
 export function AvatarPicker({
   value,
@@ -22,7 +23,7 @@ export function AvatarPicker({
           aria-pressed={value === a.icon}
           onClick={() => onChange(a.icon)}
         >
-          {a.icon}
+          <Avatar value={a.icon} />
         </button>
       ))}
     </div>

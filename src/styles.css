@@ -3433,3 +3433,17 @@ dialog {
 .ticktick-account .transfer-message {
   white-space: pre-line;
 }
+.sphere-list-mappings {
+  margin-top: 24px;
+}
+.sphere-list-mappings h4 {
+  font-size: 15px;
+  margin-bottom: 10px;
+}
+.sphere-list-mappings > .text-button {
+  margin-top: 12px;
+}
+.sphere-list-mapping > span {
+  color: #526a91;
+  font-weight: 600;
+}

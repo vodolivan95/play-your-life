@@ -3,6 +3,11 @@ import type { CSSProperties, FormEvent } from 'react';
 import Icon from './components/Icon';
 import GameArt from './components/GameArt';
 import Avatar from './components/Avatar';
+import {
+  SphereBuilding,
+  SphereDistricts,
+  SphereProjects,
+} from './components/SphereCity';
 import Statistics from './components/Statistics';
 import Onboarding, { ProfileEditor } from './components/Onboarding';
 import MonthlyReview from './components/MonthlyReview';
@@ -75,7 +80,7 @@ export default function App() {
   const [filter, setFilter] = useState('today');
   const [achievementFilter, setAchievementFilter] = useState('all');
   const [treeView, setTreeView] = useState('map');
-  const [sphereTab, setSphereTab] = useState('quests');
+  const [sphereTab, setSphereTab] = useState('projects');
   const [questDifficulty, setQuestDifficulty] = useState('Simple');
   const [questSphere, setQuestSphere] = useState('english');
   const [questTemplate, setQuestTemplate] = useState<{
@@ -111,7 +116,7 @@ export default function App() {
   function navigate(id: string) {
     setPage(id);
     setSelected(null);
-    setSphereTab('quests');
+    setSphereTab('projects');
     setFocusedGoalId(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -201,11 +206,12 @@ export default function App() {
         className="sphere-card"
         onClick={() => {
           setSelected(id);
-          setSphereTab('quests');
+          setSphereTab('projects');
           setPage('spheres');
         }}
         style={{ '--sphere-color': info.color } as CSSProperties}
       >
+        <SphereBuilding id={id} />
         <div className="sphere-top">
           <span className="sphere-icon">
             <GameArt kind={info.id} />
@@ -608,6 +614,16 @@ export default function App() {
                 </section>
               </>
             )}
+            {page === 'spheres' && (
+              <SphereDistricts
+                state={state}
+                selected={selected}
+                onSelect={(id) => {
+                  setSelected(id);
+                  setSphereTab('projects');
+                }}
+              />
+            )}
             {page === 'spheres' && !sphere && (
               <>
                 <div className="balance-banner">
@@ -636,6 +652,10 @@ export default function App() {
                   ← Все сферы
                 </button>
                 <div className={`detail-grid sphere-tab-${sphereTab}`}>
+                  <div className="district-hero-art">
+                    <SphereBuilding id={sphere.id} />
+                    <span>{sphere.name} · Твой район развития</span>
+                  </div>
                   <section className="panel">
                     <div className="section-heading">
                       <h2>LEVEL {sphereLevel(state.spheres[sphere.id].xp)}</h2>
@@ -729,7 +749,8 @@ export default function App() {
                 </div>
                 <div className="tabs sphere-tabs">
                   {[
-                    ['quests', 'Квесты'],
+                    ['projects', 'Проекты'],
+                    ['quests', 'Задачи'],
                     ['goals', 'Цели'],
                     ['history', 'История'],
                     ['statistics', 'Статистика'],
@@ -743,6 +764,32 @@ export default function App() {
                     </button>
                   ))}
                 </div>
+                {sphereTab === 'projects' && (
+                  <SphereProjects
+                    state={state}
+                    id={sphere.id}
+                    onNew={() => setModal('goal')}
+                    onOpen={(goal) => {
+                      navigate('goals');
+                      setFocusedGoalId(goal.id);
+                    }}
+                    onTemplate={(name, description) => {
+                      setState((current) =>
+                        saveGoal(current, {
+                          name,
+                          description,
+                          sphere: sphere.id,
+                          target: 100,
+                          reward: 100,
+                          progressMode: 'tasks',
+                        }),
+                      );
+                      notify(
+                        'Проект добавлен. Открой его, чтобы настроить этапы и задачи.',
+                      );
+                    }}
+                  />
+                )}
                 <section
                   className="panel sphere-goals"
                   hidden={!['goals', 'quests'].includes(sphereTab)}

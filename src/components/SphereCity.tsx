@@ -5,6 +5,8 @@ import type { GameState, Goal } from '../game';
 import { formatDate, goalStatus } from '../planning';
 import GameArt from './GameArt';
 import Icon from './Icon';
+import ProjectArt from './ProjectArt';
+import { projectStyle } from './projectStyle';
 import './SphereCity.css';
 
 const buildings: Record<string, [string, string, string]> = {
@@ -343,62 +345,120 @@ export function SphereProjects({
   function card(goal: Goal) {
     const tasks = state.quests.filter((q) => q.goalId === goal.id);
     const done = tasks.filter((q) => q.done).length;
-    const next = goal.stages?.find((stage) =>
-      tasks.some((q) => q.stageId === stage.id && !q.done),
+    const next = goal.stages?.find(
+      (stage) =>
+        !tasks.some((q) => q.stageId === stage.id) ||
+        tasks.some((q) => q.stageId === stage.id && !q.done),
     );
     const percent = Math.min(
       100,
       Math.round((goal.current / goal.target) * 100),
     );
+    const finished = goal.current >= goal.target;
+    const { color } = projectStyle(goal.name, id);
     return (
-      <article className="district-project" key={goal.id}>
+      <article
+        className={`district-project ${finished ? 'project-finished' : ''}`}
+        key={goal.id}
+        style={{ '--project-color': color } as CSSProperties}
+      >
         <div className="project-heading">
-          <span className="project-art">
-            <GameArt kind={id} />
-          </span>
+          {finished ? (
+            <span className="project-done-icon">
+              <Icon name="check" size={22} />
+            </span>
+          ) : (
+            <ProjectArt name={goal.name} sphere={id} />
+          )}
           <div>
             <h3>
               <button onClick={() => onOpen(goal)}>{goal.name}</button>
             </h3>
             <p>{goal.description || 'Каждая задача — шаг к твоей цели.'}</p>
           </div>
+          <button
+            className="project-menu"
+            aria-label={`Настроить проект: ${goal.name}`}
+            onClick={() => onOpen(goal)}
+          >
+            ⋮
+          </button>
         </div>
-        <div className="project-tags">
-          <span>{goalStatus(goal)}</span>
-          <span>
-            {goal.progressMode === 'tasks' ? 'По задачам' : 'По результату'}
-          </span>
-        </div>
+        {!finished && (
+          <div className="project-tags">
+            <span>{goalStatus(goal)}</span>
+            <span>
+              {goal.progressMode === 'tasks' ? 'Поэтапно' : 'По результату'}
+            </span>
+            <span>{goal.dueAt ? 'Есть срок' : 'Гибкий срок'}</span>
+          </div>
+        )}
         <div className="project-numbers">
           <div>
-            <small>Текущий прогресс</small>
-            <strong>{percent}%</strong>
-            <span>
-              {goal.progressMode === 'tasks'
-                ? `${done} / ${tasks.length} задач`
-                : `${goal.current} / ${goal.target}`}
-            </span>
+            <small>{finished ? 'Завершён' : 'Прогресс проекта'}</small>
+            <div className="project-result">
+              <strong>
+                {goal.progressMode === 'tasks' && tasks.length
+                  ? `${done} / ${tasks.length}`
+                  : `${percent}%`}
+              </strong>
+              <span>
+                {goal.progressMode === 'tasks'
+                  ? 'задач'
+                  : `Цель: ${goal.target}`}
+              </span>
+            </div>
+            <div className="progress">
+              <span
+                style={{
+                  width: `${percent}%`,
+                  background: finished ? '#24c69c' : color,
+                }}
+              />
+            </div>
           </div>
           <div>
-            <small>Следующий этап</small>
+            <small>{finished ? 'Награда проекта' : 'Следующий этап'}</small>
             <b>
               {next?.name ||
-                (percent === 100 ? 'Цель достигнута' : 'План проекта')}
+                (finished
+                  ? 'Цель достигнута'
+                  : tasks.find((q) => !q.done)?.name || 'Добавить первый шаг')}
             </b>
             <span className="xp-tag">
               ⚡ +{goal.reward} XP{goal.rewarded ? ' · получены' : ''}
             </span>
           </div>
         </div>
-        <div className="progress">
-          <span style={{ width: `${percent}%` }} />
-        </div>
         <div className="project-footer">
-          <span>{goal.dueAt ? formatDate(goal.dueAt) : 'Гибкий срок'}</span>
+          <div
+            className="project-task-dots"
+            aria-label={`${done} из ${tasks.length} задач выполнено`}
+          >
+            {tasks.length ? (
+              tasks.slice(0, 8).map((task) => (
+                <span
+                  key={task.id}
+                  className={task.done ? 'is-done' : ''}
+                  title={`${task.name}: ${task.done ? 'выполнено' : 'в плане'}`}
+                >
+                  {task.done && <Icon name="check" size={9} />}
+                </span>
+              ))
+            ) : (
+              <small>Пока нет задач</small>
+            )}
+            {tasks.length > 8 && <small>+{tasks.length - 8}</small>}
+          </div>
           <button className="primary-button" onClick={() => onOpen(goal)}>
-            Открыть <Icon name="arrow" size={14} />
+            {finished ? 'Итоги' : 'Открыть'}
           </button>
         </div>
+        {goal.dueAt && (
+          <small className="project-deadline">
+            До {formatDate(goal.dueAt)}
+          </small>
+        )}
       </article>
     );
   }
@@ -430,7 +490,14 @@ export function SphereProjects({
             Завершённые проекты{' '}
             <span className="project-count">{completed.length}</span>
           </h2>
-          <div className="district-project-grid">{completed.map(card)}</div>
+          <div className="district-project-grid">
+            {completed.map(card)}
+            <button className="project-add-tile" onClick={onNew}>
+              <Icon name="plus" />
+              <strong>Добавить новый проект</strong>
+              <small>Создай свой проект в этой сфере</small>
+            </button>
+          </div>
         </>
       )}
       <h2 className="project-section-title">Идеи проектов</h2>
@@ -438,10 +505,10 @@ export function SphereProjects({
         Выбери то, что важно тебе. Добавленный проект можно настроить под себя.
       </p>
       <div className="district-project-grid">
-        {templates[id].map(([icon, name, description]) => (
+        {templates[id].map(([, name, description]) => (
           <article className="district-project project-template" key={name}>
             <div className="project-heading">
-              <span className="template-art">{icon}</span>
+              <ProjectArt name={name} sphere={id} />
               <div>
                 <h3>{name}</h3>
                 <p>{description}</p>

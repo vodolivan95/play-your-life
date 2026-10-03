@@ -1,6 +1,6 @@
 import { completeQuest } from './game.ts';
 import type { GameState, Quest } from './game.ts';
-import { saveTask } from './planning.ts';
+import { isGoalTask, saveTask } from './planning.ts';
 export type RemoteTask = {
   id: string;
   projectId: string;
@@ -16,12 +16,12 @@ export type TickTickLink = {
   local: string;
   remote: string;
   done?: boolean;
+  goalId?: string;
 };
 export type TickTickConnection = {
   url: string;
   key: string;
   projectId: string;
-  sphereId: string;
   auto: boolean;
   deleteRemote: boolean;
   links: Record<string, TickTickLink>;
@@ -48,7 +48,6 @@ export function newConnection(url: string): TickTickConnection {
       n.toString(16).padStart(2, '0'),
     ).join(''),
     projectId: '',
-    sphereId: 'tasks',
     auto: true,
     deleteRemote: false,
     links: {},
@@ -174,7 +173,6 @@ export type TickTickResult = {
     remote: RemoteTask;
     previousRemote?: string;
   }[];
-  imports: Quest[];
   warnings: string[];
 };
 export async function syncTickTick(
@@ -201,18 +199,14 @@ export async function syncTickTick(
       dismissed: [...connection.dismissed],
     },
     changes: [],
-    imports: [],
     warnings: [],
   };
   const remoteTasks = new Map(data.tasks.map((t) => [t.id, t]));
-  const claimed = new Set(
-    Object.values(connection.links).map((link) => link.remoteId),
-  );
   for (const [localId, link] of Object.entries(connection.links)) {
     const local = state.quests.find((q) => q.id === localId);
     const path = `/api/project/${project}/task/${encodeURIComponent(link.remoteId)}`;
     if (!local) {
-      if (connection.deleteRemote) {
+      if (connection.deleteRemote && link.goalId) {
         try {
           await request(path, 'DELETE');
         } catch (error) {
@@ -224,6 +218,12 @@ export async function syncTickTick(
           result.connection.dismissed.push(link.remoteId);
         }
       } else result.connection.dismissed.push(link.remoteId);
+      delete result.connection.links[localId];
+      continue;
+    }
+    // Existing standalone/imported tasks remain untouched when narrowing the scope.
+    if (!isGoalTask(state, local)) {
+      result.connection.dismissed.push(link.remoteId);
       delete result.connection.links[localId];
       continue;
     }
@@ -284,21 +284,22 @@ export async function syncTickTick(
       local: snapshot,
       remote: remoteFingerprint(remote),
       done: local.done || wasCompleted,
+      goalId: local.goalId,
     };
   }
   for (const local of state.quests.filter(
-    (q) => !q.done && !connection.links[q.id],
+    (q) => !q.done && isGoalTask(state, q) && !connection.links[q.id],
   )) {
     const remote = await request<RemoteTask>('/create', 'POST', {
       ...remotePayload(local, state, connection),
       localId: local.id,
     });
     if (!remote.id) throw new Error('TickTick не подтвердил создание задачи.');
-    claimed.add(remote.id);
     result.connection.links[local.id] = {
       remoteId: remote.id,
       local: localFingerprint(local, state),
       remote: remoteFingerprint(remote),
+      goalId: local.goalId,
     };
     if (remote.status === 2)
       result.changes.push({
@@ -306,28 +307,6 @@ export async function syncTickTick(
         snapshot: localFingerprint(local, state),
         remote,
       });
-  }
-  for (const remote of data.tasks.filter(
-    (t) =>
-      t.status !== 2 &&
-      !claimed.has(t.id) &&
-      !result.connection.dismissed.includes(t.id),
-  )) {
-    const fields = remoteFields(remote);
-    const task: Quest = {
-      ...fields,
-      id: crypto.randomUUID(),
-      sphere: connection.sphereId,
-      difficulty: 'Medium',
-      xp: 20,
-      done: false,
-    };
-    result.imports.push(task);
-    result.connection.links[task.id] = {
-      remoteId: remote.id,
-      local: localFingerprint(task, state),
-      remote: remoteFingerprint(remote),
-    };
   }
   result.connection.lastSync = new Date().toISOString();
   return result;
@@ -338,7 +317,7 @@ export function applyTickTickResult(state: GameState, result: TickTickResult) {
   const rejected = new Map<string, string>();
   for (const change of result.changes) {
     const local = next.quests.find((q) => q.id === change.id);
-    if (!local) continue;
+    if (!local || !isGoalTask(next, local)) continue;
     if (!local.done && localFingerprint(local, next) === change.snapshot) {
       try {
         next = saveTask(next, { ...local, ...remoteFields(change.remote) });
@@ -351,17 +330,6 @@ export function applyTickTickResult(state: GameState, result: TickTickResult) {
       }
     }
     if (change.remote.status === 2) next = completeQuest(next, local.id);
-  }
-  for (const task of result.imports) {
-    if (next.quests.some((q) => q.id === task.id)) continue;
-    try {
-      next = saveTask(next, task);
-    } catch (error) {
-      warnings.push(
-        `${task.name}: ${error instanceof Error ? error.message : 'не удалось добавить задачу'}`,
-      );
-      delete result.connection.links[task.id];
-    }
   }
   const connection = {
     ...result.connection,

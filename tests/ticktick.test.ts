@@ -15,7 +15,7 @@ function setup() {
     mode: 'personal',
     onboardingComplete: true,
   };
-  state.quests = [state.quests[0]];
+  state.quests = [{ ...state.quests[0], goalId: 'b2' }];
   const connection = newConnection('https://bridge.example/');
   connection.projectId = 'life';
   return { state, connection };
@@ -156,27 +156,19 @@ test('редактирование в обе стороны, выполнени�
   assert.equal(api.tasks.get(rid)!.status, 2);
   assert.equal(applied.state.completed, 1);
 });
-test('новая активная задача TickTick импортируется один раз в выбранную сферу', async () => {
-  let { state, connection } = setup();
+test('посторонние задачи TickTick не импортируются и не изменяются', async () => {
+  const { state, connection } = setup();
   state.quests = [];
-  connection.sphereId = 'sport';
-  const api = upstream([remote('new')]);
-  let result = applyTickTickResult(
+  const api = upstream([remote('foreign')]);
+  const result = applyTickTickResult(
     state,
     await syncTickTick(state, connection, api.request),
   );
-  assert.equal(result.state.quests.length, 1);
-  assert.equal(result.state.quests[0].sphere, 'sport');
-  assert.equal(result.state.quests[0].xp, 20);
-  assert.equal(result.state.xp, state.xp);
-  state = result.state;
-  connection = result.connection;
-  result = applyTickTickResult(
-    state,
-    await syncTickTick(state, connection, api.request),
-  );
-  assert.equal(result.state.quests.length, 1);
-  assert.equal(api.calls.filter((c) => c.path === '/create').length, 0);
+  assert.equal(result.state.quests.length, 0);
+  assert.equal(Object.keys(result.connection.links).length, 0);
+  assert.equal(api.calls.length, 1);
+  assert.equal(api.calls[0].method, 'GET');
+  assert.deepEqual(api.tasks.get('foreign'), remote('foreign'));
 });
 test('одновременная правка сохраняет локальный план, подтверждённое выполнение выигрывает', async () => {
   let { state, connection } = setup();
@@ -358,4 +350,100 @@ test('история выполненных задач не создаёт от�
   await syncTickTick(applied.state, applied.connection, api.request);
   assert.equal(api.calls.length - before, 1);
   assert.equal(api.calls.at(-1)!.path, '/api/project/life/data');
+});
+
+test('в TickTick создаются только новые подзадачи, а не цели, этапы и самостоятельные квесты', async () => {
+  const { state, connection } = setup();
+  state.quests.push({
+    ...state.quests[0],
+    id: 'standalone',
+    name: 'Самостоятельный квест',
+    goalId: undefined,
+  });
+  state.quests.push({
+    ...state.quests[0],
+    id: 'orphan',
+    goalId: 'unknown-goal',
+  });
+  const api = upstream();
+  const first = applyTickTickResult(
+    state,
+    await syncTickTick(state, connection, api.request),
+  );
+  assert.equal(api.tasks.size, 1);
+  assert.equal(api.calls.filter((c) => c.method === 'POST').length, 1);
+  assert.equal(api.calls.find((c) => c.method === 'POST')!.path, '/create');
+  const before = api.calls.length;
+  const next = saveTask(first.state, {
+    name: 'Новая подзадача',
+    sphere: 'english',
+    difficulty: 'Medium',
+    goalId: 'b2',
+  });
+  const second = applyTickTickResult(
+    next,
+    await syncTickTick(next, first.connection, api.request),
+  );
+  assert.equal(api.tasks.size, 2);
+  assert.equal(
+    api.calls.slice(before).filter((c) => c.path === '/create').length,
+    1,
+  );
+  assert.equal(second.state.goals.length, state.goals.length);
+  assert.equal(
+    api.calls.some((c) => c.method === 'POST' && c.path.includes('/project')),
+    false,
+  );
+});
+
+test('старые связи самостоятельных задач отключаются без изменения или удаления TickTick', async () => {
+  const { state, connection } = setup();
+  const api = upstream();
+  const first = applyTickTickResult(
+    state,
+    await syncTickTick(state, connection, api.request),
+  );
+  const converted = {
+    ...first.state,
+    quests: first.state.quests.map((q) => ({ ...q, goalId: undefined })),
+  };
+  const before = api.calls.length;
+  const result = applyTickTickResult(
+    converted,
+    await syncTickTick(
+      converted,
+      { ...first.connection, deleteRemote: true },
+      api.request,
+    ),
+  );
+  assert.equal(api.tasks.size, 1);
+  assert.equal(Object.keys(result.connection.links).length, 0);
+  assert.equal(result.state.quests.length, 1);
+  assert.equal(result.state.xp, state.xp);
+  assert.equal(
+    api.calls.slice(before).some((c) => c.method !== 'GET'),
+    false,
+  );
+});
+
+test('ответ TickTick не завершает задачу, отвязанную от цели во время запроса', async () => {
+  const { state, connection } = setup();
+  const api = upstream();
+  const first = applyTickTickResult(
+    state,
+    await syncTickTick(state, connection, api.request),
+  );
+  api.tasks.get(Object.values(first.connection.links)[0].remoteId)!.status = 2;
+  const pending = await syncTickTick(
+    first.state,
+    first.connection,
+    api.request,
+  );
+  const detached = {
+    ...first.state,
+    quests: first.state.quests.map((q) => ({ ...q, goalId: undefined })),
+  };
+  const result = applyTickTickResult(detached, pending);
+  assert.equal(result.state.quests[0].done, false);
+  assert.equal(result.state.xp, state.xp);
 });

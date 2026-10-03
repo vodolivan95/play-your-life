@@ -102,7 +102,7 @@ export default function useTickTick(
       setStatus(
         applied.warnings.length
           ? applied.warnings.join('\n')
-          : 'Задачи и сроки синхронизированы.',
+          : 'Подзадачи целей синхронизированы.',
       );
     } catch (error) {
       setStatus(

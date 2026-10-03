@@ -330,6 +330,11 @@ export function periodItems(
     end,
   };
 }
+export function isGoalTask(state: GameState, task: Quest): boolean {
+  return Boolean(
+    task.goalId && state.goals.some((goal) => goal.id === task.goalId),
+  );
+}
 export function taskTransferText(task: Quest, state: GameState) {
   const goal = state.goals.find((g) => g.id === task.goalId);
   const stage = goal?.stages?.find((s) => s.id === task.stageId);
@@ -347,7 +352,7 @@ export function taskTransferText(task: Quest, state: GameState) {
 }
 export function planTransferText(tasks: Quest[], state: GameState) {
   return tasks
-    .filter((q) => !q.done)
+    .filter((q) => !q.done && isGoalTask(state, q))
     .map((q) => taskTransferText(q, state))
     .join('\n\n');
 }

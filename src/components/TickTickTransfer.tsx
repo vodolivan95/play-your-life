@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { GameState, Quest } from '../game';
-import { planTransferText, taskTransferText } from '../planning';
+import { isGoalTask, planTransferText, taskTransferText } from '../planning';
 import Icon from './Icon';
 import TickTickConnection from './TickTickConnection';
 export default function TickTickTransfer({
@@ -16,7 +16,8 @@ export default function TickTickTransfer({
   const [message, setMessage] = useState('');
   const [includeShared, setIncludeShared] = useState(false);
   const available = tasks.filter(
-    (q) => !q.done && (includeShared || !q.tickTickSharedAt),
+    (q) =>
+      !q.done && isGoalTask(state, q) && (includeShared || !q.tickTickSharedAt),
   );
   const text = planTransferText(available, state);
   async function copy() {
@@ -54,13 +55,13 @@ export default function TickTickTransfer({
       <div className="eyebrow">ПЛАН РЯДОМ С ТОБОЙ</div>
       <h2>Передать в TickTick</h2>
       <p className="muted">
-        Передай задачу через меню телефона: выбери TickTick и сохрани её. На
-        компьютере скопируй список и добавь задачи в TickTick.
+        Передай подзадачу цели через меню телефона: выбери TickTick и сохрани
+        её. На компьютере скопируй список и добавь задачи в TickTick.
       </p>
       <p className="score-note">
-        Название, цель, этап и даты передаются текстом. Проверь сроки при
-        сохранении. Статусы выполнения между приложениями пока не
-        синхронизируются.
+        Передаётся конкретная задача; название цели и этапа — только пояснение в
+        заметке. Проверь даты при сохранении. Для автоматического обмена
+        подключи аккаунт выше.
       </p>
       <label className="include-shared">
         <input
@@ -97,7 +98,7 @@ export default function TickTickTransfer({
         </div>
       ))}
       {available.length === 0 && (
-        <p className="empty">Нет новых активных задач для передачи.</p>
+        <p className="empty">Нет новых подзадач целей для передачи.</p>
       )}
       {available.length > 0 && (
         <>

@@ -4,6 +4,7 @@ import { completeQuest, dateKey, spheres } from '../game';
 import type { GameState, Quest } from '../game';
 import {
   formatDate,
+  isGoalTask,
   goalStatus,
   periodItems,
   planCalendar,
@@ -287,7 +288,9 @@ export default function LifePlanner({
         <div className="plan-export-buttons">
           <button
             className="secondary-button"
-            disabled={!period.tasks.some((q) => !q.done)}
+            disabled={
+              !period.tasks.some((q) => !q.done && isGoalTask(state, q))
+            }
             onClick={() => setEditor({ kind: 'transfer' })}
           >
             Передать в TickTick

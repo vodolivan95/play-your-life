@@ -1,6 +1,5 @@
 import { useContext, useState } from 'react';
 import { TickTickContext } from '../tickTickContext';
-import { spheres } from '../game';
 export default function TickTickConnection({ demo }: { demo: boolean }) {
   const manager = useContext(TickTickContext);
   const [url, setUrl] = useState(
@@ -25,8 +24,9 @@ export default function TickTickConnection({ demo }: { demo: boolean }) {
       <div className="eyebrow">ТВОЙ АККАУНТ. ОБЩИЙ ПЛАН.</div>
       <h3>Синхронизация TickTick</h3>
       <p className="muted">
-        Связанные задачи, названия, заметки, приоритеты и сроки обновляются в
-        обоих приложениях. Выполнение в TickTick приносит XP здесь один раз.
+        Новые подзадачи целей отправляются в выбранный список TickTick. Цели,
+        проекты и этапы остаются в PLAY YOUR LIFE. Выполнение подзадачи в
+        TickTick обновляет её прогресс здесь.
       </p>
       {demo ? (
         <p className="score-note">
@@ -77,7 +77,7 @@ export default function TickTickConnection({ demo }: { demo: boolean }) {
                     if (
                       Object.keys(c.links).length &&
                       !window.confirm(
-                        'Сменить список? Связи сбросятся; активные задачи будут переданы в новый список.',
+                        'Сменить список? Связи сбросятся; активные подзадачи целей будут переданы в новый список.',
                       )
                     )
                       return;
@@ -96,19 +96,6 @@ export default function TickTickConnection({ demo }: { demo: boolean }) {
                   {manager.projects.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Сфера для новых задач из TickTick
-                <select
-                  value={c.sphereId}
-                  onChange={(e) => manager.update({ sphereId: e.target.value })}
-                >
-                  {spheres.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.icon} {s.name}
                     </option>
                   ))}
                 </select>
@@ -139,8 +126,9 @@ export default function TickTickConnection({ demo }: { demo: boolean }) {
                 Удалять в TickTick задачи, удалённые здесь
               </label>
               <p className="score-note">
-                Новые активные задачи выбранного списка появятся здесь как
-                квесты Medium. Цели и этапы хранятся в PLAY YOUR LIFE. При
+                Передаются только задачи, привязанные к целям. Самостоятельные
+                квесты и посторонние задачи TickTick не участвуют в обмене.
+                Проекты и крупные цели в TickTick не создаются. При
                 одновременном изменении текста сохраняется вариант плана;
                 выполненное действие остаётся выполненным.
               </p>

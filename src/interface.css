@@ -2565,7 +2565,7 @@ body {
   }
 }
 .character-avatar {
-  transform: none;
+  transform: scale(1.65) translate(-4%, 16%);
   object-fit: contain;
   object-position: center bottom;
 }

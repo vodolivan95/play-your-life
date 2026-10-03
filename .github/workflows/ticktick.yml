@@ -1,0 +1,47 @@
+name: Deploy TickTick bridge
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - integrations/ticktick/**
+      - .github/workflows/ticktick.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ticktick-bridge
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Enable automatic deployments only after the owner has configured Cloudflare.
+    if: github.event_name == 'workflow_dispatch' || vars.TICKTICK_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Check and test
+        run: |
+          npm run check
+          node --experimental-strip-types --test tests/*.test.ts
+      - name: Deploy OAuth server
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '4.147.0'
+          workingDirectory: integrations/ticktick
+          command: deploy
+          secrets: |
+            TICKTICK_CLIENT_ID
+            TICKTICK_CLIENT_SECRET
+        env:
+          TICKTICK_CLIENT_ID: ${{ secrets.TICKTICK_CLIENT_ID }}
+          TICKTICK_CLIENT_SECRET: ${{ secrets.TICKTICK_CLIENT_SECRET }}

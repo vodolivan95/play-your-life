@@ -2917,3 +2917,519 @@ dialog {
     max-width: none;
   }
 }
+/* A personal life plan: directions, stages and real actions. */
+.planning-form textarea,
+.ticktick-transfer textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin-top: 9px;
+  padding: 13px;
+  border: 1px solid #e2e9f4;
+  border-radius: 10px;
+  background: #fafdff;
+  color: #3b4d6d;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.6;
+  resize: vertical;
+}
+.planning-form textarea:focus,
+.ticktick-transfer textarea:focus {
+  outline: 2px solid #75a1f5;
+}
+.planning-form input,
+.planning-form select {
+  min-width: 0;
+  max-width: 100%;
+}
+.planning-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.duration-control {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 12px;
+}
+.duration-control .secondary-button {
+  grid-column: 1 / -1;
+}
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 15px;
+  background: #fff;
+  border: 1px solid #d7e4fc;
+  border-radius: 10px;
+  color: #3267ed;
+  font-size: 11px;
+  font-weight: 700;
+}
+.secondary-button:hover {
+  background: #eff5ff;
+}
+.secondary-button:disabled,
+.text-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.duration-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0;
+}
+.duration-presets button {
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: #edf4ff;
+  color: #4975c5;
+  font-size: 10px;
+}
+.goal-dates-summary {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0;
+  color: #7b90b0;
+  font-size: 11px;
+}
+.goal-dates-summary span {
+  color: #5881c8;
+}
+.goal-plan-button {
+  width: 100%;
+}
+.overdue-pill {
+  background: #fff0e5;
+  color: #b47431;
+}
+.goal-plan-hero,
+.life-plan-intro {
+  position: relative;
+  padding: 30px;
+  border: 1px solid #d6e5fb;
+  border-radius: 24px;
+  background: linear-gradient(125deg, #f1f7ff, #fff 85%);
+  overflow: hidden;
+}
+.life-plan-intro {
+  margin-bottom: 24px;
+}
+.life-plan-intro::after {
+  content: '✦';
+  position: absolute;
+  right: 25px;
+  top: 0;
+  color: #d7e8ff;
+  font-size: 150px;
+  pointer-events: none;
+}
+.life-plan-intro h2 {
+  font-size: clamp(23px, 3vw, 34px);
+  line-height: 1.3;
+  margin: 15px 0;
+  position: relative;
+  z-index: 1;
+}
+.life-plan-intro p,
+.goal-plan-hero p {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #7b90ad;
+  max-width: 480px;
+  position: relative;
+  z-index: 1;
+}
+.life-plan-intro > div:last-child {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 23px;
+  position: relative;
+  z-index: 1;
+}
+.goal-plan-hero {
+  display: grid;
+  grid-template-columns: 1fr 155px;
+  gap: 22px;
+}
+.goal-plan-hero h2 {
+  font-size: 25px;
+  line-height: 1.4;
+  margin: 10px 0;
+}
+.goal-plan-range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 11px;
+  color: #7490b9;
+  margin-top: 20px;
+  line-height: 1.8;
+}
+.goal-plan-range b {
+  border-radius: 8px;
+  background: #e1edff;
+  padding: 1px 8px;
+  color: #4878d4;
+}
+.goal-plan-progress {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+.goal-plan-progress > b {
+  font-size: 40px;
+  color: #3267ed;
+}
+.goal-plan-progress small {
+  color: #7791ba;
+}
+.goal-plan-controls {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.goal-mode-note {
+  background: #fff;
+  border: 1px solid #e2eafa;
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #8090aa;
+  font-size: 11px;
+  line-height: 1.8;
+}
+.stage-panel {
+  margin-top: 18px;
+}
+.stage-panel h3 {
+  font-size: 15px;
+}
+.stage-actions,
+.task-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.stage-progress {
+  margin: -6px 0 14px;
+  height: 4px;
+}
+.planned-task {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #eef2f9;
+}
+.planned-task > div:not(.task-actions) {
+  flex: 1;
+  min-width: 0;
+}
+.planned-task strong {
+  font-size: 12px;
+  line-height: 1.6;
+  display: block;
+  overflow-wrap: anywhere;
+}
+.planned-task small {
+  font-size: 10px;
+  display: block;
+  color: #8a9bb4;
+  line-height: 1.8;
+  margin-top: 3px;
+}
+.planned-task .check-button,
+.planned-task > .icon-button {
+  flex-shrink: 0;
+}
+.planned-task.completed strong {
+  text-decoration: line-through;
+  color: #97a6bb;
+}
+.planned-task .transfer-label {
+  color: #5e8f88;
+}
+.add-stage-task {
+  margin-top: 18px;
+}
+.goal-plan-footer {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 24px 0;
+  color: #8091af;
+  font-size: 12px;
+}
+.goal-plan-footer .delete-goal {
+  margin-left: auto;
+  color: #b27e83;
+}
+.plan-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.plan-scopes {
+  flex-wrap: wrap;
+}
+.plan-date-navigation {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+}
+.plan-date-navigation input {
+  border: 1px solid #e1e8f5;
+  border-radius: 10px;
+  padding: 9px;
+  background: #fff;
+  color: #5d7aaa;
+  font-size: 12px;
+  min-width: 0;
+}
+.planning-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.planning-stats > div {
+  background: #fff;
+  border: 1px solid #e1e9f6;
+  border-radius: 16px;
+  padding: 19px;
+}
+.planning-stats b {
+  display: block;
+  color: #3267ed;
+  font-size: 25px;
+  margin-bottom: 8px;
+}
+.planning-stats span {
+  color: #8598b5;
+  font-size: 10px;
+  line-height: 1.6;
+  display: block;
+}
+.plan-goals,
+.planned-days,
+.unscheduled-tasks {
+  margin-bottom: 22px;
+}
+.plan-goal-row {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  padding: 15px 0;
+  background: transparent;
+  text-align: left;
+  width: 100%;
+  border-bottom: 1px solid #eef3fc;
+}
+.plan-goal-row > div {
+  flex: 1;
+  min-width: 0;
+}
+.plan-goal-row strong {
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  display: block;
+}
+.plan-goal-row small {
+  color: #8397b5;
+  font-size: 10px;
+  line-height: 1.8;
+  display: block;
+  margin: 4px 0 10px;
+}
+.plan-goal-row .progress {
+  height: 4px;
+}
+.plan-goal-row > b {
+  color: #5784d9;
+  font-size: 13px;
+}
+.plan-goal-row > svg {
+  flex-shrink: 0;
+  color: #6e93d7;
+}
+.plan-empty {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #8a9bb8;
+  padding: 15px 0;
+}
+.planned-day h3 {
+  font-size: 11px;
+  font-weight: 600;
+  color: #5e7dac;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 25px 0 0;
+}
+.show-done,
+.include-shared {
+  display: flex !important;
+  gap: 8px;
+  align-items: center;
+  color: #8396b3;
+  font-size: 11px;
+}
+.show-done input,
+.include-shared input {
+  width: 16px !important;
+  margin: 0 !important;
+  accent-color: #3267ed;
+}
+.plan-export-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 24px;
+}
+.transfer-task {
+  padding: 18px 0;
+  border-bottom: 1px solid #edf2fa;
+}
+.transfer-task strong {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  line-height: 1.7;
+}
+.transfer-task > div {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.open-ticktick {
+  width: 100%;
+  margin-top: 20px;
+}
+.transfer-message {
+  font-size: 12px;
+  line-height: 1.8;
+  background: #edf6ff;
+  padding: 12px;
+  border-radius: 10px;
+  margin-top: 16px;
+  color: #5680bd;
+}
+@media (max-width: 700px) {
+  .life-plan-intro,
+  .goal-plan-hero {
+    padding: 23px;
+  }
+  .goal-plan-hero {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .goal-plan-hero h2 {
+    font-size: 21px;
+    overflow-wrap: anywhere;
+  }
+  .goal-plan-progress {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+  }
+  .goal-plan-progress > b {
+    font-size: 30px;
+  }
+  .goal-plan-progress .progress {
+    grid-column: 1 / -1;
+  }
+  .planning-stats {
+    gap: 8px;
+  }
+  .planning-stats > div {
+    padding: 15px 11px;
+  }
+  .planning-stats b {
+    font-size: 21px;
+  }
+  .planning-stats span {
+    font-size: 9px;
+  }
+  .planning-dates {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .planned-task {
+    gap: 9px;
+    flex-wrap: wrap;
+  }
+  .planned-task > .xp-tag {
+    font-size: 10px;
+  }
+  .task-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .task-actions .icon-button {
+    height: 32px;
+  }
+  .plan-goal-row {
+    gap: 9px;
+  }
+  .plan-goal-row .sphere-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 20px;
+  }
+  .plan-scopes {
+    width: 100%;
+    gap: 2px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .plan-scopes button {
+    padding: 10px 8px;
+    font-size: 10px;
+  }
+  .goal-plan-controls .secondary-button {
+    flex: 1;
+  }
+}
+.ticktick-account {
+  padding-bottom: 25px;
+  margin-bottom: 25px;
+  border-bottom: 1px solid #e2eaf7;
+}
+.ticktick-account h3 {
+  font-size: 19px;
+  margin: 10px 0 14px;
+}
+.ticktick-account .account-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 17px 0;
+}
+.ticktick-account small {
+  display: block;
+  font-size: 10px;
+  color: #7c91b1;
+  margin-top: 12px;
+}
+.ticktick-account .transfer-message {
+  white-space: pre-line;
+}

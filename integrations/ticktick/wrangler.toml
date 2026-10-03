@@ -1,0 +1,14 @@
+name = "play-your-life-ticktick"
+main = "worker.ts"
+compatibility_date = "2026-10-03"
+
+[vars]
+APP_URL = "https://vodolivan95.github.io/play-your-life/"
+
+[[durable_objects.bindings]]
+name = "ACCOUNTS"
+class_name = "TickTickAccount"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["TickTickAccount"]

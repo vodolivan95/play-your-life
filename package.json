@@ -8,9 +8,9 @@
   },
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && tsc -p integrations/ticktick/tsconfig.json && vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "typecheck": "tsc -b",
+    "typecheck": "tsc -b && tsc -p integrations/ticktick/tsconfig.json",
     "lint": "eslint .",
     "check": "npm run lint && npm run build"
   },

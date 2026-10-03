@@ -1,0 +1,185 @@
+import { useEffect, useRef, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import type { GameState } from './game';
+import {
+  applyTickTickResult,
+  bridgeRequest,
+  connectionStorageKey,
+  newConnection,
+  syncTickTick,
+} from './ticktick';
+import type { TickTickConnection } from './ticktick';
+import type { TickTickManager } from './tickTickContext';
+function readConnection(): TickTickConnection | null {
+  try {
+    const data = JSON.parse(
+      localStorage.getItem(connectionStorageKey) ?? 'null',
+    );
+    if (
+      data &&
+      typeof data.url === 'string' &&
+      /^[a-f0-9]{64}$/.test(data.key) &&
+      data.links &&
+      Array.isArray(data.dismissed)
+    )
+      return data;
+  } catch {
+    /* A new connection can be configured if storage is unavailable. */
+  }
+  return null;
+}
+export default function useTickTick(
+  state: GameState,
+  onChange: Dispatch<SetStateAction<GameState>>,
+): TickTickManager {
+  const [connection, setConnection] = useState(readConnection);
+  const [status, setStatus] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+  const working = useRef(false);
+  const latest = useRef({ state, connection });
+  useEffect(() => {
+    latest.current = { state, connection };
+  }, [state, connection]);
+  useEffect(() => {
+    try {
+      if (connection)
+        localStorage.setItem(connectionStorageKey, JSON.stringify(connection));
+      else localStorage.removeItem(connectionStorageKey);
+    } catch {
+      queueMicrotask(() => setStatus('Браузер не сохраняет подключение.'));
+    }
+  }, [connection]);
+  async function configure(url: string) {
+    const c =
+      connection?.url === url.replace(/\/$/, '')
+        ? connection
+        : newConnection(url);
+    localStorage.setItem(connectionStorageKey, JSON.stringify(c));
+    setConnection(c);
+    const result = await bridgeRequest<{ url: string }>(
+      c,
+      '/authorize',
+      'POST',
+    );
+    const target = new URL(result.url);
+    if (
+      target.origin !== 'https://ticktick.com' ||
+      target.pathname !== '/oauth/authorize'
+    )
+      throw new Error('Сервер вернул некорректную ссылку TickTick.');
+    window.location.assign(target.toString());
+  }
+  async function refresh() {
+    if (!connection) return;
+    setBusy(true);
+    try {
+      const result = await bridgeRequest<
+        { id: string; name: string; kind?: string }[]
+      >(connection, '/api/project');
+      if (!Array.isArray(result))
+        throw new Error('Не удалось прочитать списки TickTick.');
+      setProjects(result.filter((p) => p.kind !== 'NOTE'));
+      setStatus('Аккаунт подключён. Выбери отдельный список для своего плана.');
+    } catch (error) {
+      setStatus(
+        error instanceof Error ? error.message : 'Не удалось подключиться.',
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function sync() {
+    const { state: s, connection: c } = latest.current;
+    if (working.current || !c?.projectId || s.profile.mode === 'demo') return;
+    working.current = true;
+    setBusy(true);
+    try {
+      const result = await syncTickTick(s, c);
+      const applied = applyTickTickResult(latest.current.state, result);
+      onChange(applied.state);
+      setConnection(applied.connection);
+      setStatus(
+        applied.warnings.length
+          ? applied.warnings.join('\n')
+          : 'Задачи и сроки синхронизированы.',
+      );
+    } catch (error) {
+      setStatus(
+        error instanceof Error ? error.message : 'Не удалось синхронизировать.',
+      );
+    } finally {
+      working.current = false;
+      setBusy(false);
+    }
+  }
+  async function disconnect() {
+    if (!connection) return;
+    if (working.current) throw new Error('Дождись окончания синхронизации.');
+    await bridgeRequest(connection, '/disconnect', 'POST');
+    setConnection(null);
+    setProjects([]);
+    setStatus('Подключение отключено. Задачи в обоих приложениях сохранены.');
+  }
+  // Poll remote changes and debounce local changes while this application is open.
+  useEffect(() => {
+    if (
+      !connection?.auto ||
+      !connection.projectId ||
+      state.profile.mode === 'demo'
+    )
+      return;
+    const timer = setTimeout(() => {
+      void sync();
+    }, 1800);
+    return () => clearTimeout(timer); // Ref supplies the latest state without restarting on status updates.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.quests, state.goals, connection?.auto, connection?.projectId]);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (
+        document.visibilityState === 'visible' &&
+        latest.current.connection?.auto
+      )
+        void sync();
+    }, 60000);
+    const visible = () => {
+      if (
+        document.visibilityState === 'visible' &&
+        latest.current.connection?.auto
+      )
+        void sync();
+    };
+    document.addEventListener('visibilitychange', visible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', visible);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!location.hash.startsWith('#ticktick=')) return;
+    const connected = location.hash === '#ticktick=connected';
+    history.replaceState(null, '', location.pathname + location.search);
+    queueMicrotask(() => {
+      setStatus(
+        connected
+          ? 'Аккаунт подключён. Нажми «Проверить подключение» и выбери список.'
+          : 'Подключение отменено.',
+      );
+    });
+  }, []);
+  return {
+    connection,
+    status,
+    busy,
+    projects,
+    configure,
+    refresh,
+    sync,
+    disconnect,
+    update: (patch) => {
+      setConnection((c) => (c ? { ...c, ...patch } : c));
+    },
+  };
+}

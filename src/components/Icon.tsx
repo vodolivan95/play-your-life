@@ -46,6 +46,13 @@ export default function Icon({
         <path d="M7 3h10v6a5 5 0 0 1-10 0zM7 5H3v3a4 4 0 0 0 4 4m10-7h4v3a4 4 0 0 1-4 4M12 14v6m-5 1h10" />
       </>
     ),
+    plan: (
+      <>
+        <path d="M4 5h16M4 12h10M4 19h7" />
+        <circle cx="18" cy="17" r="4" />
+        <path d="M18 15v2l2 1" />
+      </>
+    ),
     calendar: (
       <>
         <rect x="3" y="5" width="18" height="16" rx="3" />

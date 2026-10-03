@@ -103,6 +103,20 @@ export type Quest = {
   xp: number;
   done: boolean;
   difficulty: string;
+  goalId?: string;
+  stageId?: string;
+  startsAt?: string;
+  dueAt?: string;
+  estimateMinutes?: number;
+  notes?: string;
+  priority?: 'low' | 'normal' | 'high';
+  tickTickSharedAt?: string;
+};
+export type GoalStage = {
+  id: string;
+  name: string;
+  startsAt?: string;
+  dueAt?: string;
 };
 export type Goal = {
   id: string;
@@ -113,6 +127,12 @@ export type Goal = {
   created: string;
   reward: number;
   rewarded: boolean;
+  description?: string;
+  startsAt?: string;
+  dueAt?: string;
+  progressMode?: 'manual' | 'tasks';
+  manualProgress?: { current: number; target: number };
+  stages?: GoalStage[];
 };
 export type SphereState = {
   xp: number;
@@ -152,6 +172,7 @@ export type GameState = {
   activeDates: string[];
   streakClaims: string[];
   completed: number;
+  hasCompletedGoal?: boolean;
   monthlyTracking?: { since: string; scores: Record<string, number> };
   monthlyReflections?: Record<string, MonthReflection>;
 };
@@ -419,7 +440,40 @@ export function completeQuest(state: GameState, id: string): GameState {
     });
     next.streakClaims = [...next.streakClaims, claim];
   }
+  if (quest.goalId) next = syncGoalTasks(next, quest.goalId, true);
   return next;
+}
+export function syncGoalTasks(
+  state: GameState,
+  goalId: string,
+  reward = false,
+): GameState {
+  const goal = state.goals.find((g) => g.id === goalId);
+  if (!goal || goal.progressMode !== 'tasks') return state;
+  const tasks = state.quests.filter((q) => q.goalId === goalId);
+  const done = tasks.filter((q) => q.done).length;
+  const current = tasks.length ? (done / tasks.length) * 100 : 0;
+  let next = {
+    ...state,
+    goals: state.goals.map((g) =>
+      g.id === goalId ? { ...g, current, target: 100 } : g,
+    ),
+  };
+  if (reward && tasks.length > 0 && done === tasks.length && !goal.rewarded) {
+    next = award(next, goal.sphere, goal.reward, `Цель: ${goal.name}`, {
+      kind: 'goal',
+    });
+    next.goals = next.goals.map((g) =>
+      g.id === goalId ? { ...g, rewarded: true } : g,
+    );
+  }
+  return next;
+}
+export function removeQuest(state: GameState, id: string): GameState {
+  const quest = state.quests.find((q) => q.id === id);
+  if (!quest) return state;
+  const next = { ...state, quests: state.quests.filter((q) => q.id !== id) };
+  return quest.goalId ? syncGoalTasks(next, quest.goalId) : next;
 }
 export function changeScore(
   state: GameState,
@@ -450,7 +504,8 @@ export function updateGoal(
   current: number,
 ): GameState {
   const goal = state.goals.find((g) => g.id === id);
-  if (!goal || !Number.isFinite(current)) return state;
+  if (!goal || goal.progressMode === 'tasks' || !Number.isFinite(current))
+    return state;
   current = Math.max(0, Math.min(goal.target, current));
   const done = current >= goal.target;
   const next =
@@ -512,7 +567,10 @@ export const achievements = [
     name: 'Новый горизонт',
     icon: '🏔️',
     description: 'Заверши большую цель',
-    unlocked: (s: GameState) => s.goals.some((g) => g.rewarded),
+    unlocked: (s: GameState) =>
+      Boolean(s.hasCompletedGoal) ||
+      s.goals.some((g) => g.rewarded) ||
+      s.events.some((e) => e.kind === 'goal'),
   },
   {
     name: 'Стратег',

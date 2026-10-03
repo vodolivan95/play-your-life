@@ -1,0 +1,3 @@
+/* Minimal browser defaults; application design has not been started. */
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; }

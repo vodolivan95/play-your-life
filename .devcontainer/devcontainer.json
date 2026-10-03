@@ -1,0 +1,22 @@
+{
+  "name": "PLAY YOUR LIFE",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-24-bookworm",
+  "postCreateCommand": "if [ -f package-lock.json ]; then npm ci; else npm install; fi",
+  "forwardPorts": [
+    5173
+  ],
+  "portsAttributes": {
+    "5173": {
+      "label": "PLAY YOUR LIFE — development",
+      "onAutoForward": "notify"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "EditorConfig.EditorConfig"
+      ]
+    }
+  }
+}

@@ -134,7 +134,7 @@ export default function Onboarding({
     return (
       <div className="welcome">
         <span className="welcome-art">
-          {avatar}
+          <Avatar value={avatar} />
           <i>✦</i>
           <b>✧</b>
         </span>
@@ -284,7 +284,9 @@ export default function Onboarding({
             процентом. За достижение — 200 XP.
           </p>
           <div className="start-summary">
-            <span>{avatar}</span>
+            <span>
+              <Avatar value={avatar} />
+            </span>
             <div>
               <strong>{name.trim()}, твоё приключение начинается!</strong>
               <small>Уровень 1 · 0 XP · Прогресс цели 0%</small>

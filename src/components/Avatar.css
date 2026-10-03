@@ -1,0 +1,39 @@
+/* Images never determine the size of an avatar or its surrounding layout. */
+.avatar-content {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  flex: 0 0 auto;
+  width: 1em;
+  height: 1em;
+  overflow: hidden;
+  border-radius: 50%;
+  line-height: 1;
+}
+
+.avatar-content > .character-avatar {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: contain;
+  object-position: center bottom;
+  transform: scale(1.65) translate(-4%, 16%);
+  pointer-events: none;
+}
+
+.player-avatar > .avatar-content,
+.avatar > .avatar-content,
+.welcome-art > .avatar-content {
+  width: 100%;
+  height: 100%;
+}
+
+.personal-banner .avatar-content {
+  width: 28px;
+  height: 28px;
+}

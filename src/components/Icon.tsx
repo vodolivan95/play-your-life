@@ -46,6 +46,19 @@ export default function Icon({
         <path d="M7 3h10v6a5 5 0 0 1-10 0zM7 5H3v3a4 4 0 0 0 4 4m10-7h4v3a4 4 0 0 1-4 4M12 14v6m-5 1h10" />
       </>
     ),
+    calendar: (
+      <>
+        <rect x="3" y="5" width="18" height="16" rx="3" />
+        <path d="M7 3v4m10-4v4M3 10h18m-13 5h1m3 0h1m3 0h1M8 18h1m3 0h1" />
+      </>
+    ),
+    more: (
+      <>
+        <circle cx="5" cy="12" r="1" />
+        <circle cx="12" cy="12" r="1" />
+        <circle cx="19" cy="12" r="1" />
+      </>
+    ),
     arrow: <path d="m9 5 7 7-7 7" />,
     check: <path d="m5 12 4 4L19 6" />,
     plus: <path d="M12 5v14M5 12h14" />,

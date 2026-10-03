@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, FormEvent } from 'react';
 import Icon from './components/Icon';
 import Onboarding, { ProfileEditor } from './components/Onboarding';
+import MonthlyReview from './components/MonthlyReview';
 import {
   achievements,
   changeScore,
@@ -22,6 +23,7 @@ const navigation = [
   { id: 'spheres', label: 'Сферы жизни', icon: 'spheres' },
   { id: 'quests', label: 'Квесты', icon: 'quests' },
   { id: 'goals', label: 'Цели', icon: 'goals' },
+  { id: 'monthly', label: 'Итоги месяца', icon: 'calendar' },
   { id: 'tree', label: 'Skill Tree', icon: 'tree' },
   { id: 'achievements', label: 'Достижения', icon: 'trophy' },
 ];
@@ -51,7 +53,7 @@ export default function App() {
   const [page, setPage] = useState('home');
   const [selected, setSelected] = useState<string | null>(null);
   const [modal, setModal] = useState<
-    'quest' | 'goal' | 'streak' | 'start' | 'profile' | null
+    'quest' | 'goal' | 'streak' | 'start' | 'profile' | 'more' | null
   >(() => (state.profile.onboardingComplete ? null : 'start'));
   const [filter, setFilter] = useState('all');
   const [toast, setToast] = useState('');
@@ -366,6 +368,20 @@ export default function App() {
               Браузер не разрешает сохранять данные. Прогресс доступен до
               закрытия страницы.
             </div>
+          )}
+          {page === 'monthly' && (
+            <MonthlyReview
+              state={state}
+              onChange={setState}
+              storageError={storageError}
+              onSaved={() =>
+                notify(
+                  storageError
+                    ? 'Итоги сохранены на этой странице'
+                    : 'Итоги месяца сохранены',
+                )
+              }
+            />
           )}
           {page === 'home' && (
             <div className="personal-banner">
@@ -984,16 +1000,37 @@ export default function App() {
         </main>
       </div>
       <nav className="mobile-nav">
-        {navigation.map((n) => (
-          <button
-            key={n.id}
-            className={page === n.id ? 'active' : ''}
-            onClick={() => navigate(n.id)}
-          >
-            <Icon name={n.icon} size={20} />
-            <span>{n.label === 'Сферы жизни' ? 'Сферы' : n.label}</span>
-          </button>
-        ))}
+        {navigation
+          .filter((n) => n.id !== 'tree' && n.id !== 'achievements')
+          .map((n) => (
+            <button
+              key={n.id}
+              className={page === n.id ? 'active' : ''}
+              onClick={() => navigate(n.id)}
+            >
+              <Icon name={n.icon} size={20} />
+              <span>
+                {n.id === 'spheres'
+                  ? 'Сферы'
+                  : n.id === 'monthly'
+                    ? 'Итоги'
+                    : n.label}
+              </span>
+            </button>
+          ))}
+        <button
+          className={
+            page === 'tree' || page === 'achievements' || modal === 'more'
+              ? 'active'
+              : ''
+          }
+          aria-label="Ещё"
+          aria-expanded={modal === 'more'}
+          onClick={() => setModal('more')}
+        >
+          <Icon name="more" size={20} />
+          <span>Ещё</span>
+        </button>
       </nav>
       <dialog
         ref={dialog}
@@ -1033,6 +1070,31 @@ export default function App() {
                 setModal(null);
               }}
             />
+          ) : modal === 'more' ? (
+            <div className="more-menu">
+              <div className="eyebrow">ТВОЁ ПРИКЛЮЧЕНИЕ</div>
+              <h2>Ещё в твоей игре</h2>
+              {navigation
+                .filter((n) => n.id === 'tree' || n.id === 'achievements')
+                .map((n) => (
+                  <button
+                    key={n.id}
+                    onClick={() => {
+                      navigate(n.id);
+                      setModal(null);
+                    }}
+                  >
+                    <Icon name={n.icon} />
+                    <strong>{n.label}</strong>
+                    <Icon name="arrow" size={17} />
+                  </button>
+                ))}
+              <button onClick={() => setModal('profile')}>
+                <span>{state.profile.avatar}</span>
+                <strong>Личный профиль</strong>
+                <Icon name="arrow" size={17} />
+              </button>
+            </div>
           ) : modal === 'profile' ? (
             <ProfileEditor
               key="profile"

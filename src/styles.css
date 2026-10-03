@@ -2253,3 +2253,667 @@ dialog {
     font-size: 17px;
   }
 }
+/* Monthly reflection. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+.sidebar {
+  overflow-y: auto;
+}
+.month-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.month-navigation {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.month-navigation input {
+  font-size: 12px;
+  color: #5576a8;
+  max-width: 200px;
+  border: 1px solid #e2e9f5;
+  background: white;
+  border-radius: 10px;
+  padding: 10px 13px;
+  min-width: 0;
+}
+.month-navigation .icon-button {
+  width: 34px;
+  height: 34px;
+  font-size: 20px;
+}
+.month-navigation button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.review-state {
+  font-size: 10px;
+  color: #8c9cb5;
+  background: #edf2fa;
+  padding: 7px 10px;
+  border-radius: 8px;
+}
+.review-state.completed {
+  background: #edf9f2;
+  color: #42a882;
+}
+.month-hero {
+  background: linear-gradient(110deg, #397af5, #2f61e5);
+  border-radius: 23px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  padding: 29px 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 18px;
+  box-shadow: 0 8px 25px #3974ee16;
+}
+.month-hero .pill {
+  display: inline-block;
+}
+.month-hero h2 {
+  font-size: 31px;
+  text-transform: capitalize;
+  margin-top: 18px;
+  letter-spacing: -1px;
+}
+.month-hero p {
+  color: #c5d9ff;
+  font-size: 11px;
+  max-width: 420px;
+  margin-top: 10px;
+}
+.month-hero > div:first-child {
+  max-width: calc(100% - 100px);
+}
+.month-hero-art {
+  display: block;
+  font-size: 65px;
+  position: relative;
+  margin-right: 7px;
+  filter: drop-shadow(0 5px 15px #1445c030);
+}
+.month-hero-art i {
+  position: absolute;
+  font-size: 23px;
+  font-style: normal;
+  right: -7px;
+  top: -10px;
+  color: #b8d3ff;
+}
+.month-hero-bottom {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  border-top: 1px solid #ffffff22;
+  padding-top: 15px;
+  margin-top: 5px;
+  font-size: 9px;
+  color: #c2d6fb;
+}
+.month-hero-bottom b {
+  color: #e1ecff;
+  overflow-wrap: anywhere;
+  max-width: 40%;
+  font-weight: 650;
+}
+.month-coverage {
+  font-size: 10px;
+  color: #8fa0bb;
+  background: #f0f4fb;
+  border-radius: 11px;
+  padding: 12px 16px;
+  line-height: 1.8;
+  margin-top: 17px;
+}
+.monthly-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-top: 22px;
+}
+.month-stat {
+  padding: 21px 17px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+.month-stat > span {
+  font-size: 19px;
+  color: #5483e8;
+  background: #eef4ff;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-bottom: 7px;
+}
+.month-stat b {
+  font-size: 28px;
+  letter-spacing: -1px;
+  color: #314c74;
+}
+.month-stat strong {
+  font-size: 11px;
+  font-weight: 650;
+  color: #7387a5;
+}
+.month-stat small {
+  font-size: 8px;
+  color: #a2afc1;
+  line-height: 1.6;
+}
+.month-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  margin-top: 22px;
+}
+.calendar-weekdays,
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 7px;
+}
+.calendar-weekdays {
+  margin-bottom: 9px;
+}
+.calendar-weekdays span {
+  text-align: center;
+  color: #a4b1c5;
+  font-size: 9px;
+}
+.calendar-day {
+  border-radius: 9px;
+  background: #f5f7fb;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-size: 10px;
+  color: #94a2b8;
+}
+.calendar-day.active {
+  background: #5183ee;
+  color: #fff;
+  box-shadow: 0 3px 7px #467eec14;
+}
+.calendar-day.earned {
+  background: #e5eeff;
+  color: #5c83d2;
+}
+.calendar-day.future {
+  opacity: 0.4;
+}
+.calendar-day i {
+  width: 3px;
+  height: 3px;
+  background: #cce0ff;
+  border-radius: 50%;
+  position: absolute;
+  bottom: 5px;
+}
+.calendar-legend {
+  display: flex;
+  gap: 15px;
+  font-size: 8px;
+  color: #95a4bd;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+.calendar-legend > span {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.calendar-legend i {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: #5183ee;
+}
+.calendar-legend > span:last-child i {
+  background: #e5eeff;
+}
+.xp-breakdown {
+  margin-top: 21px;
+}
+.xp-breakdown > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #8b9ab2;
+  margin-bottom: 9px;
+  gap: 10px;
+}
+.xp-breakdown b {
+  font-size: 10px;
+  color: #648bea;
+}
+.xp-breakdown .progress {
+  height: 5px;
+}
+.xp-breakdown:nth-of-type(3) .progress > span {
+  background: #80aae9;
+}
+.xp-breakdown:nth-of-type(4) .progress > span {
+  background: #9a85e6;
+}
+.xp-breakdown:nth-of-type(5) .progress > span {
+  background: #ebaa65;
+}
+.month-empty-copy {
+  font-size: 10px;
+  color: #9eacc1;
+  margin-top: 24px;
+  line-height: 1.8;
+}
+.month-spheres,
+.month-reflection,
+.month-history {
+  margin-top: 22px;
+}
+.month-average {
+  font-size: 14px;
+  color: #b0bdd1;
+  white-space: nowrap;
+}
+.month-average b {
+  color: #537fd3;
+}
+.month-average small {
+  font-size: 9px;
+}
+.monthly-sphere-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 27px;
+}
+.monthly-sphere {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f3f8;
+}
+.monthly-sphere .sphere-icon {
+  width: 31px;
+  height: 31px;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+.monthly-sphere > div {
+  flex: 1;
+  min-width: 0;
+}
+.monthly-sphere strong {
+  display: block;
+  font-size: 11px;
+}
+.monthly-sphere small {
+  display: block;
+  font-size: 8px;
+  color: #a1aec2;
+  margin-top: 5px;
+}
+.monthly-sphere > span:not(.sphere-icon) {
+  font-size: 8px;
+  white-space: nowrap;
+}
+.monthly-sphere > b {
+  font-size: 9px;
+  color: #6089dc;
+  white-space: nowrap;
+}
+.reflection-spark {
+  font-size: 28px;
+  color: #b2c9f4;
+}
+.mood-fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0 0 28px;
+}
+.mood-fieldset legend {
+  font-size: 12px;
+  color: #6e819f;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.mood-options {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  max-width: 570px;
+}
+.mood-options button {
+  background: #f6f8fc;
+  border: 1.5px solid #eef2f8;
+  border-radius: 12px;
+  padding: 13px 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+.mood-options button > span {
+  font-size: 25px;
+}
+.mood-options small {
+  font-size: 9px;
+  color: #93a1b7;
+}
+.mood-options .selected {
+  background: #edf4ff;
+  border-color: #8aadf4;
+}
+.mood-options .selected small {
+  color: #427ade;
+}
+.reflection-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 23px;
+}
+.reflection-fields label {
+  display: block;
+  min-width: 0;
+}
+.reflection-fields strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+}
+.reflection-fields small {
+  display: block;
+  font-size: 9px;
+  color: #a0aec2;
+  margin-top: 5px;
+  line-height: 1.7;
+}
+.reflection-fields textarea {
+  font: inherit;
+  background: #f9fbff;
+  color: #556986;
+  border: 1px solid #e6edf7;
+  border-radius: 12px;
+  width: 100%;
+  resize: vertical;
+  min-height: 115px;
+  max-height: 450px;
+  padding: 13px;
+  font-size: 11px;
+  line-height: 1.8;
+  margin-top: 12px;
+  outline: 0;
+}
+.reflection-fields textarea:focus {
+  border-color: #8cacfa;
+  box-shadow: 0 0 0 3px #f1f5ff;
+}
+.reflection-fields textarea::placeholder {
+  color: #b2bfd1;
+  font-size: 10px;
+}
+.reflection-save {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  border-top: 1px solid #eef2f8;
+  margin-top: 28px;
+  padding-top: 21px;
+}
+.reflection-save > span {
+  font-size: 9px;
+  color: #94a7c6;
+  line-height: 1.8;
+}
+.reflection-note {
+  font-size: 9px;
+  color: #a9b5c8;
+  margin-top: 15px;
+  line-height: 1.8;
+}
+.month-history .history-row > span:first-child {
+  font-size: 19px;
+}
+.more-menu > button {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 17px 13px;
+  margin-top: 10px;
+  width: 100%;
+  border-radius: 12px;
+  background: #f6f9ff;
+  color: #6a86b3;
+  text-align: left;
+}
+.more-menu > button:hover {
+  background: #eaf2ff;
+}
+.more-menu > button strong {
+  flex: 1;
+  font-size: 12px;
+}
+.more-menu > button > span {
+  font-size: 23px;
+}
+.month-calendar .section-heading,
+.month-xp .section-heading {
+  margin-bottom: 21px;
+}
+@media (max-width: 1100px) {
+  .monthly-sphere-list {
+    grid-template-columns: 1fr;
+  }
+  .monthly-stats {
+    gap: 10px;
+  }
+  .month-stat {
+    padding: 20px 13px;
+  }
+  .month-stat strong {
+    font-size: 10px;
+  }
+  .month-stat small {
+    font-size: 7px;
+  }
+}
+@media (max-width: 900px) {
+  .month-details {
+    grid-template-columns: 1fr;
+  }
+  .calendar-day {
+    aspect-ratio: 1.3;
+  }
+  .reflection-fields {
+    grid-template-columns: 1fr;
+  }
+  .monthly-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  .month-stat small {
+    font-size: 9px;
+  }
+}
+@media (max-width: 760px) {
+  .month-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 13px;
+    margin-bottom: 18px;
+  }
+  .month-navigation {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .month-navigation input {
+    font-size: 12px;
+    max-width: 210px;
+    width: 100%;
+    text-align: center;
+  }
+  .review-state {
+    font-size: 9px;
+  }
+  .month-hero {
+    padding: 23px 21px;
+    gap: 15px;
+  }
+  .month-hero h2 {
+    font-size: 24px;
+  }
+  .month-hero p {
+    font-size: 10px;
+  }
+  .month-hero-art {
+    font-size: 47px;
+    margin-right: 0;
+  }
+  .month-hero > div:first-child {
+    max-width: calc(100% - 68px);
+  }
+  .month-hero-bottom {
+    font-size: 8px;
+    align-items: flex-start;
+    gap: 10px;
+    line-height: 1.8;
+  }
+  .month-coverage {
+    font-size: 9px;
+    padding: 12px;
+    margin-top: 15px;
+  }
+  .monthly-stats {
+    gap: 11px;
+    margin-top: 19px;
+  }
+  .month-stat {
+    padding: 17px 15px;
+    gap: 4px;
+  }
+  .month-stat b {
+    font-size: 26px;
+  }
+  .month-stat strong {
+    font-size: 10px;
+  }
+  .month-stat small {
+    font-size: 8px;
+  }
+  .month-stat > span {
+    width: 30px;
+    height: 30px;
+    font-size: 17px;
+    margin-bottom: 4px;
+  }
+  .month-details {
+    margin-top: 19px;
+    gap: 19px;
+  }
+  .calendar-day {
+    aspect-ratio: 1.15;
+    border-radius: 8px;
+    font-size: 10px;
+  }
+  .calendar-days,
+  .calendar-weekdays {
+    gap: 6px;
+  }
+  .monthly-sphere {
+    gap: 8px;
+    padding: 14px 0;
+  }
+  .monthly-sphere strong {
+    font-size: 10px;
+  }
+  .monthly-sphere > span:not(.sphere-icon) {
+    font-size: 7px;
+  }
+  .month-average {
+    font-size: 12px;
+  }
+  .month-spheres > .section-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .mood-options {
+    gap: 5px;
+  }
+  .mood-options button {
+    padding: 11px 3px;
+  }
+  .mood-options button > span {
+    font-size: 22px;
+  }
+  .mood-options small {
+    font-size: 7px;
+  }
+  .reflection-save {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .reflection-save .primary-button {
+    width: 100%;
+    padding: 13px;
+  }
+  .month-reflection .section-heading p {
+    font-size: 9px;
+  }
+  .reflection-fields textarea {
+    font-size: 12px;
+  }
+  .reflection-fields small {
+    font-size: 9px;
+  }
+  .monthly-sphere > div {
+    min-width: 80px;
+  }
+  .month-history strong {
+    font-size: 11px;
+  }
+}
+.month-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 100px;
+}
+.month-hero > div:first-child {
+  max-width: none;
+}
+.month-hero-art {
+  justify-self: center;
+}
+.month-hero-bottom {
+  grid-column: 1/-1;
+}
+@media (max-width: 760px) {
+  .month-hero {
+    grid-template-columns: minmax(0, 1fr) 58px;
+  }
+  .month-hero > div:first-child {
+    max-width: none;
+  }
+}

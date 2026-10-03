@@ -126,6 +126,18 @@ export type Event = {
   title: string;
   xp: number;
   date: string;
+  kind?: 'quest' | 'score' | 'goal' | 'streak';
+  scoreBefore?: number;
+  scoreAfter?: number;
+};
+export type MonthReflection = {
+  highlights: string;
+  challenges: string;
+  lessons: string;
+  nextMonth: string;
+  mood: number | null;
+  status: 'draft' | 'completed';
+  updatedAt: string;
 };
 export type GameState = {
   version: 1;
@@ -140,6 +152,8 @@ export type GameState = {
   activeDates: string[];
   streakClaims: string[];
   completed: number;
+  monthlyTracking?: { since: string; scores: Record<string, number> };
+  monthlyReflections?: Record<string, MonthReflection>;
 };
 export const avatars = [
   { icon: '🧑🏻‍🚀', name: 'Космонавт' },
@@ -210,6 +224,7 @@ export function personalState(
     xp: 0,
     coins: 0,
     quests: [],
+    monthlyTracking: { since: new Date().toISOString(), scores: { ...scores } },
     profile: { ...profile, name, mode: 'personal', onboardingComplete: true },
     spheres: Object.fromEntries(
       spheres.map((s) => [
@@ -243,6 +258,12 @@ export function migrateState(
   const profile = state.profile;
   return {
     ...state,
+    monthlyTracking: state.monthlyTracking ?? {
+      since: new Date().toISOString(),
+      scores: Object.fromEntries(
+        spheres.map((s) => [s.id, state.spheres[s.id].score]),
+      ),
+    },
     profile:
       profile &&
       profile.name?.trim() &&
@@ -277,6 +298,11 @@ export function initialState(): GameState {
     version: 1,
     profile: { ...defaultProfile },
     mainGoalId: 'b2',
+    monthlyTracking: {
+      since: new Date().toISOString(),
+      scores: Object.fromEntries(spheres.map((s) => [s.id, s.score])),
+    },
+    monthlyReflections: {},
     xp: 2450,
     coins: 120,
     completed: 0,
@@ -347,6 +373,7 @@ export function award(
   sphere: string,
   xp: number,
   title: string,
+  details: Pick<Event, 'kind' | 'scoreBefore' | 'scoreAfter'> = {},
 ): GameState {
   return {
     ...state,
@@ -362,15 +389,18 @@ export function award(
         xp,
         title,
         date: new Date().toISOString(),
+        ...details,
       },
       ...state.events,
-    ].slice(0, 200),
+    ],
   };
 }
 export function completeQuest(state: GameState, id: string): GameState {
   const quest = state.quests.find((q) => q.id === id);
   if (!quest || quest.done) return state;
-  let next = award(state, quest.sphere, quest.xp, quest.name);
+  let next = award(state, quest.sphere, quest.xp, quest.name, {
+    kind: 'quest',
+  });
   next = {
     ...next,
     completed: next.completed + 1,
@@ -384,7 +414,9 @@ export function completeQuest(state: GameState, id: string): GameState {
   const reward = streakRewards[count];
   const claim = `${today}:${count}`;
   if (reward && !next.streakClaims.includes(claim)) {
-    next = award(next, quest.sphere, reward, `Серия ${count} дней`);
+    next = award(next, quest.sphere, reward, `Серия ${count} дней`, {
+      kind: 'streak',
+    });
     next.streakClaims = [...next.streakClaims, claim];
   }
   return next;
@@ -399,7 +431,11 @@ export function changeScore(
   if (score === sphere.score) return state;
   const coefficient = spheres.find((s) => s.id === id)!.coefficient;
   const xp = Math.max(0, score - sphere.highScore) * coefficient;
-  const next = award(state, id, xp, `Life Score: ${sphere.score} → ${score}`);
+  const next = award(state, id, xp, `Life Score: ${sphere.score} → ${score}`, {
+    kind: 'score',
+    scoreBefore: sphere.score,
+    scoreAfter: score,
+  });
   next.spheres[id] = {
     ...next.spheres[id],
     score,
@@ -419,7 +455,9 @@ export function updateGoal(
   const done = current >= goal.target;
   const next =
     done && !goal.rewarded
-      ? award(state, goal.sphere, goal.reward, `Цель: ${goal.name}`)
+      ? award(state, goal.sphere, goal.reward, `Цель: ${goal.name}`, {
+          kind: 'goal',
+        })
       : { ...state };
   next.goals = next.goals.map((g) =>
     g.id === id ? { ...g, current, rewarded: g.rewarded || done } : g,

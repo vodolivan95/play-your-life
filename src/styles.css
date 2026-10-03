@@ -10,7 +10,7 @@
   font-synthesis: none;
   font-weight: 500;
   --blue: #3267ed;
-  --muted: #8b95a7;
+  --muted: #525f76;
   --border: #edf0f6;
 }
 * {
@@ -104,7 +104,7 @@ small {
   font-weight: 500;
   font-size: 10px;
   letter-spacing: 0.2px;
-  color: #98a1b2;
+  color: #525f76;
   margin-top: 4px;
 }
 .brand-symbol {
@@ -131,7 +131,7 @@ small {
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 1.8px;
-  color: #a8b0be;
+  color: #525f76;
   margin: 47px 12px 18px;
 }
 .sidebar nav {
@@ -142,7 +142,7 @@ small {
   width: 100%;
   padding: 14px 15px;
   background: transparent;
-  color: #8992a4;
+  color: #525f76;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -177,7 +177,7 @@ small {
   overflow: hidden;
 }
 .sidebar-message > span {
-  color: #719bff;
+  color: #435e98;
   font-size: 30px;
   display: block;
   margin-bottom: 13px;
@@ -188,7 +188,7 @@ small {
 }
 .sidebar-message p {
   font-size: 10px;
-  color: #97a2b5;
+  color: #515f76;
   margin-top: 10px;
 }
 .sidebar-profile {
@@ -203,7 +203,7 @@ small {
 }
 .sidebar-profile small {
   display: block;
-  color: #96a1b2;
+  color: #525f76;
   margin-top: 3px;
   font-size: 10px;
 }
@@ -241,7 +241,7 @@ small {
 }
 .topbar-label {
   font-size: 12px;
-  color: #8490a4;
+  color: #515f77;
 }
 .topbar-actions {
   display: flex;
@@ -260,11 +260,11 @@ small {
 }
 .coin-balance b {
   font-size: 12px;
-  color: #b98529;
+  color: #705c39;
 }
 .icon-button {
   background: transparent;
-  color: #8a95a9;
+  color: #525f77;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -294,7 +294,7 @@ main {
   font-size: 9px;
   letter-spacing: 1.6px;
   font-weight: 800;
-  color: #8191ac;
+  color: #4f5f7a;
   margin-bottom: 9px;
 }
 .heading-dot {
@@ -302,12 +302,12 @@ main {
 }
 .page-heading p {
   font-size: 12px;
-  color: #95a0b3;
+  color: #515f77;
   margin-top: 9px;
 }
 .date-label {
   font-size: 11px;
-  color: #909caf;
+  color: #516077;
   white-space: nowrap;
 }
 .hero-grid {
@@ -351,7 +351,7 @@ main {
 }
 .hero-spark {
   font-size: 26px;
-  color: #9fbdff;
+  color: #4a5f86;
 }
 .player-content {
   display: flex;
@@ -363,7 +363,7 @@ main {
   font-size: 11px;
   font-weight: 750;
   letter-spacing: 2px;
-  color: #c0d4ff;
+  color: #4d5e7d;
 }
 .player-content h2 {
   font-size: 36px;
@@ -372,7 +372,7 @@ main {
 }
 .player-content p {
   font-size: 11px;
-  color: #b9d0ff;
+  color: #4c5e7f;
   margin-top: 8px;
 }
 .avatar-orbit {
@@ -410,7 +410,7 @@ main {
 }
 .orbit-star {
   position: absolute;
-  color: #bfd8ff;
+  color: #4d5f7d;
 }
 .orbit-star.one {
   right: -5px;
@@ -429,7 +429,7 @@ main {
   margin-top: 21px;
   margin-bottom: 10px;
   font-size: 10px;
-  color: #c5d6fc;
+  color: #4e5e7d;
 }
 .hero-progress-label b {
   font-size: 11px;
@@ -437,7 +437,7 @@ main {
 }
 .hero-progress-label b span {
   font-weight: 500;
-  color: #b8ceff;
+  color: #4e5f81;
 }
 .progress {
   height: 6px;
@@ -461,7 +461,7 @@ main {
 }
 .hero-footer {
   font-size: 9px;
-  color: #c6d8ff;
+  color: #4e5f7d;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -485,13 +485,13 @@ main {
   font-size: 8px;
   font-weight: 800;
   letter-spacing: 1.2px;
-  color: #91a0b8;
+  color: #4f5f79;
 }
 .mini-pill {
   font-size: 9px;
   letter-spacing: 0;
   font-weight: 650;
-  color: #69aa8e;
+  color: #3f6468;
   background: #edf8f2;
   padding: 5px 8px;
   border-radius: 6px;
@@ -513,14 +513,14 @@ main {
   position: absolute;
   left: 76px;
   top: 13px;
-  color: #86acf9;
+  color: #475f8d;
   font-size: 22px;
 }
 .goal-art b {
   position: absolute;
   left: 81px;
   top: 46px;
-  color: #a0bdf8;
+  color: #4a5f84;
   font-size: 21px;
 }
 .goal-highlight h2 {
@@ -528,7 +528,7 @@ main {
 }
 .goal-highlight p {
   font-size: 10px;
-  color: #98a3b5;
+  color: #515f76;
   margin-top: 7px;
 }
 .goal-progress-label {
@@ -537,7 +537,7 @@ main {
   justify-content: space-between;
   margin-top: 18px;
   margin-bottom: 9px;
-  color: #94a0b2;
+  color: #526077;
   font-size: 10px;
 }
 .goal-progress-label b {
@@ -593,7 +593,7 @@ main {
 }
 .blue {
   background: #edf3ff;
-  color: #6b94f1;
+  color: #425e97;
 }
 .purple {
   background: #f3eeff;
@@ -604,17 +604,17 @@ main {
 }
 .stat-card b small {
   font-size: 11px;
-  color: #b0b8c5;
+  color: #526076;
   font-weight: 500;
 }
 .stat-card p {
   font-size: 10px;
-  color: #9aa4b5;
+  color: #526076;
   margin-top: 2px;
 }
 .stat-end {
   margin-left: auto;
-  color: #b0bac9;
+  color: #526077;
   font-size: 15px;
 }
 .home-lower {
@@ -639,7 +639,7 @@ main {
 }
 .section-heading p {
   font-size: 10px;
-  color: #98a4b6;
+  color: #516077;
   margin-top: 6px;
 }
 .section-heading h2 {
@@ -649,7 +649,7 @@ main {
   display: inline-block;
   vertical-align: middle;
   background: #eef3fc;
-  color: #7a98d0;
+  color: #485f87;
   padding: 2px 6px;
   font-size: 10px;
   margin-left: 5px;
@@ -657,7 +657,7 @@ main {
 }
 .outlined {
   border: 1px solid #e7edf7;
-  color: #6886b6;
+  color: #486087;
 }
 .quest-row {
   display: flex;
@@ -687,7 +687,7 @@ main {
   overflow-wrap: anywhere;
 }
 .quest-info small {
-  color: #a0abbd;
+  color: #526077;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -698,14 +698,14 @@ main {
   font-size: 10px;
   white-space: nowrap;
   font-weight: 750;
-  color: #5181e5;
+  color: #3b5da1;
   background: #f0f5ff;
   border-radius: 5px;
   padding: 5px 7px;
 }
 .check-button {
   background: #fff;
-  color: #bcc8dd;
+  color: #505f78;
   border: 1.5px solid #e1e8f4;
   display: flex;
   align-items: center;
@@ -723,15 +723,15 @@ main {
 }
 .check-button.checked {
   background: #eaf9f1;
-  color: #39b084;
+  color: #2b6864;
   border-color: #dcf0e5;
 }
 .completed .quest-info strong {
-  color: #a3aebb;
+  color: #526076;
   text-decoration: line-through;
 }
 .completed .xp-tag {
-  color: #84ba9e;
+  color: #46646b;
   background: #f1f9f4;
 }
 .all-link {
@@ -740,7 +740,7 @@ main {
   align-items: center;
   gap: 7px;
   background: transparent;
-  color: #7890b8;
+  color: #4b5f80;
   font-size: 10px;
   font-weight: 700;
   margin: 18px auto 0;
@@ -760,7 +760,7 @@ main {
   font-size: 8px;
   letter-spacing: 1.6px;
   font-weight: 800;
-  color: #9eb0cd;
+  color: #4f5f7b;
 }
 .daily-illustration {
   font-size: 51px;
@@ -772,7 +772,7 @@ main {
   position: absolute;
   right: -4px;
   top: 5px;
-  color: #92b4f4;
+  color: #485e86;
   font-size: 24px;
 }
 .daily-card h2 {
@@ -782,7 +782,7 @@ main {
   font-weight: 800;
 }
 .daily-card p {
-  color: #97a7c0;
+  color: #50607a;
   font-size: 10px;
   line-height: 1.9;
   margin-top: 12px;
@@ -791,7 +791,7 @@ main {
   font-size: 7px;
   letter-spacing: 1px;
   font-weight: 800;
-  color: #94a9cd;
+  color: #4d5f7e;
   margin-top: 21px;
   display: flex;
   align-items: center;
@@ -846,7 +846,7 @@ main {
 .level-chip {
   font-size: 8px;
   font-weight: 750;
-  color: #99a6bc;
+  color: #505f78;
   background: #f5f7fa;
   padding: 4px 6px;
   border-radius: 5px;
@@ -859,7 +859,7 @@ main {
   align-items: center;
   justify-content: space-between;
   font-size: 8px;
-  color: #a5aec0;
+  color: #515f76;
   margin-top: 10px;
   margin-bottom: 7px;
 }
@@ -871,42 +871,42 @@ main {
   padding-top: 12px;
   margin-top: 13px;
   font-size: 8px;
-  color: #9aa6b9;
+  color: #515f77;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 .sphere-score b {
-  color: #53627c;
+  color: #50607a;
   font-size: 11px;
   margin-left: 5px;
 }
 .sphere-score b small {
   font-size: 8px;
-  color: #adb7c7;
+  color: #515f76;
 }
 .positive {
-  color: #50b497;
+  color: #34676b;
   font-size: 10px;
 }
 .negative {
-  color: #e48989;
+  color: #745666;
   font-size: 10px;
 }
 .footer {
   font-size: 8px;
-  color: #b0b9c8;
+  color: #526077;
   text-align: center;
   padding: 32px 0;
   letter-spacing: 0.3px;
 }
 .footer span {
   margin: 0 10px;
-  color: #95b2e9;
+  color: #4a5f84;
 }
 .muted {
   font-size: 12px;
-  color: #8f9bb0;
+  color: #515f77;
 }
 .balance-banner {
   background: #edf3ff;
@@ -924,7 +924,7 @@ main {
 }
 .balance-banner p {
   font-size: 12px;
-  color: #8e9db5;
+  color: #50607a;
   margin-top: 6px;
 }
 .all-spheres {
@@ -961,7 +961,7 @@ main {
   min-width: 0;
   padding: 10px 0;
   font-size: 11px;
-  color: #7c8ba4;
+  color: #505f79;
   background: #f3f6fb;
   border-radius: 7px;
 }
@@ -971,7 +971,7 @@ main {
 }
 .score-note {
   font-size: 10px;
-  color: #8f9fb6;
+  color: #506079;
   padding: 12px;
   background: #f5f8fe;
   border-radius: 9px;
@@ -986,7 +986,7 @@ main {
 }
 .detail-goal p {
   font-size: 11px;
-  color: #96a2b5;
+  color: #505f76;
   margin-top: 8px;
 }
 .primary-button {
@@ -1024,7 +1024,7 @@ main {
 .history-row small {
   display: block;
   margin-top: 5px;
-  color: #9aa5b7;
+  color: #526077;
 }
 .history-dot {
   width: 7px;
@@ -1049,7 +1049,7 @@ main {
 .tabs button {
   font-size: 11px;
   padding: 9px 13px;
-  color: #8795ab;
+  color: #516079;
   background: transparent;
   border-radius: 7px;
 }
@@ -1070,16 +1070,16 @@ main {
   background: white;
   border-radius: 8px;
   padding: 10px;
-  color: #91a0b7;
+  color: #516079;
 }
 .difficulty-legend b {
   margin-left: 7px;
-  color: #537edf;
+  color: #3e5da1;
 }
 .empty {
   text-align: center;
   padding: 40px 15px;
-  color: #8b9ab0;
+  color: #506078;
   font-size: 12px;
 }
 .empty > span {
@@ -1102,7 +1102,7 @@ main {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #8e9db3;
+  color: #506079;
   font-size: 11px;
   margin: 22px 0;
 }
@@ -1111,7 +1111,7 @@ main {
   padding: 9px;
   border: 1px solid #e3e9f4;
   border-radius: 8px;
-  color: #386fe5;
+  color: #315bb5;
 }
 .tree-intro {
   text-align: center;
@@ -1125,7 +1125,7 @@ main {
 }
 .tree-intro p {
   font-size: 12px;
-  color: #93a2b9;
+  color: #506079;
   margin-top: 8px;
 }
 .skill-grid {
@@ -1190,7 +1190,7 @@ main {
   display: block;
   font-size: 9px;
   margin-top: 4px;
-  color: #9ca9bc;
+  color: #505f77;
 }
 .skill-node.locked > span {
   background: #f5f7fa;
@@ -1199,7 +1199,7 @@ main {
   filter: grayscale(1);
 }
 .skill-node.locked strong {
-  color: #a5b0c2;
+  color: #515f77;
 }
 .achievement {
   text-align: center;
@@ -1223,15 +1223,15 @@ main {
 }
 .achievement p {
   font-size: 11px;
-  color: #96a4b9;
+  color: #506078;
   margin-top: 9px;
 }
 .achievement:not(.unlocked) .mini-pill {
   background: #f1f3f7;
-  color: #a4afc0;
+  color: #526077;
 }
 .delete {
-  color: #b3bdcd;
+  color: #526077;
 }
 .toast {
   position: fixed;
@@ -1246,7 +1246,7 @@ main {
   border-radius: 14px;
   font-size: 12px;
   font-weight: 700;
-  color: #3768dc;
+  color: #315ab8;
   display: flex;
   gap: 12px;
   align-items: center;
@@ -1294,7 +1294,7 @@ dialog::backdrop {
 .dialog-content label {
   display: block;
   font-size: 11px;
-  color: #8393ad;
+  color: #50607a;
   margin-top: 19px;
 }
 .dialog-content input,
@@ -1528,7 +1528,7 @@ dialog::backdrop {
   .mobile-brand small {
     display: block;
     font-size: 9px;
-    color: #95a2b7;
+    color: #516078;
     font-weight: 500;
     letter-spacing: 0.1px;
     margin-top: 4px;
@@ -1732,7 +1732,7 @@ dialog::backdrop {
   .mobile-nav button {
     padding: 5px 3px;
     background: transparent;
-    color: #9ba8bb;
+    color: #516078;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1898,7 +1898,7 @@ dialog::backdrop {
 .personal-banner > span {
   font-size: 10px;
   letter-spacing: 1px;
-  color: #5f87d9;
+  color: #415e96;
   font-weight: 800;
   flex-shrink: 0;
 }
@@ -1914,7 +1914,7 @@ dialog::backdrop {
 .personal-banner small {
   display: block;
   font-size: 10px;
-  color: #92a2bc;
+  color: #50607a;
   margin-top: 4px;
   line-height: 1.6;
 }
@@ -1923,7 +1923,7 @@ dialog::backdrop {
 }
 .secondary-button {
   background: #f4f7fc;
-  color: #6c85ac;
+  color: #4b6082;
   border-radius: 10px;
   padding: 12px 16px;
   font-size: 11px;
@@ -1946,7 +1946,7 @@ dialog::backdrop {
 }
 .field-label {
   font-size: 11px;
-  color: #8393ad;
+  color: #50607a;
   margin-top: 22px;
 }
 .avatar-picker {
@@ -1997,7 +1997,7 @@ dialog::backdrop {
   font-size: 25px;
   font-style: normal;
   line-height: 1;
-  color: #84aaf6;
+  color: #465e8c;
 }
 .welcome-art i {
   right: -10px;
@@ -2013,7 +2013,7 @@ dialog::backdrop {
 }
 .welcome > p {
   font-size: 12px;
-  color: #95a3b9;
+  color: #516079;
   line-height: 1.9;
 }
 .welcome-features {
@@ -2025,7 +2025,7 @@ dialog::backdrop {
 }
 .welcome-features > span {
   font-size: 9px;
-  color: #8497b7;
+  color: #4e5f7d;
   background: #f2f6fd;
   border-radius: 8px;
   padding: 8px;
@@ -2038,7 +2038,7 @@ dialog::backdrop {
 .welcome > small {
   display: block;
   font-size: 9px;
-  color: #a3b0c2;
+  color: #505f77;
   margin-top: 15px;
   line-height: 1.7;
 }
@@ -2083,15 +2083,15 @@ dialog::backdrop {
   align-items: center;
   justify-content: space-between;
   font-size: 11px;
-  color: #637792;
+  color: #4e607b;
   gap: 10px;
 }
 .baseline-row b {
-  color: #4479e8;
+  color: #365ca9;
   font-size: 13px;
 }
 .baseline-row small {
-  color: #a8b4c7;
+  color: #516078;
   font-weight: 500;
   font-size: 9px;
 }
@@ -2125,7 +2125,7 @@ dialog::backdrop {
 }
 .start-summary small {
   display: block;
-  color: #8ea6cd;
+  color: #4c5f7f;
   font-size: 9px;
   margin-top: 5px;
 }
@@ -2134,7 +2134,7 @@ dialog::backdrop {
   align-items: flex-start;
   font-size: 10px;
   line-height: 1.7;
-  color: #9c8056;
+  color: #675e51;
   background: #fff8e9;
   padding: 12px;
   border-radius: 10px;
@@ -2148,7 +2148,7 @@ dialog::backdrop {
   accent-color: var(--blue);
 }
 .form-error {
-  color: #d37575;
+  color: #7b5360;
   font-size: 11px;
   margin-top: 15px;
 }
@@ -2280,7 +2280,7 @@ dialog {
 }
 .month-navigation input {
   font-size: 12px;
-  color: #5576a8;
+  color: #45608b;
   max-width: 200px;
   border: 1px solid #e2e9f5;
   background: white;
@@ -2299,14 +2299,14 @@ dialog {
 }
 .review-state {
   font-size: 10px;
-  color: #8c9cb5;
+  color: #50607a;
   background: #edf2fa;
   padding: 7px 10px;
   border-radius: 8px;
 }
 .review-state.completed {
   background: #edf9f2;
-  color: #42a882;
+  color: #306865;
 }
 .month-hero {
   background: linear-gradient(110deg, #397af5, #2f61e5);
@@ -2332,7 +2332,7 @@ dialog {
   letter-spacing: -1px;
 }
 .month-hero p {
-  color: #c5d9ff;
+  color: #4e5f7d;
   font-size: 11px;
   max-width: 420px;
   margin-top: 10px;
@@ -2353,7 +2353,7 @@ dialog {
   font-style: normal;
   right: -7px;
   top: -10px;
-  color: #b8d3ff;
+  color: #4c5f7f;
 }
 .month-hero-bottom {
   width: 100%;
@@ -2365,17 +2365,17 @@ dialog {
   padding-top: 15px;
   margin-top: 5px;
   font-size: 9px;
-  color: #c2d6fb;
+  color: #4d5e7c;
 }
 .month-hero-bottom b {
-  color: #e1ecff;
+  color: #505f78;
   overflow-wrap: anywhere;
   max-width: 40%;
   font-weight: 650;
 }
 .month-coverage {
   font-size: 10px;
-  color: #8fa0bb;
+  color: #4f5f7a;
   background: #f0f4fb;
   border-radius: 11px;
   padding: 12px 16px;
@@ -2397,7 +2397,7 @@ dialog {
 }
 .month-stat > span {
   font-size: 19px;
-  color: #5483e8;
+  color: #3c5da0;
   background: #eef4ff;
   border-radius: 9px;
   display: flex;
@@ -2415,11 +2415,11 @@ dialog {
 .month-stat strong {
   font-size: 11px;
   font-weight: 650;
-  color: #7387a5;
+  color: #4e607d;
 }
 .month-stat small {
   font-size: 8px;
-  color: #a2afc1;
+  color: #516078;
   line-height: 1.6;
 }
 .month-details {
@@ -2439,7 +2439,7 @@ dialog {
 }
 .calendar-weekdays span {
   text-align: center;
-  color: #a4b1c5;
+  color: #516078;
   font-size: 9px;
 }
 .calendar-day {
@@ -2451,7 +2451,7 @@ dialog {
   justify-content: center;
   position: relative;
   font-size: 10px;
-  color: #94a2b8;
+  color: #516079;
 }
 .calendar-day.active {
   background: #5183ee;
@@ -2460,10 +2460,13 @@ dialog {
 }
 .calendar-day.earned {
   background: #e5eeff;
-  color: #5c83d2;
+  color: #425e97;
 }
 .calendar-day.future {
-  opacity: 0.4;
+  opacity: 1;
+  background: #f8fafc;
+  border: 1px dashed #d9e4ed;
+  color: #65738c;
 }
 .calendar-day i {
   width: 3px;
@@ -2477,7 +2480,7 @@ dialog {
   display: flex;
   gap: 15px;
   font-size: 8px;
-  color: #95a4bd;
+  color: #50607a;
   margin-top: 15px;
   flex-wrap: wrap;
 }
@@ -2503,13 +2506,13 @@ dialog {
   align-items: center;
   justify-content: space-between;
   font-size: 11px;
-  color: #8b9ab2;
+  color: #506079;
   margin-bottom: 9px;
   gap: 10px;
 }
 .xp-breakdown b {
   font-size: 10px;
-  color: #648bea;
+  color: #425e9a;
 }
 .xp-breakdown .progress {
   height: 5px;
@@ -2525,7 +2528,7 @@ dialog {
 }
 .month-empty-copy {
   font-size: 10px;
-  color: #9eacc1;
+  color: #516079;
   margin-top: 24px;
   line-height: 1.8;
 }
@@ -2536,11 +2539,11 @@ dialog {
 }
 .month-average {
   font-size: 14px;
-  color: #b0bdd1;
+  color: #516079;
   white-space: nowrap;
 }
 .month-average b {
-  color: #537fd3;
+  color: #3e5e9a;
 }
 .month-average small {
   font-size: 9px;
@@ -2574,7 +2577,7 @@ dialog {
 .monthly-sphere small {
   display: block;
   font-size: 8px;
-  color: #a1aec2;
+  color: #516078;
   margin-top: 5px;
 }
 .monthly-sphere > span:not(.sphere-icon) {
@@ -2583,12 +2586,12 @@ dialog {
 }
 .monthly-sphere > b {
   font-size: 9px;
-  color: #6089dc;
+  color: #415e96;
   white-space: nowrap;
 }
 .reflection-spark {
   font-size: 28px;
-  color: #b2c9f4;
+  color: #4d5f7f;
 }
 .mood-fieldset {
   border: 0;
@@ -2597,7 +2600,7 @@ dialog {
 }
 .mood-fieldset legend {
   font-size: 12px;
-  color: #6e819f;
+  color: #4e607d;
   font-weight: 700;
   margin-bottom: 12px;
 }
@@ -2622,14 +2625,14 @@ dialog {
 }
 .mood-options small {
   font-size: 9px;
-  color: #93a1b7;
+  color: #505f78;
 }
 .mood-options .selected {
   background: #edf4ff;
   border-color: #8aadf4;
 }
 .mood-options .selected small {
-  color: #427ade;
+  color: #355da5;
 }
 .reflection-fields {
   display: grid;
@@ -2648,14 +2651,14 @@ dialog {
 .reflection-fields small {
   display: block;
   font-size: 9px;
-  color: #a0aec2;
+  color: #516078;
   margin-top: 5px;
   line-height: 1.7;
 }
 .reflection-fields textarea {
   font: inherit;
   background: #f9fbff;
-  color: #556986;
+  color: #4d607d;
   border: 1px solid #e6edf7;
   border-radius: 12px;
   width: 100%;
@@ -2673,7 +2676,7 @@ dialog {
   box-shadow: 0 0 0 3px #f1f5ff;
 }
 .reflection-fields textarea::placeholder {
-  color: #b2bfd1;
+  color: #505f77;
   font-size: 10px;
 }
 .reflection-save {
@@ -2687,12 +2690,12 @@ dialog {
 }
 .reflection-save > span {
   font-size: 9px;
-  color: #94a7c6;
+  color: #4e607c;
   line-height: 1.8;
 }
 .reflection-note {
   font-size: 9px;
-  color: #a9b5c8;
+  color: #516078;
   margin-top: 15px;
   line-height: 1.8;
 }
@@ -2708,7 +2711,7 @@ dialog {
   width: 100%;
   border-radius: 12px;
   background: #f6f9ff;
-  color: #6a86b3;
+  color: #496085;
   text-align: left;
 }
 .more-menu > button:hover {
@@ -2965,7 +2968,7 @@ dialog {
   background: #fff;
   border: 1px solid #d7e4fc;
   border-radius: 10px;
-  color: #3267ed;
+  color: #2d58c1;
   font-size: 11px;
   font-weight: 700;
 }
@@ -2987,25 +2990,25 @@ dialog {
   padding: 7px 10px;
   border-radius: 8px;
   background: #edf4ff;
-  color: #4975c5;
+  color: #3b5e9d;
   font-size: 10px;
 }
 .goal-dates-summary {
   display: grid;
   gap: 10px;
   margin: 18px 0;
-  color: #7b90b0;
+  color: #4e607e;
   font-size: 11px;
 }
 .goal-dates-summary span {
-  color: #5881c8;
+  color: #405f94;
 }
 .goal-plan-button {
   width: 100%;
 }
 .overdue-pill {
   background: #fff0e5;
-  color: #b47431;
+  color: #77583c;
 }
 .goal-plan-hero,
 .life-plan-intro {
@@ -3024,7 +3027,7 @@ dialog {
   position: absolute;
   right: 25px;
   top: 0;
-  color: #d7e8ff;
+  color: #50607a;
   font-size: 150px;
   pointer-events: none;
 }
@@ -3039,7 +3042,7 @@ dialog {
 .goal-plan-hero p {
   font-size: 12px;
   line-height: 1.8;
-  color: #7b90ad;
+  color: #4e607c;
   max-width: 480px;
   position: relative;
   z-index: 1;
@@ -3067,7 +3070,7 @@ dialog {
   flex-wrap: wrap;
   gap: 12px;
   font-size: 11px;
-  color: #7490b9;
+  color: #4a6082;
   margin-top: 20px;
   line-height: 1.8;
 }
@@ -3075,7 +3078,7 @@ dialog {
   border-radius: 8px;
   background: #e1edff;
   padding: 1px 8px;
-  color: #4878d4;
+  color: #395da1;
 }
 .goal-plan-progress {
   display: flex;
@@ -3085,10 +3088,10 @@ dialog {
 }
 .goal-plan-progress > b {
   font-size: 40px;
-  color: #3267ed;
+  color: #2d58c1;
 }
 .goal-plan-progress small {
-  color: #7791ba;
+  color: #4b6081;
 }
 .goal-plan-controls {
   grid-column: 1 / -1;
@@ -3107,7 +3110,7 @@ dialog {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  color: #8090aa;
+  color: #50607a;
   font-size: 11px;
   line-height: 1.8;
 }
@@ -3147,7 +3150,7 @@ dialog {
 .planned-task small {
   font-size: 10px;
   display: block;
-  color: #8a9bb4;
+  color: #50607a;
   line-height: 1.8;
   margin-top: 3px;
 }
@@ -3157,10 +3160,10 @@ dialog {
 }
 .planned-task.completed strong {
   text-decoration: line-through;
-  color: #97a6bb;
+  color: #516079;
 }
 .planned-task .transfer-label {
-  color: #5e8f88;
+  color: #42646d;
 }
 .add-stage-task {
   margin-top: 18px;
@@ -3171,12 +3174,12 @@ dialog {
   flex-wrap: wrap;
   align-items: center;
   margin: 24px 0;
-  color: #8091af;
+  color: #4f607c;
   font-size: 12px;
 }
 .goal-plan-footer .delete-goal {
   margin-left: auto;
-  color: #b27e83;
+  color: #6d5969;
 }
 .plan-toolbar {
   display: flex;
@@ -3199,7 +3202,7 @@ dialog {
   border-radius: 10px;
   padding: 9px;
   background: #fff;
-  color: #5d7aaa;
+  color: #475f88;
   font-size: 12px;
   min-width: 0;
 }
@@ -3217,12 +3220,12 @@ dialog {
 }
 .planning-stats b {
   display: block;
-  color: #3267ed;
+  color: #2d58c1;
   font-size: 25px;
   margin-bottom: 8px;
 }
 .planning-stats span {
-  color: #8598b5;
+  color: #4e607c;
   font-size: 10px;
   line-height: 1.6;
   display: block;
@@ -3253,7 +3256,7 @@ dialog {
   display: block;
 }
 .plan-goal-row small {
-  color: #8397b5;
+  color: #4e5f7c;
   font-size: 10px;
   line-height: 1.8;
   display: block;
@@ -3263,23 +3266,23 @@ dialog {
   height: 4px;
 }
 .plan-goal-row > b {
-  color: #5784d9;
+  color: #3e5e99;
   font-size: 13px;
 }
 .plan-goal-row > svg {
   flex-shrink: 0;
-  color: #6e93d7;
+  color: #455f8d;
 }
 .plan-empty {
   font-size: 12px;
   line-height: 1.8;
-  color: #8a9bb8;
+  color: #4f5f7b;
   padding: 15px 0;
 }
 .planned-day h3 {
   font-size: 11px;
   font-weight: 600;
-  color: #5e7dac;
+  color: #466087;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin: 25px 0 0;
@@ -3289,7 +3292,7 @@ dialog {
   display: flex !important;
   gap: 8px;
   align-items: center;
-  color: #8396b3;
+  color: #4f607c;
   font-size: 11px;
 }
 .show-done input,
@@ -3331,7 +3334,7 @@ dialog {
   padding: 12px;
   border-radius: 10px;
   margin-top: 16px;
-  color: #5680bd;
+  color: #40608f;
 }
 @media (max-width: 700px) {
   .life-plan-intro,
@@ -3427,7 +3430,7 @@ dialog {
 .ticktick-account small {
   display: block;
   font-size: 10px;
-  color: #7c91b1;
+  color: #4e607e;
   margin-top: 12px;
 }
 .ticktick-account .transfer-message {
@@ -3444,6 +3447,6 @@ dialog {
   margin-top: 12px;
 }
 .sphere-list-mapping > span {
-  color: #526a91;
+  color: #496084;
   font-weight: 600;
 }

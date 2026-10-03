@@ -34,6 +34,7 @@ export default function GoalsBoard({
   onSelect,
   onNew,
   onNotify,
+  backLabel = '← Все цели',
 }: {
   state: GameState;
   onChange: Dispatch<SetStateAction<GameState>>;
@@ -41,6 +42,7 @@ export default function GoalsBoard({
   onSelect: (id: string | null) => void;
   onNew: () => void;
   onNotify: (message: string) => void;
+  backLabel?: string;
 }) {
   const [goalFilter, setGoalFilter] = useState('active');
   const [editor, setEditor] = useState<Editor | null>(null);
@@ -151,7 +153,7 @@ export default function GoalsBoard({
               className="text-button back-link"
               onClick={() => onSelect(null)}
             >
-              ← Все цели
+              {backLabel}
             </button>
           )}
         </div>
@@ -479,6 +481,15 @@ export default function GoalsBoard({
         </>
       )}
       <dialog
+        aria-label={
+          editor?.kind === 'stage'
+            ? 'Настройка этапа'
+            : editor?.kind === 'task'
+              ? 'Настройка задачи'
+              : editor?.kind === 'transfer'
+                ? 'Подключение TickTick'
+                : 'Настройка цели'
+        }
         ref={dialog}
         onCancel={() => setEditor(null)}
         onClick={(e) => {

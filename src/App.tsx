@@ -3,6 +3,8 @@ import type { CSSProperties, FormEvent } from 'react';
 import Icon from './components/Icon';
 import GameArt from './components/GameArt';
 import Avatar from './components/Avatar';
+import DataBackup from './components/DataBackup';
+import { stateStorageKey, recoveryStorageKey } from './backup';
 import {
   SphereBuilding,
   SphereDistricts,
@@ -24,6 +26,9 @@ import {
   dateKey,
   difficulties,
   loadState,
+  getStorageProblem,
+  clearStorageProblem,
+  questsForToday,
   playerProgress,
   spheres,
   streak,
@@ -45,18 +50,30 @@ const navigation = [
   { id: 'profile', label: 'Профиль', icon: 'profile' },
 ];
 const mobileIds = ['home', 'goals', 'quests', 'statistics', 'profile'];
-function Progress({ value, color }: { value: number; color?: string }) {
+function Progress({
+  value,
+  color,
+  label = 'Прогресс',
+}: {
+  value: number;
+  color?: string;
+  label?: string;
+}) {
+  const progress = Number.isFinite(value)
+    ? Math.min(100, Math.max(0, value))
+    : 0;
   return (
     <div
       className="progress"
       role="progressbar"
-      aria-valuenow={Math.round(value)}
+      aria-label={label}
+      aria-valuenow={Math.round(progress)}
       aria-valuemin={0}
       aria-valuemax={100}
     >
       <span
         style={{
-          width: `${Math.min(100, Math.max(0, value))}%`,
+          width: `${progress}%`,
           background: color,
         }}
       />
@@ -72,6 +89,8 @@ export default function App() {
   const [page, setPage] = useState(() =>
     location.hash.startsWith('#ticktick=') ? 'plan' : 'home',
   );
+  const [goalOrigin, setGoalOrigin] = useState<string | null>(null);
+  const [today, setToday] = useState(dateKey);
   const [focusedGoalId, setFocusedGoalId] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [modal, setModal] = useState<
@@ -92,12 +111,23 @@ export default function App() {
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
+    if (getStorageProblem()) return;
     try {
-      localStorage.setItem('play-your-life-v1', JSON.stringify(state));
+      localStorage.setItem(stateStorageKey, JSON.stringify(state));
+      queueMicrotask(() => setStorageError(false));
     } catch {
       queueMicrotask(() => setStorageError(true));
     }
   }, [state]);
+  useEffect(() => {
+    const timer = setInterval(() => setToday(dateKey()), 30000);
+    const visible = () => setToday(dateKey());
+    document.addEventListener('visibilitychange', visible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', visible);
+    };
+  }, []);
   useEffect(() => {
     if (modal) dialog.current?.showModal();
     else dialog.current?.close();
@@ -118,6 +148,7 @@ export default function App() {
     setSelected(null);
     setSphereTab('projects');
     setFocusedGoalId(null);
+    setGoalOrigin(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   function finish(q: Quest) {
@@ -128,12 +159,7 @@ export default function App() {
   }
   const unlocked = achievements.filter((a) => a.unlocked(state)).length;
   const active = state.quests.filter((q) => !q.done);
-  const today = dateKey();
-  const todayTasks = state.quests.filter((q) => {
-    const start = q.startsAt ?? q.dueAt;
-    if (start && dateKey(new Date(start)) > today) return false;
-    return !q.done || !q.dueAt || dateKey(new Date(q.dueAt)) >= today;
-  });
+  const todayTasks = questsForToday(state, new Date(`${today}T12:00:00`));
   const lifeScore = (
     spheres.reduce((sum, s) => sum + state.spheres[s.id].score, 0) /
     spheres.length
@@ -175,6 +201,24 @@ export default function App() {
         <div className="quest-info">
           <strong>{quest.name}</strong>
           <small>{info.name}</small>
+          {(quest.dueAt || quest.startsAt) && (
+            <small
+              className={`quest-deadline ${!quest.done && quest.dueAt && new Date(quest.dueAt) < new Date() ? 'is-overdue' : ''}`}
+            >
+              {!quest.done && quest.dueAt && new Date(quest.dueAt) < new Date()
+                ? 'Срок прошёл · '
+                : ''}
+              {new Date(quest.dueAt ?? quest.startsAt!).toLocaleString(
+                'ru-RU',
+                {
+                  day: 'numeric',
+                  month: 'short',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                },
+              )}
+            </small>
+          )}
         </div>
         <span className="xp-tag">+{quest.xp} XP</span>
         <button
@@ -223,7 +267,11 @@ export default function App() {
           <span>{data.xp % 200} / 200 XP</span>
           <Icon name="arrow" size={15} />
         </div>
-        <Progress value={(data.xp % 200) / 2} color={info.color} />
+        <Progress
+          value={(data.xp % 200) / 2}
+          color={info.color}
+          label={`Развитие: ${info.name}`}
+        />
         <div className="sphere-score">
           <span>
             Life Score{' '}
@@ -406,6 +454,17 @@ export default function App() {
                 })}
               </span>
             </div>
+            {getStorageProblem() && (
+              <div className="storage-warning" role="alert">
+                {getStorageProblem()}{' '}
+                <button
+                  className="text-button"
+                  onClick={() => navigate('profile')}
+                >
+                  Открыть восстановление
+                </button>
+              </div>
+            )}
             {storageError && (
               <div className="storage-warning">
                 Браузер не разрешает сохранять данные. Прогресс доступен до
@@ -474,7 +533,10 @@ export default function App() {
                         <div className="level-label">LEVEL {currentLevel}</div>
                         <h2>{levelTitle}</h2>
                         <p>{state.profile.name}</p>
-                        <Progress value={levelProgress} />
+                        <Progress
+                          value={levelProgress}
+                          label="XP до следующего уровня"
+                        />
                         <div className="hero-progress-label">
                           <b>
                             {state.profile.mode === 'personal'
@@ -538,6 +600,7 @@ export default function App() {
                       </b>
                     </div>
                     <Progress
+                      label={`Цель: ${mainGoal?.name ?? 'Главная цель'}`}
                       value={
                         mainGoal
                           ? (mainGoal.current / mainGoal.target) * 100
@@ -664,6 +727,7 @@ export default function App() {
                       </span>
                     </div>
                     <Progress
+                      label={`Развитие: ${sphere.name}`}
                       value={(state.spheres[sphere.id].xp % 200) / 2}
                       color={sphere.color}
                     />
@@ -772,6 +836,7 @@ export default function App() {
                     onOpen={(goal) => {
                       navigate('goals');
                       setFocusedGoalId(goal.id);
+                      setGoalOrigin(sphere.id);
                     }}
                     onTemplate={(name, description) => {
                       setState((current) =>
@@ -810,7 +875,10 @@ export default function App() {
                           <GameArt kind="target" />
                         </span>
                         <h3>{g.name}</h3>
-                        <Progress value={(g.current / g.target) * 100} />
+                        <Progress
+                          value={(g.current / g.target) * 100}
+                          label={`Цель: ${g.name}`}
+                        />
                         <p>{Math.round((g.current / g.target) * 100)}%</p>
                       </button>
                     ))}
@@ -896,7 +964,10 @@ export default function App() {
                     <small>
                       LEVEL {currentLevel} · {state.xp} XP
                     </small>
-                    <Progress value={levelProgress} />
+                    <Progress
+                      value={levelProgress}
+                      label="XP до следующего уровня"
+                    />
                   </div>
                   <button
                     className="icon-button"
@@ -942,6 +1013,23 @@ export default function App() {
                     <Icon name="arrow" size={17} />
                   </button>
                 </section>
+                <DataBackup
+                  state={state}
+                  connected={!!tickTick.connection}
+                  onNotify={notify}
+                  onRestore={(next) => {
+                    if (tickTick.connection)
+                      throw new Error('Сначала отключи TickTick');
+                    const current = localStorage.getItem(stateStorageKey);
+                    if (current)
+                      localStorage.setItem(recoveryStorageKey, current);
+                    localStorage.setItem(stateStorageKey, JSON.stringify(next));
+                    clearStorageProblem();
+                    setState(next);
+                    setStorageError(false);
+                    navigate('home');
+                  }}
+                />
                 <button
                   className="secondary-button"
                   onClick={() => navigate('plan')}
@@ -971,7 +1059,7 @@ export default function App() {
                   </div>
                 </div>
                 <section className="panel">
-                  {state.quests
+                  {(filter === 'today' ? todayTasks : state.quests)
                     .filter(
                       (q) =>
                         filter === 'all' ||
@@ -1057,7 +1145,18 @@ export default function App() {
                 state={state}
                 onChange={setState}
                 selectedId={focusedGoalId}
-                onSelect={setFocusedGoalId}
+                backLabel={
+                  goalOrigin
+                    ? `← Проекты: ${spheres.find((s) => s.id === goalOrigin)?.name}`
+                    : undefined
+                }
+                onSelect={(id) => {
+                  if (id === null && goalOrigin) {
+                    const origin = goalOrigin;
+                    navigate('spheres');
+                    setSelected(origin);
+                  } else setFocusedGoalId(id);
+                }}
                 onNew={() => setModal('goal')}
                 onNotify={notify}
               />
@@ -1225,6 +1324,7 @@ export default function App() {
                         <p>{a.description}</p>
                         <div className="achievement-progress">
                           <Progress
+                            label={`Достижение: ${a.name}`}
                             value={
                               a.unlocked(state)
                                 ? 100
@@ -1275,6 +1375,17 @@ export default function App() {
             ))}
         </nav>
         <dialog
+          aria-label={
+            modal === 'quest'
+              ? 'Создание квеста'
+              : modal === 'goal'
+                ? 'Создание цели'
+                : modal === 'profile'
+                  ? 'Настройки персонажа'
+                  : modal === 'streak'
+                    ? 'Награды за активность'
+                    : 'Начало личной игры'
+          }
           className={modal === 'quest' ? 'quest-creation-dialog' : undefined}
           ref={dialog}
           onCancel={(event) => {

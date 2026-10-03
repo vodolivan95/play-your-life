@@ -319,6 +319,11 @@ export default function LifePlanner({
         </section>
       )}
       <dialog
+        aria-label={
+          editor?.kind === 'task'
+            ? 'Планирование задачи'
+            : 'Подключение TickTick'
+        }
         ref={dialog}
         onCancel={() => setEditor(null)}
         onClick={(e) => {

@@ -174,7 +174,11 @@ export default function Onboarding({
     );
   return (
     <form onSubmit={next} className="onboarding-form">
-      <div className="onboarding-steps" aria-label={`Шаг ${step} из 3`}>
+      <div
+        className="onboarding-steps"
+        role="group"
+        aria-label={`Шаг ${step} из 3`}
+      >
         {[1, 2, 3].map((n) => (
           <span key={n} className={n <= step ? 'active' : ''} />
         ))}

@@ -11,7 +11,7 @@
   justify-content: space-between;
   gap: 12px;
   margin: 0 2px 12px;
-  color: #658098;
+  color: #4a617a;
 }
 .districts-heading > span {
   font-size: 10px;
@@ -76,7 +76,7 @@
 }
 .district-caption span {
   font-size: 11px;
-  color: #5d7286;
+  color: #4d6177;
 }
 .district-meter {
   height: 5px;
@@ -114,7 +114,7 @@
   padding: 12px;
   font-size: 11px;
   font-weight: 700;
-  color: #367f7c;
+  color: #2f676d;
 }
 .screen-sphere-detail .detail-grid > .panel {
   min-width: 0;
@@ -177,7 +177,7 @@
 }
 .project-heading p {
   font-size: 11px;
-  color: #7b8ba0;
+  color: #506078;
   margin: 0;
   line-height: 1.6;
 }
@@ -190,7 +190,7 @@
 .project-tags span {
   padding: 4px 8px;
   background: #f0f5f9;
-  color: #7a8b9f;
+  color: #506078;
   border-radius: 6px;
   font-size: 10px;
 }
@@ -212,7 +212,7 @@
 }
 .project-numbers small {
   font-size: 10px;
-  color: #8b98aa;
+  color: #516077;
 }
 .project-numbers strong {
   font-size: 21px;
@@ -223,10 +223,10 @@
 }
 .project-numbers span {
   font-size: 10px;
-  color: #718499;
+  color: #4e6077;
 }
 .project-numbers .xp-tag {
-  color: #2297e7;
+  color: #216297;
 }
 .project-footer {
   display: flex;
@@ -237,7 +237,7 @@
 }
 .project-footer > span {
   font-size: 10px;
-  color: #8c99ab;
+  color: #526077;
 }
 .project-footer .primary-button {
   padding: 7px 12px;
@@ -285,7 +285,7 @@
 }
 .district-empty p {
   font-size: 12px;
-  color: #7d92a5;
+  color: #4e6077;
   line-height: 1.7;
 }
 .sphere-card > .sphere-building {
@@ -404,7 +404,7 @@
 .project-menu {
   border: 0;
   background: transparent;
-  color: #7c8da0;
+  color: #506077;
   font-size: 22px;
   padding: 0 2px;
   line-height: 1;
@@ -456,7 +456,7 @@
 }
 .project-result > span {
   font-size: 8px;
-  color: #8a98ac;
+  color: #516078;
 }
 .project-numbers .progress {
   height: 7px;
@@ -497,7 +497,7 @@
 .project-task-dots > small,
 .project-deadline {
   font-size: 9px;
-  color: #97a7b8;
+  color: #506077;
 }
 .project-deadline {
   margin-top: 8px;
@@ -537,7 +537,7 @@
   justify-content: center;
   gap: 8px;
   padding: 18px;
-  color: #259bdc;
+  color: #226391;
   cursor: pointer;
 }
 .project-add-tile strong {
@@ -545,7 +545,7 @@
 }
 .project-add-tile small {
   font-size: 10px;
-  color: #94a6b7;
+  color: #506077;
 }
 .project-template {
   min-height: 145px;

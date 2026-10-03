@@ -1,3 +1,4 @@
+import { validateState } from './stateValidation.ts';
 export const spheres = [
   {
     id: 'health',
@@ -102,6 +103,7 @@ export type Quest = {
   sphere: string;
   xp: number;
   done: boolean;
+  completedAt?: string;
   difficulty: string;
   goalId?: string;
   stageId?: string;
@@ -315,6 +317,20 @@ export function streak(dates: string[], now = new Date()) {
   }
   return count;
 }
+export function longestStreak(dates: string[], now = new Date()) {
+  const days = [...new Set(dates)].filter((day) => day <= dateKey(now)).sort();
+  let best = 0,
+    count = 0,
+    previous = '';
+  for (const day of days) {
+    const next = new Date(`${previous}T12:00:00`);
+    next.setDate(next.getDate() + 1);
+    count = previous && dateKey(next) === day ? count + 1 : 1;
+    best = Math.max(best, count);
+    previous = day;
+  }
+  return best;
+}
 export function initialState(): GameState {
   return {
     version: 1,
@@ -427,7 +443,11 @@ export function completeQuest(state: GameState, id: string): GameState {
     ...next,
     completed: next.completed + 1,
     coins: next.coins + Math.ceil(quest.xp / 5),
-    quests: next.quests.map((q) => (q.id === id ? { ...q, done: true } : q)),
+    quests: next.quests.map((q) =>
+      q.id === id
+        ? { ...q, done: true, completedAt: new Date().toISOString() }
+        : q,
+    ),
   };
   const today = dateKey();
   if (!next.activeDates.includes(today))
@@ -520,30 +540,67 @@ export function updateGoal(
   );
   return next;
 }
+let storageProblem = '';
+let recoveryRaw = '';
+export function getStorageProblem() {
+  return storageProblem;
+}
+export function getRecoveryRaw() {
+  return recoveryRaw;
+}
+export function clearStorageProblem() {
+  storageProblem = '';
+  recoveryRaw = '';
+}
 export function loadState(): GameState {
+  storageProblem = '';
+  recoveryRaw = '';
   try {
-    const value = JSON.parse(
-      localStorage.getItem('play-your-life-v1') || 'null',
-    );
-    if (
-      value?.version === 1 &&
-      typeof value.xp === 'number' &&
-      Array.isArray(value.quests) &&
-      Array.isArray(value.goals) &&
-      Array.isArray(value.events) &&
-      Array.isArray(value.activeDates) &&
-      Array.isArray(value.streakClaims) &&
-      spheres.every(
-        (s) =>
-          value.spheres?.[s.id] &&
-          typeof value.spheres[s.id].highScore === 'number',
-      )
-    )
-      return migrateState(value);
+    const raw = localStorage.getItem('play-your-life-v1');
+    if (!raw) return initialState();
+    recoveryRaw = raw;
+    const value: unknown = JSON.parse(raw);
+    validateState(value);
+    recoveryRaw = '';
+    return migrateState(value);
   } catch {
-    /* Use a playable demo if storage is unavailable. */
+    if (recoveryRaw) {
+      storageProblem =
+        'Сохранённую игру не удалось прочитать. Исходные данные не перезаписаны. Открой профиль, чтобы скачать их или восстановить резервную копию.';
+    }
   }
-  return initialState();
+  const fallback = initialState();
+  if (storageProblem) fallback.profile.onboardingComplete = true;
+  return fallback;
+}
+export function questsForToday(state: GameState, now = new Date()): Quest[] {
+  const today = dateKey(now);
+  return state.quests
+    .filter((q) => {
+      if (q.done) {
+        const completedAt =
+          q.completedAt ??
+          state.events.find(
+            (e) =>
+              (e.kind === 'quest' || e.kind === undefined) &&
+              e.title === q.name &&
+              e.sphere === q.sphere,
+          )?.date;
+        return !!completedAt && dateKey(new Date(completedAt)) === today;
+      }
+      const start = q.startsAt ?? q.dueAt;
+      return !start || dateKey(new Date(start)) <= today;
+    })
+    .sort((a, b) => {
+      if (a.done !== b.done) return Number(a.done) - Number(b.done);
+      const priority = { high: 0, normal: 1, low: 2 };
+      const diff =
+        priority[a.priority ?? 'normal'] - priority[b.priority ?? 'normal'];
+      if (diff) return diff;
+      return (a.dueAt ?? a.startsAt ?? '9999').localeCompare(
+        b.dueAt ?? b.startsAt ?? '9999',
+      );
+    });
 }
 export const achievements = [
   {
@@ -557,8 +614,8 @@ export const achievements = [
     name: 'В ритме',
     icon: '🔥',
     description: 'Будь активен 3 дня подряд',
-    unlocked: (s: GameState) => streak(s.activeDates) >= 3,
-    progress: (s: GameState) => Math.min(1, streak(s.activeDates) / 3),
+    unlocked: (s: GameState) => longestStreak(s.activeDates) >= 3,
+    progress: (s: GameState) => Math.min(1, longestStreak(s.activeDates) / 3),
   },
   {
     name: 'На волне',
@@ -589,12 +646,12 @@ export const achievements = [
     progress: (s: GameState) =>
       Math.min(
         1,
-        Math.max(0, ...Object.values(s.spheres).map((sp) => sp.score)) / 9,
+        Math.max(0, ...Object.values(s.spheres).map((sp) => sp.highScore)) / 9,
       ),
     name: 'Личный стандарт',
     icon: '💎',
     description: 'Достигни Life Score 9',
     unlocked: (s: GameState) =>
-      Object.values(s.spheres).some((v) => v.score === 9),
+      Object.values(s.spheres).some((v) => v.highScore === 9),
   },
 ];

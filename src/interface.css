@@ -1,7 +1,7 @@
 /* Shared light game interface. Layout adaptations live below component styles. */
 :root {
   --blue: #079ced;
-  --muted: #7c91a5;
+  --muted: #4e6078;
   --border: #eaf2f7;
   color: #23394d;
   background: #f0f8fc;
@@ -33,7 +33,7 @@ body {
   display: none;
 }
 .brand small {
-  color: #7795ae;
+  color: #4a607b;
 }
 .nav-caption {
   margin-top: 30px;
@@ -49,7 +49,7 @@ body {
 }
 .nav-item.active {
   background: #e3f5ff;
-  color: #008bdc;
+  color: #0e639c;
   box-shadow: none;
 }
 .sidebar-message {
@@ -68,7 +68,7 @@ body {
   padding: 0 30px;
 }
 .topbar-label {
-  color: #66879d;
+  color: #476179;
 }
 .topbar-actions {
   gap: 14px;
@@ -104,7 +104,7 @@ h3 {
 }
 .date-label {
   background: transparent;
-  color: #8ba0b1;
+  color: #4e6077;
   font-size: 11px;
 }
 .panel,
@@ -144,15 +144,15 @@ h3 {
   background: #eaf6fe;
   border-color: #d7ecf9;
   border-radius: 12px;
-  color: #2882b4;
+  color: #25648e;
 }
 .text-button,
 .all-link {
-  color: #1993cc;
+  color: #1c648f;
   font-size: 12px;
 }
 .icon-button {
-  color: #7990a1;
+  color: #4d6177;
 }
 .progress {
   height: 6px;
@@ -169,7 +169,7 @@ h3 {
 }
 .tabs button {
   background: transparent;
-  color: #8a9cac;
+  color: #4f6076;
   border-radius: 9px;
   font-size: 12px;
   padding: 9px 16px;
@@ -250,7 +250,7 @@ h3 {
   min-width: 0;
 }
 .level-label {
-  color: #0d9ae7;
+  color: #176396;
   letter-spacing: 0.8px;
   font-size: 11px;
 }
@@ -261,7 +261,7 @@ h3 {
   margin: 3px 0;
 }
 .player-content p {
-  color: #7892a5;
+  color: #4c6178;
   font-size: 11px;
   margin: 0 0 10px;
 }
@@ -274,11 +274,11 @@ h3 {
 }
 .hero-progress-label {
   margin: 6px 0 0;
-  color: #91a6b8;
+  color: #4e6078;
 }
 .hero-progress-label b,
 .hero-progress-label b span {
-  color: #88a0b3;
+  color: #4d6078;
   font-size: 10px;
   font-weight: 500;
 }
@@ -301,7 +301,7 @@ h3 {
 }
 .player-rewards small {
   display: block;
-  color: #92a7b6;
+  color: #4e6076;
   font-size: 10px;
   margin-top: 5px;
 }
@@ -316,7 +316,7 @@ h3 {
 .card-kicker {
   font-size: 11px;
   margin-bottom: 16px;
-  color: #678499;
+  color: #496178;
 }
 .goal-art {
   position: absolute;
@@ -348,7 +348,7 @@ h3 {
   display: none;
 }
 .goal-progress-label {
-  color: #8b9eac;
+  color: #4f6076;
   font-size: 11px;
   margin-bottom: 7px;
 }
@@ -384,7 +384,7 @@ h3 {
   line-height: 1.4;
 }
 .quest-info small {
-  color: #96a6b2;
+  color: #506075;
   font-size: 10px;
   margin-top: 3px;
 }
@@ -392,7 +392,7 @@ h3 {
   margin: 0 4px;
 }
 .xp-tag {
-  color: #258dc2;
+  color: #23648e;
   background: transparent;
   font-size: 10px;
   white-space: nowrap;
@@ -409,7 +409,7 @@ h3 {
 }
 .check-button:hover {
   border-color: #0ca7f1;
-  color: #0ca7f1;
+  color: #176494;
   background: #edfaff;
 }
 .check-button.checked {
@@ -456,7 +456,7 @@ h3 {
 .level-chip {
   font-size: 9px;
   background: transparent;
-  color: #94aabd;
+  color: #4d6077;
   padding: 3px;
 }
 .sphere-card h3 {
@@ -466,7 +466,7 @@ h3 {
 }
 .sphere-xp {
   font-size: 9px;
-  color: #a1b2bf;
+  color: #506076;
   margin-bottom: 8px;
 }
 .sphere-score {
@@ -495,7 +495,7 @@ h3 {
 }
 .balance-banner p {
   font-size: 11px;
-  color: #7e9bac;
+  color: #4b6178;
 }
 .sphere-tabs {
   margin-bottom: 18px;
@@ -511,7 +511,7 @@ h3 {
   padding: 20px;
 }
 .score-big {
-  color: #069ee8;
+  color: #146495;
 }
 .score-selector {
   gap: 6px;
@@ -519,14 +519,14 @@ h3 {
 .score-selector button {
   border-radius: 10px;
   background: #f1f7fb;
-  color: #718b9e;
+  color: #4c6178;
 }
 .score-selector button.selected {
   background: #0b9fee;
   color: #fff;
 }
 .score-note {
-  color: #90a5b4;
+  color: #4e6076;
   background: #f3f9fd;
   font-size: 10px;
   padding: 10px;
@@ -597,7 +597,7 @@ h3 {
   width: 100%;
   background: #e9f6ff;
   box-shadow: none;
-  color: #1394d3;
+  color: #196492;
   font-size: 11px;
   min-height: 36px;
 }
@@ -607,7 +607,7 @@ h3 {
 }
 .mini-pill {
   background: #eef8ff;
-  color: #749bb2;
+  color: #47617a;
   font-size: 9px;
 }
 .goal-plan-hero,
@@ -665,12 +665,12 @@ h3 {
 }
 .profile-hero strong {
   display: block;
-  color: #7592a5;
+  color: #4a6178;
   font-size: 12px;
 }
 .profile-hero small {
   display: block;
-  color: #149ddf;
+  color: #1a6492;
   font-size: 10px;
   margin: 6px 0 10px;
 }
@@ -688,7 +688,7 @@ h3 {
   padding: 16px 0;
   border-bottom: 1px solid #eff5fa;
   background: transparent;
-  color: #7490a4;
+  color: #4b6178;
   text-align: left;
 }
 .profile-menu button:last-child {
@@ -707,7 +707,7 @@ h3 {
   margin-top: 0;
 }
 .xp-chart-card > small {
-  color: #829bac;
+  color: #4d6178;
   font-size: 11px;
 }
 .xp-chart-card h2 {
@@ -716,7 +716,7 @@ h3 {
 }
 .xp-chart-card h2 small {
   font-size: 12px;
-  color: #7e9aac;
+  color: #4b6178;
 }
 .xp-chart {
   display: flex;
@@ -747,12 +747,12 @@ h3 {
 .xp-bar-column > small {
   position: absolute;
   bottom: -19px;
-  color: #8ca1b1;
+  color: #4d5f76;
   font-size: 10px;
 }
 .chart-empty {
   font-size: 10px;
-  color: #96a9b8;
+  color: #4f6077;
   margin-top: 12px;
 }
 .statistics-summary {
@@ -762,14 +762,14 @@ h3 {
   margin: 16px 0;
 }
 .statistics-summary small {
-  color: #8ca0b1;
+  color: #4e6077;
 }
 .statistics-summary h2 {
   margin-top: 10px;
   font-size: 24px;
 }
 .statistics-summary h2 span {
-  color: #31bf85;
+  color: #276962;
   font-size: 16px;
 }
 .development-row {
@@ -792,7 +792,7 @@ h3 {
   font-size: 10px;
   width: 55px;
   text-align: right;
-  color: #869dab;
+  color: #4e6176;
 }
 .compact-statistics .page-toolbar {
   display: none;
@@ -834,7 +834,7 @@ h3 {
 }
 .tree-root small {
   font-size: 9px;
-  color: #55a4cc;
+  color: #376384;
 }
 .tree-root:after {
   content: '';
@@ -888,7 +888,7 @@ h3 {
 .tree-map-node small {
   font-size: 9px;
   margin-top: 4px;
-  color: #87a4b9;
+  color: #4b6179;
 }
 .tree-map-node:hover > span {
   box-shadow:
@@ -903,7 +903,7 @@ h3 {
 }
 .skill-node.open > span {
   background: #e3f6ff;
-  color: #0a9bdd;
+  color: #156493;
 }
 .achievement-tabs {
   margin-bottom: 18px;
@@ -945,7 +945,7 @@ h3 {
 .achievement p {
   grid-column: 2;
   font-size: 11px;
-  color: #8ba0b1;
+  color: #4e6077;
 }
 .achievement .mini-pill {
   position: absolute;
@@ -956,7 +956,7 @@ h3 {
   padding: 0;
 }
 .footer {
-  color: #a4b8c5;
+  color: #4e6076;
   font-size: 9px;
   padding: 25px 0 0;
 }
@@ -1038,14 +1038,14 @@ form textarea {
 }
 .difficulty-picker span {
   font-size: 11px;
-  color: #728a9d;
+  color: #4c6177;
 }
 .quest-xp-preview {
   margin: 20px 0;
 }
 .quest-xp-preview small {
   display: block;
-  color: #829bae;
+  color: #4c6078;
 }
 .quest-xp-preview b {
   display: block;
@@ -1056,12 +1056,12 @@ form textarea {
 .toast {
   background: #fff;
   border: 1px solid #bee7fb;
-  color: #087dc1;
+  color: #106399;
   box-shadow: 0 6px 25px #198ccc20;
   border-radius: 15px;
 }
 .toast > span {
-  color: #f3c635;
+  color: #646044;
 }
 @media (min-width: 1241px) {
   .sidebar {
@@ -1119,7 +1119,7 @@ form textarea {
   }
   .mobile-brand small {
     font-size: 9px;
-    color: #6d97b4;
+    color: #45617d;
   }
   .topbar-label,
   .coin-balance {
@@ -1563,7 +1563,7 @@ form textarea {
     padding: 0;
     gap: 5px;
     border-radius: 0;
-    color: #8ca8ba;
+    color: #4c6179;
     background: transparent;
   }
   .mobile-nav button span {
@@ -1571,7 +1571,7 @@ form textarea {
     white-space: nowrap;
   }
   .mobile-nav button.active {
-    color: #049ceb;
+    color: #136396;
     background: transparent;
   }
   .mobile-nav button.active:before {
@@ -1611,7 +1611,7 @@ form textarea {
 .goal-controls {
   clear: both;
   margin: 14px 0 0;
-  color: #8a9fae;
+  color: #4e6076;
   font-size: 10px;
 }
 .goal-controls summary {
@@ -1709,7 +1709,7 @@ form textarea {
   display: block;
   font-size: 10px;
   margin-top: 5px;
-  color: #39b592;
+  color: #2a6869;
 }
 .sphere-coefficient {
   margin-left: auto;
@@ -1723,7 +1723,7 @@ form textarea {
   font-size: 22px;
 }
 .sphere-coefficient small {
-  color: #8ba3b5;
+  color: #4d6078;
   font-size: 9px;
 }
 .sphere-coefficient strong {
@@ -1732,7 +1732,7 @@ form textarea {
 .score-editor summary {
   cursor: pointer;
   font-size: 11px;
-  color: #2c9dcf;
+  color: #26648a;
   padding: 7px 0;
 }
 .score-editor .score-selector {
@@ -1957,12 +1957,12 @@ body {
 .template-row small {
   display: block;
   font-size: 10px;
-  color: #9baeba;
+  color: #4f6075;
   margin-top: 4px;
 }
 .template-row b {
   font-size: 10px;
-  color: #279dca;
+  color: #236589;
   white-space: nowrap;
 }
 .difficulty-legend {
@@ -2009,7 +2009,7 @@ body {
   position: absolute;
   right: 16px;
   margin-top: -8px;
-  color: #94a6b4;
+  color: #506076;
   font-size: 10px;
 }
 .goal-card > .progress {
@@ -2067,7 +2067,7 @@ body {
 .sphere-goals > .primary-button {
   background: #e6f5fd;
   box-shadow: none;
-  color: #2394c4;
+  color: #22648a;
   min-height: 30px;
   font-size: 10px;
   padding: 7px 11px;
@@ -2100,7 +2100,7 @@ body {
   grid-row: 2;
   font-size: 10px;
   margin: 0;
-  color: #328ab1;
+  color: #2a6486;
   line-height: 1;
 }
 .sphere-health-stats {
@@ -2242,7 +2242,7 @@ body {
   }
   .personal-banner strong {
     font-weight: 500;
-    color: #87a1b5;
+    color: #4c6179;
     font-size: 9px;
   }
   .player-card {
@@ -2640,7 +2640,7 @@ body {
 }
 .achievement-progress small {
   font-size: 9px;
-  color: #8da4b5;
+  color: #4d6076;
 }
 .achievement .mini-pill {
   font-size: 0;
@@ -2650,7 +2650,7 @@ body {
 .achievement .mini-pill:after {
   content: '›';
   font-size: 18px;
-  color: #a0b2bd;
+  color: #4f6075;
 }
 .achievement.unlocked .mini-pill:after {
   content: '✓';
@@ -2771,4 +2771,30 @@ body {
 }
 .quest-info small {
   display: block;
+}
+
+.quest-info .quest-deadline {
+  font-size: 9px;
+  line-height: 1.4;
+  margin-top: 3px;
+  color: #4f6078;
+}
+.quest-info .quest-deadline.is-overdue {
+  color: #835064;
+}
+
+/* Keep the light palette while making small action labels readable. */
+:root {
+  --blue: #0877b5;
+}
+.primary-button,
+.tabs button.selected {
+  background: linear-gradient(180deg, #087ab9, #006fae);
+  color: #fff;
+}
+.primary-button:hover {
+  background: #006da9;
+}
+.project-count {
+  background: #087b67;
 }

@@ -1,0 +1,47 @@
+.backup-panel {
+  margin-top: 20px;
+}
+.backup-panel h2 {
+  font-size: 16px;
+  margin: 0 0 10px;
+}
+.backup-panel p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #4e6078;
+}
+.backup-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 14px 0;
+}
+.backup-actions button {
+  font-size: 12px;
+}
+.backup-note {
+  display: block;
+  color: #4f6078;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.backup-preview,
+.backup-recovery {
+  padding: 16px;
+  margin-top: 16px;
+  background: #eef8ff;
+  border-radius: 14px;
+}
+.backup-preview h3 {
+  font-size: 14px;
+  margin-top: 0;
+}
+.backup-panel .backup-error {
+  color: #96445d;
+}
+@media (max-width: 600px) {
+  .backup-actions > .primary-button,
+  .backup-actions > .secondary-button {
+    width: 100%;
+  }
+}

@@ -180,7 +180,7 @@ export const avatars = [
   { icon: '🧑🏻‍🚀', name: 'Космонавт' },
   { icon: '👩🏻‍🚀', name: 'Космонавтка' },
   { icon: '🦊', name: 'Лиса' },
-  { icon: '🐼', name: 'Панда' },
+  { icon: '🐼', name: 'Моё фото' },
   { icon: '🦁', name: 'Лев' },
   { icon: '🦉', name: 'Сова' },
   { icon: 'character', name: 'Мой персонаж' },

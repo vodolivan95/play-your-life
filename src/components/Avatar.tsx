@@ -4,7 +4,7 @@ import './Avatar.css';
 export default function Avatar({ value }: { value: string }) {
   return (
     <span className="avatar-content">
-      {value === 'character' ? (
+      {value === 'character' || value === '🐼' ? (
         <img className="character-avatar" src={player} alt="" />
       ) : (
         value

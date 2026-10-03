@@ -14,18 +14,26 @@ export function AvatarPicker({
 }) {
   return (
     <div className="avatar-picker" role="group" aria-label="Выбор аватара">
-      {avatars.map((a) => (
-        <button
-          type="button"
-          key={a.name}
-          className={value === a.icon ? 'selected' : ''}
-          aria-label={a.name}
-          aria-pressed={value === a.icon}
-          onClick={() => onChange(a.icon)}
-        >
-          <Avatar value={a.icon} />
-        </button>
-      ))}
+      {avatars
+        .filter((a) => a.icon !== 'character')
+        .map((a) => (
+          <button
+            type="button"
+            key={a.name}
+            className={
+              value === a.icon || (value === 'character' && a.icon === '🐼')
+                ? 'selected'
+                : ''
+            }
+            aria-label={a.name}
+            aria-pressed={
+              value === a.icon || (value === 'character' && a.icon === '🐼')
+            }
+            onClick={() => onChange(a.icon)}
+          >
+            <Avatar value={a.icon} />
+          </button>
+        ))}
     </div>
   );
 }

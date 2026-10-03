@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Test game rules
-        run: node --experimental-strip-types --test tests/game.test.ts
+        run: node --experimental-strip-types --test tests/*.test.ts
       - name: Check and build
         run: npm run check
       - name: Configure Pages

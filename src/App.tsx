@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, FormEvent } from 'react';
 import Icon from './components/Icon';
+import Onboarding, { ProfileEditor } from './components/Onboarding';
 import {
   achievements,
   changeScore,
@@ -8,6 +9,7 @@ import {
   dateKey,
   difficulties,
   loadState,
+  playerProgress,
   spheres,
   streak,
   streakRewards,
@@ -41,9 +43,6 @@ function Progress({ value, color }: { value: number; color?: string }) {
     </div>
   );
 }
-function level(xp: number) {
-  return 12 + Math.floor(Math.max(0, xp - 2450) / 550);
-}
 function sphereLevel(xp: number) {
   return Math.floor(xp / 200) + 1;
 }
@@ -51,7 +50,9 @@ export default function App() {
   const [state, setState] = useState(loadState);
   const [page, setPage] = useState('home');
   const [selected, setSelected] = useState<string | null>(null);
-  const [modal, setModal] = useState<'quest' | 'goal' | 'streak' | null>(null);
+  const [modal, setModal] = useState<
+    'quest' | 'goal' | 'streak' | 'start' | 'profile' | null
+  >(() => (state.profile.onboardingComplete ? null : 'start'));
   const [filter, setFilter] = useState('all');
   const [toast, setToast] = useState('');
   const [storageError, setStorageError] = useState(false);
@@ -95,9 +96,20 @@ export default function App() {
     spheres.reduce((sum, s) => sum + state.spheres[s.id].score, 0) /
     spheres.length
   ).toFixed(1);
-  const mainGoal = state.goals.find((g) => !g.rewarded) || state.goals[0];
-  const currentLevel = level(state.xp);
-  const nextXP = 3000 + (currentLevel - 12) * 550;
+  const mainGoal =
+    state.goals.find((g) => g.id === state.mainGoalId) ||
+    state.goals.find((g) => !g.rewarded) ||
+    state.goals[0];
+  const {
+    level: currentLevel,
+    nextXP,
+    progress: levelProgress,
+    title: levelTitle,
+  } = playerProgress(state);
+  function closeModal() {
+    if (!state.profile.onboardingComplete && modal === 'start') return;
+    setModal(null);
+  }
   const sphere = spheres.find((s) => s.id === selected);
   function QuestRow({
     quest,
@@ -278,14 +290,20 @@ export default function App() {
             стать лучшей версией себя.
           </p>
         </div>
-        <div className="sidebar-profile">
-          <span className="avatar small">🧑🏻‍🚀</span>
+        <button
+          className="sidebar-profile"
+          aria-label="Личный профиль"
+          onClick={() => setModal('profile')}
+        >
+          <span className="avatar small">{state.profile.avatar}</span>
           <div>
-            <strong>Игрок</strong>
-            <small>Уровень {currentLevel} · Стратег</small>
+            <strong>{state.profile.name}</strong>
+            <small>
+              Уровень {currentLevel} · {levelTitle}
+            </small>
           </div>
           <span className="online-dot" />
-        </div>
+        </button>
       </aside>
       <div className="main-wrap">
         <header className="topbar">
@@ -306,7 +324,13 @@ export default function App() {
             >
               <Icon name="bell" />
             </button>
-            <span className="avatar small">🧑🏻‍🚀</span>
+            <button
+              className="avatar small profile-trigger"
+              aria-label="Личный профиль"
+              onClick={() => setModal('profile')}
+            >
+              {state.profile.avatar}
+            </button>
           </div>
         </header>
         <main>
@@ -344,6 +368,34 @@ export default function App() {
             </div>
           )}
           {page === 'home' && (
+            <div className="personal-banner">
+              <span>
+                {state.profile.mode === 'demo' ? 'ДЕМО' : state.profile.avatar}
+              </span>
+              <div>
+                <strong>
+                  {state.profile.mode === 'demo'
+                    ? 'Пример игры. Начни свою историю.'
+                    : `${state.profile.name}, каждый шаг имеет значение.`}
+                </strong>
+                <small>
+                  {state.profile.mode === 'demo'
+                    ? 'Настрой персонажа и выбери свою главную цель.'
+                    : 'Твой прогресс начинается с реальных действий.'}
+                </small>
+              </div>
+              <button
+                className="text-button"
+                onClick={() =>
+                  setModal(state.profile.mode === 'demo' ? 'start' : 'profile')
+                }
+              >
+                {state.profile.mode === 'demo' ? 'Начать' : 'Профиль'}
+                <Icon name="arrow" size={15} />
+              </button>
+            </div>
+          )}
+          {page === 'home' && (
             <>
               <div className="hero-grid">
                 <section className="player-card">
@@ -354,12 +406,22 @@ export default function App() {
                   <div className="player-content">
                     <div>
                       <div className="level-label">LEVEL {currentLevel}</div>
-                      <h2>{currentLevel < 15 ? 'Стратег' : 'Мастер'}</h2>
-                      <p>Ты создаёшь свою историю.</p>
+                      <h2
+                        className={
+                          levelTitle.length > 8 ? 'compact-title' : undefined
+                        }
+                      >
+                        {levelTitle}
+                      </h2>
+                      <p>
+                        {state.profile.name} · Всего {state.xp} XP
+                      </p>
                     </div>
                     <div className="avatar-orbit">
                       <span className="orbit-star one">✦</span>
-                      <span className="player-avatar">🧑🏻‍🚀</span>
+                      <span className="player-avatar">
+                        {state.profile.avatar}
+                      </span>
                       <span className="avatar-level">{currentLevel}</span>
                       <span className="orbit-star two">✧</span>
                     </div>
@@ -367,10 +429,15 @@ export default function App() {
                   <div className="hero-progress-label">
                     <span>До следующего уровня</span>
                     <b>
-                      {state.xp} <span>/ {nextXP} XP</span>
+                      {state.profile.mode === 'personal'
+                        ? state.xp % 200
+                        : state.xp}{' '}
+                      <span>
+                        / {state.profile.mode === 'personal' ? 200 : nextXP} XP
+                      </span>
                     </b>
                   </div>
-                  <Progress value={(state.xp / nextXP) * 100} />
+                  <Progress value={levelProgress} />
                   <div className="hero-footer">
                     <span>⚡ Ещё {nextXP - state.xp} XP до нового уровня</span>
                     <Icon name="arrow" size={16} />
@@ -379,10 +446,15 @@ export default function App() {
                 <section className="goal-highlight">
                   <div className="card-kicker">
                     <span>🎯 ГЛАВНАЯ ЦЕЛЬ</span>
-                    <span className="mini-pill">В процессе</span>
+                    <span className="mini-pill">
+                      {mainGoal?.rewarded ? 'Достигнута ✓' : 'В процессе'}
+                    </span>
                   </div>
                   <div className="goal-art">
-                    <span>🌍</span>
+                    <span>
+                      {spheres.find((s) => s.id === mainGoal?.sphere)?.icon ||
+                        '🎯'}
+                    </span>
                     <i>✦</i>
                     <b>
                       <Icon name="arrow" size={20} />
@@ -781,6 +853,18 @@ export default function App() {
                         )}
                       </small>
                       <h2>{g.name}</h2>
+                      <button
+                        className="text-button main-goal-button"
+                        aria-pressed={mainGoal?.id === g.id}
+                        onClick={() => {
+                          setState((s) => ({ ...s, mainGoalId: g.id }));
+                          notify('Главная цель выбрана');
+                        }}
+                      >
+                        {mainGoal?.id === g.id
+                          ? '★ Главная цель'
+                          : '☆ Сделать главной'}
+                      </button>
                       <div className="goal-progress-label">
                         <span>
                           {g.current} / {g.target}
@@ -913,20 +997,54 @@ export default function App() {
       </nav>
       <dialog
         ref={dialog}
-        onCancel={() => setModal(null)}
+        onCancel={(event) => {
+          event.preventDefault();
+          closeModal();
+        }}
         onClick={(e) => {
-          if (e.target === e.currentTarget) setModal(null);
+          if (e.target === e.currentTarget) closeModal();
         }}
       >
         <div className="dialog-content">
-          <button
-            className="icon-button modal-close"
-            aria-label="Закрыть"
-            onClick={() => setModal(null)}
-          >
-            <Icon name="close" />
-          </button>
-          {modal === 'streak' ? (
+          {(state.profile.onboardingComplete || modal !== 'start') && (
+            <button
+              className="icon-button modal-close"
+              aria-label="Закрыть"
+              onClick={closeModal}
+            >
+              <Icon name="close" />
+            </button>
+          )}
+          {modal === 'start' ? (
+            <Onboarding
+              key="start"
+              profile={state.profile}
+              onComplete={(next) => {
+                setState(next);
+                setModal(null);
+                navigate('home');
+                notify('Твоя игра началась. Первый шаг — за тобой!');
+              }}
+              onDemo={() => {
+                setState((s) => ({
+                  ...s,
+                  profile: { ...s.profile, onboardingComplete: true },
+                }));
+                setModal(null);
+              }}
+            />
+          ) : modal === 'profile' ? (
+            <ProfileEditor
+              key="profile"
+              profile={state.profile}
+              onSave={(profile) => {
+                setState((s) => ({ ...s, profile }));
+                setModal(null);
+                notify('Профиль сохранён');
+              }}
+              onStart={() => setModal('start')}
+            />
+          ) : modal === 'streak' ? (
             <>
               <span className="streak-hero">🔥</span>
               <h2>В твоём ритме</h2>

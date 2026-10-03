@@ -129,6 +129,8 @@ export type Event = {
 };
 export type GameState = {
   version: 1;
+  profile: PlayerProfile;
+  mainGoalId: string | null;
   xp: number;
   coins: number;
   quests: Quest[];
@@ -139,6 +141,124 @@ export type GameState = {
   streakClaims: string[];
   completed: number;
 };
+export const avatars = [
+  { icon: '🧑🏻‍🚀', name: 'Космонавт' },
+  { icon: '👩🏻‍🚀', name: 'Космонавтка' },
+  { icon: '🦊', name: 'Лиса' },
+  { icon: '🐼', name: 'Панда' },
+  { icon: '🦁', name: 'Лев' },
+  { icon: '🦉', name: 'Сова' },
+];
+export type PlayerProfile = {
+  name: string;
+  avatar: string;
+  mode: 'demo' | 'personal';
+  onboardingComplete: boolean;
+};
+export const defaultProfile: PlayerProfile = {
+  name: 'Игрок',
+  avatar: avatars[0].icon,
+  mode: 'demo',
+  onboardingComplete: false,
+};
+export function playerProgress(state: GameState) {
+  const personal = state.profile.mode === 'personal';
+  const level = personal
+    ? 1 + Math.floor(state.xp / 200)
+    : 12 + Math.floor(Math.max(0, state.xp - 2450) / 550);
+  const nextXP = personal ? level * 200 : 3000 + (level - 12) * 550;
+  const progress = personal ? (state.xp % 200) / 2 : (state.xp / nextXP) * 100;
+  const title =
+    level < 4
+      ? 'Новичок'
+      : level < 8
+        ? 'Исследователь'
+        : level < 12
+          ? 'Созидатель'
+          : level < 15
+            ? 'Стратег'
+            : 'Мастер';
+  return { level, nextXP, progress, title };
+}
+export function personalState(
+  profile: Pick<PlayerProfile, 'name' | 'avatar'>,
+  scores: Record<string, number>,
+  goal: Pick<Goal, 'name' | 'sphere' | 'target'>,
+): GameState {
+  const name = profile.name.trim();
+  if (
+    !name ||
+    name.length > 30 ||
+    !avatars.some((a) => a.icon === profile.avatar) ||
+    !goal.name.trim() ||
+    goal.name.trim().length > 100 ||
+    !spheres.some((s) => s.id === goal.sphere) ||
+    !Number.isInteger(goal.target) ||
+    goal.target < 1 ||
+    goal.target > 1000000 ||
+    !spheres.every(
+      (s) =>
+        Number.isInteger(scores[s.id]) &&
+        scores[s.id] >= 0 &&
+        scores[s.id] <= 9,
+    )
+  )
+    throw new Error('Проверь имя, цель и оценки сфер.');
+  const id = crypto.randomUUID();
+  return {
+    ...initialState(),
+    xp: 0,
+    coins: 0,
+    quests: [],
+    profile: { ...profile, name, mode: 'personal', onboardingComplete: true },
+    spheres: Object.fromEntries(
+      spheres.map((s) => [
+        s.id,
+        {
+          xp: 0,
+          score: scores[s.id],
+          highScore: scores[s.id],
+          previousScore: scores[s.id],
+        },
+      ]),
+    ),
+    mainGoalId: id,
+    goals: [
+      {
+        id,
+        ...goal,
+        name: goal.name.trim(),
+        current: 0,
+        created: dateKey(),
+        reward: 200,
+        rewarded: false,
+      },
+    ],
+  };
+}
+export function migrateState(
+  state: Omit<GameState, 'profile' | 'mainGoalId'> &
+    Partial<Pick<GameState, 'profile' | 'mainGoalId'>>,
+): GameState {
+  const profile = state.profile;
+  return {
+    ...state,
+    profile:
+      profile &&
+      profile.name?.trim() &&
+      avatars.some((a) => a.icon === profile.avatar) &&
+      (profile.mode === 'demo' || profile.mode === 'personal')
+        ? {
+            ...profile,
+            name: profile.name.trim().slice(0, 30),
+            onboardingComplete: profile.onboardingComplete ?? true,
+          }
+        : { ...defaultProfile, onboardingComplete: true },
+    mainGoalId: state.goals.some((g) => g.id === state.mainGoalId)
+      ? (state.mainGoalId ?? null)
+      : (state.goals.find((g) => !g.rewarded)?.id ?? null),
+  };
+}
 export function dateKey(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
@@ -155,6 +275,8 @@ export function streak(dates: string[], now = new Date()) {
 export function initialState(): GameState {
   return {
     version: 1,
+    profile: { ...defaultProfile },
+    mainGoalId: 'b2',
     xp: 2450,
     coins: 120,
     completed: 0,
@@ -323,7 +445,7 @@ export function loadState(): GameState {
           typeof value.spheres[s.id].highScore === 'number',
       )
     )
-      return value;
+      return migrateState(value);
   } catch {
     /* Use a playable demo if storage is unavailable. */
   }
@@ -358,7 +480,7 @@ export const achievements = [
     name: 'Стратег',
     icon: '♟️',
     description: 'Достигни 12 уровня',
-    unlocked: (s: GameState) => s.xp >= 2400,
+    unlocked: (s: GameState) => playerProgress(s).level >= 12,
   },
   {
     name: 'Личный стандарт',

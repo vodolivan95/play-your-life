@@ -14,6 +14,7 @@ import type { PlanScope } from '../planning';
 import { TaskForm } from './PlanningForms';
 import TickTickTransfer from './TickTickTransfer';
 import Icon from './Icon';
+import ProjectArt from './ProjectArt';
 export default function LifePlanner({
   state,
   onChange,
@@ -226,7 +227,15 @@ export default function LifePlanner({
             onClick={() => onGoal(goal.id)}
           >
             <span className="sphere-icon">
-              {spheres.find((s) => s.id === goal.sphere)?.icon}
+              {goal.image ? (
+                <ProjectArt
+                  name={goal.name}
+                  sphere={goal.sphere}
+                  image={goal.image}
+                />
+              ) : (
+                spheres.find((s) => s.id === goal.sphere)?.icon
+              )}
             </span>
             <div>
               <strong>{goal.name}</strong>

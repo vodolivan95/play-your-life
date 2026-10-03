@@ -121,6 +121,7 @@ export type GoalStage = {
   dueAt?: string;
 };
 export type Goal = {
+  image?: string;
   id: string;
   name: string;
   sphere: string;

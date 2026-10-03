@@ -3,6 +3,7 @@ import type { CSSProperties, FormEvent } from 'react';
 import Icon from './components/Icon';
 import GameArt from './components/GameArt';
 import Avatar from './components/Avatar';
+import ProjectArt from './components/ProjectArt';
 import DataBackup from './components/DataBackup';
 import { stateStorageKey, recoveryStorageKey } from './backup';
 import {
@@ -579,7 +580,15 @@ export default function App() {
                     </div>
                     <div className="goal-art">
                       <span>
-                        <GameArt kind="target" />
+                        {mainGoal?.image ? (
+                          <ProjectArt
+                            name={mainGoal.name}
+                            sphere={mainGoal.sphere}
+                            image={mainGoal.image}
+                          />
+                        ) : (
+                          <GameArt kind="target" />
+                        )}
                       </span>
                       <i>✦</i>
                       <b>
@@ -872,7 +881,15 @@ export default function App() {
                         }}
                       >
                         <span className="detail-goal-icon">
-                          <GameArt kind="target" />
+                          {g.image ? (
+                            <ProjectArt
+                              name={g.name}
+                              sphere={g.sphere}
+                              image={g.image}
+                            />
+                          ) : (
+                            <GameArt kind="target" />
+                          )}
                         </span>
                         <h3>{g.name}</h3>
                         <Progress

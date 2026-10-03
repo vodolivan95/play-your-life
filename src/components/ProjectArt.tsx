@@ -6,12 +6,20 @@ import { projectStyle } from './projectStyle';
 export default function ProjectArt({
   name,
   sphere,
+  image,
 }: {
   name: string;
   sphere: string;
+  image?: string;
 }) {
   const id = useId().replace(/:/g, '');
   const { kind, color } = projectStyle(name, sphere);
+  if (image)
+    return (
+      <span className="project-art project-photo">
+        <img src={image} alt="" />
+      </span>
+    );
   const art: Record<string, React.ReactNode> = {
     smoking: (
       <>

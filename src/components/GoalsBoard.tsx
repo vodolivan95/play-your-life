@@ -22,6 +22,7 @@ import { GoalForm, StageForm, TaskForm } from './PlanningForms';
 import TickTickTransfer from './TickTickTransfer';
 import Icon from './Icon';
 import GameArt from './GameArt';
+import ProjectArt from './ProjectArt';
 type Editor =
   | { kind: 'goal' }
   | { kind: 'stage'; stage?: GoalStage }
@@ -186,9 +187,17 @@ export default function GoalsBoard({
               <section className="panel goal-card" key={g.id}>
                 <div className="section-heading">
                   <span className="sphere-icon">
-                    <GameArt
-                      kind={g.sphere === 'english' ? 'target' : g.sphere}
-                    />
+                    {g.image ? (
+                      <ProjectArt
+                        name={g.name}
+                        sphere={g.sphere}
+                        image={g.image}
+                      />
+                    ) : (
+                      <GameArt
+                        kind={g.sphere === 'english' ? 'target' : g.sphere}
+                      />
+                    )}
                   </span>
                   <span
                     className={`mini-pill ${goalStatus(g) === 'Срок прошёл' ? 'overdue-pill' : ''}`}
@@ -287,6 +296,15 @@ export default function GoalsBoard({
           <section className="goal-plan-hero">
             <div>
               <div className="eyebrow">ТВОЁ НАПРАВЛЕНИЕ</div>
+              {goal.image && (
+                <div className="goal-project-photo">
+                  <ProjectArt
+                    name={goal.name}
+                    sphere={goal.sphere}
+                    image={goal.image}
+                  />
+                </div>
+              )}
               <h2>
                 {spheres.find((s) => s.id === goal.sphere)?.icon} {goal.name}
               </h2>

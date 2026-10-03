@@ -5,6 +5,7 @@ import type { GameState, Goal, GoalStage, Quest } from '../game';
 import { durationEnd, formatDate, localDateTime, toISO } from '../planning';
 import type { DurationUnit } from '../planning';
 import Icon from './Icon';
+import ProjectImagePicker from './ProjectImagePicker';
 
 export function GoalForm({
   initial,
@@ -17,6 +18,9 @@ export function GoalForm({
     goal: Pick<Goal, 'name' | 'sphere' | 'target' | 'reward'> & Partial<Goal>,
   ) => void;
 }) {
+  const [image, setImage] = useState(initial?.image);
+  const [imageBusy, setImageBusy] = useState(false);
+  const [imageSphere, setImageSphere] = useState(initial?.sphere ?? sphereId);
   const [start, setStart] = useState(
     initial?.startsAt
       ? localDateTime(new Date(initial.startsAt))
@@ -37,10 +41,12 @@ export function GoalForm({
   const [error, setError] = useState('');
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (imageBusy) return;
     const data = new FormData(e.currentTarget);
     try {
       onSave({
         id: initial?.id,
+        image,
         name: String(data.get('name')).trim(),
         sphere: String(data.get('sphere')),
         description: String(data.get('description')),
@@ -70,6 +76,12 @@ export function GoalForm({
     <form className="planning-form" onSubmit={submit}>
       <div className="eyebrow">НАПРАВЛЕНИЕ ТВОЕЙ ЖИЗНИ</div>
       <h2>{initial ? 'Настроить цель' : 'Новая цель'}</h2>
+      <ProjectImagePicker
+        image={image}
+        onChange={setImage}
+        onBusy={setImageBusy}
+        sphere={imageSphere}
+      />
       <label>
         Название
         <input
@@ -83,7 +95,11 @@ export function GoalForm({
       </label>
       <label>
         Сфера жизни
-        <select name="sphere" defaultValue={initial?.sphere ?? sphereId}>
+        <select
+          name="sphere"
+          defaultValue={initial?.sphere ?? sphereId}
+          onChange={(e) => setImageSphere(e.target.value)}
+        >
           {spheres.map((s) => (
             <option value={s.id} key={s.id}>
               {s.icon} {s.name}
@@ -234,7 +250,11 @@ export function GoalForm({
           {error}
         </p>
       )}
-      <button type="submit" className="primary-button submit-button">
+      <button
+        type="submit"
+        disabled={imageBusy}
+        className="primary-button submit-button"
+      >
         {initial ? 'Сохранить цель' : 'Создать цель'}
         <Icon name="arrow" size={17} />
       </button>

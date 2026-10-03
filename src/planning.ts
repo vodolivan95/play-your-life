@@ -1,3 +1,4 @@
+import { validProjectImage } from './projectImage.ts';
 import { dateKey, difficulties, syncGoalTasks } from './game.ts';
 import type { GameState, Goal, GoalStage, Quest } from './game.ts';
 export type DurationUnit = 'hours' | 'days' | 'weeks' | 'months';
@@ -96,6 +97,7 @@ export function saveGoal(
   if (
     !input.name.trim() ||
     input.name.trim().length > 100 ||
+    !validProjectImage(input.image) ||
     !state.spheres[input.sphere] ||
     !Number.isFinite(input.target) ||
     input.target < 1 ||

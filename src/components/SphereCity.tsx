@@ -363,12 +363,12 @@ export function SphereProjects({
         style={{ '--project-color': color } as CSSProperties}
       >
         <div className="project-heading">
-          {finished ? (
+          {finished && !goal.image ? (
             <span className="project-done-icon">
               <Icon name="check" size={22} />
             </span>
           ) : (
-            <ProjectArt name={goal.name} sphere={id} />
+            <ProjectArt name={goal.name} sphere={id} image={goal.image} />
           )}
           <div>
             <h3>

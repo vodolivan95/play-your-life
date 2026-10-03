@@ -1,3 +1,4 @@
+import { validProjectImage } from './projectImage.ts';
 import type { GameState } from './game.ts';
 
 type SavedState = Omit<GameState, 'profile' | 'mainGoalId'> &
@@ -93,6 +94,7 @@ export function validateState(value: unknown): asserts value is SavedState {
         !!g.id &&
         text(g.name) &&
         sphereIds.includes(g.sphere as string) &&
+        validProjectImage(g.image) &&
         number(g.current) &&
         number(g.target) &&
         (g.target as number) > 0 &&

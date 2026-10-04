@@ -1,0 +1,528 @@
+.app-shell .spheres-overview {
+  min-width: 0;
+}
+.app-shell .spheres-overview h2 {
+  font-size: 17px;
+  margin: 0;
+}
+.spheres-intro {
+  color: #526b8b;
+  margin: -4px 0 16px;
+  font-size: 13px;
+}
+.spheres-summary {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.85fr) minmax(390px, 2fr) minmax(
+      220px,
+      1fr
+    );
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.spheres-summary .panel {
+  margin: 0;
+  padding: 18px;
+  min-width: 0;
+  border-radius: 18px;
+}
+.life-balance-panel {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #edf9ff, #d7efff);
+  overflow: hidden;
+}
+.life-balance-panel .eyebrow,
+.sphere-focus-panel .eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.02em;
+}
+.life-balance-value {
+  font-size: clamp(32px, 3vw, 46px);
+  line-height: 1.3;
+  color: #23384d;
+  margin: 14px 0 9px;
+}
+.life-balance-value small {
+  font-size: 0.65em;
+}
+.life-balance-panel > p {
+  color: #506d8d;
+  line-height: 1.55;
+  font-size: 12px;
+  margin: 13px 0;
+}
+.life-balance-panel > .sphere-building {
+  width: calc(100% + 36px);
+  margin: auto -18px -18px;
+  height: 145px;
+  flex-shrink: 0;
+}
+.radar-legend {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  color: #526b8b;
+  font-size: 10px;
+  margin-top: 9px;
+}
+.radar-legend > i {
+  width: 7px;
+  height: 7px;
+  background: #1697ff;
+  border-radius: 50%;
+}
+.radar-and-insights {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 125px;
+  gap: 10px;
+  align-items: center;
+}
+.sphere-radar {
+  position: relative;
+  min-width: 0;
+  width: 100%;
+  aspect-ratio: 360 / 330;
+}
+.sphere-radar > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.radar-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 82px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 5px;
+  border-radius: 10px;
+  background: #f7fcffed;
+  border: 1px solid #e1effa;
+  box-shadow: 0 3px 10px #5281a70b;
+}
+.radar-label > span {
+  width: 21px;
+  height: 21px;
+  flex-shrink: 0;
+}
+.radar-label strong {
+  display: block;
+  font-size: 8px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.radar-label small {
+  font-size: 10px;
+  color: var(--sphere-color);
+  font-weight: 750;
+}
+.balance-insights {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.balance-insights > div {
+  padding: 10px;
+  border-radius: 12px;
+  display: grid;
+  gap: 5px;
+}
+.balance-insights small {
+  color: #526b8b;
+  font-size: 9px;
+}
+.balance-insights strong {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.balance-insights b {
+  font-size: 24px;
+  line-height: 1.2;
+}
+.balance-insights b small {
+  font-weight: 500;
+}
+.balance-insights span {
+  font-size: 9px;
+  color: #526b8b;
+  line-height: 1.4;
+}
+.insight-strong {
+  background: #e6f8f3;
+}
+.insight-weak {
+  background: #fff0f3;
+}
+.insight-gap {
+  background: #eaf5ff;
+}
+.sphere-focus-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+.focus-copy {
+  position: relative;
+  padding-right: 42px;
+}
+.focus-copy p {
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0 0 10px;
+  color: #506d8d;
+}
+.focus-copy b {
+  color: #23384d;
+}
+.focus-copy > span {
+  position: absolute;
+  width: 42px;
+  height: 42px;
+  right: 0;
+  top: 16px;
+}
+.recommendation-label {
+  color: #506d8d;
+  font-size: 10px;
+}
+.focus-project {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: #f3faff;
+  border: 1px solid #e4eff9;
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.focus-project > svg {
+  flex-shrink: 0;
+  color: #178fdf;
+}
+.sphere-focus-panel .primary-button {
+  width: 100%;
+  margin-top: auto;
+  min-height: 40px;
+  font-size: 12px;
+}
+.sphere-focus-panel .primary-button:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+.my-spheres {
+  background: #eaf4fb;
+  border: 1px solid #e0edf5;
+  border-radius: 18px;
+  padding: 14px;
+  margin-bottom: 18px;
+  min-width: 0;
+}
+.spheres-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.spheres-controls .tabs {
+  margin: 0;
+  padding: 3px;
+  width: auto;
+  gap: 4px;
+}
+.spheres-controls .tabs button {
+  min-height: 30px;
+  font-size: 10px;
+  padding: 7px 12px;
+  white-space: nowrap;
+}
+.sphere-views {
+  margin-left: auto !important;
+}
+.my-spheres .districts {
+  padding: 0;
+  border: 0;
+  margin: 0;
+  background: transparent;
+}
+.my-spheres .district-card {
+  flex-basis: 145px;
+}
+.my-spheres .district-caption {
+  padding: 7px 8px 6px;
+  gap: 5px;
+}
+.my-spheres .district-caption strong {
+  font-size: 10px;
+  min-height: 26px;
+}
+.sphere-empty {
+  color: #526b8b;
+  padding: 12px;
+  margin: 0;
+  font-size: 12px;
+}
+.sphere-results > h2 {
+  margin-bottom: 12px;
+}
+.app-shell .spheres-overview .sphere-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+.app-shell .spheres-overview .sphere-card {
+  padding: 0 12px 12px;
+  margin: 0;
+  overflow: hidden;
+  text-align: left;
+  display: block;
+  border-radius: 15px;
+}
+.app-shell .spheres-overview .sphere-card > .sphere-building {
+  width: calc(100% + 24px);
+  max-width: none;
+  margin: 0 -12px;
+  height: 115px;
+}
+.app-shell .spheres-overview .sphere-top {
+  margin: 10px 0 5px;
+}
+.app-shell .spheres-overview .sphere-icon {
+  width: 30px;
+  height: 30px;
+}
+.app-shell .spheres-overview .sphere-card h3 {
+  font-size: 13px;
+  margin: 0 0 8px;
+  padding: 0;
+}
+.app-shell .spheres-overview .level-chip {
+  font-size: 9px;
+}
+.app-shell .spheres-overview .overview-life-score {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+.app-shell .spheres-overview .overview-life-score b {
+  font-size: 13px;
+}
+.app-shell .spheres-overview .sphere-card .progress > span {
+  background: var(--sphere-color);
+}
+.app-shell .spheres-overview .sphere-card > .sphere-score {
+  display: none;
+}
+.app-shell .spheres-overview .sphere-card > .sphere-xp {
+  margin-top: 8px;
+  font-size: 9px;
+}
+.overview-project-counts {
+  font-size: 10px;
+  color: #526b8b;
+  margin-top: 9px;
+}
+.overview-project-counts > span {
+  color: #a6c4d9;
+  margin: 0 5px;
+}
+.sphere-list {
+  display: grid;
+  gap: 9px;
+}
+.sphere-list-row {
+  display: grid;
+  grid-template-columns: 80px 26px minmax(90px, 1fr) minmax(100px, 1fr) minmax(
+      95px,
+      1fr
+    ) 16px;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  border: 1px solid #e4eff9;
+  border-radius: 14px;
+  padding: 10px;
+  width: 100%;
+  color: #24394d;
+  text-align: left;
+  cursor: pointer;
+}
+.sphere-list-row > .sphere-building {
+  width: 80px;
+  height: 52px;
+  border-radius: 9px;
+  overflow: hidden;
+}
+.sphere-list-row > strong {
+  font-size: 12px;
+}
+.list-icon {
+  width: 26px;
+  height: 26px;
+}
+.list-score {
+  display: grid;
+  gap: 6px;
+  font-size: 11px;
+}
+.list-counts {
+  color: #526b8b;
+  font-size: 10px;
+}
+.list-counts small {
+  display: block;
+  margin-top: 6px;
+}
+@media (max-width: 1360px) {
+  .spheres-summary {
+    grid-template-columns: minmax(180px, 0.8fr) minmax(350px, 1.8fr);
+  }
+  .sphere-focus-panel {
+    grid-column: 1 / -1;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 18px;
+  }
+  .sphere-focus-panel .eyebrow {
+    grid-column: 1 / -1;
+  }
+  .focus-copy {
+    grid-row: 2 / 5;
+  }
+}
+@media (max-width: 1000px) {
+  .spheres-summary {
+    grid-template-columns: 1fr;
+  }
+  .sphere-focus-panel {
+    grid-column: auto;
+  }
+  .life-balance-panel > .sphere-building {
+    height: 170px;
+  }
+  .life-balance-value {
+    font-size: 38px;
+  }
+  .radar-and-insights {
+    grid-template-columns: minmax(0, 1fr) 140px;
+  }
+}
+@media (max-width: 760px) {
+  .spheres-intro {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .spheres-summary .panel {
+    padding: 15px;
+  }
+  .life-balance-panel > .sphere-building {
+    margin: 0 -15px -15px;
+    width: calc(100% + 30px);
+    height: 155px;
+  }
+  .radar-and-insights {
+    display: block;
+  }
+  .sphere-radar {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  .radar-label {
+    width: 79px;
+  }
+  .balance-insights {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .balance-insights > div {
+    padding: 9px;
+  }
+  .balance-insights strong {
+    font-size: 10px;
+  }
+  .balance-insights b {
+    font-size: 21px;
+  }
+  .sphere-focus-panel {
+    display: flex !important;
+  }
+  .spheres-controls {
+    display: block;
+  }
+  .spheres-controls h2 {
+    margin-bottom: 10px;
+  }
+  .spheres-controls .tabs {
+    display: flex;
+    width: 100%;
+    margin-top: 8px;
+    gap: 2px;
+  }
+  .spheres-controls .tabs button {
+    padding: 7px 5px;
+    flex: 1;
+    font-size: 9px;
+    min-width: 0;
+  }
+  .my-spheres {
+    padding: 10px;
+  }
+  .app-shell .spheres-overview .sphere-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .app-shell .spheres-overview .sphere-card {
+    padding: 0 10px 10px;
+  }
+  .app-shell .spheres-overview .sphere-card > .sphere-building {
+    width: calc(100% + 20px);
+    margin: 0 -10px;
+    height: 90px;
+  }
+  .app-shell .spheres-overview .sphere-card h3 {
+    font-size: 12px;
+  }
+  .overview-project-counts {
+    font-size: 9px;
+  }
+  .sphere-list-row {
+    grid-template-columns: 48px 22px minmax(0, 1fr) 70px;
+    gap: 7px;
+  }
+  .sphere-list-row > .sphere-building {
+    width: 48px;
+    height: 48px;
+  }
+  .sphere-list-row > svg:last-child {
+    display: none;
+  }
+  .list-counts {
+    grid-column: 3 / -1;
+  }
+  .list-score {
+    font-size: 10px;
+  }
+}
+.app-shell .spheres-overview .sphere-card .progress > span {
+  background: var(--sphere-color) !important;
+}
+
+.sphere-radar {
+  max-width: 360px;
+  margin: 0 auto;
+}
+.spheres-summary .panel.life-balance-panel {
+  background: linear-gradient(135deg, #edf9ff, #d7efff);
+}
+.app-shell .spheres-overview .sphere-grid > .sphere-card:nth-child(n) {
+  grid-column: auto;
+}
+@media (min-width: 761px) and (max-width: 1250px) {
+  .app-shell .spheres-overview .sphere-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+

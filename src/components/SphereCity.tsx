@@ -17,19 +17,23 @@ export function SphereDistricts({
   state,
   selected,
   onSelect,
+  sphereIds,
+  showHeading = true,
 }: {
   state: GameState;
   selected: string | null;
   onSelect: (id: string) => void;
+  sphereIds?: string[];
+  showHeading?: boolean;
 }) {
   return (
     <section className="districts" aria-label="Мои сферы жизни">
-      <div className="districts-heading">
+      {showHeading && <div className="districts-heading">
         <span>МОИ СФЕРЫ</span>
         <small>Твой город жизни · {spheres.length} районов</small>
-      </div>
+      </div>}
       <div className="district-strip">
-        {spheres.map((s) => (
+        {spheres.filter(s => !sphereIds || sphereIds.includes(s.id)).map((s) => (
           <button
             key={s.id}
             className={`district-card ${selected === s.id ? 'is-selected' : ''}`}

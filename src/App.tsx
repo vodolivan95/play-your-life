@@ -1,3 +1,5 @@
+import { sphereCount } from './sphereAnalytics';
+import SpheresOverview from './components/SpheresOverview';
 import HomeDashboard from './components/HomeDashboard';
 import DashboardHeader from './components/DashboardHeader';
 import PlayBrand from './components/PlayBrand';
@@ -191,10 +193,6 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   const unlocked = achievements.filter((a) => a.unlocked(state)).length;
   const active = state.quests.filter((q) => !q.done);
   const todayTasks = questsForToday(state, new Date(`${today}T12:00:00`));
-  const lifeScore = (
-    spheres.reduce((sum, s) => sum + state.spheres[s.id].score, 0) /
-    spheres.length
-  ).toFixed(1);
   const {
     level: currentLevel,
     progress: levelProgress,
@@ -267,7 +265,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
       </div>
     );
   }
-  function SphereCard({ id }: { id: string }) {
+  function SphereCard({ id, overview = false }: { id: string; overview?: boolean }) {
     const info = spheres.find((s) => s.id === id)!;
     const data = state.spheres[id];
     const diff = data.score - data.previousScore;
@@ -289,6 +287,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
           <span className="level-chip">LVL {sphereLevel(data.xp)}</span>
         </div>
         <h3>{info.name}</h3>
+        {overview && <div className="overview-life-score"><b>{data.score.toFixed(1)} / 9</b><Progress value={data.score / 9 * 100} color={info.color} label={`Life Score: ${info.name}`} /></div>}
         <div className="sphere-xp">
           <span>{data.xp % 200} / 200 XP</span>
           <Icon name="arrow" size={15} />
@@ -298,6 +297,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
           color={info.color}
           label={`Развитие: ${info.name}`}
         />
+        {overview && <div className="overview-project-counts">{sphereCount(state.goals.filter(g => g.sphere === id).length, 'projects')} <span>|</span> {sphereCount(state.quests.filter(q => q.sphere === id).length, 'tasks')}</div>}
         <div className="sphere-score">
           <span>
             Life Score{' '}
@@ -447,35 +447,8 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
               />
             )}
             {page === 'home' && <HomeDashboard state={state} onChange={setState} onSphere={(id) => { setSelected(id); setSphereTab('projects'); setPage('spheres'); }} onQuests={() => navigate('quests')} onGoal={() => navigate('goals')} onShop={() => navigate('shop')} onProfile={() => navigate('profile')} onIntegration={() => navigate('plan')} onCreate={newQuest} onStart={() => setModal('start')} renderQuest={q => <QuestRow key={q.id} quest={q} />} />}
-            {page === 'spheres' && (
-              <SphereDistricts
-                state={state}
-                selected={selected}
-                onSelect={(id) => {
-                  setSelected(id);
-                  setSphereTab('projects');
-                }}
-              />
-            )}
-            {page === 'spheres' && !sphere && (
-              <>
-                <div className="balance-banner">
-                  <span>✦</span>
-                  <div>
-                    <h2>Твой баланс — {lifeScore} / 9</h2>
-                    <p>
-                      Не сравнивай себя с другими. Расти относительно себя
-                      вчера.
-                    </p>
-                  </div>
-                </div>
-                <div className="sphere-grid all-spheres">
-                  {spheres.map((s) => (
-                    <SphereCard key={s.id} id={s.id} />
-                  ))}
-                </div>
-              </>
-            )}
+            {page === 'spheres' && !sphere && <SpheresOverview state={state} onSelect={(id) => { setSelected(id); setSphereTab('projects'); }} renderCard={(id) => <SphereCard key={id} id={id} overview />} onAddRecommendation={(idea) => { setState(current => current.goals.some(g => g.sphere === idea.sphereId && g.name === idea.title && g.current < g.target) ? current : saveGoal(current, { name: idea.title, description: idea.description, sphere: idea.sphereId, target: 100, reward: 100, progressMode: 'tasks' })); notify('Проект добавлен в план. Открой его и добавь этапы и задачи.'); }} />}
+            {page === 'spheres' && sphere && <SphereDistricts state={state} selected={selected} onSelect={(id) => { setSelected(id); setSphereTab('projects'); }} />}
             {sphere && (
               <>
                 <button
@@ -1368,6 +1341,5 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
     </TickTickContext.Provider>
   );
 }
-
 
 

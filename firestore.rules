@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /players/{userId} {
+      function owner() { return request.auth != null && request.auth.uid == userId; }
+      function valid() {
+        return request.resource.data.keys().hasOnly(['state', 'revision', 'updatedAt'])
+          && request.resource.data.keys().hasAll(['state', 'revision', 'updatedAt'])
+          && request.resource.data.state is map
+          && request.resource.data.state.profile.mode == 'personal'
+          && request.resource.data.state.xp is int && request.resource.data.state.xp >= 0
+          && request.resource.data.state.coins is int && request.resource.data.state.coins >= 0
+          && request.resource.data.revision is int
+          && request.resource.data.updatedAt == request.time;
+      }
+      allow get: if owner();
+      allow list, delete: if false;
+      allow create: if owner() && valid() && request.resource.data.revision == 1
+        && request.resource.data.state.xp == 0 && request.resource.data.state.coins == 0;
+      allow update: if owner() && valid()
+        && request.resource.data.revision == resource.data.revision + 1;
+    }
+  }
+}
+

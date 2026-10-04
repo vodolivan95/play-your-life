@@ -12,10 +12,10 @@ import {
 } from './ticktick';
 import type { TickTickConnection } from './ticktick';
 import type { TickTickManager } from './tickTickContext';
-function readConnection(): TickTickConnection | null {
+function readConnection(storageKey: string): TickTickConnection | null {
   try {
     const data = JSON.parse(
-      localStorage.getItem(connectionStorageKey) ?? 'null',
+      localStorage.getItem(storageKey) ?? 'null',
     );
     if (
       data &&
@@ -33,8 +33,10 @@ function readConnection(): TickTickConnection | null {
 export default function useTickTick(
   state: GameState,
   onChange: Dispatch<SetStateAction<GameState>>,
+  userId?: string,
 ): TickTickManager {
-  const [connection, setConnection] = useState(readConnection);
+  const storageKey = userId ? `${connectionStorageKey}:${userId}` : connectionStorageKey;
+  const [connection, setConnection] = useState(() => readConnection(storageKey));
   const [status, setStatus] = useState('');
   const [busy, setBusy] = useState(false);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
@@ -46,18 +48,18 @@ export default function useTickTick(
   useEffect(() => {
     try {
       if (connection)
-        localStorage.setItem(connectionStorageKey, JSON.stringify(connection));
-      else localStorage.removeItem(connectionStorageKey);
+        localStorage.setItem(storageKey, JSON.stringify(connection));
+      else localStorage.removeItem(storageKey);
     } catch {
       queueMicrotask(() => setStatus('Браузер не сохраняет подключение.'));
     }
-  }, [connection]);
+  }, [connection, storageKey]);
   async function configure(url: string) {
     const c =
       connection?.url === url.replace(/\/$/, '')
         ? connection
         : newConnection(url);
-    localStorage.setItem(connectionStorageKey, JSON.stringify(c));
+    localStorage.setItem(storageKey, JSON.stringify(c));
     setConnection(c);
     const result = await bridgeRequest<{ url: string }>(
       c,
@@ -217,3 +219,4 @@ export default function useTickTick(
     },
   };
 }
+

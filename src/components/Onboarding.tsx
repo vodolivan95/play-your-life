@@ -43,6 +43,7 @@ export function ProfileEditor({
   onStart,
 }: {
   profile: PlayerProfile;
+
   onSave: (profile: PlayerProfile) => void;
   onStart: () => void;
 }) {
@@ -98,8 +99,10 @@ export default function Onboarding({
   profile,
   onComplete,
   onDemo,
+  accountMode = false,
 }: {
   profile: PlayerProfile;
+  accountMode?: boolean;
   onComplete: (state: GameState) => void;
   onDemo: () => void;
 }) {
@@ -167,9 +170,9 @@ export default function Onboarding({
         <button className="secondary-button" onClick={onDemo}>
           {profile.onboardingComplete
             ? 'Вернуться к текущей игре'
-            : 'Сначала посмотреть демо'}
+            : accountMode ? 'Настроить позже' : 'Сначала посмотреть демо'}
         </button>
-        <small>Без регистрации. Прогресс сохраняется на этом устройстве.</small>
+        <small>{accountMode ? 'Твоя новая игра начинается с 0 XP. Прогресс сохраняется в аккаунте.' : 'Без регистрации. Прогресс сохраняется на этом устройстве.'}</small>
       </div>
     );
   return (
@@ -334,3 +337,5 @@ export default function Onboarding({
     </form>
   );
 }
+
+

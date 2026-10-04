@@ -18,11 +18,13 @@ function download(text: string, filename: string) {
 export default function DataBackup({
   state,
   connected,
+  userId,
   onRestore,
   onNotify,
 }: {
   state: GameState;
   connected: boolean;
+  userId?: string;
   onRestore: (state: GameState) => void;
   onNotify: (message: string) => void;
 }) {
@@ -32,7 +34,7 @@ export default function DataBackup({
   const input = useRef<HTMLInputElement>(null);
   const [previous] = useState(() => {
     try {
-      return localStorage.getItem(recoveryStorageKey);
+      return localStorage.getItem(userId ? `play-your-life-account:${userId}:recovery` : recoveryStorageKey);
     } catch {
       return null;
     }
@@ -43,9 +45,9 @@ export default function DataBackup({
       setPending(null);
       setError('');
       onNotify('Игра восстановлена. XP и прогресс сохранены из копии.');
-    } catch {
+    } catch (err) {
       setError(
-        'Браузер не смог сохранить восстановленную игру. Текущие данные не изменены. Освободи место и повтори.',
+        err instanceof Error ? err.message : 'Не удалось восстановить игру.',
       );
     }
   }
@@ -149,15 +151,15 @@ export default function DataBackup({
           </div>
         </div>
       )}
-      {getStorageProblem() && (
+      {!userId && getStorageProblem() && (
         <div className="backup-recovery">
-          <p>{getStorageProblem()}</p>
+          <p>{!userId && getStorageProblem()}</p>
           <div className="backup-actions">
             <button
               className="secondary-button"
               onClick={() =>
                 download(
-                  getRecoveryRaw(),
+                  (getRecoveryRaw() ?? ''),
                   `play-your-life-recovery-${dateKey()}.json`,
                 )
               }
@@ -189,3 +191,5 @@ export default function DataBackup({
     </section>
   );
 }
+
+

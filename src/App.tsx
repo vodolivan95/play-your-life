@@ -5,7 +5,7 @@ import SidebarReference from './components/SidebarReference';
 import citySidebarImage from './assets/life-city.webp';
 import { CityAppearanceContext } from './cityAppearanceContext';
 import { useEffect, useRef, useState } from 'react';
-import type { CSSProperties, FormEvent } from 'react';
+import type { CSSProperties, FormEvent, Dispatch, SetStateAction, ReactNode } from 'react';
 import Icon from './components/Icon';
 import LifeCity from './components/LifeCity';
 import GameArt from './components/GameArt';
@@ -44,7 +44,7 @@ import {
   streakRewards,
   removeQuest,
 } from './game';
-import type { Quest } from './game';
+import type { Quest, GameState } from './game';
 
 const navigation = [
   { id: 'home', label: 'Главная', icon: 'home' },
@@ -102,9 +102,13 @@ function Progress({
 function sphereLevel(xp: number) {
   return Math.floor(xp / 200) + 1;
 }
-export default function App() {
-  const [state, setState] = useState(loadState);
-  const tickTick = useTickTick(state, setState);
+export default function App({ state: suppliedState, onChange, userId, accountTools }: {
+  state?: GameState; onChange?: Dispatch<SetStateAction<GameState>>; userId?: string; accountTools?: ReactNode;
+} = {}) {
+  const [localState, setLocalState] = useState(() => suppliedState ?? loadState());
+  const state = suppliedState ?? localState;
+  const setState = onChange ?? setLocalState;
+  const tickTick = useTickTick(state, setState, userId);
   const [page, setPage] = useState(() =>
     location.hash === '#city'
       ? 'city'
@@ -119,6 +123,10 @@ export default function App() {
   const [modal, setModal] = useState<
     'quest' | 'goal' | 'streak' | 'start' | 'profile' | null
   >(() => (state.profile.onboardingComplete ? null : 'start'));
+  useEffect(() => {
+    if (userId && state.profile.onboardingComplete)
+      queueMicrotask(() => setModal(current => current === 'start' ? null : current));
+  }, [userId, state.profile.onboardingComplete]);
   const [filter, setFilter] = useState('today');
   const [achievementFilter, setAchievementFilter] = useState('all');
   const [treeView, setTreeView] = useState('map');
@@ -134,14 +142,14 @@ export default function App() {
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
-    if (getStorageProblem()) return;
+    if (userId || getStorageProblem()) return;
     try {
       localStorage.setItem(stateStorageKey, JSON.stringify(state));
       queueMicrotask(() => setStorageError(false));
     } catch {
       queueMicrotask(() => setStorageError(true));
     }
-  }, [state]);
+  }, [state, userId]);
   useEffect(() => {
     const timer = setInterval(() => setToday(dateKey()), 30000);
     const visible = () => setToday(dateKey());
@@ -375,7 +383,7 @@ export default function App() {
           <main
             className={`screen-${page} ${sphere ? 'screen-sphere-detail' : ''}`}
           >
-            <div className="page-heading">
+            {accountTools}<div className="page-heading">
               <div>
                 <div className="eyebrow">ТВОЯ ЖИЗНЬ. ТВОИ ПРАВИЛА.</div>
                 <h1>
@@ -407,7 +415,7 @@ export default function App() {
                 })}
               </span>
             </div>
-            {getStorageProblem() && (
+            {!userId && getStorageProblem() && (
               <div className="storage-warning" role="alert">
                 {getStorageProblem()}{' '}
                 <button
@@ -805,14 +813,18 @@ export default function App() {
                 <DataBackup
                   state={state}
                   connected={!!tickTick.connection}
+                  userId={userId}
                   onNotify={notify}
                   onRestore={(next) => {
                     if (tickTick.connection)
                       throw new Error('Сначала отключи TickTick');
-                    const current = localStorage.getItem(stateStorageKey);
+                    if (userId && next.profile.mode !== 'personal') throw new Error('В аккаунт можно восстановить только личную игру.');
+                    const storageKey = userId ? `play-your-life-account:${userId}:manual-backup` : stateStorageKey;
+                    const restoreKey = userId ? `play-your-life-account:${userId}:recovery` : recoveryStorageKey;
+                    const current = userId ? JSON.stringify(state) : localStorage.getItem(storageKey);
                     if (current)
-                      localStorage.setItem(recoveryStorageKey, current);
-                    localStorage.setItem(stateStorageKey, JSON.stringify(next));
+                      localStorage.setItem(restoreKey, current);
+                    if (!userId) localStorage.setItem(storageKey, JSON.stringify(next));
                     clearStorageProblem();
                     setState(next);
                     setStorageError(false);
@@ -1208,8 +1220,9 @@ export default function App() {
               <Onboarding
                 key="start"
                 profile={state.profile}
+                accountMode={!!userId}
                 onComplete={(next) => {
-                  setState(next);
+                  setState(current => userId && current.profile.onboardingComplete ? current : next);
                   setModal(null);
                   navigate('home');
                   notify('Твоя игра началась. Первый шаг — за тобой!');
@@ -1355,3 +1368,6 @@ export default function App() {
     </TickTickContext.Provider>
   );
 }
+
+
+

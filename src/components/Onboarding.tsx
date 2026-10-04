@@ -43,7 +43,7 @@ export function ProfileEditor({
   onStart,
 }: {
   profile: PlayerProfile;
-  accountMode?: boolean;
+
   onSave: (profile: PlayerProfile) => void;
   onStart: () => void;
 }) {
@@ -337,4 +337,5 @@ export default function Onboarding({
     </form>
   );
 }
+
 

@@ -13,6 +13,7 @@ import App from './App';
 import { auth, database } from './firebaseClient';
 import { firebaseSave } from './firebaseSave';
 import { AccountSave } from './accountPersistence';
+import { accountStorage } from './accountStorage';
 import type { SaveSnapshot } from './accountPersistence';
 import { newAccountGame } from './accountGame';
 import { backupText } from './backup';
@@ -217,12 +218,12 @@ function CloudGame({ user }: { user: User }) {
   } | null>(null);
   const [message, setMessage] = useState(''),
     [leaving, setLeaving] = useState(false),
-    [backup, setBackup] = useState(false);
+    [backup, setBackup] = useState<GameState | null>(null);
   useEffect(() => {
     const engine = new AccountSave(
       user.uid,
       firebaseSave(database, user.uid),
-      localStorage,
+      accountStorage,
     );
     const unsubscribe = engine.subscribe((snapshot) =>
       setUnit({ engine, snapshot }),
@@ -256,7 +257,9 @@ function CloudGame({ user }: { user: User }) {
       const current = unit.engine.current;
       if (
         current.status === 'conflict' ||
-        (!current.localSaved && current.status !== 'saved')
+        (!current.localSaved &&
+          current.status !== 'saved' &&
+          backup !== current.state)
       ) {
         setLeaving(false);
         setMessage(
@@ -278,9 +281,10 @@ function CloudGame({ user }: { user: User }) {
       <span role="status">{unit?.snapshot.message || 'Загружаем игру…'}</span>
       {unit?.snapshot.state && (
         <button
-          onClick={() =>
-            download(unit.snapshot.state!, 'play-your-life-backup.json')
-          }
+          onClick={() => {
+            download(unit.snapshot.state!, 'play-your-life-backup.json');
+            setBackup(unit.snapshot.state);
+          }}
         >
           Скачать копию
         </button>
@@ -338,7 +342,7 @@ function CloudGame({ user }: { user: User }) {
             className="secondary-button"
             onClick={() => {
               download(snapshot.state!, 'play-your-life-local.json');
-              setBackup(true);
+              setBackup(snapshot.state);
             }}
           >
             Скачать версию устройства
@@ -357,7 +361,7 @@ function CloudGame({ user }: { user: User }) {
                 className="primary-button"
                 onClick={() =>
                   void engine
-                    .chooseRemote(backup)
+                    .chooseRemote(backup === snapshot.state)
                     .catch((e) => setMessage(String(e.message)))
                 }
               >
@@ -426,4 +430,3 @@ export default function AccountRoot() {
     );
   return <Login onGuest={() => setGuest(true)} />;
 }
-

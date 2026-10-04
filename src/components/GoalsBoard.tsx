@@ -339,7 +339,7 @@ export default function GoalsBoard({
                 className="secondary-button"
                 onClick={() => setEditor({ kind: 'transfer' })}
               >
-                Передать в TickTick
+                Задачи в TickTick
               </button>
               <button className="text-button" onClick={() => main(goal.id)}>
                 {mainGoal?.id === goal.id
@@ -373,7 +373,7 @@ export default function GoalsBoard({
           )}
           <div className="section-heading section-gap">
             <div>
-              <h2>Этапы твоего пути</h2>
+              <h2>Этапы цели</h2>
               <p>Разбей большую цель на понятные части.</p>
             </div>
             <button

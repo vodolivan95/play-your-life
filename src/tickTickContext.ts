@@ -8,7 +8,7 @@ export type TickTickManager = {
   configure: (url: string) => Promise<void>;
   update: (patch: Partial<TickTickConnection>) => void;
   refresh: () => Promise<void>;
-  sync: () => Promise<void>;
+  sync: (taskIds?: readonly string[]) => Promise<void>;
   disconnect: () => Promise<void>;
 };
 export const TickTickContext = createContext<TickTickManager | null>(null);

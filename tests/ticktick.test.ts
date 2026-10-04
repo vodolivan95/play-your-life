@@ -659,3 +659,63 @@ test('названия списков с фотографии сопоставл
   assert.equal(mapping.health, 'list-0');
   assert.equal(Object.values(mapping).includes('list-5'), false);
 });
+
+test('передача выбранной конкретной задачи не создаёт другие задачи той же цели или списка', async () => {
+  const { state, connection } = setup();
+  state.goals.find((g) => g.id === 'b2')!.stages = [
+    { id: 'listening', name: '100 часов аудирования' },
+  ];
+  state.quests[0] = {
+    ...state.quests[0],
+    stageId: 'listening',
+    name: 'Аудирование 1 час',
+    startsAt: '2026-10-04T11:00:00Z',
+    dueAt: '2026-10-04T12:00:00Z',
+  };
+  state.quests.push({
+    ...state.quests[0],
+    id: 'other',
+    name: 'Другой конкретный шаг',
+  });
+  const api = upstream();
+  const result = applyTickTickResult(
+    state,
+    await syncTickTick(state, connection, api.request, [state.quests[0].id]),
+  );
+  assert.equal(api.tasks.size, 1);
+  const task = [...api.tasks.values()][0];
+  assert.equal(task.title, 'Аудирование 1 час');
+  assert.match(task.content!, /Этап: 100 часов аудирования/);
+  assert.equal(task.startDate, '2026-10-04T11:00:00+0000');
+  assert.equal(task.dueDate, '2026-10-04T12:00:00+0000');
+  assert.equal(result.connection.links.other, undefined);
+  assert.equal(result.state.xp, state.xp);
+  await syncTickTick(result.state, result.connection, api.request, [
+    state.quests[0].id,
+  ]);
+  assert.equal(api.tasks.size, 1);
+});
+test('ограниченная передача сохраняет связи остальных задач и пустой выбор ничего не отправляет', async () => {
+  const { state, connection } = setup();
+  state.quests.push({
+    ...state.quests[0],
+    id: 'second',
+    name: 'Вторая задача',
+  });
+  const api = upstream();
+  const first = applyTickTickResult(
+    state,
+    await syncTickTick(state, connection, api.request),
+  );
+  const before = structuredClone(first.connection.links.second);
+  const result = await syncTickTick(
+    first.state,
+    first.connection,
+    api.request,
+    [state.quests[0].id],
+  );
+  assert.deepEqual(result.connection.links.second, before);
+  const calls = api.calls.length;
+  await syncTickTick(state, connection, api.request, []);
+  assert.equal(api.calls.length, calls);
+});

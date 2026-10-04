@@ -232,6 +232,7 @@ async function syncTickTickProject(
   connection: TickTickConnection,
   request: <T>(path: string, method?: string, body?: unknown) => Promise<T>,
   allLinks: TickTickConnection['links'],
+  taskIds?: readonly string[],
 ): Promise<TickTickResult> {
   if (!connection.projectId)
     throw new Error('Выбери список TickTick для синхронизации.');
@@ -340,6 +341,7 @@ async function syncTickTickProject(
   for (const local of state.quests.filter(
     (q) =>
       !q.done &&
+      (!taskIds || taskIds.includes(q.id)) &&
       isGoalTask(state, q) &&
       !allLinks[q.id] &&
       taskProject(connection, q) === connection.projectId,
@@ -374,6 +376,7 @@ export async function syncTickTick(
     method,
     body,
   ) => bridgeRequest(connection, path, method, body),
+  taskIds?: readonly string[],
 ): Promise<TickTickResult> {
   if (!hasTickTickTargets(connection))
     throw new Error('Сопоставь сферу жизни со списком TickTick.');
@@ -388,7 +391,12 @@ export async function syncTickTick(
   };
   const projects = new Set<string>();
   for (const task of state.quests) {
-    if (task.done || !isGoalTask(state, task) || connection.links[task.id])
+    if (
+      (taskIds && !taskIds.includes(task.id)) ||
+      task.done ||
+      !isGoalTask(state, task) ||
+      connection.links[task.id]
+    )
       continue;
     const project = taskProject(connection, task);
     if (project) projects.add(project);
@@ -397,14 +405,17 @@ export async function syncTickTick(
         `${task.name}: для сферы «${spheres.find((s) => s.id === task.sphere)?.name ?? task.sphere}» не выбран список TickTick. Задача остаётся здесь.`,
       );
   }
-  for (const link of Object.values(connection.links)) {
+  for (const [id, link] of Object.entries(connection.links)) {
+    if (taskIds && !taskIds.includes(id)) continue;
     const project = link.projectId || connection.projectId;
     if (project) projects.add(project);
   }
   for (const projectId of projects) {
     const links = Object.fromEntries(
       Object.entries(connection.links).filter(
-        ([, link]) => (link.projectId || connection.projectId) === projectId,
+        ([id, link]) =>
+          (!taskIds || taskIds.includes(id)) &&
+          (link.projectId || connection.projectId) === projectId,
       ),
     );
     try {
@@ -413,6 +424,7 @@ export async function syncTickTick(
         { ...connection, projectId, links },
         request,
         connection.links,
+        taskIds,
       );
       for (const id of Object.keys(links)) delete result.connection.links[id];
       Object.assign(result.connection.links, batch.connection.links);

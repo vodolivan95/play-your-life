@@ -102,7 +102,7 @@ export default function useTickTick(
       setBusy(false);
     }
   }
-  async function sync() {
+  async function sync(taskIds?: readonly string[]) {
     const { state: s, connection: c } = latest.current;
     if (
       working.current ||
@@ -114,7 +114,7 @@ export default function useTickTick(
     working.current = true;
     setBusy(true);
     try {
-      const result = await syncTickTick(s, c);
+      const result = await syncTickTick(s, c, undefined, taskIds);
       const applied = applyTickTickResult(latest.current.state, result);
       onChange(applied.state);
       setConnection((current) =>

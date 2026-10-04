@@ -57,6 +57,7 @@ export function validateState(value: unknown): asserts value is SavedState {
       )
     )
       return fail();
+    if (shop.rewardTargetId !== undefined && !shopItems.some(i => i.kind === 'reward' && i.id === shop.rewardTargetId)) return fail();
     const purchases = shop.purchases as Record<string, unknown>[];
     const frames = purchases.filter((p) =>
       shopItems.some((i) => i.id === p.itemId && i.kind === 'frame'),

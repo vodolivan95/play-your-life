@@ -1,3 +1,7 @@
+import HomeDashboard from './components/HomeDashboard';
+import DashboardHeader from './components/DashboardHeader';
+import PlayBrand from './components/PlayBrand';
+import citySidebarImage from './assets/life-city.webp';
 import { CityAppearanceContext } from './cityAppearanceContext';
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, FormEvent } from 'react';
@@ -182,13 +186,8 @@ export default function App() {
     spheres.reduce((sum, s) => sum + state.spheres[s.id].score, 0) /
     spheres.length
   ).toFixed(1);
-  const mainGoal =
-    state.goals.find((g) => g.id === state.mainGoalId) ||
-    state.goals.find((g) => !g.rewarded) ||
-    state.goals[0];
   const {
     level: currentLevel,
-    nextXP,
     progress: levelProgress,
     title: levelTitle,
   } = playerProgress(state);
@@ -350,12 +349,7 @@ export default function App() {
               navigate('home');
             }}
           >
-            <span className="brand-symbol">
-              P<span>↗</span>
-            </span>
-            <div>
-              PLAY YOUR LIFE<small>Your Life. Your Game.</small>
-            </div>
+            <PlayBrand />
           </a>
           <div className="nav-caption">ТВОЁ ПРИКЛЮЧЕНИЕ</div>
           <nav>
@@ -374,19 +368,7 @@ export default function App() {
               </button>
             ))}
           </nav>
-          <div className="sidebar-message">
-            <span>✦</span>
-            <strong>
-              Маленькие шаги.
-              <br />
-              Большие перемены.
-            </strong>
-            <p>
-              Каждый день — новый шанс
-              <br />
-              стать лучшей версией себя.
-            </p>
-          </div>
+          <div className="sidebar-city"><img src={citySidebarImage} alt="Твой город сфер жизни" /><PlayBrand /></div>
           <button
             className="sidebar-profile"
             aria-label="Личный профиль"
@@ -408,43 +390,7 @@ export default function App() {
           </button>
         </aside>
         <div className="main-wrap">
-          <header className="topbar">
-            <button
-              className="icon-button mobile-settings"
-              aria-label="Личный профиль"
-              onClick={() => setModal('profile')}
-            >
-              <Icon name="settings" size={19} />
-            </button>
-            <div className="mobile-brand">
-              PLAY YOUR LIFE<small>Your Life. Your Game.</small>
-            </div>
-            <span className="topbar-label">
-              {navigation.find((n) => n.id === page)?.label}
-            </span>
-            <div className="topbar-actions">
-              <span className="coin-balance">
-                🪙 <b>{state.coins}</b>
-              </span>
-              <button
-                className="icon-button"
-                aria-label="Награды за активность"
-                onClick={() => setModal('streak')}
-              >
-                <Icon name="bell" />
-              </button>
-              <button
-                className="avatar small profile-trigger"
-                aria-label="Личный профиль"
-                onClick={() => setModal('profile')}
-              >
-                <Avatar
-                  value={state.profile.avatar}
-                  frame={state.shop?.equippedFrame}
-                />
-              </button>
-            </div>
-          </header>
+          <header className="topbar"><DashboardHeader state={state} onProfile={() => setModal('profile')} onQuests={() => navigate('quests')} /></header>
           <main
             className={`screen-${page} ${sphere ? 'screen-sphere-detail' : ''}`}
           >
@@ -511,212 +457,7 @@ export default function App() {
                 }
               />
             )}
-            {page === 'home' && (
-              <div className="personal-banner">
-                <span>
-                  {state.profile.mode === 'demo' ? (
-                    'ДЕМО'
-                  ) : (
-                    <Avatar
-                      value={state.profile.avatar}
-                      frame={state.shop?.equippedFrame}
-                    />
-                  )}
-                </span>
-                <div>
-                  <strong>
-                    {state.profile.mode === 'demo'
-                      ? 'Пример игры. Начни свою историю.'
-                      : `${state.profile.name}, каждый шаг имеет значение.`}
-                  </strong>
-                  <small>
-                    {state.profile.mode === 'demo'
-                      ? 'Настрой персонажа и выбери свою главную цель.'
-                      : 'Твой прогресс начинается с реальных действий.'}
-                  </small>
-                </div>
-                <button
-                  className="text-button"
-                  onClick={() =>
-                    setModal(
-                      state.profile.mode === 'demo' ? 'start' : 'profile',
-                    )
-                  }
-                >
-                  {state.profile.mode === 'demo' ? 'Начать' : 'Профиль'}
-                  <Icon name="arrow" size={15} />
-                </button>
-              </div>
-            )}
-            {page === 'home' && (
-              <>
-                <div className="hero-grid">
-                  <section className="player-card">
-                    <div className="player-content">
-                      <div className="avatar-orbit">
-                        <span className="player-avatar">
-                          <Avatar
-                            value={state.profile.avatar}
-                            frame={state.shop?.equippedFrame}
-                          />
-                        </span>
-                      </div>
-                      <div className="player-summary">
-                        <div className="level-label">LEVEL {currentLevel}</div>
-                        <h2>{levelTitle}</h2>
-                        <p>{state.profile.name}</p>
-                        <Progress
-                          value={levelProgress}
-                          label="XP до следующего уровня"
-                        />
-                        <div className="hero-progress-label">
-                          <b>
-                            {state.profile.mode === 'personal'
-                              ? state.xp % 200
-                              : state.xp}{' '}
-                            / {state.profile.mode === 'personal' ? 200 : nextXP}{' '}
-                            XP
-                          </b>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="player-rewards">
-                      <span>
-                        <b>
-                          <GameArt kind="coin" />{' '}
-                          {state.coins.toLocaleString('ru')}
-                        </b>
-                        <small>Монеты</small>
-                      </span>
-                      <button onClick={() => setModal('streak')}>
-                        <b>
-                          <GameArt kind="fire" /> {streak(state.activeDates)}
-                        </b>
-                        <small>Серия дней</small>
-                      </button>
-                      <button onClick={() => navigate('achievements')}>
-                        <b>
-                          <GameArt kind="trophy" /> {unlocked}
-                        </b>
-                        <small>Достижения</small>
-                      </button>
-                    </div>
-                  </section>
-                  <section className="goal-highlight">
-                    <div className="card-kicker">
-                      <span>Главная цель</span>
-                      <span className="mini-pill">
-                        {mainGoal?.rewarded ? 'Достигнута ✓' : 'В процессе'}
-                      </span>
-                    </div>
-                    <div className="goal-art">
-                      <span>
-                        {mainGoal?.image ? (
-                          <ProjectArt
-                            name={mainGoal.name}
-                            sphere={mainGoal.sphere}
-                            image={mainGoal.image}
-                          />
-                        ) : (
-                          <GameArt kind="target" />
-                        )}
-                      </span>
-                      <i>✦</i>
-                      <b>
-                        <Icon name="arrow" size={20} />
-                      </b>
-                    </div>
-                    <h2>{mainGoal?.name || 'Твоя следующая большая цель'}</h2>
-                    <p>Большая мечта. Маленькие шаги каждый день.</p>
-                    <div className="goal-progress-label">
-                      <span>Твой прогресс</span>
-                      <b>
-                        {mainGoal
-                          ? Math.round(
-                              (mainGoal.current / mainGoal.target) * 100,
-                            )
-                          : 0}
-                        %
-                      </b>
-                    </div>
-                    <Progress
-                      label={`Цель: ${mainGoal?.name ?? 'Главная цель'}`}
-                      value={
-                        mainGoal
-                          ? (mainGoal.current / mainGoal.target) * 100
-                          : 0
-                      }
-                    />
-                    <button
-                      className="text-button"
-                      onClick={() => navigate('goals')}
-                    >
-                      Продолжить путь <Icon name="arrow" size={16} />
-                    </button>
-                  </section>
-                </div>
-                <div className="home-lower">
-                  <section className="panel quests-panel">
-                    <div className="section-heading">
-                      <div>
-                        <h2>
-                          Квесты на сегодня{' '}
-                          <span className="count-chip">
-                            {todayTasks.filter((q) => !q.done).length}
-                          </span>
-                        </h2>
-                        <p>Реальные действия. Настоящий прогресс.</p>
-                      </div>
-                      <button
-                        className="icon-button outlined"
-                        aria-label="Создать квест"
-                        onClick={newQuest}
-                      >
-                        <Icon name="plus" />
-                      </button>
-                    </div>
-                    {todayTasks.slice(0, 4).map((q) => (
-                      <QuestRow key={q.id} quest={q} />
-                    ))}
-                    {todayTasks.length === 0 && (
-                      <p className="empty">
-                        Создай первый квест и начни приключение.
-                      </p>
-                    )}
-                    <button
-                      className="all-link"
-                      onClick={() => navigate('quests')}
-                    >
-                      Все квесты <Icon name="arrow" size={16} />
-                    </button>
-                  </section>
-                  <Statistics
-                    state={state}
-                    compact
-                    onMonthly={() => navigate('monthly')}
-                  />
-                </div>
-                <section className="spheres-section">
-                  <div className="section-heading">
-                    <div>
-                      <h2>Твои сферы жизни</h2>
-                      <p>Развивайся в своём ритме. Найди свой баланс.</p>
-                    </div>
-                    <button
-                      className="text-button"
-                      onClick={() => navigate('spheres')}
-                    >
-                      Все сферы <Icon name="arrow" size={16} />
-                    </button>
-                  </div>
-                  <div className="sphere-grid">
-                    {spheres.slice(0, 4).map((s) => (
-                      <SphereCard id={s.id} key={s.id} />
-                    ))}
-                  </div>
-                </section>
-              </>
-            )}
+            {page === 'home' && <HomeDashboard state={state} onChange={setState} onSphere={(id) => { setSelected(id); setSphereTab('projects'); setPage('spheres'); }} onQuests={() => navigate('quests')} onGoal={() => navigate('goals')} onShop={() => navigate('shop')} onProfile={() => setModal('profile')} onCreate={newQuest} onStart={() => setModal('start')} renderQuest={q => <QuestRow key={q.id} quest={q} />} />}
             {page === 'spheres' && (
               <SphereDistricts
                 state={state}
@@ -1409,7 +1150,8 @@ export default function App() {
                 </div>
               </>
             )}
-            <footer className="footer">
+            <div className="mobile-city-footer"><img src={citySidebarImage} alt="Твой город жизни" /><PlayBrand /></div>
+          <footer className="footer">
               PLAY YOUR LIFE <span>✦</span> Маленькие шаги делают большую жизнь.
             </footer>
           </main>

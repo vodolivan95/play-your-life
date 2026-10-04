@@ -1,0 +1,41 @@
+import { useContext } from 'react';
+import type { ReactNode } from 'react';
+import type { GameState, Quest } from '../game';
+import { achievements, playerProgress, spheres, streak, dateKey as localDate, questsForToday } from '../game';
+
+import { TickTickContext } from '../tickTickContext';
+import { shopItems, selectRewardTarget } from '../shop';
+import Avatar from './Avatar';
+import GameArt from './GameArt';
+import CityBuildingArt from './CityBuildingArt';
+import hero from '../assets/home-mountains.webp';
+import './HomeDashboard.css';
+function Bar({ value, label }: { value: number; label: string }) { return <div className="home-progress" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(Math.min(100, Math.max(0, value)))}><span style={{ width: `${Math.min(100, Math.max(0, value))}%` }} /></div>; }
+export default function HomeDashboard({ state, onChange, onSphere, onQuests, onGoal, onShop, onProfile, onCreate, onStart, renderQuest }: { state: GameState; onChange: (state: GameState) => void; onSphere: (id: string | null) => void; onQuests: () => void; onGoal: () => void; onShop: () => void; onProfile: () => void; onCreate: () => void; onStart: () => void; renderQuest: (quest: Quest) => ReactNode }) {
+  const tickTick = useContext(TickTickContext);
+  const now = new Date();
+  const tasks = questsForToday(state, now);
+  const player = playerProgress(state);
+  const goal = state.goals.find(g => g.id === state.mainGoalId) ?? state.goals.find(g => !g.rewarded) ?? state.goals[0];
+  const goalPercent = goal ? Math.min(100, Math.round(goal.current / goal.target * 100)) : 0;
+  const rewards = shopItems.filter(i => i.kind === 'reward');
+  const reward = rewards.find(i => i.id === state.shop?.rewardTargetId);
+  const hour = Number(new Intl.DateTimeFormat('ru-RU', { hour: 'numeric', hourCycle: 'h23', timeZone: 'Europe/Moscow' }).format(now));
+  const greeting = hour < 6 ? 'Доброй ночи' : hour < 12 ? 'Доброе утро' : hour < 18 ? 'Добрый день' : 'Добрый вечер';
+  const monday = new Date(now); monday.setDate(now.getDate() - (now.getDay() + 6) % 7);
+  return <div className="home-dashboard">
+    <section className="home-welcome" style={{ backgroundImage: `linear-gradient(90deg, #f0f7ffcc, #f0f7ff33 65%, transparent), url(${hero})` }}><h1>{greeting}, {state.profile.name}!</h1><p>Сегодня ещё один шаг к лучшей версии себя.</p><blockquote>Большие изменения начинаются<br />с маленьких ежедневных действий.</blockquote><button onClick={onQuests}><span>▶</span><div><strong>Продолжить путь</strong><small>{tasks.filter(q => !q.done).length ? `Сегодня тебя ждут квесты: ${tasks.filter(q => !q.done).length}` : 'Выбери свой первый шаг на сегодня'}</small></div></button>{state.profile.mode === 'demo' && <button className="home-demo-start" onClick={onStart}>Демо · Начать свою игру →</button>}</section>
+    <section className="home-player home-panel"><button className="home-player-identity" onClick={onProfile}><span className="home-avatar"><Avatar value={state.profile.avatar} frame={state.shop?.equippedFrame} /></span><span><small>LEVEL {player.level}</small><h2>{player.title}</h2><p>{state.profile.name}</p><Bar value={player.progress} label="XP до следующего уровня" /><b>{state.profile.mode === 'personal' ? state.xp % 200 : state.xp} / {state.profile.mode === 'personal' ? 200 : player.nextXP} XP</b></span></button><div className="home-player-stats"><span><GameArt kind="coin" /><b>{state.coins}</b><small>Life Coins</small></span><span><GameArt kind="fire" /><b>{streak(state.activeDates)}</b><small>Серия дней</small></span><span><GameArt kind="trophy" /><b>{achievements.filter(a => a.unlocked(state)).length}</b><small>Достижения</small></span></div></section>
+    <div className="home-dashboard-main">
+      <section className="home-panel home-spheres"><div className="home-section-title"><h2>Сферы жизни</h2><button onClick={() => onSphere(null)}>Все сферы →</button></div><div className="home-sphere-grid">{spheres.map(s => <button key={s.id} onClick={() => onSphere(s.id)} className="home-sphere"><CityBuildingArt id={s.id} /><div><GameArt kind={s.id} /><strong>{s.name}</strong><small>{state.spheres[s.id].score} / 9</small></div><div className="home-sphere-meter"><span style={{ width: `${state.spheres[s.id].score / 9 * 100}%`, background: s.color }} /></div></button>)}</div></section>
+      <section className="home-panel home-today"><div className="home-section-title"><h2>Мои квесты на сегодня <span>{tasks.filter(q => !q.done).length}</span></h2><button onClick={onCreate}>＋ Добавить задачу</button></div><div className="home-ticktick-status">{tickTick?.connection ? 'Задачи твоей игры · TickTick подключён' : 'Задачи твоей игры · TickTick не подключён'}<button onClick={onProfile}>Настроить</button></div>{tasks.map(q => renderQuest(q))}{!tasks.length && <div className="home-empty"><strong>Сегодня начинается с одного шага</strong><p>Добавь задачу на день или выбери шаблон квеста.</p></div>}<button className="home-all-tasks" onClick={onQuests}>Все задачи →</button></section>
+      <section className="home-panel home-habits"><div className="home-section-title"><h2>Трекер привычек</h2><span>TickTick</span></div><div className="home-empty"><span className="home-habit-symbol">✓</span><div><strong>Привычки TickTick появятся здесь</strong><p>Подключение трекера ещё не настроено. Здесь будут привычки на сегодня и отметки выполнения.</p></div></div><button className="text-button" onClick={onProfile}>Открыть настройки TickTick →</button></section>
+    </div>
+    <div className="home-dashboard-side">
+      <section className="home-panel home-main-goal"><div className="home-section-title"><h2>Главная цель</h2><button onClick={onGoal}>{goal?.rewarded ? 'Достигнута ✓' : 'Открыть →'}</button></div><div className="home-goal-line"><GameArt kind="target" /><div><strong>{goal?.name ?? 'Выбери свою большую цель'}</strong><Bar value={goalPercent} label="Прогресс главной цели" /><small>{goalPercent}%</small></div></div></section>
+      <section className="home-panel home-schedule"><div className="home-section-title"><h2>Сегодня</h2><small>{now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: 'Europe/Moscow' })}</small></div>{tasks.slice().sort((a,b)=>(a.startsAt ?? a.dueAt ?? '').localeCompare(b.startsAt ?? b.dueAt ?? '')).map(q => <button key={q.id} onClick={onQuests} className={q.done ? 'is-done' : ''}><time>{q.startsAt || q.dueAt ? new Date(q.startsAt ?? q.dueAt!).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' }) : 'Без времени'}</time><GameArt kind={q.sphere} /><span>{q.name}</span>{q.done && <b>✓</b>}</button>)}{!tasks.length && <p>В расписании пока нет задач.</p>}</section>
+      <section className="home-panel home-reward"><div className="home-section-title"><h2>Ближайшая награда</h2><button onClick={onShop}>Все награды →</button></div><label>На что копим?<select aria-label="Выбрать награду" value={reward?.id ?? ''} onChange={e => onChange(selectRewardTarget(state, e.target.value || null))}><option value="">Выбери награду…</option>{rewards.map(r => <option key={r.id} value={r.id}>{r.name} · {r.price} монет</option>)}</select></label>{reward ? <div className="home-reward-detail"><span style={{ background: reward.color }}>{reward.icon}</span><div><strong>{reward.name}</strong><p>{reward.description}</p><b>{state.coins} / {reward.price} 🪙</b><Bar value={state.coins / reward.price * 100} label="Накопления на награду" /><small>{state.coins >= reward.price ? 'Награда уже доступна в магазине' : `Осталось накопить ${reward.price - state.coins} монет`}</small></div></div> : <p>Выбери награду, ради которой хочется сделать следующий шаг.</p>}</section>
+      <section className="home-panel home-streak"><div className="home-section-title"><h2>🔥 Серия дней</h2><strong>{streak(state.activeDates)} дней</strong></div><div className="home-week">{['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map((name,i)=>{const day=new Date(monday);day.setDate(monday.getDate()+i);const date=localDate(day);const completed=state.activeDates.includes(date);return <div key={name}><span className={completed?'completed':date===localDate(now)?'today':''}>{completed?'✓':''}</span><small>{name}</small></div>;})}</div></section>
+    </div>
+  </div>;
+}

@@ -90,7 +90,7 @@ export type Purchase = {
   date: string;
   usedAt?: string;
 };
-export type ShopState = { purchases: Purchase[]; equippedFrame?: string };
+export type ShopState = { purchases: Purchase[]; equippedFrame?: string; rewardTargetId?: string };
 export function buyItem(
   state: GameState,
   itemId: string,
@@ -141,4 +141,13 @@ export function redeemPurchase(
       ),
     },
   };
+}
+
+export function selectRewardTarget(state: GameState, itemId: string | null): GameState {
+  if (itemId !== null && !shopItems.some(i => i.id === itemId && i.kind === 'reward')) throw new Error('Эта награда недоступна.');
+  if ((state.shop?.rewardTargetId ?? null) === itemId) return state;
+  const shop: ShopState = { ...state.shop, purchases: state.shop?.purchases ?? [] };
+  if (itemId === null) delete shop.rewardTargetId;
+  else shop.rewardTargetId = itemId;
+  return { ...state, shop };
 }

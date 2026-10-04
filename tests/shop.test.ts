@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { initialState } from '../src/game.ts';
-import { buyItem, redeemPurchase } from '../src/shop.ts';
+import { buyItem, redeemPurchase, selectRewardTarget } from '../src/shop.ts';
 import { backupText, restoreBackup } from '../src/backup.ts';
 
 test('покупка списывает только монеты и сохраняется в копии', () => {
@@ -62,4 +62,33 @@ test('старые сохранения работают, повреждённы
     { purchases: [], equippedFrame: 'gold' },
   ])
     assert.throws(() => restoreBackup(JSON.stringify({ ...state, shop })));
+});
+
+test('выбор награды сохраняется без покупки, списания монет или начисления XP', () => {
+  const state = buyItem({ ...initialState(), coins: 1000 }, 'gold');
+  const next = selectRewardTarget(state, 'games');
+  assert.equal(next.shop?.rewardTargetId, 'games');
+  assert.equal(next.coins, state.coins);
+  assert.equal(next.xp, state.xp);
+  assert.deepEqual(next.shop?.purchases, state.shop?.purchases);
+  assert.equal(next.shop?.equippedFrame, state.shop?.equippedFrame);
+  assert.equal(state.shop?.rewardTargetId, undefined);
+  assert.deepEqual(restoreBackup(backupText(next)), next);
+  assert.equal(selectRewardTarget(next, 'games'), next);
+  const cleared = selectRewardTarget(next, null);
+  assert.equal(cleared.shop?.rewardTargetId, undefined);
+  assert.deepEqual(restoreBackup(backupText(cleared)), cleared);
+});
+
+test('цель накопления принимает только награды и отклоняет повреждённый импорт', () => {
+  const state = initialState();
+  assert.throws(() => selectRewardTarget(state, 'unknown'));
+  assert.throws(() => selectRewardTarget(state, 'gold'));
+  assert.equal(selectRewardTarget(state, null), state);
+  const next = selectRewardTarget(state, 'coffee');
+  for (const id of ['unknown', 'gold', 42, null]) {
+    const copy = JSON.parse(backupText(next));
+    copy.state.shop.rewardTargetId = id;
+    assert.throws(() => restoreBackup(JSON.stringify(copy)));
+  }
 });

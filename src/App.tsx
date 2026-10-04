@@ -347,6 +347,7 @@ export default function App() {
               <button
                 key={item.id}
                 className={page === item.id ? 'nav-item active' : 'nav-item'}
+                aria-current={page === item.id ? 'page' : undefined}
                 onClick={() => navigate(item.id)}
               >
                 <Icon name={item.icon} />
@@ -1397,6 +1398,14 @@ export default function App() {
                     n.id === 'profile')
                     ? 'active'
                     : ''
+                }
+                aria-current={
+                  page === n.id ||
+                  (page === 'spheres' && n.id === 'home') ||
+                  (['plan', 'monthly', 'tree', 'achievements'].includes(page) &&
+                    n.id === 'profile')
+                    ? 'page'
+                    : undefined
                 }
                 onClick={() => navigate(n.id)}
               >

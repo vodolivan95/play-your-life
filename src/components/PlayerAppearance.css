@@ -1,0 +1,95 @@
+/* Reference styling: gold outer ring, blue gap, white portrait edge. */
+.player-content .avatar-orbit {
+  box-sizing: border-box;
+  width: 120px;
+  height: 120px;
+  flex: 0 0 120px;
+  padding: 10px;
+  border: 4px solid #f6c44b;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #245fff, #1831ca);
+  box-shadow: 0 8px 24px #2450d12b;
+}
+.player-content .avatar-orbit .player-avatar {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border: 4px solid #fff;
+  background: linear-gradient(145deg, #eef8ff, #bfdfff);
+  box-shadow: 0 3px 8px #11278a40;
+}
+.player-content .avatar-orbit:has(.frame-sky) {
+  border-color: #50c2ff;
+}
+.player-content .avatar-orbit:has(.frame-rose) {
+  border-color: #f48bab;
+}
+.profile-hero .player-avatar {
+  border: 4px solid #fff;
+  outline: 3px solid #f6c44b;
+  outline-offset: 5px;
+  box-shadow:
+    0 0 0 8px #2454ef,
+    0 9px 24px #2450d125;
+}
+.avatar.small:has(.character-avatar) {
+  box-sizing: border-box;
+  border: 2px solid #fff;
+  background: #e4f2ff;
+  box-shadow: 0 0 0 2px #2454ef;
+}
+.sidebar .nav-item.active,
+.tabs button.selected {
+  color: #fff;
+  background: linear-gradient(135deg, #2057f5, #1536d7);
+  box-shadow: 0 4px 12px #244fe52b;
+}
+.sidebar .nav-item.active .nav-count {
+  color: #fff;
+  background: #ffffff25;
+}
+.district-card.is-selected {
+  border-color: #2454ef;
+  background: #edf2ff;
+  box-shadow: 0 4px 16px #2454ef30;
+}
+@media (max-width: 900px) {
+  .player-content .avatar-orbit {
+    width: 100px;
+    height: 100px;
+    flex-basis: 100px;
+    padding: 8px;
+    border-width: 3px;
+  }
+  .player-content .avatar-orbit .player-avatar {
+    border-width: 3px;
+  }
+  .mobile-nav button.active {
+    color: #fff;
+    background: linear-gradient(135deg, #2057f5, #1536d7);
+    border-radius: 12px;
+    box-shadow: 0 4px 10px #244fe530;
+  }
+  .mobile-nav button {
+    min-height: 48px;
+    padding: 6px 0;
+    margin: 0 2px;
+  }
+  .mobile-nav button.active svg {
+    fill: none;
+  }
+}
+@media (max-width: 359px) {
+  .player-content .avatar-orbit {
+    width: 88px;
+    height: 88px;
+    flex-basis: 88px;
+    padding: 7px;
+  }
+  .player-content {
+    gap: 12px;
+  }
+  .mobile-nav button {
+    margin-inline: 1px;
+  }
+}

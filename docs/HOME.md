@@ -32,3 +32,9 @@
 ## Проверки
 
 npm run check, npm test; браузерная проверка выбора и сохранения награды, выполнения квеста, переходов, погоды, отсутствия ошибок и переполнения на 320/390/768/1024/1440 px.
+
+## Персонаж ближе к зрителю
+
+По отдельной правке пользователя персонаж на фоне увеличен и перенесён на передний план; поза сидя и пейзаж сохранены. На телефоне кадр смещён вправо, чтобы персонаж попадал в видимую область. Файл заменён: src/assets/home-mountains.webp. Режим: редактирование встроенным image_gen. Промпт:
+
+> Edit the supplied panoramic mountain hero photograph. Make only one composition change: move the same seated male hiker much closer to the camera and enlarge him by about 1.6 times. He must remain seated on the foreground rock at the right, viewed from behind with the same blue outdoor jacket, dark trousers and blue backpack, looking toward the alpine lake. Show his head, shoulders, backpack and bent legs prominently; his seated silhouette should occupy approximately 80 percent of the image height and the rightmost 32 percent of the image, with the head around 78 percent of the width. Preserve the existing lake, mountains, pine forest, warm sunrise, natural photographic style and overall wide panoramic 8:3 canvas. Keep the left 65 percent spacious and unobstructed for dashboard text. Do not add text, logos, UI or extra people. Keep realistic anatomy and a clearly seated posture. The character should feel close to the viewer, in the immediate foreground.

@@ -123,6 +123,10 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   const [modal, setModal] = useState<
     'quest' | 'goal' | 'streak' | 'start' | 'profile' | null
   >(() => (state.profile.onboardingComplete ? null : 'start'));
+  useEffect(() => {
+    if (userId && state.profile.onboardingComplete)
+      queueMicrotask(() => setModal(current => current === 'start' ? null : current));
+  }, [userId, state.profile.onboardingComplete]);
   const [filter, setFilter] = useState('today');
   const [achievementFilter, setAchievementFilter] = useState('all');
   const [treeView, setTreeView] = useState('map');
@@ -1218,7 +1222,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 profile={state.profile}
                 accountMode={!!userId}
                 onComplete={(next) => {
-                  setState(next);
+                  setState(current => userId && current.profile.onboardingComplete ? current : next);
                   setModal(null);
                   navigate('home');
                   notify('Твоя игра началась. Первый шаг — за тобой!');
@@ -1364,5 +1368,6 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
     </TickTickContext.Provider>
   );
 }
+
 
 

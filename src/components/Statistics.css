@@ -1,0 +1,141 @@
+.statistics-view:not(.compact-statistics) .xp-chart-card {
+  border-radius: 26px;
+  padding: 24px;
+}
+.statistics-view:not(.compact-statistics) .xp-chart-card h2 {
+  font-size: 42px;
+}
+.statistics-view:not(.compact-statistics) .xp-chart {
+  height: 190px;
+  margin-top: 42px;
+}
+.statistics-view:not(.compact-statistics) .xp-bar {
+  background: linear-gradient(#9abaff, #2457f5);
+  border-radius: 12px 12px 4px 4px;
+  width: 70%;
+  max-width: 48px;
+}
+.statistics-view:not(.compact-statistics) .xp-bar.zero {
+  background: #e9effb;
+}
+.xp-value {
+  position: absolute;
+  font-size: 10px;
+  color: #4c5d75;
+  transform: translateY(-5px);
+}
+.period-comparison {
+  font-size: 13px;
+  color: #265c51;
+  margin-top: 10px;
+}
+.period-comparison span {
+  color: #52637a;
+  font-size: 11px;
+}
+.metric-note {
+  font-size: 12px;
+  color: #52637a;
+  margin-top: 12px;
+}
+.life-score-chart {
+  margin-top: 22px;
+  border-radius: 26px;
+}
+.score-chart-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+.score-chart-heading span {
+  font-size: 13px;
+  color: #52637a;
+}
+.life-score-chart svg {
+  display: block;
+  width: 100%;
+  max-width: 450px;
+  margin: 8px auto;
+}
+.life-score-chart > p {
+  text-align: center;
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+.life-score-chart details {
+  font-size: 12px;
+}
+.life-score-chart summary {
+  cursor: pointer;
+  padding: 8px;
+}
+.score-values p {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 12px 0;
+}
+.score-values p > span {
+  flex: 1;
+}
+.score-values small {
+  color: #52637a;
+}
+.overall-progress {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-top: 20px;
+  border-radius: 26px;
+}
+.overall-progress h2 {
+  font-size: 20px;
+}
+.overall-progress p {
+  font-size: 13px;
+  color: #52637a;
+  line-height: 1.6;
+  margin-top: 8px;
+}
+.overall-level {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  border: 7px solid #2457f5;
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: 800;
+  flex: none;
+}
+@media (max-width: 480px) {
+  .statistics-view:not(.compact-statistics) .xp-chart-card {
+    padding: 18px;
+  }
+  .statistics-view:not(.compact-statistics) .xp-chart {
+    height: 150px;
+    gap: 4px;
+  }
+  .statistics-view:not(.compact-statistics) .statistics-summary .panel {
+    padding: 18px;
+    border-radius: 24px;
+  }
+  .xp-value {
+    font-size: 8px;
+  }
+  .statistics-summary h2 {
+    font-size: 24px;
+  }
+  .overall-progress {
+    gap: 12px;
+    padding: 18px;
+  }
+  .score-values p {
+    gap: 8px;
+  }
+  .life-score-chart {
+    padding: 18px;
+  }
+}

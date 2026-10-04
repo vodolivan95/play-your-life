@@ -12,6 +12,7 @@ import {
   SphereProjects,
 } from './components/SphereCity';
 import Statistics from './components/Statistics';
+import RewardShop from './components/RewardShop';
 import Onboarding, { ProfileEditor } from './components/Onboarding';
 import MonthlyReview from './components/MonthlyReview';
 import GoalsBoard from './components/GoalsBoard';
@@ -47,10 +48,11 @@ const navigation = [
   { id: 'monthly', label: 'Итоги месяца', icon: 'calendar' },
   { id: 'tree', label: 'Skill Tree', icon: 'tree' },
   { id: 'achievements', label: 'Достижения', icon: 'trophy' },
+  { id: 'shop', label: 'Магазин', icon: 'shop' },
   { id: 'statistics', label: 'Статистика', icon: 'statistics' },
   { id: 'profile', label: 'Профиль', icon: 'profile' },
 ];
-const mobileIds = ['home', 'goals', 'quests', 'statistics', 'profile'];
+const mobileIds = ['home', 'goals', 'quests', 'shop', 'statistics', 'profile'];
 function Progress({
   value,
   color,
@@ -374,7 +376,10 @@ export default function App() {
             onClick={() => setModal('profile')}
           >
             <span className="avatar small">
-              <Avatar value={state.profile.avatar} />
+              <Avatar
+                value={state.profile.avatar}
+                frame={state.shop?.equippedFrame}
+              />
             </span>
             <div>
               <strong>{state.profile.name}</strong>
@@ -416,7 +421,10 @@ export default function App() {
                 aria-label="Личный профиль"
                 onClick={() => setModal('profile')}
               >
-                <Avatar value={state.profile.avatar} />
+                <Avatar
+                  value={state.profile.avatar}
+                  frame={state.shop?.equippedFrame}
+                />
               </button>
             </div>
           </header>
@@ -492,7 +500,10 @@ export default function App() {
                   {state.profile.mode === 'demo' ? (
                     'ДЕМО'
                   ) : (
-                    <Avatar value={state.profile.avatar} />
+                    <Avatar
+                      value={state.profile.avatar}
+                      frame={state.shop?.equippedFrame}
+                    />
                   )}
                 </span>
                 <div>
@@ -527,7 +538,10 @@ export default function App() {
                     <div className="player-content">
                       <div className="avatar-orbit">
                         <span className="player-avatar">
-                          <Avatar value={state.profile.avatar} />
+                          <Avatar
+                            value={state.profile.avatar}
+                            frame={state.shop?.equippedFrame}
+                          />
                         </span>
                       </div>
                       <div className="player-summary">
@@ -966,6 +980,9 @@ export default function App() {
                 }}
               />
             )}
+            {page === 'shop' && (
+              <RewardShop state={state} onChange={setState} notify={notify} />
+            )}
             {page === 'statistics' && (
               <Statistics state={state} onMonthly={() => navigate('monthly')} />
             )}
@@ -973,7 +990,10 @@ export default function App() {
               <div className="profile-page">
                 <section className="panel profile-hero">
                   <span className="player-avatar">
-                    <Avatar value={state.profile.avatar} />
+                    <Avatar
+                      value={state.profile.avatar}
+                      frame={state.shop?.equippedFrame}
+                    />
                   </span>
                   <div>
                     <h2>{state.profile.name}</h2>

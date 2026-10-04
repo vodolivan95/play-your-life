@@ -1,3 +1,4 @@
+import { shopItems } from './shop.ts';
 import { validProjectImage } from './projectImage.ts';
 import type { GameState } from './game.ts';
 
@@ -38,6 +39,33 @@ export function validateState(value: unknown): asserts value is SavedState {
     );
   };
   if (!record(value) || value.version !== 1) return fail();
+  if (value.shop !== undefined) {
+    const shop = value.shop;
+    if (
+      !record(shop) ||
+      !list(
+        shop.purchases,
+        (p) =>
+          text(p.id) &&
+          !!p.id &&
+          shopItems.some((i) => i.id === p.itemId) &&
+          number(p.price) &&
+          date(p.date) &&
+          optionalDate(p.usedAt),
+      )
+    )
+      return fail();
+    const purchases = shop.purchases as Record<string, unknown>[];
+    const frames = purchases.filter((p) =>
+      shopItems.some((i) => i.id === p.itemId && i.kind === 'frame'),
+    );
+    if (
+      new Set(frames.map((p) => p.itemId)).size !== frames.length ||
+      (shop.equippedFrame !== undefined &&
+        !frames.some((p) => p.itemId === shop.equippedFrame))
+    )
+      return fail();
+  }
   if (
     ![value.xp, value.coins, value.completed].every(number) ||
     !Number.isInteger(value.completed)

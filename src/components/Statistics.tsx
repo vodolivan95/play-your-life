@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import GameArt from './GameArt';
-import { dateKey, spheres, streak } from '../game';
+import LifeScoreChart from './LifeScoreChart';
+import './Statistics.css';
+import { dateKey, spheres, streak, longestStreak } from '../game';
 import type { GameState } from '../game';
 
 export default function Statistics({
@@ -61,6 +63,20 @@ export default function Statistics({
   );
   const max = Math.max(1, ...buckets.map((b) => b.xp));
   const total = events.reduce((sum, e) => sum + e.xp, 0);
+  const previousStart = new Date(start);
+  if (period === 'year')
+    previousStart.setFullYear(previousStart.getFullYear() - 1);
+  else if (period === 'month')
+    previousStart.setMonth(previousStart.getMonth() - 1);
+  else previousStart.setDate(previousStart.getDate() - 7);
+  const previousEvents = state.events.filter(
+    (e) => new Date(e.date) >= previousStart && new Date(e.date) < start,
+  );
+  const previousXP = previousEvents.reduce((sum, e) => sum + e.xp, 0);
+  const difference = total - previousXP;
+  const questDifference =
+    events.filter((e) => e.kind === 'quest').length -
+    previousEvents.filter((e) => e.kind === 'quest').length;
   return (
     <div className={`statistics-view ${compact ? 'compact-statistics' : ''}`}>
       <div className="page-toolbar">
@@ -92,9 +108,37 @@ export default function Statistics({
         <h2>
           +{total} <small>XP</small>
         </h2>
+        {!compact && (
+          <p className="period-comparison">
+            {previousXP
+              ? `${difference >= 0 ? '+' : ''}${Math.round((difference / previousXP) * 100)}%`
+              : total
+                ? 'Первый прогресс'
+                : 'Пока нет XP'}{' '}
+            <span>
+              к прошлому полному{' '}
+              {period === 'week'
+                ? 'недельному'
+                : period === 'month'
+                  ? 'месячному'
+                  : 'годовому'}{' '}
+              периоду
+            </span>
+          </p>
+        )}
         <div className="xp-chart" aria-label="XP за выбранный период">
           {buckets.map((b, i) => (
             <div key={i} className="xp-bar-column">
+              {!compact && (
+                <span
+                  className="xp-value"
+                  style={{
+                    bottom: `${b.xp ? Math.max(8, (b.xp / max) * 100) : 3}%`,
+                  }}
+                >
+                  {b.xp}
+                </span>
+              )}
               <span
                 className={`xp-bar ${b.xp ? '' : 'zero'}`}
                 style={{
@@ -121,12 +165,19 @@ export default function Statistics({
               <h2>
                 {events.filter((e) => e.kind === 'quest').length} <span>✓</span>
               </h2>
+              <p className="metric-note">
+                {questDifference >= 0 ? '+' : ''}
+                {questDifference} к прошлому полному периоду
+              </p>
             </section>
             <section className="panel">
               <small>Текущая серия</small>
               <h2>
                 🔥 {streak(state.activeDates)} <small>дней</small>
               </h2>
+              <p className="metric-note">
+                Рекорд: {longestStreak(state.activeDates)} дней
+              </p>
             </section>
           </div>
           <section className="panel sphere-development">
@@ -143,7 +194,10 @@ export default function Statistics({
                   <strong>{s.name}</strong>
                   <div className="progress">
                     <span
-                      style={{ width: `${total ? (xp / total) * 100 : 0}%` }}
+                      style={{
+                        width: `${total ? (xp / total) * 100 : 0}%`,
+                        background: s.color,
+                      }}
                     />
                   </div>
                   <small>+{xp} XP</small>
@@ -151,6 +205,7 @@ export default function Statistics({
               );
             })}
           </section>
+          <LifeScoreChart state={state} />
         </>
       )}
     </div>

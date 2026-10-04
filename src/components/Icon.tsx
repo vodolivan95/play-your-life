@@ -6,6 +6,11 @@ export default function Icon({
   size?: number;
 }) {
   const paths: Record<string, React.ReactNode> = {
+    city: (
+      <>
+        <path d="M3 21V10h5v11M8 21V3h8v18M16 21V8h5v13M2 21h20M10 7h4M10 11h4M10 15h4M5 13v2M18 11v2" />
+      </>
+    ),
     shop: (
       <>
         <path d="M5 8h14l1 13H4zM8 8V6a4 4 0 0 1 8 0v2" />

@@ -1,0 +1,27 @@
+.city-environment { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:hidden; }
+.city-simulation-controls { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 14px; font-size:12px; color:#56718e; }
+.city-simulation-controls button, .city-simulation-controls select { border:1px solid #d8e4f3; border-radius:10px; background:white; color:#36597b; padding:9px 12px; font:inherit; cursor:pointer; }
+.city-simulation-controls button[aria-pressed=true] { background:#e6efff; color:#225bd9; border-color:#aac6ff; }
+.city-simulation-controls label { display:flex; gap:7px; align-items:center; }
+.city-simulation-controls > span { margin-left:auto; font-size:11px; }
+.city-map > img { transition:filter 1.5s; }
+.city-map[data-time=evening] > img { filter:brightness(.8) sepia(.23) saturate(1.1); }
+.city-map[data-time=night] > img { filter:brightness(.42) saturate(.7) hue-rotate(12deg); }
+.city-night-lights { opacity:0; transition:opacity 1.5s; }
+.city-map[data-time=evening] .city-night-lights { opacity:.45; }
+.city-map[data-time=night] .city-night-lights { opacity:1; }
+.city-spray { animation:city-spray 1.4s ease-in-out infinite alternate; transform-origin:0 0; }
+.city-ripple { animation:city-ripple 2.4s ease-out infinite; transform-origin:0 0; }
+.city-wake { animation:city-wake 1.4s ease-in-out infinite alternate; }
+.city-cloud { animation:city-cloud 65s linear infinite; }
+
+.city-spray { animation-duration:calc(1.4s / var(--city-rate)); }
+.city-ripple { animation-duration:calc(2.4s / var(--city-rate)); }
+.city-cloud { animation-duration:calc(65s / var(--city-rate)); }
+.city-map[data-paused=true] .city-environment * { animation-play-state:paused; }
+@keyframes city-spray { to { transform:scale(.9, .82); opacity:.45; } }
+@keyframes city-ripple { from { transform:scale(.4); opacity:.85; } to { transform:scale(1.6); opacity:0; } }
+@keyframes city-wake { to { opacity:.25; } }
+@keyframes city-cloud { from { transform:translateX(-280px); } to { transform:translateX(1000px); } }
+@media(max-width:700px) { .city-simulation-controls > span { width:100%; margin-left:0; } }
+@media(prefers-reduced-motion:reduce) { .city-environment * { animation:none!important; } .city-map > img { transition:none; } }

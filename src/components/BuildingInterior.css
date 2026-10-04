@@ -1,0 +1,441 @@
+.life-city .city-balance,
+.city-balance {
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 800;
+  color: #ad8536;
+  background: #fff7df;
+  padding: 10px 16px;
+  border-radius: 20px;
+}
+.city-jump {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: #7d91ae;
+  font-size: 11px;
+}
+.city-jump select {
+  width: 230px;
+  background: white;
+  border: 1px solid #dce6f5;
+  border-radius: 12px;
+  padding: 10px;
+  color: #486582;
+  font: inherit;
+}
+.city-building-hit {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 27%;
+  height: 24%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 45%;
+  transition:
+    background 0.2s,
+    filter 0.2s;
+}
+.city-building-hit:hover,
+.city-building-hit:focus-visible {
+  background: #c4f8ff1a;
+  outline: 2px dashed #ffffffbc;
+  box-shadow: 0 0 20px #54bbff80;
+  z-index: 2;
+}
+.city-hover-name {
+  opacity: 0;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 800;
+  color: #234e83;
+  background: #ffffffe8;
+  border-radius: 20px;
+  padding: 8px 13px;
+  box-shadow: 0 4px 18px #24557922;
+  pointer-events: none;
+}
+.city-hover-name small {
+  margin-left: 9px;
+  color: #678daf;
+  font-size: 10px;
+}
+.city-building-hit:hover .city-hover-name,
+.city-building-hit:focus-visible .city-hover-name {
+  opacity: 1;
+}
+.city-upgrade-badge {
+  position: absolute;
+  right: 12%;
+  top: 5%;
+  color: #f7bf48;
+  font-size: 20px;
+  text-shadow: 0 1px 4px white;
+  pointer-events: none;
+}
+.city-placed-decor {
+  position: absolute;
+  bottom: 5%;
+  font-size: 27px;
+  filter: drop-shadow(0 3px 2px #356d6055);
+  pointer-events: none;
+}
+.city-placed-decor.decor-0 {
+  left: 8%;
+}
+.city-placed-decor.decor-1 {
+  left: 45%;
+  bottom: -8%;
+}
+.city-placed-decor.decor-2 {
+  right: 7%;
+}
+.city-building-hit.style-tropical {
+  filter: saturate(1.08);
+}
+.city-building-hit.tier-3 {
+  box-shadow: inset 0 -9px 20px #ffd97424;
+}
+.building-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 22px;
+}
+.building-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+.building-title h2 {
+  font-size: 25px;
+  margin: 7px 0 10px;
+}
+.building-title p {
+  font-size: 12px;
+  color: #8b9bb2;
+}
+.building-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(270px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.building-scene-wrap {
+  position: relative;
+  border: 1px solid #dfecf6;
+  border-radius: 25px;
+  overflow: hidden;
+  background: #eaf7ff;
+  box-shadow: 0 12px 30px #4979a015;
+}
+.building-room-art {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.building-decor-slot {
+  position: absolute;
+  width: 13%;
+  height: 13%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 2px dashed #799e9b80;
+  background: #ffffffe0;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  color: #749898;
+  box-shadow: 0 6px 10px #598a7720;
+}
+.building-decor-slot:hover {
+  border-color: #258bef;
+  background: #fff;
+}
+.building-decor-slot span {
+  font-size: 22px;
+}
+.building-decor-slot small {
+  font-size: 8px;
+}
+.building-decor-slot.occupied {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.building-decor-slot.occupied span {
+  font-size: 45px;
+  filter: drop-shadow(0 5px 3px #557c7255);
+}
+.building-decor-slot.slot-0 {
+  left: 25%;
+  top: 71%;
+}
+.building-decor-slot.slot-1 {
+  left: 51%;
+  top: 86%;
+}
+.building-decor-slot.slot-2 {
+  left: 77%;
+  top: 73%;
+}
+.building-scene-tip {
+  font-size: 10px;
+  color: #7598ad;
+  background: #ffffffdf;
+  padding: 13px 18px;
+  text-align: center;
+  line-height: 1.6;
+}
+.building-editor {
+  background: #fff;
+  border: 1px solid #e4edf7;
+  border-radius: 22px;
+  padding: 20px;
+  min-width: 0;
+  box-shadow: 0 4px 15px #37528b0b;
+}
+.building-edit-tabs {
+  display: flex;
+  padding: 4px;
+  background: #eff4fd;
+  border-radius: 12px;
+  gap: 4px;
+  margin-bottom: 22px;
+}
+.building-edit-tabs button {
+  border: 0;
+  padding: 10px;
+  font-size: 11px;
+  flex: 1;
+  border-radius: 9px;
+  background: none;
+  color: #8a9abb;
+  cursor: pointer;
+}
+.building-edit-tabs .selected {
+  background: white;
+  color: #245be4;
+  font-weight: 800;
+  box-shadow: 0 2px 8px #4b6bc318;
+}
+.building-editor h3 {
+  font-size: 14px;
+  margin: 19px 0 12px;
+}
+.building-editor > p {
+  font-size: 11px;
+  line-height: 1.8;
+  color: #94a0b7;
+}
+.building-tier-track > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: #a6b1c4;
+  padding: 11px 0;
+  border-bottom: 1px solid #eef3fa;
+}
+.building-tier-track > div > b {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #f0f4fa;
+  flex-shrink: 0;
+}
+.building-tier-track > div > span:nth-child(2) {
+  flex: 1;
+}
+.building-tier-track small {
+  display: block;
+  font-size: 9px;
+  margin-top: 5px;
+  font-weight: 400;
+}
+.building-tier-track .unlocked {
+  color: #5a83ba;
+}
+.building-tier-track .unlocked > b {
+  background: #e4f0ff;
+  color: #347ced;
+}
+.building-editor .primary-button {
+  margin-top: 16px;
+  width: 100%;
+  font-size: 12px;
+}
+.building-editor .primary-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.building-requirement {
+  display: block;
+  color: #bf9170;
+  font-size: 10px;
+  line-height: 1.6;
+  margin-top: 10px;
+}
+.building-style-options {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.building-style-options button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-align: left;
+  border: 1px solid #eaf0f7;
+  border-radius: 10px;
+  background: #fff;
+  color: #899bb4;
+  padding: 10px;
+  font-size: 10px;
+  cursor: pointer;
+}
+.building-style-options .selected {
+  border-color: #9bc4fc;
+  background: #f1f7ff;
+  color: #396eae;
+}
+.building-style-options i {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+}
+.building-editor > small {
+  font-size: 9px;
+  color: #9cacbf;
+  display: block;
+  margin-top: 12px;
+}
+.building-editor .building-local-note {
+  font-size: 9px;
+  margin: 20px 0 0;
+  padding-top: 13px;
+  border-top: 1px solid #edf2f9;
+}
+.building-decor-shop > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #edf2f9;
+  padding: 13px 0;
+}
+.building-decor-shop > div > span {
+  font-size: 27px;
+  width: 34px;
+}
+.building-decor-shop > div > div {
+  flex: 1;
+}
+.building-decor-shop strong {
+  font-size: 11px;
+  display: block;
+}
+.building-decor-shop small {
+  font-size: 9px;
+  color: #97a7bf;
+  display: block;
+  margin-top: 4px;
+}
+.building-decor-shop button {
+  font-size: 10px;
+  color: #3976cf;
+  border: 1px solid #dbe8f8;
+  background: #f4f8ff;
+  border-radius: 9px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.building-decor-shop button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.building-decor-shop .selected {
+  background: #edf6ff;
+  border-radius: 10px;
+}
+.building-max {
+  color: #c4a158 !important;
+}
+@media (max-width: 1100px) {
+  .building-workspace {
+    grid-template-columns: 1fr;
+  }
+  .building-editor {
+    max-width: none;
+  }
+  .building-decor-shop {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 25px;
+  }
+}
+@media (max-width: 700px) {
+  .city-jump {
+    display: block;
+  }
+  .city-jump select {
+    width: 100%;
+    margin-top: 8px;
+  }
+  .city-building-hit {
+    height: 25%;
+  }
+  .building-title {
+    display: block;
+  }
+  .building-title h2 {
+    font-size: 21px;
+  }
+  .building-title .secondary-button {
+    font-size: 11px;
+    margin-top: 6px;
+  }
+  .building-topbar {
+    gap: 10px;
+  }
+  .building-topbar .text-button {
+    font-size: 11px;
+  }
+  .building-topbar .city-balance {
+    font-size: 10px;
+    padding: 8px 10px;
+  }
+  .building-decor-shop {
+    display: block;
+  }
+  .building-decor-slot span {
+    font-size: 17px;
+  }
+  .building-decor-slot small {
+    display: none;
+  }
+  .building-decor-slot.occupied span {
+    font-size: 30px;
+  }
+  .building-scene-tip {
+    font-size: 9px;
+    padding: 12px;
+  }
+  .building-editor {
+    padding: 18px;
+  }
+  .building-title p {
+    font-size: 11px;
+  }
+}

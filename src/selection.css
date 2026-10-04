@@ -1,0 +1,48 @@
+/* Shared selection palette matches the supplied sky-blue navigation reference. */
+:root {
+  --selection-background: linear-gradient(110deg, #51b5ff, #1597ff);
+  --selection-border: #39aaff;
+  --selection-shadow: 0 4px 12px #238ee72a;
+}
+.app-shell .sidebar .nav-item.active,
+.app-shell .mobile-nav button.active,
+.tabs button.selected,
+.app-shell .score-selector button.selected,
+.app-shell .calendar-day.active,
+.app-shell .onboarding-steps > span.active,
+.app-shell .building-edit-tabs button.selected,
+.app-shell .building-style-options button.selected,
+.app-shell .building-decor-shop button.selected,
+.app-shell .city-view-switch button.active,
+.app-shell .city-simulation-controls button[aria-pressed="true"],
+.app-shell .mood-options button.selected,
+.app-shell .difficulty-picker label.selected,
+.account-tabs button[aria-pressed="true"],
+.primary-button {
+  background: var(--selection-background);
+  color: #fff;
+  border-color: var(--selection-border);
+  box-shadow: var(--selection-shadow);
+  font-weight: 700;
+}
+.primary-button:hover:not(:disabled) { background: linear-gradient(110deg, #43aeff, #0c8ef5); }
+.app-shell .mobile-nav button.active svg { color: inherit; fill: none; }
+.app-shell .mobile-nav button.active::before { background: transparent; }
+.app-shell .mood-options .selected small,
+.app-shell .difficulty-picker label.selected :is(strong, span) { color: #fff; }
+.app-shell .sidebar .nav-item.active .nav-count { color: #fff; background: #ffffff26; }
+/* Image choices retain their artwork; selection is shown by a sky-blue border. */
+.app-shell .district-card.is-selected,
+.app-shell .avatar-picker button.selected {
+  border-color: var(--selection-border);
+  background: #eaf7ff;
+  box-shadow: var(--selection-shadow);
+}
+.sidebar-reference-logo { display: flex; align-items: center; }
+.sidebar-brand-vector { display: block; width: 100%; height: auto; flex-shrink: 0; }
+.sidebar-reference-city { display: flex; flex-direction: column; overflow: hidden; }
+.sidebar-reference-city > img { display: block; width: 100%; flex: 1; min-height: 0; object-fit: cover; object-position: center 38%; }
+.sidebar-reference-city > .sidebar-brand-vector { height: 73px; padding: 0 9px 4px; }
+@media (min-width: 761px) and (max-height: 650px) {
+  .sidebar-reference-city > .sidebar-brand-vector { height: 47px; }
+}

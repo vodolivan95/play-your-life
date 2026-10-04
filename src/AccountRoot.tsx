@@ -108,6 +108,7 @@ function Login({ onGuest }: { onGuest: () => void }) {
         </p>
         <div className="account-tabs">
           <button
+            aria-pressed={mode === 'login'}
             disabled={busy}
             onClick={() => {
               setMode('login');
@@ -117,6 +118,7 @@ function Login({ onGuest }: { onGuest: () => void }) {
             Вход
           </button>
           <button
+            aria-pressed={mode === 'register'}
             disabled={busy}
             onClick={() => {
               setMode('register');

@@ -997,6 +997,8 @@ export default function App() {
             )}
             {page === 'city' && (
               <LifeCity
+                onChange={setState}
+                notify={notify}
                 state={state}
                 onOpen={(id) => {
                   setSelected(id);

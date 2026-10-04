@@ -1,8 +1,11 @@
+import CityBuildingArt from './CityBuildingArt';
+import { citySphereIds } from '../city';
 import { useId } from 'react';
 
 /** Small vector game illustrations, shared by every screen and crisp at any size. */
 export default function GameArt({ kind }: { kind: string }) {
   const id = useId().replace(/:/g, '');
+  if (citySphereIds.includes(kind as (typeof citySphereIds)[number])) return <CityBuildingArt id={kind} variant="icon" />;
   const paint = `url(#${id})`;
   const colors: Record<string, [string, string]> = {
     health: ['#ff8fb7', '#f5286d'],

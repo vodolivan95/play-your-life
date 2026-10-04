@@ -1,0 +1,9 @@
+.city-building-art { display:block; width:100%; height:auto; overflow:hidden; }
+.building-art-icon { width:40px; height:40px; aspect-ratio:1; border-radius:10px; flex-shrink:0; }
+.building-art-map { width:100%; height:100%; }
+.building-source.style-tropical { filter:saturate(1.13) hue-rotate(-8deg); }
+.building-source.style-modern { filter:saturate(.82) hue-rotate(8deg); }
+.city-exteriors { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; transition:filter 1.5s; }
+.city-map[data-time=evening] .city-exteriors { filter:brightness(.8) sepia(.23) saturate(1.1); }
+.city-map[data-time=night] .city-exteriors { filter:brightness(.42) saturate(.7) hue-rotate(12deg); }
+@media(prefers-reduced-motion:reduce) { .city-exteriors { transition:none; } }

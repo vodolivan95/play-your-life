@@ -39,7 +39,7 @@ export function SphereDistricts({
           >
             <SphereBuilding id={s.id} />
             <div className="district-caption">
-              <GameArt kind={s.id} />
+              <>{s.id === 'english' ? <CityBuildingArt id={s.id} variant="icon" /> : <GameArt kind={s.id} />}</>
               <div>
                 <strong>{s.name}</strong>
                 <span>{state.spheres[s.id].score} / 9</span>

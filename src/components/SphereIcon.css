@@ -1,0 +1,7 @@
+.game-art.sphere-ui-icon {
+  filter: none;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.quest-icon .sphere-ui-icon { padding: 0; }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, FormEvent } from 'react';
 import Icon from './components/Icon';
+import LifeCity from './components/LifeCity';
 import GameArt from './components/GameArt';
 import Avatar from './components/Avatar';
 import ProjectArt from './components/ProjectArt';
@@ -49,10 +50,19 @@ const navigation = [
   { id: 'tree', label: 'Skill Tree', icon: 'tree' },
   { id: 'achievements', label: 'Достижения', icon: 'trophy' },
   { id: 'shop', label: 'Магазин', icon: 'shop' },
+  { id: 'city', label: 'Город', icon: 'city' },
   { id: 'statistics', label: 'Статистика', icon: 'statistics' },
   { id: 'profile', label: 'Профиль', icon: 'profile' },
 ];
-const mobileIds = ['home', 'goals', 'quests', 'shop', 'statistics', 'profile'];
+const mobileIds = [
+  'home',
+  'goals',
+  'quests',
+  'shop',
+  'city',
+  'statistics',
+  'profile',
+];
 function Progress({
   value,
   color,
@@ -90,7 +100,11 @@ export default function App() {
   const [state, setState] = useState(loadState);
   const tickTick = useTickTick(state, setState);
   const [page, setPage] = useState(() =>
-    location.hash.startsWith('#ticktick=') ? 'plan' : 'home',
+    location.hash === '#city'
+      ? 'city'
+      : location.hash.startsWith('#ticktick=')
+        ? 'plan'
+        : 'home',
   );
   const [goalOrigin, setGoalOrigin] = useState<string | null>(null);
   const [today, setToday] = useState(dateKey);
@@ -978,6 +992,17 @@ export default function App() {
                 state={{
                   ...state,
                   events: state.events.filter((e) => e.sphere === sphere.id),
+                }}
+              />
+            )}
+            {page === 'city' && (
+              <LifeCity
+                state={state}
+                onOpen={(id) => {
+                  setSelected(id);
+                  setPage('spheres');
+                  setSphereTab('projects');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               />
             )}

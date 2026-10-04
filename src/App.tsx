@@ -390,7 +390,7 @@ export default function App() {
           </button>
         </aside>
         <div className="main-wrap">
-          <header className="topbar"><DashboardHeader state={state} onProfile={() => setModal('profile')} onQuests={() => navigate('quests')} /></header>
+          <header className="topbar"><DashboardHeader state={state} onProfile={() => navigate('profile')} onQuests={() => navigate('quests')} /></header>
           <main
             className={`screen-${page} ${sphere ? 'screen-sphere-detail' : ''}`}
           >
@@ -457,7 +457,7 @@ export default function App() {
                 }
               />
             )}
-            {page === 'home' && <HomeDashboard state={state} onChange={setState} onSphere={(id) => { setSelected(id); setSphereTab('projects'); setPage('spheres'); }} onQuests={() => navigate('quests')} onGoal={() => navigate('goals')} onShop={() => navigate('shop')} onProfile={() => setModal('profile')} onCreate={newQuest} onStart={() => setModal('start')} renderQuest={q => <QuestRow key={q.id} quest={q} />} />}
+            {page === 'home' && <HomeDashboard state={state} onChange={setState} onSphere={(id) => { setSelected(id); setSphereTab('projects'); setPage('spheres'); }} onQuests={() => navigate('quests')} onGoal={() => navigate('goals')} onShop={() => navigate('shop')} onProfile={() => navigate('profile')} onIntegration={() => navigate('plan')} onCreate={newQuest} onStart={() => setModal('start')} renderQuest={q => <QuestRow key={q.id} quest={q} />} />}
             {page === 'spheres' && (
               <SphereDistricts
                 state={state}

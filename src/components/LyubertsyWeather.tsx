@@ -1,37 +1,37 @@
 import { useEffect, useState } from 'react';
-type Weather = { temperature: number; code: number; day: boolean; time: string };
-function description(code: number, day: boolean) {
-  if (code === 0) return [day ? '☀️' : '🌙', day ? 'Ясно' : 'Ясная ночь'];
-  if (code <= 3) return ['⛅', code === 3 ? 'Пасмурно' : 'Переменная облачность'];
-  if (code <= 48) return ['🌫️', 'Туман'];
-  if (code >= 71 && code <= 77 || code === 85 || code === 86) return ['🌨️', 'Снег'];
-  if (code >= 95) return ['⛈️', 'Гроза'];
-  return ['🌧️', 'Дождь'];
-}
-export default function LyubertsyWeather() {
+const forecast = 'https://yandex.ru/pogoda/ru/lubercy?lat=55.669663&lon=37.907137';
+const conditions: Record<string, [string, string]> = {
+  clear: ['☀️', 'Ясно'], 'partly-cloudy': ['⛅', 'Малооблачно'], cloudy: ['⛅', 'Облачно с прояснениями'], overcast: ['☁️', 'Пасмурно'],
+  'light-rain': ['🌧️', 'Небольшой дождь'], rain: ['🌧️', 'Дождь'], 'heavy-rain': ['🌧️', 'Сильный дождь'], showers: ['🌧️', 'Ливень'],
+  'wet-snow': ['🌨️', 'Дождь со снегом'], 'light-snow': ['🌨️', 'Небольшой снег'], snow: ['🌨️', 'Снег'], 'snow-showers': ['🌨️', 'Снегопад'], hail: ['🌨️', 'Град'],
+  thunderstorm: ['⛈️', 'Гроза'], 'thunderstorm-with-rain': ['⛈️', 'Дождь с грозой'], 'thunderstorm-with-hail': ['⛈️', 'Гроза с градом'],
+};
+type Weather = { temp: number; condition: string; daytime: string; obs_time: number };
+export default function YandexLyubertsyWeather() {
+  const endpoint = import.meta.env.VITE_YANDEX_WEATHER_URL as string | undefined;
   const [weather, setWeather] = useState<Weather | null>(null);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
+    if (!endpoint) return;
     let active = true;
     let controller: AbortController;
-    let timeout: ReturnType<typeof setTimeout>;
     async function update() {
       controller?.abort();
       controller = new AbortController();
-      timeout = setTimeout(() => controller.abort(), 10000);
+      const timeout = setTimeout(() => controller.abort(), 10000);
       try {
-        const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.677&longitude=37.893&current=temperature_2m,weather_code,is_day&timezone=Europe%2FMoscow&forecast_days=1', { signal: controller.signal });
+        const response = await fetch(endpoint!, { signal: controller.signal, credentials: 'omit' });
         if (!response.ok) throw new Error('weather');
-        const { current } = await response.json();
-        if (!current || !Number.isFinite(current.temperature_2m) || !Number.isFinite(current.weather_code) || typeof current.time !== 'string' || ![0, 1].includes(current.is_day)) throw new Error('weather');
-        if (active) { setWeather({ temperature: current.temperature_2m, code: current.weather_code, day: current.is_day === 1, time: current.time }); setFailed(false); }
+        const { fact } = await response.json();
+        if (!fact || !Number.isFinite(fact.temp) || fact.temp < -90 || fact.temp > 65 || !Object.hasOwn(conditions, fact.condition) || !['d', 'n'].includes(fact.daytime) || !Number.isFinite(fact.obs_time) || Math.abs(Date.now() / 1000 - fact.obs_time) > 10800) throw new Error('weather');
+        if (active) { setWeather({ temp: fact.temp, condition: fact.condition, daytime: fact.daytime, obs_time: fact.obs_time }); setFailed(false); }
       } catch { if (active) setFailed(true); }
       finally { clearTimeout(timeout); }
     }
     void update();
     const interval = setInterval(() => void update(), 600000);
-    return () => { active = false; clearInterval(interval); clearTimeout(timeout); controller?.abort(); };
-  }, []);
-  const [icon, label] = weather ? description(weather.code, weather.day) : ['☁️', failed ? 'Погода недоступна' : 'Загрузка погоды…'];
-  return <div className="home-weather" aria-label="Погода в Люберцах" title={weather ? `Обновлено: ${weather.time}, Москва` : undefined}><span aria-hidden="true">{icon}</span><div><small>Люберцы, Россия</small><strong>{weather ? `${label} ${weather.temperature > 0 ? '+' : ''}${Math.round(weather.temperature)}°C` : label}</strong><a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo{failed && weather ? ' · нет связи' : ''}</a></div></div>;
+    return () => { active = false; clearInterval(interval); controller?.abort(); };
+  }, [endpoint]);
+  const [icon, label] = weather ? conditions[weather.condition] : ['☁️', endpoint ? failed ? 'Прогноз на Яндексе →' : 'Загрузка погоды…' : 'Открыть прогноз →'];
+  return <a className="home-weather" href={forecast} target="_blank" rel="noreferrer" aria-label="Погода в Люберцах — Яндекс Погода" title={weather ? `Обновлено: ${new Date(weather.obs_time * 1000).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}` : 'Прогноз Яндекс Погоды для выбранной точки в Люберцах'}><span aria-hidden="true">{weather?.condition === 'clear' && weather.daytime === 'n' ? '🌙' : icon}</span><div><small>Люберцы, Россия</small><strong>{weather ? `${label} ${weather.temp > 0 ? '+' : ''}${weather.temp}°C` : label}</strong><span className="weather-source">Яндекс Погода{failed && weather ? ' · нет связи' : ''}</span></div></a>;
 }

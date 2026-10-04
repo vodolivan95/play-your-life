@@ -1,6 +1,7 @@
 import HomeDashboard from './components/HomeDashboard';
 import DashboardHeader from './components/DashboardHeader';
 import PlayBrand from './components/PlayBrand';
+import SidebarReference from './components/SidebarReference';
 import citySidebarImage from './assets/life-city.webp';
 import { CityAppearanceContext } from './cityAppearanceContext';
 import { useEffect, useRef, useState } from 'react';
@@ -349,9 +350,8 @@ export default function App() {
               navigate('home');
             }}
           >
-            <PlayBrand />
+            <SidebarReference part="logo" />
           </a>
-          <div className="nav-caption">ТВОЁ ПРИКЛЮЧЕНИЕ</div>
           <nav>
             {navigation.map((item) => (
               <button
@@ -368,26 +368,7 @@ export default function App() {
               </button>
             ))}
           </nav>
-          <div className="sidebar-city"><img src={citySidebarImage} alt="Твой город сфер жизни" /><PlayBrand /></div>
-          <button
-            className="sidebar-profile"
-            aria-label="Личный профиль"
-            onClick={() => setModal('profile')}
-          >
-            <span className="avatar small">
-              <Avatar
-                value={state.profile.avatar}
-                frame={state.shop?.equippedFrame}
-              />
-            </span>
-            <div>
-              <strong>{state.profile.name}</strong>
-              <small>
-                Уровень {currentLevel} · {levelTitle}
-              </small>
-            </div>
-            <span className="online-dot" />
-          </button>
+          <div className="sidebar-city"><SidebarReference part="city" /></div>
         </aside>
         <div className="main-wrap">
           <header className="topbar"><DashboardHeader state={state} onProfile={() => navigate('profile')} onQuests={() => navigate('quests')} /></header>

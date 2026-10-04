@@ -8,7 +8,7 @@
 - Квесты на сегодня, расписание из сохранённых дат задач, главная цель и активность текущей недели. Время не придумывается для задач без расписания.
 - Пользователь выбирает награду из магазина и видит накопленные Life Coins. Выбор сохраняется в профиле и резервной копии; монеты списываются только при покупке в магазине.
 - Текущая дата по московскому времени, уведомление о незавершённых квестах, баланс, уровень и вход в профиль в верхней панели.
-- Погода в Люберцах из [Open-Meteo](https://open-meteo.com/en/docs): текущая температура и погодные условия, обновление раз в 10 минут. При ошибке связи показывается понятный статус, без выдуманной температуры.
+- Погода в Люберцах: ссылка на присланный прогноз Яндекса, подготовлено автоматическое получение через сервер Яндекс Погоды. До подключения сервера температура не выдумывается.
 
 ## Будущее подключение TickTick
 
@@ -38,3 +38,16 @@ npm run check, npm test; браузерная проверка выбора и �
 По отдельной правке пользователя персонаж на фоне увеличен и перенесён на передний план; поза сидя и пейзаж сохранены. На телефоне кадр смещён вправо, чтобы персонаж попадал в видимую область. Файл заменён: src/assets/home-mountains.webp. Режим: редактирование встроенным image_gen. Промпт:
 
 > Edit the supplied panoramic mountain hero photograph. Make only one composition change: move the same seated male hiker much closer to the camera and enlarge him by about 1.6 times. He must remain seated on the foreground rock at the right, viewed from behind with the same blue outdoor jacket, dark trousers and blue backpack, looking toward the alpine lake. Show his head, shoulders, backpack and bent legs prominently; his seated silhouette should occupy approximately 80 percent of the image height and the rightmost 32 percent of the image, with the head around 78 percent of the width. Preserve the existing lake, mountains, pine forest, warm sunrise, natural photographic style and overall wide panoramic 8:3 canvas. Keep the left 65 percent spacious and unobstructed for dashboard text. Do not add text, logos, UI or extra people. Keep realistic anatomy and a clearly seated posture. The character should feel close to the viewer, in the immediate foreground.
+## Меню и ширина экрана
+
+Меню повторяет первый присланный образец: оригинальные логотип с короной, город и нижняя подпись отображаются прямо из исходного изображения без перерисовки. Список заменён на 12 действующих разделов из второго образца. Голубое выделение перемещается на выбранный раздел, счётчик квестов берётся из игры. Подпись «Твоё приключение» и отдельный нижний профиль убраны в соответствии с образцом; профиль остаётся в списке разделов и верхней панели.
+
+На компьютере меню занимает высоту окна, все ссылки и изображение доступны без прокрутки меню. Страница занимает ширину окна за вычетом меню. На телефоне ширина равна ширине устройства; используется существующая нижняя навигация. Проверены 1920×1080, 1440×900, 1366×768, 1280×720, 1024×600, 768×1024 и мобильные 320/390/430 px.
+
+## Источник погоды — Яндекс
+
+Источник изменён на присланную страницу: https://yandex.ru/pogoda/ru/lubercy?lat=55.669663&lon=37.907137. Open-Meteo больше не запрашивается. Пока сервер с ключом Яндекса не подключён, блок открывает эту страницу и не показывает выдуманную температуру.
+
+Для автоматического отображения задайте VITE_YANDEX_WEATHER_URL — адрес своего серверного endpoint, который возвращает JSON с fact.temp, fact.condition, fact.daytime и fact.obs_time из официального API Яндекса для координат 55.669663 / 37.907137. Сервер должен разрешать CORS для адреса приложения. Ключ X-Yandex-Weather-Key хранится только на сервере, его нельзя помещать в VITE-переменные или репозиторий. Клиент проверяет свежесть и формат ответа, обновляет погоду каждые 10 минут и при ошибке сохраняет ссылку на прогноз.
+
+Документация: https://yandex.com/dev/weather/doc/ru/concepts/api, https://yandex.com/dev/weather/doc/ru/concepts/forecast-rest. Сервер и платный тариф в этой правке не создаются.

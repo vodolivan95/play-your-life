@@ -4,6 +4,7 @@ import { spheres } from '../game';
 import type { GameState } from '../game';
 import Icon from './Icon';
 import BuildingInterior from './BuildingInterior';
+import CityEnvironment from './CityEnvironment';
 import cityImage from '../assets/life-city.webp';
 import { buildingState } from '../city';
 import './LifeCity.css';
@@ -31,6 +32,9 @@ export default function LifeCity({
   notify: (message: string) => void;
 }) {
   const [inside, setInside] = useState<string | null>(null);
+  const [paused, setPaused] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const [speed, setSpeed] = useState(1);
+  const [time, setTime] = useState('day');
   if (inside)
     return (
       <BuildingInterior
@@ -74,17 +78,24 @@ export default function LifeCity({
         </label>
         <span>Наведи на здание или нажми на него</span>
       </div>
+      <div className="city-simulation-controls" aria-label="Управление окружением">
+        <button aria-pressed={paused} onClick={() => setPaused(!paused)}>{paused ? '▶ Продолжить' : '⏸ Пауза'}</button>
+        <label>Скорость <select aria-label="Скорость города" value={speed} onChange={e => setSpeed(Number(e.target.value))}><option value={1}>1×</option><option value={2}>2×</option><option value={3}>3×</option></select></label>
+        <label>Время суток <select aria-label="Время суток" value={time} onChange={e => setTime(e.target.value)}><option value="day">☀ День</option><option value="evening">🌅 Вечер</option><option value="night">🌙 Ночь</option></select></label>
+        <span>{paused ? 'Город на паузе' : 'Город живёт: жители, транспорт и вода'}</span>
+      </div>
       <div
         className="city-map-scroll"
         tabIndex={0}
         aria-label="Карта острова: прокручивайте по горизонтали на телефоне"
       >
-        <div className="city-map">
+        <div className="city-map" data-time={time} data-paused={paused} style={{ '--city-rate': speed } as CSSProperties}>
           <img
             src={cityImage}
             alt="Девять зданий сфер жизни на солнечном острове"
             draggable={false}
           />
+          <CityEnvironment paused={paused} speed={speed} />
           <div className="city-map-badge">
             <Icon name="city" size={20} />
             <span>
@@ -151,4 +162,3 @@ export default function LifeCity({
     </section>
   );
 }
-

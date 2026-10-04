@@ -1,3 +1,4 @@
+import { CityAppearanceContext } from './cityAppearanceContext';
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, FormEvent } from 'react';
 import Icon from './components/Icon';
@@ -336,6 +337,7 @@ export default function App() {
   }
   return (
     <TickTickContext.Provider value={tickTick}>
+      <CityAppearanceContext.Provider value={state.city}>
       <div
         className={`app-shell app-page-${page} ${modal === 'quest' ? 'quest-dialog-open' : ''}`}
       >
@@ -1626,6 +1628,7 @@ export default function App() {
           </div>
         )}
       </div>
+    </CityAppearanceContext.Provider>
     </TickTickContext.Provider>
   );
 }

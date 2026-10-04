@@ -1,3 +1,5 @@
+import CityBuildingArt from './CityBuildingArt';
+import { cityLandmarks as districts } from '../cityLandmarks';
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { spheres } from '../game';
@@ -8,18 +10,6 @@ import CityEnvironment from './CityEnvironment';
 import cityImage from '../assets/life-city.webp';
 import { buildingState } from '../city';
 import './LifeCity.css';
-const districts: Record<string, { name: string; x: number; y: number }> =
-  {
-    health: { name: 'Центр здоровья', x: 20, y: 19 },
-    sport: { name: 'Спортивный клуб', x: 50, y: 20 },
-    growth: { name: 'Библиотека знаний', x: 80, y: 19 },
-    english: { name: 'Языковая академия', x: 20, y: 43 },
-    finance: { name: 'Банк возможностей', x: 50, y: 43 },
-    together: { name: 'Дом общих дел', x: 80, y: 43 },
-    driving: { name: 'Автошкола', x: 20, y: 71 },
-    tasks: { name: 'Мастерская планов', x: 50, y: 71 },
-    hobby: { name: 'Дом творчества', x: 80, y: 71 },
-  };
 export default function LifeCity({
   state,
   onOpen,
@@ -95,6 +85,14 @@ export default function LifeCity({
             alt="Девять зданий сфер жизни на солнечном острове"
             draggable={false}
           />
+          <svg className="city-exteriors" viewBox="0 0 900 600" aria-hidden="true">
+            {spheres.map(s => {
+              const b = buildingState(state, s.id);
+              const d = districts[s.id];
+              if (b.tier === 1 && b.style === 'coastal' && !b.slots.some(Boolean)) return null;
+              return <svg key={s.id} x={(d.x - 15) * 9} y={(d.y - 12) * 6} width="270" height="165"><CityBuildingArt id={s.id} building={b} variant="map" /></svg>;
+            })}
+          </svg>
           <CityEnvironment paused={paused} speed={speed} />
           <div className="city-map-badge">
             <Icon name="city" size={20} />
@@ -129,27 +127,6 @@ export default function LifeCity({
                   >
                     {'★'.repeat(building.tier - 1)}
                   </span>
-                )}
-                {building.slots.map(
-                  (item, i) =>
-                    item && (
-                      <span
-                        className={`city-placed-decor decor-${i}`}
-                        key={i}
-                        aria-hidden="true"
-                      >
-                        {
-                          {
-                            palm: '🌴',
-                            bench: '🪑',
-                            flowers: '🌺',
-                            lamp: '💡',
-                            fountain: '⛲',
-                            statue: '🗿',
-                          }[item]
-                        }
-                      </span>
-                    ),
                 )}
               </button>
             );

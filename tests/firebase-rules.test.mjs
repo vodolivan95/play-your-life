@@ -1,3 +1,6 @@
+import assert from 'node:assert/strict';
+import { firebaseSave } from '../src/firebaseSave.ts';
+import { completeQuest } from '../src/game.ts';
 import { test, after, beforeEach } from 'node:test';
 import { readFileSync } from 'node:fs';
 import {
@@ -71,3 +74,23 @@ test('анонимный доступ закрыт, демо XP и неверн�
   );
   await assertFails(setDoc(own, { ...save(), unexpected: 'field' }));
 });
+
+test('SDK сохраняет выполненный квест и XP между сессиями одного аккаунта', async () => {
+  const alice = firebaseSave(env.authenticatedContext('alice').firestore(), 'alice');
+  const fresh = await alice.create(newAccountGame('Алиса'));
+  assert.equal(fresh.state.xp, 0);
+  const withQuest = { ...fresh.state, quests: [{ id: 'read', name: 'Читать', sphere: 'growth', xp: 20, difficulty: 'Simple', done: false }] };
+  const planned = await alice.save(withQuest, fresh.revision);
+  const completed = completeQuest(planned.state, 'read');
+  await alice.save(completed, planned.revision);
+  const anotherSession = firebaseSave(env.authenticatedContext('alice').firestore(), 'alice');
+  const loaded = await anotherSession.load();
+  assert.equal(loaded.state.xp, 20); assert.equal(loaded.state.spheres.growth.xp, 20);
+  assert.equal(loaded.state.quests[0].done, true); assert.equal(loaded.state.completed, 1);
+  assert.ok(loaded.state.coins > 0); assert.equal(loaded.state.events.length, 1);
+  assert.equal(await alice.save(withQuest, planned.revision), null);
+  const bob = firebaseSave(env.authenticatedContext('bob').firestore(), 'bob');
+  const separate = await bob.create(newAccountGame('Боб')); assert.equal(separate.state.xp, 0);
+  await assertFails(firebaseSave(env.authenticatedContext('bob').firestore(), 'alice').load());
+});
+

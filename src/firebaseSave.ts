@@ -4,10 +4,10 @@ import {
   runTransaction,
   serverTimestamp,
 } from 'firebase/firestore';
-import { database } from './firebaseClient';
-import { restoreBackup } from './backup';
-import type { GameState } from './game';
-import type { SaveDriver, SaveRow } from './accountPersistence';
+import type { Firestore } from 'firebase/firestore';
+import { restoreBackup } from './backup.ts';
+import type { GameState } from './game.ts';
+import type { SaveDriver, SaveRow } from './accountPersistence.ts';
 function decode(data: Record<string, unknown>): SaveRow {
   if (!Number.isSafeInteger(data.revision) || Number(data.revision) < 1)
     throw new Error('Некорректная версия сохранения.');
@@ -24,7 +24,7 @@ function clean(state: GameState) {
     throw new Error('Сохранение слишком большое. Скачайте резервную копию.');
   return result;
 }
-export function firebaseSave(userId: string): SaveDriver {
+export function firebaseSave(database: Firestore, userId: string): SaveDriver {
   const ref = doc(database, 'players', userId);
   return {
     async load() {
@@ -59,3 +59,4 @@ export function firebaseSave(userId: string): SaveDriver {
     },
   };
 }
+

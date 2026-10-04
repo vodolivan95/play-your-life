@@ -10,7 +10,7 @@ import {
 } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import App from './App';
-import { auth } from './firebaseClient';
+import { auth, database } from './firebaseClient';
 import { firebaseSave } from './firebaseSave';
 import { AccountSave } from './accountPersistence';
 import type { SaveSnapshot } from './accountPersistence';
@@ -221,7 +221,7 @@ function CloudGame({ user }: { user: User }) {
   useEffect(() => {
     const engine = new AccountSave(
       user.uid,
-      firebaseSave(user.uid),
+      firebaseSave(database, user.uid),
       localStorage,
     );
     const unsubscribe = engine.subscribe((snapshot) =>
@@ -426,3 +426,4 @@ export default function AccountRoot() {
     );
   return <Login onGuest={() => setGuest(true)} />;
 }
+

@@ -1,3 +1,4 @@
+import { cityPrices, cityRooms } from './city.ts';
 import { shopItems } from './shop.ts';
 import { validProjectImage } from './projectImage.ts';
 import type { GameState } from './game.ts';
@@ -39,6 +40,14 @@ export function validateState(value: unknown): asserts value is SavedState {
     );
   };
   if (!record(value) || value.version !== 1) return fail();
+  if (value.cityPurchases !== undefined) {
+    if (!list(value.cityPurchases, (p) =>
+      text(p.id) && !!p.id && text(p.sphere) && Object.hasOwn(cityRooms, p.sphere as string) &&
+      Number.isInteger(p.slot) && (p.slot as number) >= 0 && (p.slot as number) <= 2 &&
+      p.price === cityPrices[p.slot as number] && date(p.date))) return fail();
+    const purchases = value.cityPurchases as Record<string, unknown>[];
+    if (new Set(purchases.map((p) => String(p.sphere) + ':' + String(p.slot))).size !== purchases.length) return fail();
+  }
   if (value.shop !== undefined) {
     const shop = value.shop;
     if (

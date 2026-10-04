@@ -8,6 +8,7 @@ import Icon from './Icon';
 import ProjectArt from './ProjectArt';
 import { projectStyle } from './projectStyle';
 import './SphereCity.css';
+import LivingBuilding from './LivingBuilding';
 
 const buildings: Record<string, [string, string, string]> = {
   health: ['Центр здоровья', '#f4e5d1', '#5bc3aa'],
@@ -222,6 +223,14 @@ export function SphereBuilding({ id }: { id: string }) {
           />
         </g>
       ))}
+      {[0, 1, 2].map((person) => (
+        <g key={person} className="district-walker" style={{ animationDelay: `-${person * 4}s` }}>
+          <ellipse cx={105 + person * 44} cy={143 - person * 5} rx="5" ry="2" fill="#365e54" opacity=".25" />
+          <circle cx={105 + person * 44} cy={130 - person * 5} r="3" fill="#efc59f" />
+          <path d={`M${105 + person * 44} ${134 - person * 5}v5`} stroke={['#e58979', '#6c9bd0', '#a38aca'][person]} strokeWidth="5" strokeLinecap="round" />
+          <path d={`M${103 + person * 44} ${139 - person * 5}v4m4-4v4`} stroke="#526475" strokeWidth="2" />
+        </g>
+      ))}
       <g fill="#ffe6a0">
         <circle cx="43" cy="144" r="3" />
         <circle cx="255" cy="148" r="3" />
@@ -327,6 +336,7 @@ const templates: Record<string, [string, string, string][]> = {
 };
 
 export function SphereProjects({
+  onChange,
   state,
   id,
   onOpen,
@@ -335,6 +345,7 @@ export function SphereProjects({
 }: {
   state: GameState;
   id: string;
+  onChange: (state: GameState) => void;
   onOpen: (goal: Goal) => void;
   onNew: () => void;
   onTemplate: (name: string, description: string) => void;
@@ -464,6 +475,7 @@ export function SphereProjects({
   }
   return (
     <div className="district-projects">
+      <LivingBuilding key={id} state={state} id={id} onChange={onChange} />
       <div className="section-heading">
         <h2>
           Активные проекты{' '}

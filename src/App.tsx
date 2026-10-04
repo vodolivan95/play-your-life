@@ -854,6 +854,7 @@ export default function App() {
                 </div>
                 {sphereTab === 'projects' && (
                   <SphereProjects
+                    onChange={setState}
                     state={state}
                     id={sphere.id}
                     onNew={() => setModal('goal')}

@@ -592,3 +592,7 @@
     font-size: 11px;
   }
 }
+
+.district-walker { animation: district-stroll 12s ease-in-out infinite; }
+@keyframes district-stroll { 0%,100% { transform: translate(0,0); } 50% { transform: translate(22px,-7px); } }
+@media (prefers-reduced-motion: reduce) { .district-walker { animation: none; } }

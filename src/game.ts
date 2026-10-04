@@ -163,6 +163,7 @@ export type MonthReflection = {
   updatedAt: string;
 };
 export type GameState = {
+  cityPurchases?: import('./city').CityPurchase[];
   shop?: import('./shop').ShopState;
   version: 1;
   profile: PlayerProfile;

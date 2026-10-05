@@ -29,7 +29,7 @@ function Asset({ id, url, ghost }: { id: ObjectId; url: string; ghost?: 'valid' 
     const bounds = new Box3().setFromObject(clone), size = bounds.getSize(new Vector3()), center = bounds.getCenter(new Vector3());
     const footprint = objectSpec(id).size;
     const fit = Math.min(1, (footprint[0] - .05) / Math.max(.01, size.x), (footprint[1] - .05) / Math.max(.01, size.z));
-    clone.position.set(-center.x * fit, -bounds.min.y * fit, -center.z * fit); clone.scale.multiplyScalar(fit);
+    clone.position.set((clone.position.x - center.x) * fit, (clone.position.y - bounds.min.y) * fit, (clone.position.z - center.z) * fit); clone.scale.multiplyScalar(fit);
     return clone;
   }, [scene, ghost, id]);
   useEffect(() => () => copy.traverse(node => { if (node instanceof Mesh) (Array.isArray(node.material) ? node.material : [node.material]).forEach(material => material.dispose()); }), [copy]);

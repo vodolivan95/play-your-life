@@ -1,3 +1,4 @@
+import { MAX_SPHERE_LEVEL } from '../sphereProgress';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { avatars, personalState, spheres } from '../game';
@@ -111,8 +112,8 @@ export default function Onboarding({
     profile.name === 'Игрок' ? '' : profile.name,
   );
   const [avatar, setAvatar] = useState(profile.avatar);
-  const [scores, setScores] = useState<Record<string, number>>(
-    Object.fromEntries(spheres.map((s) => [s.id, 5])),
+  const [scores] = useState<Record<string, number>>(
+    Object.fromEntries(spheres.map((s) => [s.id, 0])),
   );
   const [goalName, setGoalName] = useState('');
   const [goalSphere, setGoalSphere] = useState('english');
@@ -198,7 +199,7 @@ export default function Onboarding({
         {step === 1
           ? 'Выбери имя и своего персонажа.'
           : step === 2
-            ? 'Оцени каждую сферу так, как чувствуешь сейчас.'
+            ? 'Каждая сфера развивается отдельно за накопленный XP.'
             : 'Выбери одну цель, которая важна именно тебе.'}
       </p>
       {step === 1 && (
@@ -219,42 +220,7 @@ export default function Onboarding({
           <AvatarPicker value={avatar} onChange={setAvatar} />
         </>
       )}
-      {step === 2 && (
-        <>
-          <div className="baseline-list">
-            {spheres.map((s) => (
-              <label className="baseline-row" key={s.id}>
-                <div>
-                  <span>
-                    {s.icon} {s.name}
-                  </span>
-                  <b>
-                    {scores[s.id]}
-                    <small>/9</small>
-                  </b>
-                </div>
-                <input
-                  type="range"
-                  aria-label={`Начальная оценка: ${s.name}`}
-                  min="0"
-                  max="9"
-                  value={scores[s.id]}
-                  onChange={(e) =>
-                    setScores((previous) => ({
-                      ...previous,
-                      [s.id]: Number(e.target.value),
-                    }))
-                  }
-                />
-              </label>
-            ))}
-          </div>
-          <p className="score-note">
-            0 — сфера отсутствует · 5 — базовый уровень · 9 — твой личный
-            стандарт. Начальная оценка не приносит XP.
-          </p>
-        </>
-      )}
+      {step === 2 && <><div className="baseline-list">{spheres.map(s => <div className="baseline-row" key={s.id}><span>{s.icon} {s.name}</span><b>LVL 0 / {MAX_SPHERE_LEVEL}</b></div>)}</div><p className="score-note">Все сферы начинают с 0 XP. Уровень повышается постепенно за выполненные действия; его нельзя выставить вручную.</p></>}
       {step === 3 && (
         <>
           <label>

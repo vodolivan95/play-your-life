@@ -1,3 +1,4 @@
+import { sphereProgress } from './sphereProgress.ts';
 import type { GameState } from './game.ts';
 export const citySphereIds = [
   'health',
@@ -59,7 +60,7 @@ export function upgradeBuilding(
   const b = buildingState(state, id);
   if (b.tier !== expectedTier) throw new Error('Здание уже изменилось.');
   if (b.tier >= 3) throw new Error('Максимальное улучшение уже достигнуто.');
-  if (Math.floor(state.spheres[id].xp / 200) + 1 < b.tier + 1)
+  if (sphereProgress(state.spheres[id].xp).level < b.tier + 1)
     throw new Error(
       `Для улучшения нужен уровень сферы ${b.tier + 1}. Выполняй квесты этой сферы.`,
     );

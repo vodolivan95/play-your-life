@@ -1,3 +1,4 @@
+import { MAX_SPHERE_LEVEL } from '../sphereProgress';
 import { useState, useId } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import type { GameState } from "../game";
@@ -17,7 +18,7 @@ function Meter({
   value,
   color,
   label,
-  max = 9,
+  max = MAX_SPHERE_LEVEL,
 }: {
   value: number;
   color?: string;
@@ -42,23 +43,23 @@ function Radar({ state }: { state: GameState }) {
   const fillId = useId().replace(/:/g, "");
   const point = (index: number, score: number) => {
     const angle = (index * 2 * Math.PI) / rows.length - Math.PI / 2;
-    return `${220 + (Math.cos(angle) * 110 * score) / 9},${180 + (Math.sin(angle) * 110 * score) / 9}`;
+    return `${220 + (Math.cos(angle) * 110 * score) / MAX_SPHERE_LEVEL},${180 + (Math.sin(angle) * 110 * score) / MAX_SPHERE_LEVEL}`;
   };
   return (
     <div className="sphere-radar">
       <svg
         viewBox="0 0 440 360"
         role="img"
-        aria-label={`Баланс сфер жизни, шкала от 0 до 9. ${rows.map((r) => `${r.name}: ${number(r.score)}`).join("; ")}`}
+        aria-label={`Баланс сфер жизни, шкала от 0 до ${MAX_SPHERE_LEVEL}. ${rows.map((r) => `${r.name}: ${number(r.level)}`).join("; ")}`}
       >
-        <title>Life Score всех сфер, от 0 до 9</title>
+        <title>Уровни сфер от 0 до {MAX_SPHERE_LEVEL}</title>
         <defs><linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2cc5ff" stopOpacity=".8"/><stop offset="100%" stopColor="#008cff" stopOpacity=".65"/></linearGradient></defs>
-        {[3, 6, 9]
+        {[MAX_SPHERE_LEVEL / 4, MAX_SPHERE_LEVEL / 2, MAX_SPHERE_LEVEL]
           .map((value) => (
             <polygon
               key={value}
               points={rows.map((_, i) => point(i, value)).join(" ")}
-              fill={value === 9 ? "#f5fbff" : "none"}
+              fill={value === MAX_SPHERE_LEVEL ? "#f5fbff" : "none"}
               stroke="#d4eafd"
               style={{ paintOrder: "fill stroke" }}
             />
@@ -69,14 +70,14 @@ function Radar({ state }: { state: GameState }) {
             key={r.id}
             x1="220"
             y1="180"
-            x2={point(i, 9).split(",")[0]}
-            y2={point(i, 9).split(",")[1]}
+            x2={point(i, MAX_SPHERE_LEVEL).split(",")[0]}
+            y2={point(i, MAX_SPHERE_LEVEL).split(",")[1]}
             stroke="#d4eafd"
           />
         ))}
         <polygon
           className="radar-value"
-          points={rows.map((row, i) => point(i, row.score)).join(" ")}
+          points={rows.map((row, i) => point(i, row.level)).join(" ")}
           fill={`url(#${fillId})`}
           stroke="#1697ff"
           strokeWidth="2"
@@ -84,18 +85,18 @@ function Radar({ state }: { state: GameState }) {
         {rows.map((r, i) => (
           <circle
             key={r.id}
-            cx={point(i, r.score).split(",")[0]}
-            cy={point(i, r.score).split(",")[1]}
+            cx={point(i, r.level).split(",")[0]}
+            cy={point(i, r.level).split(",")[1]}
             r="3"
             fill="white"
             stroke="#1697ff"
           />
         ))}
-        {[0, 3, 6, 9].map((value) => (
+        {[0, MAX_SPHERE_LEVEL / 4, MAX_SPHERE_LEVEL / 2, MAX_SPHERE_LEVEL].map((value) => (
           <text
             key={value}
             x="225"
-            y={180 - (value / 9) * 110 - 4}
+            y={180 - (value / MAX_SPHERE_LEVEL) * 110 - 4}
             fontSize="9"
             fill="#577a96"
           >
@@ -122,7 +123,7 @@ function Radar({ state }: { state: GameState }) {
             </span>
             <div>
               <strong>{r.name}</strong>
-              <small>{number(r.score)} / 9</small>
+              <small>LVL {r.level} / {MAX_SPHERE_LEVEL}</small>
             </div>
           </div>
         );
@@ -167,12 +168,12 @@ export default function SpheresOverview({
         <article className="panel life-balance-panel">
           <div className="eyebrow">✦ Твой баланс жизни</div>
           <strong className="life-balance-value">
-            {number(metrics.balance100)} <small>/ 100</small>
+            LVL {number(metrics.average)} <small>/ {MAX_SPHERE_LEVEL}</small>
           </strong>
-          <Meter value={metrics.balance100} max={100} label="Общий баланс жизни" />
+          <Meter value={metrics.average} max={MAX_SPHERE_LEVEL} label="Средний уровень активных сфер" />
           <p>
             {metrics.average === 0
-              ? "Это начало твоей игры. Оцени сферы и выбери первый шаг."
+              ? "Это начало твоей игры. Выбери первый квест и заработай XP."
               : metrics.gap <= 2 && metrics.average >= 5
                 ? "Ты развиваешься гармонично. Продолжай двигаться вперёд!"
                 : "Каждый небольшой шаг укрепляет твой баланс. Удели внимание сферам, которым нужна поддержка."}
@@ -182,7 +183,7 @@ export default function SpheresOverview({
         <article className="panel sphere-balance-panel">
           <h2>Баланс сфер жизни</h2>
           <div className="radar-legend">
-            <span><i />Текущий уровень</span><span><i />Максимум шкалы: 9</span>
+            <span><i />Текущий уровень</span><span><i />Максимум шкалы: {MAX_SPHERE_LEVEL}</span>
           </div>
           <div className="radar-and-insights">
             <Radar state={state} />
@@ -195,7 +196,7 @@ export default function SpheresOverview({
                   {metrics.equal ? "Равный баланс" : metrics.strongest.name}
                 </strong>
                 <b>
-                  {number(metrics.strongest.score)} <small>/ 9</small>
+                  LVL {metrics.strongest.level} <small>/ {MAX_SPHERE_LEVEL}</small>
                 </b>
               </div>
               <div className="insight-weak"><i className="insight-symbol" aria-hidden="true">↓</i><span className="insight-sphere-art" aria-hidden="true"><GameArt kind={metrics.weakest.id}/></span>
@@ -204,13 +205,13 @@ export default function SpheresOverview({
                 </small>
                 <strong>{metrics.weakest.name}</strong>
                 <b>
-                  {number(metrics.weakest.score)} <small>/ 9</small>
+                  LVL {metrics.weakest.level} <small>/ {MAX_SPHERE_LEVEL}</small>
                 </b>
               </div>
               <div className="insight-gap"><i className="insight-symbol" aria-hidden="true">⚖</i><span className="insight-bars" aria-hidden="true"><i/><i/><i/></span>
                 <small>Разрыв сфер</small>
-                <b>{number(metrics.gap)}</b>
-                <span>Между максимальной и минимальной оценкой</span>
+                <b>{metrics.gap} уровней</b>
+                <span>Между максимальным и минимальным уровнем активных сфер</span>
               </div>
             </div>
           </div>
@@ -234,7 +235,7 @@ export default function SpheresOverview({
             <p>
               {metrics.deficit > 0 ? (
                 <>
-                  До среднего Life Score ({number(metrics.average)} / 9) не хватает <strong>+{number(metrics.deficit)}</strong>.
+                  До среднего уровня активных сфер (LVL {number(metrics.average)} / {MAX_SPHERE_LEVEL}) не хватает <strong>+{number(metrics.deficit)} уровней</strong>.
                 </>
               ) : (
                 "Выбери небольшой проект, чтобы сделать следующий шаг."
@@ -350,11 +351,11 @@ export default function SpheresOverview({
                   </span>
                   <strong>{row.name}</strong>
                   <div className="list-score">
-                    <b>{number(row.score)} / 9</b>
+                    <b>LVL {row.level} / {MAX_SPHERE_LEVEL}</b><small>{row.maxed ? "Максимальный уровень" : `${row.currentXP} / ${row.requiredXP} XP`}</small>
                     <Meter
-                      value={row.score}
+                      value={row.maxed ? MAX_SPHERE_LEVEL : row.progress / 100 * MAX_SPHERE_LEVEL}
                       color={row.color}
-                      label={`Life Score: ${row.name}`}
+                      label={`XP: ${row.name}`}
                     />
                   </div>
                   <span className="list-counts">
@@ -362,7 +363,7 @@ export default function SpheresOverview({
                     {sphereCount(row.tasks, "tasks")}
                     {view === "analytics" && (
                       <small>
-                        {number(row.score - metrics.average)} к среднему ·{" "}
+                        {number(row.level - metrics.average)} к среднему ·{" "}
                         {state.spheres[row.id].xp} XP
                       </small>
                     )}

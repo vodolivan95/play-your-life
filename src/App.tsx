@@ -1,3 +1,4 @@
+import { sphereProgress, MAX_SPHERE_LEVEL } from './sphereProgress';
 import { sphereCount } from './sphereAnalytics';
 import SpheresOverview from './components/SpheresOverview';
 import HomeDashboard from './components/HomeDashboard';
@@ -32,7 +33,6 @@ import useTickTick from './useTickTick';
 import { TickTickContext } from './tickTickContext';
 import {
   achievements,
-  changeScore,
   completeQuest,
   dateKey,
   difficulties,
@@ -102,7 +102,7 @@ function Progress({
   );
 }
 function sphereLevel(xp: number) {
-  return Math.floor(xp / 200) + 1;
+  return sphereProgress(xp).level;
 }
 export default function App({ state: suppliedState, onChange, userId, accountTools }: {
   state?: GameState; onChange?: Dispatch<SetStateAction<GameState>>; userId?: string; accountTools?: ReactNode;
@@ -265,53 +265,16 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
       </div>
     );
   }
-  function SphereCard({ id, overview = false }: { id: string; overview?: boolean }) {
-    const info = spheres.find((s) => s.id === id)!;
-    const data = state.spheres[id];
-    const diff = data.score - data.previousScore;
-    return (
-      <button
-        className="sphere-card"
-        onClick={() => {
-          setSelected(id);
-          setSphereTab('projects');
-          setPage('spheres');
-        }}
-        style={{ '--sphere-color': info.color } as CSSProperties}
-      >
-        <SphereBuilding id={id} />
-        <div className="sphere-top">
-          <span className="sphere-icon">
-            <GameArt kind={info.id} />
-          </span>
-          <span className="level-chip">LVL {sphereLevel(data.xp)}</span>
-        </div>
-        <h3>{info.name}</h3>
-        {overview && <div className="overview-life-score"><b>{data.score.toFixed(1)} / 9</b><Progress value={data.score / 9 * 100} color={info.color} label={`Life Score: ${info.name}`} /></div>}
-        <div className="sphere-xp">
-          <span>{data.xp % 200} / 200 XP</span>
-          <Icon name="arrow" size={15} />
-        </div>
-        <Progress
-          value={(data.xp % 200) / 2}
-          color={info.color}
-          label={`Развитие: ${info.name}`}
-        />
-        {overview && <div className="overview-project-counts">{sphereCount(state.goals.filter(g => g.sphere === id).length, 'projects')} <span>|</span> {sphereCount(state.quests.filter(q => q.sphere === id).length, 'tasks')}</div>}
-        <div className="sphere-score">
-          <span>
-            Life Score{' '}
-            <b>
-              {data.score}
-              <small>/9</small>
-            </b>
-          </span>
-          <span className={diff < 0 ? 'negative' : 'positive'}>
-            {diff > 0 ? `↗ +${diff}` : diff < 0 ? `↘ ${diff}` : '—'}
-          </span>
-        </div>
-      </button>
-    );
+  function SphereCard({ id }: { id: string; overview?: boolean }) {
+    const info = spheres.find(s => s.id === id)!;
+    const p = sphereProgress(state.spheres[id].xp);
+    return <button className="sphere-card" onClick={() => { setSelected(id); setSphereTab('projects'); setPage('spheres'); }} style={{ '--sphere-color': info.color } as CSSProperties}>
+      <SphereBuilding id={id}/><div className="sphere-top"><span className="sphere-icon"><GameArt kind={id}/></span><span className="level-chip">LVL {p.level} / {MAX_SPHERE_LEVEL}</span></div><h3>{info.name}</h3>
+      <div className="overview-life-score"><b>LVL {p.level} / {MAX_SPHERE_LEVEL}</b></div>
+      <div className="sphere-xp"><span>{p.maxed ? 'Максимальный уровень' : p.currentXP + ' / ' + p.requiredXP + ' XP'}</span><Icon name="arrow" size={15}/></div>
+      <Progress value={p.progress} color={info.color} label={ 'XP: ' + info.name }/>
+      <div className="overview-project-counts">{sphereCount(state.goals.filter(g => g.sphere === id).length,'projects')} <span>|</span> {sphereCount(state.quests.filter(q => q.sphere === id).length,'tasks')}</div>
+    </button>;
   }
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -463,95 +426,11 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                     <span>{sphere.name} · Твой район развития</span>
                   </div>
                   <section className="panel">
-                    <div className="section-heading">
-                      <h2>LEVEL {sphereLevel(state.spheres[sphere.id].xp)}</h2>
-                      <span className="xp-tag">
-                        {state.spheres[sphere.id].xp} XP всего
-                      </span>
-                    </div>
-                    <Progress
-                      label={`Развитие: ${sphere.name}`}
-                      value={(state.spheres[sphere.id].xp % 200) / 2}
-                      color={sphere.color}
-                    />
-                    <p className="muted">
-                      {200 - (state.spheres[sphere.id].xp % 200)} XP до
-                      следующего уровня · Коэффициент {sphere.coefficient}
-                    </p>
-                    <div className="sphere-health-stats">
-                      <span
-                        className="score-circle"
-                        style={{
-                          background: `conic-gradient(#33c5a6 ${(state.spheres[sphere.id].score / 9) * 360}deg, #e7f3f7 0)`,
-                        }}
-                      >
-                        <b>{state.spheres[sphere.id].score}/9</b>
-                      </span>
-                      <div>
-                        <strong>Life Score</strong>
-                        <small>
-                          {state.spheres[sphere.id].score >
-                          state.spheres[sphere.id].previousScore
-                            ? `↗ +${state.spheres[sphere.id].score - state.spheres[sphere.id].previousScore}`
-                            : state.spheres[sphere.id].score <
-                                state.spheres[sphere.id].previousScore
-                              ? `↘ ${state.spheres[sphere.id].score - state.spheres[sphere.id].previousScore}`
-                              : 'Без изменений'}
-                        </small>
-                      </div>
-                      <div className="sphere-coefficient">
-                        <span>⚡</span>
-                        <small>Коэффициент</small>
-                        <strong>{sphere.coefficient} XP</strong>
-                      </div>
-                    </div>
-                    <details className="score-editor">
-                      <summary>Изменить Life Score</summary>
-                      <div className="score-selector">
-                        {Array.from({ length: 10 }, (_, n) => (
-                          <button
-                            key={n}
-                            className={
-                              state.spheres[sphere.id].score === n
-                                ? 'selected'
-                                : ''
-                            }
-                            onClick={() => {
-                              const next = changeScore(state, sphere.id, n);
-                              setState(next);
-                              notify(
-                                next.xp > state.xp
-                                  ? `+${next.xp - state.xp} XP · Новый личный результат!`
-                                  : 'Оценка сохранена',
-                              );
-                            }}
-                          >
-                            {n}
-                          </button>
-                        ))}
-                      </div>
-                      <p className="muted">
-                        {
-                          [
-                            'Сфера практически отсутствует',
-                            'Очень низкий уровень',
-                            'Очень низкий уровень',
-                            'Нестабильно / требует развития',
-                            'Нестабильно / требует развития',
-                            'Нормальная базовая точка',
-                            'Хороший уровень',
-                            'Стабильный хороший результат',
-                            'Очень высокий уровень',
-                            'Достигнут личный целевой стандарт',
-                          ][state.spheres[sphere.id].score]
-                        }
-                      </p>
-                      <p className="score-note">
-                        XP за рост выше твоего лучшего результата (
-                        {state.spheres[sphere.id].highScore}). Повторная оценка
-                        не приносит бонус.
-                      </p>
-                    </details>
+                    <div className="section-heading"><h2>LVL {sphereProgress(state.spheres[sphere.id].xp).level} / {MAX_SPHERE_LEVEL}</h2><span className="xp-tag">{state.spheres[sphere.id].xp} XP всего</span></div>
+                    <Progress label={ 'XP: ' + sphere.name } value={sphereProgress(state.spheres[sphere.id].xp).progress} color={sphere.color}/>
+                    <p className="muted">{sphereProgress(state.spheres[sphere.id].xp).maxed ? 'Максимальный уровень сферы' : sphereProgress(state.spheres[sphere.id].xp).currentXP + ' / ' + sphereProgress(state.spheres[sphere.id].xp).requiredXP + ' XP · ' + sphereProgress(state.spheres[sphere.id].xp).remainingXP + ' XP до следующего уровня'}</p>
+                    <p className="score-note">Уровень растёт за реальные действия: выполняй квесты и задачи проектов этой сферы. У каждой сферы свой XP и своя история развития.</p>
+
                   </section>
                 </div>
                 <div className="tabs sphere-tabs">
@@ -993,7 +872,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                               </span>
                               <strong>{sp.name}</strong>
                               <small>
-                                LVL {sphereLevel(state.spheres[sp.id].xp)}
+                                LVL {sphereLevel(state.spheres[sp.id].xp)} / {MAX_SPHERE_LEVEL}
                               </small>
                             </button>
                           ))}
@@ -1021,7 +900,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                         >
                           <span>{s.icon}</span>
                           <h3>{s.name}</h3>
-                          <span className="level-chip">LVL {lvl}</span>
+                          <span className="level-chip">LVL {lvl} / {MAX_SPHERE_LEVEL}</span>
                         </button>
                         <div className="skill-nodes">
                           {[

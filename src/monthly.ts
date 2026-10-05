@@ -1,3 +1,4 @@
+import { sphereProgress } from './sphereProgress.ts';
 import { dateKey, spheres } from './game.ts';
 import type { GameState, MonthReflection } from './game.ts';
 
@@ -106,7 +107,11 @@ export function monthlySummary(
         if (new Date(event.date) < start) before = after;
       }
     }
+    const xpAt = (boundary: Date) => Math.max(0, state.spheres[s.id].xp - state.events.filter(e => e.sphere === s.id && new Date(e.date) >= boundary).reduce((sum,e) => sum + e.xp,0));
+    const levelBefore = scoresKnown ? sphereProgress(xpAt(start)).level : null;
+    const levelAfter = scoresKnown ? sphereProgress(xpAt(end)).level : null;
     return {
+      levelBefore, levelAfter, levelDelta: levelBefore === null || levelAfter === null ? null : levelAfter - levelBefore,
       ...s,
       xp: events
         .filter((e) => e.sphere === s.id)
@@ -133,7 +138,7 @@ export function monthlySummary(
   );
   const breakdown = [
     { kind: 'quest', label: 'Квесты', xp: 0 },
-    { kind: 'score', label: 'Рост Life Score', xp: 0 },
+    { kind: 'score', label: 'Архивные награды', xp: 0 },
     { kind: 'goal', label: 'Большие цели', xp: 0 },
     { kind: 'streak', label: 'Награды за серии', xp: 0 },
     { kind: 'legacy', label: 'Старые записи', xp: 0 },

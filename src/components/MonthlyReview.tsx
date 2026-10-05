@@ -1,3 +1,4 @@
+import { MAX_SPHERE_LEVEL } from '../sphereProgress';
 import { useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import {
@@ -71,7 +72,7 @@ export default function MonthlyReview({
     onChange((s) => saveReflection(s, month, { ...changes, status: 'draft' }));
   }
   const scoreAverage = (field: 'before' | 'after') => {
-    const values = summary.sphereResults.map((s) => s[field]);
+    const values = summary.sphereResults.map((s) => s[field === 'before' ? 'levelBefore' : 'levelAfter']);
     return values.every((v) => v !== null)
       ? (
           values.reduce<number>((sum, v) => sum + (v ?? 0), 0) / values.length
@@ -271,13 +272,13 @@ export default function MonthlyReview({
             <h2>Как изменились сферы</h2>
             <p>
               {summary.partial
-                ? 'Life Score: от начала доступного учёта до конца периода.'
-                : 'Life Score: начало → конец месяца.'}
+                ? 'Уровни: от начала доступного учёта до конца периода.'
+                : 'Уровни: начало → конец месяца.'}
             </p>
           </div>
           <span className="month-average">
             {scoreAverage('before')} → <b>{scoreAverage('after')}</b>
-            <small> / 9</small>
+            <small> / {MAX_SPHERE_LEVEL}</small>
           </span>
         </div>
         <div className="monthly-sphere-list">
@@ -292,22 +293,22 @@ export default function MonthlyReview({
               <div>
                 <strong>{s.name}</strong>
                 <small>
-                  {s.before === null
+                  {s.levelBefore === null
                     ? 'Оценки пока неизвестны'
-                    : `${s.before} → ${s.after} Life Score`}
+                    : `${s.levelBefore} → ${s.levelAfter} LVL`}
                 </small>
               </div>
               <span
                 className={
-                  s.delta !== null && s.delta < 0 ? 'negative' : 'positive'
+                  s.levelDelta !== null && s.levelDelta < 0 ? 'negative' : 'positive'
                 }
               >
-                {s.delta === null
+                {s.levelDelta === null
                   ? '—'
-                  : s.delta > 0
-                    ? `+${s.delta}`
-                    : s.delta < 0
-                      ? s.delta
+                  : s.levelDelta > 0
+                    ? `+${s.levelDelta}`
+                    : s.levelDelta < 0
+                      ? s.levelDelta
                       : 'Без изменений'}
               </span>
               <b>+{s.xp} XP</b>

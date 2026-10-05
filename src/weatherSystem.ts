@@ -8,7 +8,7 @@ export const weatherConfig: Record<WeatherKind, Omit<WeatherParameters, 'wetness
   cloudy: { cloudiness: .85, rainIntensity: 0, snowIntensity: 0, fogDensity: .008, windStrength: .25, sunIntensity: .65, trafficSpeed: 1, pedestrianDensity: .9 },
   rain: { cloudiness: 1, rainIntensity: .65, snowIntensity: 0, fogDensity: .012, windStrength: .4, sunIntensity: .35, trafficSpeed: .8, pedestrianDensity: .45 },
   thunderstorm: { cloudiness: 1, rainIntensity: 1, snowIntensity: 0, fogDensity: .016, windStrength: .8, sunIntensity: .12, trafficSpeed: .65, pedestrianDensity: .2 },
-  fog: { cloudiness: .65, rainIntensity: 0, snowIntensity: 0, fogDensity: .045, windStrength: .12, sunIntensity: .45, trafficSpeed: .7, pedestrianDensity: .65 },
+  fog: { cloudiness: .65, rainIntensity: 0, snowIntensity: 0, fogDensity: .022, windStrength: .12, sunIntensity: .45, trafficSpeed: .7, pedestrianDensity: .65 },
   snow: { cloudiness: .85, rainIntensity: 0, snowIntensity: .85, fogDensity: .016, windStrength: .3, sunIntensity: .6, trafficSpeed: .75, pedestrianDensity: .65 },
 };
 export function initialWeather(): WeatherParameters { return { ...weatherConfig.clear, wetness: 0, snowAmount: 0 }; }

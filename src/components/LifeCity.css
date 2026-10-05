@@ -451,3 +451,10 @@
   .city-jump select { width: 100%; margin-top: 8px; }
   .city-building-hit { height: 25%; }
 }
+
+.city-simulation-controls { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 14px; font-size:12px; color:#56718e; }
+.city-simulation-controls button, .city-simulation-controls select { border:1px solid #d8e4f3; border-radius:10px; background:white; color:#36597b; padding:9px 12px; font:inherit; cursor:pointer; }
+.city-simulation-controls button[aria-pressed=true] { background:#e6efff; color:#225bd9; border-color:#aac6ff; }
+.city-simulation-controls label { display:flex; gap:7px; align-items:center; }
+.city-simulation-controls > span { margin-left:auto; font-size:11px; }
+@media(max-width:700px) { .city-simulation-controls > span { width:100%; margin-left:0; } }

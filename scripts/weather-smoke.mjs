@@ -31,7 +31,7 @@ try {
   await page.getByRole('combobox', { name: 'Погода города' }).selectOption('clear'); await page.waitForTimeout(1000);
   assert.ok(Number(await canvas.getAttribute('data-wetness')) > wet * .9, 'Дорога не высыхает мгновенно');
   await page.getByRole('combobox', { name: 'Погода города' }).selectOption('fog'); await page.waitForTimeout(6000);
-  assert.ok(Number(await canvas.getAttribute('data-fog')) > .025);
+  assert.ok(Number(await canvas.getAttribute('data-fog')) > .015);
   await page.screenshot({ path: 'room-preview/city-night-fog.png' });
   await page.getByRole('combobox', { name: 'Погода города' }).selectOption('snow'); await page.waitForTimeout(12000);
   assert.ok(Number(await canvas.getAttribute('data-snow-amount')) > .01);

@@ -20,7 +20,7 @@ const sportCatalog: readonly ObjectSpec[] = [
 
 export const roomConfigs: Record<RoomId, RoomConfig> = Object.fromEntries(
   (['health', 'sport', 'growth', 'english', 'finance', 'together', 'driving', 'tasks', 'hobby'] as const)
-    .map(id => [id, { id, title: id === 'sport' ? 'Спорт' : id, size: [12, 10], catalog: id === 'sport' ? sportCatalog : [] }]),
+    .map(id => [id, { id, title: ({ health: 'Здоровье', sport: 'Спорт', growth: 'Саморазвитие', english: 'Английский', finance: 'Финансы', together: 'Общие дела', driving: 'Вождение', tasks: 'Задачи', hobby: 'Хобби' })[id], size: [12, 10], catalog: id === 'sport' ? sportCatalog : [] }]),
 ) as Record<RoomId, RoomConfig>;
 
 export function roomData(state: GameState, id: RoomId): RoomData {

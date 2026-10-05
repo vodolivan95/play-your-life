@@ -21,8 +21,6 @@ function Architecture({ time, shadows }: { time: RoomTime; shadows: boolean }) {
   const l = lighting[time];
   const block = (position: Vec3, scale: Vec3, color: string, roughness = .65, metalness = 0) => <mesh position={position} scale={scale} castShadow={shadows} receiveShadow><boxGeometry /><meshStandardMaterial color={color} roughness={roughness} metalness={metalness} /></mesh>;
   return <group>
-    <color attach="background" args={[l.sky]} />
-    <fog attach="fog" args={[l.sky, 25, 95]} />
     <hemisphereLight args={[l.sky, '#5c4638', l.ambient]} />
     <directionalLight position={[-3, 7, -7]} color={l.sun} intensity={l.power} castShadow={shadows} shadow-mapSize={[1024, 1024]} shadow-camera-left={-9} shadow-camera-right={9} shadow-camera-top={9} shadow-camera-bottom={-9} shadow-normalBias={.04} />
     <pointLight position={[0, 4.6, 1]} color="#ffd1a2" intensity={l.indoor * 32} distance={16} decay={2} />
@@ -59,6 +57,8 @@ export default function RoomScene3D(props: Props) {
   const shadows = quality !== 'low' && !slow;
   const footprint = ghost ? rotateSize(objectSpec(ghost.id).size, ghost.rotation[1]) : null;
   return <Canvas shadows={shadows} dpr={slow || quality === 'low' ? 1 : quality === 'medium' ? 1.25 : 1.75} camera={{ position: [7.5, 4.9, 8], fov: 48, near: .1, far: 110 }} gl={{ antialias: quality !== 'low', powerPreference: 'low-power' }} frameloop={visible && !reduced ? 'always' : 'demand'}>
+    <color attach="background" args={[lighting[time].sky]} />
+    <fog attach="fog" args={[lighting[time].sky, 25, 95]} />
     <PerformanceMonitor onDecline={() => setSlow(true)} />
     <Architecture time={time} shadows={shadows} />
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, .02, 0]} onPointerMove={event => { if (ghost) { event.stopPropagation(); onFloor([Math.round(event.point.x), 0, Math.round(event.point.z)]); } }} onClick={event => { if (ghost) { event.stopPropagation(); onFloor([Math.round(event.point.x), 0, Math.round(event.point.z)]); } }}>

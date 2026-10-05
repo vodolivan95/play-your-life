@@ -62,14 +62,14 @@ export default function RoomEngine({ state, onChange, onBack, roomId = 'sport', 
   }
   function confirm() { if (ghost && valid && apply(current => moving ? moveRoomObject(current, roomId, ghost) : placeRoomObject(current, roomId, ghost), 'Предмет установлен. Положение сохранено.')) { setGhost(null); setSelected(null); } }
   const chosen = selected ? room.objects.find(item => item.id === selected) : null;
-  return createPortal(<section className="room3d" aria-label="3D-комната Спорт">
+  return createPortal(<section className="room3d" aria-label={`3D-комната ${config.title}`}>
     <div className="room3d-stage" data-testid="room-scene">
       {webgl ? <SceneBoundary><Suspense fallback={<div className="room3d-unavailable">Загружаем 3D-комнату…</div>}><Scene roomId={roomId} objects={room.objects} ghost={ghost} valid={valid} build={build} selected={selected} time={time} quality={quality} onFloor={floor} onSelect={id => { setSelected(id); if (!build) setMessage(`${objectSpec(id).name}${id === 'treadmill' ? ' · Нажми, чтобы включить экран' : ''}`); }} /></Suspense></SceneBoundary> : <div className="room3d-unavailable">Для комнаты нужен WebGL 2. Попробуй актуальный Chrome или Safari. Покупки и позиции сохранены.</div>}
     </div>
     <header className="room3d-hud">
       <button className="room3d-back" onClick={onBack} aria-label="Вернуться из комнаты">←</button>
-      <div><strong>Спорт</strong><span>LVL {level} · {state.coins.toLocaleString('ru-RU')} Coins</span></div>
-      <div className="room3d-completion"><b>{Math.round(room.objects.length / config.catalog.length * 100)}%</b><span>Комната</span></div>
+      <div><strong>{config.title}</strong><span>LVL {level} · {state.coins.toLocaleString('ru-RU')} Coins</span></div>
+      <div className="room3d-completion"><b>{config.catalog.length ? Math.round(room.objects.length / config.catalog.length * 100) : 0}%</b><span>Комната</span></div>
       <button className="room3d-settings" onClick={() => setSheet('settings')} aria-label="Настройки комнаты">⚙</button>
     </header>
     {build && <div className="room3d-build-label">РЕЖИМ ОБУСТРОЙСТВА</div>}

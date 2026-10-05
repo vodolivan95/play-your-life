@@ -22,17 +22,22 @@ function useCityModel(id: string) {
 function Building({ index, state, runtime, time, onOpen }: { index: number; state: GameState; runtime: WeatherRuntime; time: CityTime; onOpen: (id: string) => void }) {
   const s = spheres[index], p = cityPositions[index], building = buildingState(state, s.id), model = useCityModel(s.id);
   const materials = useMemo(() => { const list: MeshStandardMaterial[] = []; model.traverse(node => { if (node instanceof Mesh && node.material instanceof MeshStandardMaterial) list.push(node.material); }); return list; }, [model]);
+  // These cloned Three.js materials are mutable scene resources, not React state.
+  /* eslint-disable react-hooks/immutability */
   useFrame(() => {
     for (const material of materials) {
       if (material.name === 'snow-roof') material.color.copy(new Color('#edeedf').lerp(new Color('#f5f8ff'), runtime.current.snowAmount));
       if (material.name === 'weather-glass') { material.emissiveIntensity = time === 'night' ? 1.1 : time === 'sunset' ? .3 : .03; material.roughness = .14 + runtime.current.cloudiness * .15; }
     }
   });
+  /* eslint-enable react-hooks/immutability */
   return <group position={[p.x, .4, p.z]} scale={1 + (building.tier - 1) * .035} onClick={e => { e.stopPropagation(); onOpen(s.id); }}><primitive object={model} /></group>;
 }
 export function IslandLandscape({ runtime }: { runtime: WeatherRuntime }) {
   const model = useCityModel('island');
   const materials = useMemo(() => { const list: MeshStandardMaterial[] = []; model.traverse(node => { if (node instanceof Mesh && node.material instanceof MeshStandardMaterial) list.push(node.material); }); return list; }, [model]);
+  // These cloned Three.js materials are mutable scene resources, not React state.
+  /* eslint-disable react-hooks/immutability */
   useFrame(() => {
     for (const material of materials) {
       if (material.name === 'wet-road') { material.roughness = .92 - runtime.current.wetness * .75; material.color.copy(new Color('#657079').lerp(new Color('#394d57'), runtime.current.wetness * .6)); }
@@ -40,6 +45,7 @@ export function IslandLandscape({ runtime }: { runtime: WeatherRuntime }) {
       if (material.name === 'lawn') material.color.copy(new Color('#6c9b62').lerp(new Color('#e6ece8'), runtime.current.snowAmount));
     }
   });
+  /* eslint-enable react-hooks/immutability */
   return <primitive object={model} />;
 }
 export function IslandPalms({ runtime, paused, reduced }: { runtime: WeatherRuntime; paused: boolean; reduced: boolean }) {

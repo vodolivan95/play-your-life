@@ -1,6 +1,7 @@
 // Авторские 3D-модели острова. Референс задаёт архитектуру; изображение не встраивается в GLB.
 import * as T from 'three';
 import { Buffer } from 'node:buffer';
+import { URL } from 'node:url';
 import { log } from 'node:console';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
@@ -165,8 +166,9 @@ function island() {
   for (const x of [-8, 8]) for (const z of [-8, 8]) for (let j = 0; j < 5; j++) box(root, [2.6, .02, .15], [x, .51, z + 2.2 + j * .35], m.white);
   bridge(root, -27, 11, Math.PI / 2); bridge(root, 11, 28, 0);
   // Cliff waterfall: spatial ribbons step down from the rock, not a screen overlay.
-  for (let i = 0; i < 3; i++) box(root, [.65, 4.5 - i * .3, .12], [-30 + i * .75, 1.1, -18], m.cyan);
-  for (let i = 0; i < 10; i++) ball(root, .45, [-30 + Math.sin(i * 2) * 1.4, -.2, -17 + Math.cos(i * 2) * 1.4], m.water, [1, .1, 1]);
+  for (let i = 0; i < 5; i++) add(root, new T.IcosahedronGeometry(1, 2), m.rock, [-28 + Math.sin(i * 2) * 1.4, 2.1 + i % 2 * .7, -18 + Math.cos(i * 2)], [2.1, 2.6, 2], [i * .3, i * .5, 0]);
+  for (let i = 0; i < 3; i++) box(root, [.65, 4.5 - i * .3, .12], [-29 + i * .75, 1.8, -15.1], m.cyan);
+  for (let i = 0; i < 10; i++) ball(root, .45, [-28 + Math.sin(i * 2) * 1.4, -.2, -14.3 + Math.cos(i * 2) * .5], m.water, [1, .1, 1]);
   // Flower beds and sculpted bushes along the roads.
   for (let i = 0; i < 32; i++) { const a = i / 32 * Math.PI * 2, x = Math.cos(a) * 28, z = Math.sin(a) * 26;
     garden(root, x, z, 1.8, 1.1);

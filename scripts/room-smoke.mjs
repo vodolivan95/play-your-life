@@ -1,4 +1,4 @@
-/* global fetch, setTimeout, localStorage, document, innerWidth, getComputedStyle */
+/* global fetch, setTimeout, localStorage, document, innerWidth */
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -10,21 +10,14 @@ await mkdir('room-preview', { recursive: true });
 let browser;
 // Нажимаем именно на изображение здания, а не на текстовую кнопку под картой.
 async function enterSportFromBuilding(page, touch = false) {
-  const hit = page.getByRole('button', { name: 'Войти: Спорт', exact: true });
-  await hit.scrollIntoViewIfNeeded();
-  const layout = await hit.evaluate(element => {
-    const rect = element.getBoundingClientRect();
-    const map = element.closest('.city-map').getBoundingClientRect();
-    return { position: getComputedStyle(element).position, x: rect.x, y: rect.y,
-      width: rect.width, height: rect.height, mapX: map.x, mapY: map.y,
-      mapWidth: map.width, mapHeight: map.height };
-  });
-  assert.equal(layout.position, 'absolute', 'Кнопка входа должна перекрывать само здание');
-  const x = layout.mapX + layout.mapWidth * 0.5;
-  const y = layout.mapY + layout.mapHeight * 0.16;
-  assert.ok(x >= layout.x && x <= layout.x + layout.width && y >= layout.y && y <= layout.y + layout.height);
-  if (touch) await page.touchscreen.tap(x, y);
-  else await page.mouse.click(x, y);
+  const canvas = page.locator('.city3d-scene canvas[data-ready="true"]');
+  await canvas.waitFor();
+  await canvas.scrollIntoViewIfNeeded();
+  const rect = await canvas.boundingBox();
+  const [px, py] = (await canvas.getAttribute('data-sport-point')).split(',').map(Number);
+  assert.ok(px > 0 && py > 0 && px < rect.width && py < rect.height, 'Здание SPORT видно в 3D-камере');
+  if (touch) await page.touchscreen.tap(rect.x + px, rect.y + py);
+  else await page.mouse.click(rect.x + px, rect.y + py);
   await page.locator('.room3d canvas[data-ready="true"]').waitFor();
 }
 try {

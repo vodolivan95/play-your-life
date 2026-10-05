@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useId } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import type { GameState } from "../game";
 import {
@@ -17,10 +17,12 @@ function Meter({
   value,
   color,
   label,
+  max = 9,
 }: {
   value: number;
   color?: string;
   label: string;
+  max?: number;
 }) {
   return (
     <div
@@ -28,27 +30,29 @@ function Meter({
       role="progressbar"
       aria-label={label}
       aria-valuemin={0}
-      aria-valuemax={9}
+      aria-valuemax={max}
       aria-valuenow={value}
     >
-      <span style={{ width: `${(value / 9) * 100}%`, background: color }} />
+      <span style={{ width: `${(value / max) * 100}%`, background: color }} />
     </div>
   );
 }
 function Radar({ state }: { state: GameState }) {
   const rows = sphereMetrics(state).rows;
+  const fillId = useId().replace(/:/g, "");
   const point = (index: number, score: number) => {
     const angle = (index * 2 * Math.PI) / rows.length - Math.PI / 2;
-    return `${180 + (Math.cos(angle) * 96 * score) / 9},${165 + (Math.sin(angle) * 96 * score) / 9}`;
+    return `${220 + (Math.cos(angle) * 110 * score) / 9},${180 + (Math.sin(angle) * 110 * score) / 9}`;
   };
   return (
     <div className="sphere-radar">
       <svg
-        viewBox="0 0 360 330"
+        viewBox="0 0 440 360"
         role="img"
         aria-label={`Баланс сфер жизни, шкала от 0 до 9. ${rows.map((r) => `${r.name}: ${number(r.score)}`).join("; ")}`}
       >
         <title>Life Score всех сфер, от 0 до 9</title>
+        <defs><linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2cc5ff" stopOpacity=".8"/><stop offset="100%" stopColor="#008cff" stopOpacity=".65"/></linearGradient></defs>
         {[3, 6, 9]
           .map((value) => (
             <polygon
@@ -63,8 +67,8 @@ function Radar({ state }: { state: GameState }) {
         {rows.map((r, i) => (
           <line
             key={r.id}
-            x1="180"
-            y1="165"
+            x1="220"
+            y1="180"
             x2={point(i, 9).split(",")[0]}
             y2={point(i, 9).split(",")[1]}
             stroke="#d4eafd"
@@ -73,7 +77,7 @@ function Radar({ state }: { state: GameState }) {
         <polygon
           className="radar-value"
           points={rows.map((row, i) => point(i, row.score)).join(" ")}
-          fill="#43aeff66"
+          fill={`url(#${fillId})`}
           stroke="#1697ff"
           strokeWidth="2"
         />
@@ -90,8 +94,8 @@ function Radar({ state }: { state: GameState }) {
         {[0, 3, 6, 9].map((value) => (
           <text
             key={value}
-            x="185"
-            y={165 - (value / 9) * 96 - 4}
+            x="225"
+            y={180 - (value / 9) * 110 - 4}
             fontSize="9"
             fill="#577a96"
           >
@@ -163,9 +167,9 @@ export default function SpheresOverview({
         <article className="panel life-balance-panel">
           <div className="eyebrow">✦ Твой баланс жизни</div>
           <strong className="life-balance-value">
-            {number(metrics.average)} <small>/ 9</small>
+            {number(metrics.balance100)} <small>/ 100</small>
           </strong>
-          <Meter value={metrics.average} label="Общий Life Score" />
+          <Meter value={metrics.balance100} max={100} label="Общий баланс жизни" />
           <p>
             {metrics.average === 0
               ? "Это начало твоей игры. Оцени сферы и выбери первый шаг."
@@ -178,13 +182,12 @@ export default function SpheresOverview({
         <article className="panel sphere-balance-panel">
           <h2>Баланс сфер жизни</h2>
           <div className="radar-legend">
-            <i />
-            Текущий Life Score · шкала 0–9
+            <span><i />Текущий уровень</span><span><i />Максимум шкалы: 9</span>
           </div>
           <div className="radar-and-insights">
             <Radar state={state} />
             <div className="balance-insights">
-              <div className="insight-strong">
+              <div className="insight-strong"><i className="insight-symbol" aria-hidden="true">↗</i><span className="insight-bars" aria-hidden="true"><i/><i/><i/></span>
                 <small>
                   {metrics.equal ? "Сферы на одном уровне" : "Сильная сторона"}
                 </small>
@@ -195,7 +198,7 @@ export default function SpheresOverview({
                   {number(metrics.strongest.score)} <small>/ 9</small>
                 </b>
               </div>
-              <div className="insight-weak">
+              <div className="insight-weak"><i className="insight-symbol" aria-hidden="true">↓</i><span className="insight-sphere-art" aria-hidden="true"><GameArt kind={metrics.weakest.id}/></span>
                 <small>
                   {metrics.equal ? "Первый фокус" : "Требует внимания"}
                 </small>
@@ -204,7 +207,7 @@ export default function SpheresOverview({
                   {number(metrics.weakest.score)} <small>/ 9</small>
                 </b>
               </div>
-              <div className="insight-gap">
+              <div className="insight-gap"><i className="insight-symbol" aria-hidden="true">⚖</i><span className="insight-bars" aria-hidden="true"><i/><i/><i/></span>
                 <small>Разрыв сфер</small>
                 <b>{number(metrics.gap)}</b>
                 <span>Между максимальной и минимальной оценкой</span>
@@ -213,7 +216,7 @@ export default function SpheresOverview({
           </div>
         </article>
         <article className="panel sphere-focus-panel">
-          <div className="eyebrow">✦ Фокус развития</div>
+          <div className="focus-heading"><div className="eyebrow">✦ Фокус развития</div><small className="focus-badge">{idea.source === "ai" ? "AI-рекомендация" : "Идея проекта"}</small></div>
           <div className="focus-copy">
             <p>
               {metrics.equal ? (
@@ -231,23 +234,20 @@ export default function SpheresOverview({
             <p>
               {metrics.deficit > 0 ? (
                 <>
-                  До твоего текущего среднего баланса ({number(metrics.average)}
-                  ) не хватает <strong>+{number(metrics.deficit)}</strong>.
+                  До среднего Life Score ({number(metrics.average)} / 9) не хватает <strong>+{number(metrics.deficit)}</strong>.
                 </>
               ) : (
                 "Выбери небольшой проект, чтобы сделать следующий шаг."
               )}
             </p>
-            <span>
-              <GameArt kind={metrics.weakest.id} />
-            </span>
+            <div className="focus-art"><SphereBuilding id={metrics.weakest.id}/><span><GameArt kind={metrics.weakest.id}/></span></div>
           </div>
           <small className="recommendation-label">
-            Рекомендуемый проект · {idea.source === "ai" ? "AI" : "пример"}
+            <GameArt kind="target"/> Рекомендуемый проект
           </small>
           <div className="focus-project">
             <Icon name="calendar" />
-            <strong>{idea.title}</strong>
+            <strong>{idea.title}</strong><Icon name="arrow" size={17}/>
           </div>
           <button
             className="primary-button"

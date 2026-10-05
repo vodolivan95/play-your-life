@@ -40,6 +40,7 @@ export function sphereMetrics(state: GameState) {
   return {
     rows,
     average,
+    balance100: average / 9 * 100,
     strongest,
     weakest,
     gap,

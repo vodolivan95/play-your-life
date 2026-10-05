@@ -1,6 +1,6 @@
 import { sphereProgress, MAX_SPHERE_LEVEL } from '../sphereProgress';
 import CityBuildingArt from './CityBuildingArt';
-import type { CSSProperties, Dispatch, SetStateAction } from 'react';
+import type { CSSProperties } from 'react';
 import { spheres } from '../game';
 import type { GameState, Goal } from '../game';
 import { formatDate, goalStatus } from '../planning';
@@ -9,7 +9,6 @@ import Icon from './Icon';
 import ProjectArt from './ProjectArt';
 import { projectStyle } from './projectStyle';
 import './SphereCity.css';
-import RoomEntry from './room3d/RoomEntry';
 
 export function SphereBuilding({ id }: { id: string }) {
   return <CityBuildingArt id={id} />;
@@ -114,7 +113,7 @@ const templates: Record<string, [string, string, string][]> = {
 };
 
 export function SphereProjects({
-  onChange,
+  onMap,
   state,
   id,
   onOpen,
@@ -124,7 +123,7 @@ export function SphereProjects({
   state: GameState;
   id: string;
   onOpen: (goal: Goal) => void;
-  onChange: Dispatch<SetStateAction<GameState>>;
+  onMap: () => void;
   onNew: () => void;
   onTemplate: (name: string, description: string) => void;
 }) {
@@ -253,7 +252,7 @@ export function SphereProjects({
   }
   return (
     <div className="district-projects">
-      {id === 'sport' && <RoomEntry state={state} onChange={onChange} />}
+      {id === 'sport' && <button className="secondary-button" onClick={onMap}>Открыть общую карту →</button>}
       <div className="section-heading">
         <h2>
           Активные проекты{' '}

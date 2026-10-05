@@ -15,7 +15,14 @@ try {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
 
   await page.goto('http://localhost:4173/?room-demo=sport');
-  await page.locator('.room3d canvas').waitFor();
+  assert.equal(await page.locator('.room3d canvas').count(), 0, 'Демо начинается с общей карты');
+  await page.getByRole('heading', { name: 'Общая карта', exact: true }).waitFor();
+  await page.screenshot({ path: 'room-preview/common-map.png' });
+  await page.getByRole('button', { name: 'Войти: Спорт', exact: true }).click();
+  await page.locator('.room3d canvas[data-ready="true"]').waitFor();
+  await page.getByRole('button', { name: 'Вернуться из комнаты' }).click();
+  await page.getByRole('heading', { name: 'Общая карта', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Войти: Спорт', exact: true }).click();
   await page.locator('.room3d canvas[data-ready="true"]').waitFor();
   await page.waitForTimeout(1500);
   assert.equal(await page.locator('.room3d-unavailable').count(), 0, '3D сцена должна загрузиться');
@@ -54,6 +61,7 @@ try {
   }
   await page.getByRole('button', { name: 'RESET CAMERA' }).click(); await page.waitForTimeout(1600);
   await page.reload();
+  await page.getByRole('button', { name: 'Войти: Спорт', exact: true }).click();
 
   await page.locator('.room3d canvas').waitFor();
   await page.waitForTimeout(2000);
@@ -89,7 +97,8 @@ try {
   await plant.getByRole('button', { name: 'Установить', exact: true }).click();
   for (let i = 0; i < 6; i++) await page.getByRole('button', { name: 'Сдвинуть вперёд' }).click();
   await page.getByRole('button', { name: '✓ Установить', exact: true }).click();
-  await page.reload(); await page.locator('.room3d canvas[data-ready="true"]').waitFor();
+  await page.reload();
+  await page.getByRole('button', { name: 'Войти: Спорт', exact: true }).click(); await page.locator('.room3d canvas[data-ready="true"]').waitFor();
   edited = JSON.parse(await page.evaluate(key => localStorage.getItem(key), saveKey));
   assert.equal(edited.rooms.sport.objects.find(item => item.id === 'treadmill').position[0], 1.5);
   assert.equal(edited.rooms.sport.objects.length, 6); assert.equal(edited.coins, 360);
@@ -122,6 +131,14 @@ try {
   const position = (await canvas.getAttribute('data-camera')).split(',').map(Number);
   assert.ok(Math.abs(position[0]) <= 5.35 && Math.abs(position[2]) <= 4.35 && position[1] >= 2.2 && position[1] <= 4.65, 'Camera stays inside bounds');
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+  await page.getByRole('button', { name: 'Вернуться из комнаты' }).click();
+  await page.getByRole('heading', { name: 'Общая карта', exact: true }).waitFor();
+  await page.screenshot({ path: 'room-preview/common-map-mobile.png' });
+  await page.getByRole('button', { name: 'Войти: Спорт', exact: true }).click();
+  await page.locator('.room3d canvas[data-ready="true"]').waitFor();
+  const afterReturn = JSON.parse(await page.evaluate(key => localStorage.getItem(key), saveKey));
+  assert.deepEqual(afterReturn.rooms.sport.objects, edited.rooms.sport.objects);
+  assert.equal(afterReturn.coins, 360);
   assert.deepEqual(errors, []);
   await writeFile('room-preview/result.json', JSON.stringify({ passed: true, coinsAfterTreadmill: reloaded.coins, object: reloaded.rooms.sport.objects[0], allSix: furnished.rooms.sport.objects, coinsAfterAllSix: furnished.coins, errors }, null, 2));
 } catch (error) {

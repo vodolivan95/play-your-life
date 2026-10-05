@@ -56,7 +56,7 @@ export default function RoomScene3D(props: Props) {
   useEffect(() => { const handle = () => setVisible(!document.hidden); document.addEventListener('visibilitychange', handle); return () => document.removeEventListener('visibilitychange', handle); }, []);
   const shadows = quality !== 'low' && !slow;
   const footprint = ghost ? rotateSize(objectSpec(ghost.id).size, ghost.rotation[1]) : null;
-  return <Canvas shadows={shadows} dpr={slow || quality === 'low' ? 1 : quality === 'medium' ? 1.25 : 1.75} camera={{ position: [7.5, 4.9, 8], fov: 48, near: .1, far: 110 }} gl={{ antialias: quality !== 'low', powerPreference: 'low-power' }} frameloop={visible && !reduced ? 'always' : 'demand'}>
+  return <Canvas shadows={shadows} dpr={slow || quality === 'low' ? 1 : quality === 'medium' ? 1.25 : 1.75} camera={{ position: [3.4, 2.8, 3], fov: 75, near: .1, far: 110 }} gl={{ antialias: quality !== 'low', powerPreference: 'low-power' }} frameloop={visible && !reduced ? 'always' : 'demand'}>
     <color attach="background" args={[lighting[time].sky]} />
     <fog attach="fog" args={[lighting[time].sky, 25, 95]} />
     <PerformanceMonitor onDecline={() => setSlow(true)} />
@@ -73,6 +73,6 @@ export default function RoomScene3D(props: Props) {
       <Model3D id={ghost.id} ghost={valid ? 'valid' : 'invalid'} reduced />
       <mesh position={[0, .045, 0]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={objectSpec(ghost.id).size} /><meshBasicMaterial color={valid ? '#67ccff' : '#ff7979'} transparent opacity={.2} depthWrite={false} /></mesh>
     </group>}
-    <OrbitControls makeDefault target={[0, 1.4, 0]} enablePan={false} enableRotate={!ghost} minDistance={5} maxDistance={13} minPolarAngle={.8} maxPolarAngle={1.35} minAzimuthAngle={-.35} maxAzimuthAngle={1.1} enableDamping dampingFactor={.08} />
+    <OrbitControls makeDefault target={[0, 1.2, -.6]} enablePan={false} enableRotate={!ghost} minDistance={3} maxDistance={5.3} minPolarAngle={.8} maxPolarAngle={1.35} minAzimuthAngle={-.35} maxAzimuthAngle={1.1} enableDamping dampingFactor={.08} />
   </Canvas>;
 }

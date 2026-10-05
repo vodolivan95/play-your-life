@@ -5,11 +5,11 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const server = spawn('npm', ['run', 'preview', '--', '--port', '4173'], { stdio: 'ignore' });
 await mkdir('room-preview', { recursive: true });
-let browser;
+let browser, page;
 try {
   for (let i = 0; i < 60; i++) { try { if ((await fetch('http://localhost:4173')).ok) break; } catch { /* Vite starts. */ } await new Promise(r => setTimeout(r, 500)); }
   browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist', '--enable-unsafe-swiftshader'] });
-  const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, hasTouch: true });
+  page = await browser.newPage({ viewport: { width: 1280, height: 900 }, hasTouch: true });
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   await page.goto('http://localhost:4173/?room-demo=sport');
   const canvas = page.locator('.city3d-scene canvas[data-ready="true"]'); await canvas.waitFor();
@@ -19,6 +19,7 @@ try {
     await page.getByRole('combobox', { name: 'Время 3D-города' }).selectOption(time);
     for (const weather of ['clear', 'partlyCloudy', 'cloudy', 'rain', 'thunderstorm', 'fog', 'snow']) {
       await page.getByRole('combobox', { name: 'Погода города' }).selectOption(weather);
+      await page.waitForFunction(({ weather, time }) => document.querySelector('.city3d-scene canvas')?.getAttribute('data-weather') === weather && document.querySelector('.city3d-scene canvas')?.getAttribute('data-time') === time, { weather, time });
       assert.equal(await canvas.getAttribute('data-weather'), weather); assert.equal(await canvas.getAttribute('data-time'), time);
     }
   }
@@ -46,5 +47,5 @@ try {
   assert.equal(await page.evaluate(() => document.querySelectorAll('.city3d-scene canvas').length), 1);
   assert.deepEqual(errors, []);
   await writeFile('room-preview/weather-result.json', JSON.stringify({ passed: true, combinations: 21, wetnessAfterRain: wet, mobileEntry: true, errors }, null, 2));
-} catch (error) { await writeFile('room-preview/weather-error.txt', String(error.stack || error)); throw error; }
+} catch (error) { await page?.screenshot({ path: 'room-preview/weather-failure.png' }); await writeFile('room-preview/weather-error.txt', String(error.stack || error)); throw error; }
 finally { await browser?.close(); server.kill('SIGTERM'); }

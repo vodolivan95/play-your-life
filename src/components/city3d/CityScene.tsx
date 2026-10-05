@@ -30,6 +30,7 @@ function CityWorld({ state, onOpen, weather, time, quality, paused, speed, reduc
   /* eslint-disable react-hooks/immutability */
   useFrame(() => {
     gl.domElement.dataset.ready = 'true';
+    gl.domElement.dataset.weather = weather; gl.domElement.dataset.time = time; gl.domElement.dataset.quality = quality;
     const p = cityPositions.find(p => p.id === 'sport')!;
     scratch.current.set(p.x, 2.8, p.z).project(camera);
     gl.domElement.dataset.sportPoint = `${(scratch.current.x + 1) * size.width / 2},${(1 - scratch.current.y) * size.height / 2}`;

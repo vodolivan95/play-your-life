@@ -1,5 +1,6 @@
 import { SPHERE_PROGRESSION_MODEL } from './sphereProgress.ts';
 import { validCity, cityPrices, cityRooms } from './city.ts';
+import { validRooms } from './roomEngine.ts';
 import { shopItems } from './shop.ts';
 import { validProjectImage } from './projectImage.ts';
 import type { GameState } from './game.ts';
@@ -41,6 +42,7 @@ export function validateState(value: unknown): asserts value is SavedState {
     );
   };
   if (!record(value) || value.version !== 1) return fail();
+  if (value.rooms !== undefined && !validRooms(value.rooms)) return fail();
   if (value.cityPurchases !== undefined) {
     if (!list(value.cityPurchases, (p) =>
       text(p.id) && !!p.id && text(p.sphere) && Object.hasOwn(cityRooms, p.sphere as string) &&

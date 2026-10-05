@@ -27,7 +27,7 @@ export default function TrafficSystem({ runtime, time, paused, speed }: { runtim
 export function PedestrianSystem({ runtime, paused, speed }: { runtime: WeatherRuntime; paused: boolean; speed: number }) {
   const people = useRef<Group>(null), elapsed = useRef(0);
   useFrame((_, dt) => {
-    if (!paused) elapsed.current += dt * speed;
+    if (!paused) elapsed.current += dt * speed * (.4 + runtime.current.trafficSpeed * .6);
     people.current?.children.forEach((person, i) => {
       person.visible = i / 20 < runtime.current.pedestrianDensity;
       person.position.set(-12 + (elapsed.current * .55 + i * 2.4) % 24, .35, i % 2 ? 9.5 : -9.5);

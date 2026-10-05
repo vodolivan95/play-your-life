@@ -12,8 +12,6 @@ function Building({ index, state, runtime, time, onOpen }: { index: number; stat
   const s = spheres[index], p = cityPositions[index], building = buildingState(state, s.id);
   const roof = useRef<MeshStandardMaterial>(null), windows = useRef<MeshStandardMaterial>(null);
   const height = 2.6 + building.tier * .65 + index % 3 * .4;
-  // Three.js resources are mutable GPU/scene objects, outside React render state.
-  // eslint-disable-next-line react-hooks/immutability
   useFrame(() => {
     if (roof.current) roof.current.color.copy(new Color('#d2d9d5').lerp(new Color('#f5f8ff'), runtime.current.snowAmount));
     if (windows.current) { windows.current.emissiveIntensity = time === 'night' ? 1.7 : time === 'sunset' ? .5 : .05; windows.current.roughness = .12 + runtime.current.cloudiness * .25; }

@@ -6,7 +6,7 @@ function run(kind: WeatherKind, seconds: number, current = initialWeather()) { f
 test('Дождь начинается после облачности и постепенно увлажняет город', () => {
   const first = advanceWeather(initialWeather(), 'rain', .1); assert.equal(first.rainIntensity, 0); assert.ok(first.cloudiness > 0 && first.cloudiness < 1);
   const rainy = run('rain', 60); assert.ok(rainy.rainIntensity > .6); assert.ok(rainy.wetness > .8); assert.ok(rainy.trafficSpeed < .85); assert.ok(rainy.pedestrianDensity < .5);
-  const drying = run('clear', 10, rainy); assert.ok(drying.wetness > .7); assert.ok(drying.wetness < rainy.wetness);
+  const drying = run('clear', 20, rainy); assert.ok(drying.wetness > .7); assert.ok(drying.wetness < rainy.wetness);
   const dry = run('clear', 600, rainy); assert.equal(dry.wetness, 0);
 });
 test('Снег сохраняется после окончания осадков и тает постепенно', () => {

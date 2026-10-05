@@ -8,6 +8,25 @@ const saveKey = 'play-your-life-3d-sport-demo-v1';
 const server = spawn('npm', ['run', 'preview', '--', '--port', '4173'], { stdio: 'ignore' });
 await mkdir('room-preview', { recursive: true });
 let browser;
+// Нажимаем именно на изображение здания, а не на текстовую кнопку под картой.
+async function enterSportFromBuilding(page, touch = false) {
+  const hit = page.getByRole('button', { name: 'Войти: Спорт', exact: true });
+  await hit.scrollIntoViewIfNeeded();
+  const layout = await hit.evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    const map = element.closest('.city-map').getBoundingClientRect();
+    return { position: getComputedStyle(element).position, x: rect.x, y: rect.y,
+      width: rect.width, height: rect.height, mapX: map.x, mapY: map.y,
+      mapWidth: map.width, mapHeight: map.height };
+  });
+  assert.equal(layout.position, 'absolute', 'Кнопка входа должна перекрывать само здание');
+  const x = layout.mapX + layout.mapWidth * 0.5;
+  const y = layout.mapY + layout.mapHeight * 0.16;
+  assert.ok(x >= layout.x && x <= layout.x + layout.width && y >= layout.y && y <= layout.y + layout.height);
+  if (touch) await page.touchscreen.tap(x, y);
+  else await page.mouse.click(x, y);
+  await page.locator('.room3d canvas[data-ready="true"]').waitFor();
+}
 try {
   for (let i = 0; i < 60; i++) { try { if ((await fetch('http://localhost:4173')).ok) break; } catch { /* Vite ещё запускается. */ } await new Promise(resolve => setTimeout(resolve, 500)); }
   browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist', '--enable-unsafe-swiftshader'] });
@@ -18,11 +37,11 @@ try {
   assert.equal(await page.locator('.room3d canvas').count(), 0, 'Демо начинается с общей карты');
   await page.getByRole('heading', { name: 'Общая карта', exact: true }).waitFor();
   await page.screenshot({ path: 'room-preview/common-map.png' });
-  await page.getByRole('button', { name: 'Войти: Спорт', exact: true }).click();
+  await enterSportFromBuilding(page);
   await page.locator('.room3d canvas[data-ready="true"]').waitFor();
   await page.getByRole('button', { name: 'Вернуться из комнаты' }).click();
   await page.getByRole('heading', { name: 'Общая карта', exact: true }).waitFor();
-  await page.getByRole('button', { name: 'Войти: Спорт', exact: true }).click();
+  await enterSportFromBuilding(page);
   await page.locator('.room3d canvas[data-ready="true"]').waitFor();
   await page.waitForTimeout(1500);
   assert.equal(await page.locator('.room3d-unavailable').count(), 0, '3D сцена должна загрузиться');
@@ -61,7 +80,7 @@ try {
   }
   await page.getByRole('button', { name: 'RESET CAMERA' }).click(); await page.waitForTimeout(1600);
   await page.reload();
-  await page.getByRole('button', { name: 'Войти: Спорт', exact: true }).click();
+  await enterSportFromBuilding(page);
 
   await page.locator('.room3d canvas').waitFor();
   await page.waitForTimeout(2000);
@@ -98,7 +117,7 @@ try {
   for (let i = 0; i < 6; i++) await page.getByRole('button', { name: 'Сдвинуть вперёд' }).click();
   await page.getByRole('button', { name: '✓ Установить', exact: true }).click();
   await page.reload();
-  await page.getByRole('button', { name: 'Войти: Спорт', exact: true }).click(); await page.locator('.room3d canvas[data-ready="true"]').waitFor();
+  await enterSportFromBuilding(page); await page.locator('.room3d canvas[data-ready="true"]').waitFor();
   edited = JSON.parse(await page.evaluate(key => localStorage.getItem(key), saveKey));
   assert.equal(edited.rooms.sport.objects.find(item => item.id === 'treadmill').position[0], 1.5);
   assert.equal(edited.rooms.sport.objects.length, 6); assert.equal(edited.coins, 360);
@@ -134,7 +153,7 @@ try {
   await page.getByRole('button', { name: 'Вернуться из комнаты' }).click();
   await page.getByRole('heading', { name: 'Общая карта', exact: true }).waitFor();
   await page.screenshot({ path: 'room-preview/common-map-mobile.png' });
-  await page.getByRole('button', { name: 'Войти: Спорт', exact: true }).click();
+  await enterSportFromBuilding(page, true);
   await page.locator('.room3d canvas[data-ready="true"]').waitFor();
   const afterReturn = JSON.parse(await page.evaluate(key => localStorage.getItem(key), saveKey));
   assert.deepEqual(afterReturn.rooms.sport.objects, edited.rooms.sport.objects);

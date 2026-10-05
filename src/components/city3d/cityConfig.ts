@@ -1,2 +1,4 @@
 import { spheres } from '../../game';
-export const cityPositions = spheres.map((s, i) => ({ id: s.id, x: (i % 3 - 1) * 10, z: (Math.floor(i / 3) - 1) * 8 }));
+// Как на острове-референсе: здоровье/стадион/знания сзади, академия/банк/общие дела в центре,
+// автошкола/планы/творчество спереди. Геометрия зданий индивидуальна.
+export const cityPositions = spheres.map((s, i) => ({ id: s.id, x: (i % 3 - 1) * 16, z: (Math.floor(i / 3) - 1) * 16 }));

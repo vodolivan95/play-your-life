@@ -8,12 +8,13 @@
   },
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "tsc -b && tsc -p integrations/ticktick/tsconfig.json && vite build",
+    "build": "node scripts/build-city-models.mjs && tsc -b && tsc -p integrations/ticktick/tsconfig.json && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "tsc -b && tsc -p integrations/ticktick/tsconfig.json",
     "lint": "eslint .",
     "check": "npm run lint && npm run build",
-    "test": "node --experimental-strip-types --test tests/*.test.ts"
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "city:models": "node scripts/build-city-models.mjs"
   },
   "dependencies": {
     "firebase": "12.19.0",

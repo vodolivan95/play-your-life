@@ -1,8 +1,8 @@
 import { Component, Suspense, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, PerformanceMonitor } from '@react-three/drei';
-import { ACESFilmicToneMapping, Vector3 } from 'three';
+import { Environment, Lightformer, OrbitControls, PerformanceMonitor } from '@react-three/drei';
+import { ACESFilmicToneMapping, PerspectiveCamera, Vector3 } from 'three';
 import type { GameState } from '../../game';
 import { automaticTime, automaticWeather, initialWeather, weatherLabels } from '../../weatherSystem';
 import type { CityTime, WeatherKind, WeatherParameters } from '../../weatherSystem';
@@ -10,7 +10,7 @@ import WeatherSystem from './WeatherSystem';
 import CityLighting from './CityLighting';
 import { EnvironmentSystem, WaterSystem } from './EnvironmentSystem';
 import TrafficSystem, { PedestrianSystem } from './TrafficSystem';
-import CityArchitecture from './CityArchitecture';
+import CityArchitecture, { IslandBoat, IslandPalms } from './CityArchitecture';
 import { cityPositions } from './cityConfig';
 import WeatherParticles from './WeatherParticles';
 import './CityScene.css';
@@ -31,8 +31,9 @@ function CityWorld({ state, onOpen, weather, time, quality, paused, speed, reduc
   useFrame(() => {
     gl.domElement.dataset.ready = 'true';
     gl.domElement.dataset.weather = weather; gl.domElement.dataset.time = time; gl.domElement.dataset.quality = quality;
+    if (camera instanceof PerspectiveCamera) { const desired = size.width < size.height ? 49 : 42; if (camera.fov !== desired) { camera.fov = desired; camera.updateProjectionMatrix(); } }
     const p = cityPositions.find(p => p.id === 'sport')!;
-    scratch.current.set(p.x, 2.8, p.z).project(camera);
+    scratch.current.set(p.x, 1.8, p.z + 2.4).project(camera);
     gl.domElement.dataset.sportPoint = `${(scratch.current.x + 1) * size.width / 2},${(1 - scratch.current.y) * size.height / 2}`;
     gl.domElement.dataset.wetness = runtime.current.wetness.toFixed(3);
     gl.domElement.dataset.snowAmount = runtime.current.snowAmount.toFixed(3);
@@ -41,7 +42,7 @@ function CityWorld({ state, onOpen, weather, time, quality, paused, speed, reduc
     gl.domElement.dataset.trafficSpeed = runtime.current.trafficSpeed.toFixed(3);
   });
   /* eslint-enable react-hooks/immutability */
-  return <><WeatherSystem weatherRef={runtime} kind={weather} paused={paused} onTelemetry={telemetry} /><CityLighting runtime={runtime} time={time} quality={quality} reduced={reduced} paused={paused} /><WaterSystem runtime={runtime} time={time} paused={paused} reduced={reduced} /><EnvironmentSystem runtime={runtime} paused={paused} reduced={reduced} /><CityArchitecture state={state} runtime={runtime} time={time} onOpen={onOpen} /><TrafficSystem runtime={runtime} time={time} paused={paused || reduced} speed={speed} /><PedestrianSystem runtime={runtime} paused={paused || reduced} speed={speed} /><WeatherParticles runtime={runtime} quality={quality} paused={paused} reduced={reduced} /><OrbitControls target={[0, 0, 0]} minDistance={32} maxDistance={72} minPolarAngle={.35} maxPolarAngle={1.05} enablePan={false} maxAzimuthAngle={.8} minAzimuthAngle={-.8} /></>;
+  return <><WeatherSystem weatherRef={runtime} kind={weather} paused={paused} onTelemetry={telemetry} /><CityLighting runtime={runtime} time={time} quality={quality} reduced={reduced} paused={paused} /><WaterSystem runtime={runtime} time={time} paused={paused} reduced={reduced} /><IslandPalms runtime={runtime} paused={paused} reduced={reduced} /><IslandBoat paused={paused || reduced} /><EnvironmentSystem runtime={runtime} paused={paused} reduced={reduced} /><CityArchitecture state={state} runtime={runtime} time={time} onOpen={onOpen} /><TrafficSystem runtime={runtime} time={time} paused={paused || reduced} speed={speed} /><PedestrianSystem runtime={runtime} paused={paused || reduced} speed={speed} /><WeatherParticles runtime={runtime} quality={quality} paused={paused} reduced={reduced} /><Environment resolution={64} frames={1}><Lightformer color="#e8f8ff" intensity={1.2} position={[0, 30, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[70, 70, 1]} /><Lightformer color="#c6e9f4" intensity={.8} position={[-40, 10, 0]} rotation={[0, Math.PI / 2, 0]} scale={[80, 35, 1]} /></Environment><OrbitControls target={[0, 1, 1]} minDistance={50} maxDistance={120} minPolarAngle={.35} maxPolarAngle={1.05} enablePan={false} maxAzimuthAngle={.8} minAzimuthAngle={-.8} /></>;
 }
 export default function CityScene({ state, onOpen, paused, speed }: { state: GameState; onOpen: (id: string) => void; paused: boolean; speed: number }) {
   const [options, setOptions] = useState(settings), [now, setNow] = useState(() => new Date()), [slow, setSlow] = useState(false), [telemetry, setTelemetry] = useState(initialWeather);
@@ -56,9 +57,9 @@ export default function CityScene({ state, onOpen, paused, speed }: { state: Gam
     <label>Погода<select aria-label="Погода города" value={options.weather} onChange={e => setOptions({ ...options, weather: e.target.value as Settings['weather'] })}><option value="auto">AUTO · игровой цикл</option>{Object.entries(weatherLabels).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>
     <label>Время<select aria-label="Время 3D-города" value={options.time} onChange={e => setOptions({ ...options, time: e.target.value as Settings['time'] })}>{[['auto', 'AUTO · время устройства'], ['day', 'День'], ['sunset', 'Закат'], ['night', 'Ночь']].map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>
     <label>Качество<select aria-label="Качество города" value={options.quality} onChange={e => setOptions({ ...options, quality: e.target.value as Settings['quality'] })}>{['auto', 'low', 'medium', 'high'].map(id => <option key={id} value={id}>{id.toUpperCase()}</option>)}</select></label>
-    <small>AUTO — игровой цикл, без запроса реальной погоды. Здания, жители и транспорт пока DEV PLACEHOLDERS.</small>
-  </div></details><div className="city3d-scene"><Boundary><Suspense fallback={<p role="status">Загрузка 3D-города…</p>}><Canvas camera={{ position: [18, 38, 46], fov: 52, near: .2, far: 200 }} dpr={quality === 'high' ? 1.5 : 1} shadows={quality !== 'low'} gl={{ antialias: quality !== 'low', powerPreference: 'low-power', toneMapping: ACESFilmicToneMapping }} data-weather={weather} data-time={time} data-quality={quality}>
+    <small>AUTO — игровой цикл, без запроса реальной погоды. Авторские GLB-модели острова. Жители пока DEV PLACEHOLDERS.</small>
+  </div></details><div className="city3d-scene"><Boundary><Suspense fallback={<p role="status">Загрузка моделей острова…</p>}><Canvas camera={{ position: [12, 64, 78], fov: 42, near: .2, far: 300 }} dpr={quality === 'high' ? 1.5 : 1} shadows={quality !== 'low'} gl={{ antialias: quality !== 'low', powerPreference: 'low-power', toneMapping: ACESFilmicToneMapping }} data-weather={weather} data-time={time} data-quality={quality}>
       {options.quality === 'auto' && <PerformanceMonitor bounds={() => [23, 45]} flipflops={2} onDecline={() => setSlow(true)} onFallback={() => setSlow(true)} />}
-      <CityWorld state={state} onOpen={onOpen} weather={weather} time={time} quality={quality} paused={paused} speed={speed} reduced={reduced} telemetry={setTelemetry} />
+      <Suspense fallback={null}><CityWorld state={state} onOpen={onOpen} weather={weather} time={time} quality={quality} paused={paused} speed={speed} reduced={reduced} telemetry={setTelemetry} /></Suspense>
     </Canvas></Suspense></Boundary><span className="city3d-weather-status">{weatherLabels[weather]} · {quality.toUpperCase()} · Влажность {Math.round(telemetry.wetness * 100)}%</span></div><p className="city3d-hint">Нажми на здание, чтобы войти. Один палец — осмотр, два — приближение.</p></>;
 }

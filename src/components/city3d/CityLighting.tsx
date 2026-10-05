@@ -24,5 +24,5 @@ export default function CityLighting({ runtime, time, quality, reduced, paused }
     if (ambient.current) { ambient.current.intensity = (time === 'night' ? 1.1 : 1.5) + flash.current; ambient.current.color.copy(time === 'night' ? new Color('#799dc6') : sky.current); }
   });
   /* eslint-enable react-hooks/immutability */
-  return <><hemisphereLight ref={ambient} args={['#cde9ff', '#596b65', 1.4]} /><directionalLight ref={sun} position={[-22, 35, 12]} castShadow={quality !== 'low'} shadow-mapSize={quality === 'high' ? [2048, 2048] : [1024, 1024]} shadow-camera-left={-28} shadow-camera-right={28} shadow-camera-top={28} shadow-camera-bottom={-28} shadow-normalBias={.08} shadow-bias={-.0002} /></>;
+  return <><hemisphereLight ref={ambient} args={['#cde9ff', '#596b65', 1.4]} /><directionalLight ref={sun} position={[-25, 55, 30]} castShadow={quality !== 'low'} shadow-mapSize={quality === 'high' ? [2048, 2048] : [1024, 1024]} shadow-camera-left={-43} shadow-camera-right={43} shadow-camera-top={43} shadow-camera-bottom={-43} shadow-normalBias={.08} shadow-bias={-.0002} /></>;
 }

@@ -10,9 +10,11 @@ try {
   for (let i = 0; i < 60; i++) { try { if ((await fetch('http://localhost:4173')).ok) break; } catch { /* Vite starts. */ } await new Promise(r => setTimeout(r, 500)); }
   browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist', '--enable-unsafe-swiftshader'] });
   page = await browser.newPage({ viewport: { width: 1280, height: 900 }, hasTouch: true });
-  const errors = []; page.on('pageerror', e => errors.push(e.message));
+  const errors = []; const failedAssets = []; page.on('response', r => { if (r.url().includes('/models/city/') && !r.ok()) failedAssets.push(r.url()); }); page.on('pageerror', e => errors.push(e.message));
   await page.goto('http://localhost:4173/?room-demo=sport');
   const canvas = page.locator('.city3d-scene canvas[data-ready="true"]'); await canvas.waitFor();
+  await canvas.scrollIntoViewIfNeeded(); await page.waitForTimeout(1800);
+  await page.screenshot({ path: 'room-preview/island-day.png' });
   await page.locator('.city3d-dev summary').click();
   await page.getByRole('combobox', { name: 'Качество города' }).selectOption('low');
   for (const time of ['day', 'sunset', 'night']) {
@@ -39,12 +41,14 @@ try {
   for (const q of ['medium', 'high', 'auto', 'low']) await page.getByRole('combobox', { name: 'Качество города' }).selectOption(q);
   await page.getByRole('combobox', { name: 'Время 3D-города' }).selectOption('day');
   await page.getByRole('combobox', { name: 'Погода города' }).selectOption('clear');
+  await page.waitForTimeout(18000);
   await page.setViewportSize({ width: 390, height: 844 }); await canvas.scrollIntoViewIfNeeded();
   await page.screenshot({ path: 'room-preview/city-mobile.png' });
   const rect = await canvas.boundingBox(); const [x, y] = (await canvas.getAttribute('data-sport-point')).split(',').map(Number);
   await page.touchscreen.tap(rect.x + x, rect.y + y); await page.locator('.room3d canvas[data-ready="true"]').waitFor();
   await page.getByRole('button', { name: 'Вернуться из комнаты' }).click(); await canvas.waitFor();
   assert.equal(await page.evaluate(() => document.querySelectorAll('.city3d-scene canvas').length), 1);
+  assert.deepEqual(failedAssets, [], 'Все GLB должны загрузиться');
   assert.deepEqual(errors, []);
   await writeFile('room-preview/weather-result.json', JSON.stringify({ passed: true, combinations: 21, wetnessAfterRain: wet, mobileEntry: true, errors }, null, 2));
 } catch (error) { await page?.screenshot({ path: 'room-preview/weather-failure.png' }); await writeFile('room-preview/weather-error.txt', String(error.stack || error)); throw error; }

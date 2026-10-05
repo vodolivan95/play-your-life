@@ -16,10 +16,16 @@ try {
 
   await page.goto('http://localhost:4173/?room-demo=sport');
   await page.locator('.room3d canvas').waitFor();
-  await page.waitForTimeout(4000);
+  await page.locator('.room3d canvas[data-ready="true"]').waitFor();
+  await page.waitForTimeout(1500);
   assert.equal(await page.locator('.room3d-unavailable').count(), 0, '3D сцена должна загрузиться');
+  await page.getByRole('button', { name: 'Настройки комнаты' }).click();
+  await page.getByRole('combobox', { name: 'Качество' }).selectOption('high');
+  await page.getByRole('button', { name: 'Закрыть панель' }).click();
+  await page.waitForTimeout(1500);
   await page.screenshot({ path: 'room-preview/sport-empty.png' });
   await page.getByRole('button', { name: 'Магазин', exact: true }).click();
+  await page.screenshot({ path: 'room-preview/sport-shop.png' });
   const treadmill = page.locator('.room3d-catalog article').filter({ hasText: 'Беговая дорожка' });
   await treadmill.getByRole('button', { name: 'Купить', exact: true }).click();
   await page.getByRole('button', { name: 'Закрыть панель' }).click();
@@ -28,6 +34,7 @@ try {
   await page.getByRole('button', { name: 'Сдвинуть вправо' }).click();
   await page.getByRole('button', { name: 'Сдвинуть вправо' }).click();
   await page.getByRole('button', { name: 'Повернуть', exact: true }).click();
+  await page.screenshot({ path: 'room-preview/sport-build.png' });
   await page.getByRole('button', { name: '✓ Установить', exact: true }).click();
   await page.waitForTimeout(1200);
   const saved = JSON.parse(await page.evaluate(key => localStorage.getItem(key), saveKey));
@@ -42,6 +49,9 @@ try {
   const angle = await canvas.getAttribute('data-camera');
   await page.getByRole('button', { name: 'Левый', exact: true }).click(); await page.waitForTimeout(1600);
   assert.notEqual(await canvas.getAttribute('data-camera'), angle);
+  for (const name of ['Центр', 'Правый']) {
+    await page.getByRole('button', { name, exact: true }).click(); await page.waitForTimeout(1600);
+  }
   await page.getByRole('button', { name: 'RESET CAMERA' }).click(); await page.waitForTimeout(1600);
   await page.reload();
 
@@ -103,10 +113,12 @@ try {
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await page.waitForTimeout(800);
   assert.notEqual(await canvas.getAttribute('data-camera'), beforeTouch, 'Touch drag should rotate the 3D camera');
+  const beforePinch = await canvas.getAttribute('data-camera');
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 140, y: 400, id: 0 }, { x: 240, y: 400, id: 1 }] });
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 110, y: 400, id: 0 }, { x: 270, y: 400, id: 1 }] });
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await page.waitForTimeout(800);
+  assert.notEqual(await canvas.getAttribute('data-camera'), beforePinch, 'Pinch should change camera distance');
   const position = (await canvas.getAttribute('data-camera')).split(',').map(Number);
   assert.ok(Math.abs(position[0]) <= 5.35 && Math.abs(position[2]) <= 4.35 && position[1] >= 2.2 && position[1] <= 4.65, 'Camera stays inside bounds');
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);

@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { CanvasTexture, RepeatWrapping, SRGBColorSpace } from 'three';
+import { CanvasTexture, RepeatWrapping, SRGBColorSpace, MeshStandardMaterial, BoxGeometry } from 'three';
 import { Environment, Lightformer, useTexture } from '@react-three/drei';
 import type { Vec3 } from '../../roomEngine';
 import type { RoomQuality, RoomTime } from './RoomScene3D';
@@ -14,7 +14,7 @@ function surface(kind: 'stone' | 'wood', normal = false) {
     const seam = kind === 'stone' && (x < 2 || y < 2);
     const v = kind === 'stone' ? (seam ? 38 : 112 + noise * 12 + Math.sin(x * .07 + y * .03) * 4) : 94 + grain + noise * 12;
     const i = (y * 256 + x) * 4;
-    data.data[i] = normal ? 128 + grain * .4 : v;
+    data.data[i] = normal ? 128 + (kind === 'stone' ? (noise - .5) * 3 : grain * .4) : v;
     data.data[i + 1] = normal ? 128 + (noise - .5) * 5 : v * (kind === 'wood' ? .68 : .96);
     data.data[i + 2] = normal ? 250 : v * (kind === 'wood' ? .44 : .91);
     data.data[i + 3] = 255;
@@ -37,9 +37,20 @@ function Skyline({ time }: { time: RoomTime }) {
   </mesh><mesh position={[27, 3.5, 0]} rotation={[0, -Math.PI / 2, 0]}><planeGeometry args={[96, 48]} /><meshBasicMaterial map={texture} toneMapped={false} /></mesh></group>;
 }
 export default function RoomEnvironment({ time, quality }: { time: RoomTime; quality: RoomQuality }) {
-  const maps = useMemo(() => ({ stone: surface('stone'), normal: surface('stone', true), wood: surface('wood') }), []);
+  const stone = useTexture(`${import.meta.env.BASE_URL}environments/sport-stone.jpg`);
+  // Texture sampler configuration is an imperative GPU operation.
+  // eslint-disable-next-line react-hooks/immutability
+  useEffect(() => { stone.wrapS = stone.wrapT = RepeatWrapping; stone.repeat.set(8, 7); stone.colorSpace = SRGBColorSpace; stone.anisotropy = 4; }, [stone]);
+  const maps = useMemo(() => ({ normal: surface('stone', true), wood: surface('wood') }), []);
   useEffect(() => () => Object.values(maps).forEach(texture => texture.dispose()), [maps]);
-  const block = (pos: Vec3, scale: Vec3, color = '#222b31', metalness = .5, roughness = .45) => <mesh position={pos} scale={scale} castShadow receiveShadow><boxGeometry /><meshStandardMaterial color={color} metalness={metalness} roughness={roughness} /></mesh>;
+  const geometry = useMemo(() => new BoxGeometry(), []);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+  const materials = useMemo(() => {
+    const palette: [string, number, number][] = [['#222b31', .5, .45], ['#82776b', 0, .9], ['#785435', .05, .65], ['#19272d', .7, .27], ['#4c3d30', .05, .65], ['#b5b7b6', .9, .23], ['#454441', .05, .85], ['#242a2c', .65, .36], ['#131b20', .75, .3], ['#172027', .85, .3], ['#716961', 0, .85], ['#1c252a', .6, .45], ['#55565a', 0, .9]];
+    return new Map(palette.map(([color, metalness, roughness]) => [`${color}:${metalness}:${roughness}`, new MeshStandardMaterial({ color, metalness, roughness })]));
+  }, []);
+  useEffect(() => () => materials.forEach(material => material.dispose()), [materials]);
+  const block = (pos: Vec3, scale: Vec3, color = '#222b31', metalness = .5, roughness = .45) => <mesh position={pos} scale={scale} geometry={geometry} material={materials.get(`${color}:${metalness}:${roughness}`)} dispose={null} castShadow receiveShadow />;
   return <group>
     <Environment key={time} resolution={quality === 'low' ? 64 : 128} frames={1}>
       <Lightformer position={[0, 4, -8]} scale={[12, 5, 1]} intensity={time === 'night' ? .5 : 2} color={time === 'day' ? '#dceeff' : '#ffba80'} />
@@ -47,7 +58,9 @@ export default function RoomEnvironment({ time, quality }: { time: RoomTime; qua
       <Lightformer position={[6, 2, 0]} rotation={[0, -Math.PI / 2, 0]} scale={[8, 4, 1]} intensity={1} color="#94c9e5" />
     </Environment>
     <Skyline time={time} />
-    <mesh position={[0, -.08, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[12.4, 10.4]} /><meshStandardMaterial map={maps.stone} normalMap={maps.normal} normalScale={[.2, .2]} roughness={.32} metalness={.12} envMapIntensity={1.3} /></mesh>
+    <mesh position={[0, -.005, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[12.4, 10.4]} /><meshStandardMaterial map={stone} normalMap={maps.normal} normalScale={[.2, .2]} roughness={.38} metalness={.08} envMapIntensity={1.3} /></mesh>
+    {Array.from({ length: 7 }, (_, i) => <group key={`grout-x-${i}`}>{block([-6.2 + (i + 1) * 1.55, -.003, 0], [.012, .002, 10.4], '#55565a', 0, .9)}</group>)}
+    {Array.from({ length: 6 }, (_, i) => <group key={`grout-z-${i}`}>{block([0, -.003, -5.2 + (i + 1) * 10.4 / 7], [12.4, .002, .012], '#55565a', 0, .9)}</group>)}
     {block([-6.1, 2.7, 0], [.2, 5.4, 10.4], '#82776b', 0, .9)}
     <mesh position={[-5.985, 2.5, -1]} rotation={[0, Math.PI / 2, 0]}><planeGeometry args={[7.5, 4.8]} /><meshStandardMaterial map={maps.wood} roughness={.62} /></mesh>
     {Array.from({ length: 26 }, (_, i) => <group key={i}>{block([-5.9, 2.5, -4.6 + i * .28], [.1, 4.8, .04], '#785435', .05, .65)}</group>)}

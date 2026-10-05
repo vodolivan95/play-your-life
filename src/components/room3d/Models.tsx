@@ -41,6 +41,7 @@ export default function Model3D({ id, ghost, active = false, reduced = false }: 
       </group>
     </>}
     {id === 'treadmill' && <>
+      {[-.53, .53].map(x => [-.75, 1.05].map(z => <group key={`${x}:${z}`}>{box([x, .05, z], [.2, .1, .25], materials.rubber)}</group>))}
       {box([0, .19, .15], [1.35, .22, 2.35], materials.steel)}
       {box([0, .32, .25], [.95, .06, 1.9], materials.rubber)}
       {[-.59, .59].map(x => <group key={x}>{box([x, .75, -.9], [.1, 1.2, .1], materials.steel, [-.15, 0, 0])}{box([x, 1.05, -.35], [.1, .1, 1.3], materials.dark)}</group>)}

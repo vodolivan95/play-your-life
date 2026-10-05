@@ -55,7 +55,7 @@ export default function RoomScene3D({ objects, ghost, valid, build, time, qualit
       {objects.filter(item => item.id !== ghost?.id).map(item => <group key={item.id} position={item.position} rotation={item.rotation} scale={item.scale} onClick={event => { event.stopPropagation(); onSelect(item.id); if (!build && item.id === 'treadmill') setActive(active === 'treadmill' ? null : 'treadmill'); }}>
         <RoomItemRenderer id={item.id} active={active === item.id} reduced={reduced} />
       </group>)}
-      {effective === 'high' && <ContactShadows key={JSON.stringify(objects)} position={[0, -.065, 0]} opacity={.4} scale={12} blur={1.5} far={2.5} resolution={256} frames={2} color="#172027" />}
+      {effective === 'high' && <ContactShadows key={JSON.stringify(objects)} position={[0, .001, 0]} opacity={.4} scale={12} blur={1.5} far={2.5} resolution={256} frames={2} color="#172027" />}
       <BuildSystem build={build} ghost={ghost} valid={valid} onFloor={onFloor} />
       <Ready onReady={setReady} />
     </Suspense>

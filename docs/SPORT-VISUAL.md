@@ -8,8 +8,8 @@ Renderer — WebGLRenderer Three.js 0.180, React Three Fiber 9, drei 10. Сте�
 
 ## Реализация
 
-- RoomEngine — существующие состояние и транзакции; RoomEnvironment — архитектура и PBR; RoomLighting — реальные источники света; RoomCamera — ограниченный перспективный обзор; RoomItemRenderer — ленивые GLB/резервные dev-модели; BuildSystem — пол/сетка/ghost. Данные и экономика комнат общие, код не копируется девять раз.
-- Новый зал: каменный плиточный пол с процедурными color/normal текстурами, деревянные панели и рейки, темный металл, дверь, высокие потолочные балки, трековые светильники и теплые LED-линии. Пол/стены/стекло/балки остаются отдельными 3D-объектами.
+- RoomEngine — существующие состояние и транзакции; Shop/Inventory/RoomHUD — отдельные общие компоненты; RoomEnvironment — архитектура и PBR; RoomLighting — реальные источники света; RoomCamera — ограниченный перспективный обзор; RoomItemRenderer — ленивые GLB/резервные dev-модели; BuildSystem — пол/сетка/ghost. Данные и экономика комнат общие, код не копируется девять раз.
+- Новый зал: каменный плиточный пол с созданной stone baseColor и процедурной normal текстурой, деревянные панели и рейки, темный металл, дверь, высокие потолочные балки, трековые светильники и теплые LED-линии. Пол/стены/стекло/балки остаются отдельными 3D-объектами.
 - PBR: MeshStandardMaterial и MeshPhysicalMaterial, roughness/metalness/environment reflections; текстуры цвета sRGB, normal linear. Настоящие AO/roughness карты оборудования будут читаться из предоставленных glTF; они не выдумываются для отсутствующих ассетов.
 - Environment lighting через Environment/Lightformer из drei, без сетевого HDR. Key/window directional, hemisphere fill, два теплых practical и слабый холодный accent. DAY/SUNSET/NIGHT меняют реальные интенсивности, цвета, exposure и городскую панораму. ACES tone mapping, правильный sRGB output.
 - Один источник с динамической shadow map (1024 MEDIUM, 2048 HIGH); HIGH дополнительно ContactShadows на 2 кадра после изменения обстановки. LOW без тяжелых теней. Стекло с низкой opacity без дорогой многоэтапной transmission.
@@ -44,6 +44,8 @@ Renderer — WebGLRenderer Three.js 0.180, React Three Fiber 9, drei 10. Сте�
 | Functional trainer | GLB | realistic game-ready | 15–30k | PBR 1K–2K | REQUIRED, future slot |
 | Trophy | GLB | realistic game-ready | 2–4k | PBR 512 | REQUIRED, future slot |
 | Sports display | GLB | realistic game-ready | 2–5k | PBR 1K, emissive screen | REQUIRED, future slot |
+
+Архитектурные геометрия/материалы переиспользуются; цвет камня 1K, город ~2K, остальные поверхности 256px.
 
 Текстуры по возможности KTX2/Basis после подключения локального transcoder, ORM packed; до этого обычные встроенные JPG/PNG. Предпочтительно 1–3 материала на модель, 1K текстуры, размер GLB 0.3–2MB. Таблица — целевой бюджет, не число полигонов отсутствующих моделей. Случайные модели с неизвестной лицензией не добавлены. До получения GLB визуальный benchmark не считается окончательным.
 

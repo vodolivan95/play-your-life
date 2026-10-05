@@ -41,9 +41,9 @@ export function placementValid(room: RoomData, candidate: RoomObject, roomId: Ro
   if (candidate.position[1] !== 0 || candidate.rotation[0] !== 0 || candidate.rotation[2] !== 0) return false;
   if (candidate.scale.some(n => n !== 1) || Math.abs(candidate.rotation[1] / (Math.PI / 2) - Math.round(candidate.rotation[1] / (Math.PI / 2))) > 1e-8) return false;
   const [x, , z] = candidate.position;
-  if (!Number.isInteger(x * 2) || !Number.isInteger(z * 2) || x < -4 || x > 4 || z < -3 || z > 3) return false;
+  if (!Number.isInteger(x * 2) || !Number.isInteger(z * 2)) return false;
   const [w, d] = rotateSize(spec.size, candidate.rotation[1]);
-  if (Math.abs(x) + w / 2 > cfg.size[0] / 2 - 1 || Math.abs(z) + d / 2 > cfg.size[1] / 2 - 1) return false;
+  if (Math.abs(x) + w / 2 > cfg.size[0] / 2 - .35 || Math.abs(z) + d / 2 > cfg.size[1] / 2 - .35) return false;
   return room.objects.every(other => {
     if (other.id === candidate.id) return true;
     const otherSpec = cfg.catalog.find(item => item.id === other.id);

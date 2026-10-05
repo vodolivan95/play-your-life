@@ -13,6 +13,9 @@ try {
   const errors = []; const failedAssets = []; page.on('response', r => { if (r.url().includes('/models/city/') && !r.ok()) failedAssets.push(r.url()); }); page.on('pageerror', e => errors.push(e.message));
   await page.goto('http://localhost:4173/?room-demo=sport');
   const canvas = page.locator('.city3d-scene canvas[data-ready="true"]'); await canvas.waitFor();
+  const manifest = await (await page.request.get('http://localhost:4173/models/city/manifest.json')).json();
+  assert.equal(manifest.length, 13); assert.ok(manifest.reduce((sum, entry) => sum + entry.bytes, 0) < 10 * 1024 * 1024, 'GLB города укладываются в мобильный бюджет');
+  await writeFile('room-preview/city-manifest.json', JSON.stringify(manifest, null, 2));
   await canvas.scrollIntoViewIfNeeded(); await page.waitForTimeout(1800);
   await page.screenshot({ path: 'room-preview/island-day.png' });
   await page.locator('.city3d-dev summary').click();

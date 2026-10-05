@@ -3,7 +3,7 @@ import * as T from 'three';
 import { Buffer } from 'node:buffer';
 import { URL } from 'node:url';
 import { log } from 'node:console';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { mkdir, writeFile } from 'node:fs/promises';
 // GLTFExporter uses the browser FileReader API for its binary container, not for textures.
@@ -203,7 +203,7 @@ function bake(root) {
   root.updateMatrixWorld(true); const batches = new Map();
   root.traverse(node => { if (node.isMesh) { const key = node.material.name; if (!batches.has(key)) batches.set(key, { material: node.material, geometries: [] }); const geometry = node.geometry.clone(); geometry.applyMatrix4(node.matrixWorld); if (!geometry.attributes.uv) geometry.setAttribute('uv', new T.BufferAttribute(new Float32Array(geometry.attributes.position.count * 2), 2)); batches.get(key).geometries.push(geometry.index ? geometry.toNonIndexed() : geometry); } });
   const result = new T.Group(); result.name = root.name;
-  for (const [name, batch] of batches) { const geometry = mergeGeometries(batch.geometries, false); const mesh = new T.Mesh(geometry, batch.material); mesh.name = name; mesh.castShadow = true; mesh.receiveShadow = true; result.add(mesh); }
+  for (const [name, batch] of batches) { const geometry = mergeVertices(mergeGeometries(batch.geometries, false), .0001); const mesh = new T.Mesh(geometry, batch.material); mesh.name = name; mesh.castShadow = true; mesh.receiveShadow = true; result.add(mesh); }
   return result;
 }
 const models = Object.fromEntries(['health', 'growth', 'english', 'finance', 'together', 'tasks', 'hobby'].map(id => [id, civic(id)]));
@@ -213,7 +213,7 @@ const manifest = [];
 for (const [id, root] of Object.entries(models)) {
   const baked = bake(root), binary = await new GLTFExporter().parseAsync(baked, { binary: true, onlyVisible: true });
   await writeFile(new URL(`${id}.glb`, out), Buffer.from(binary));
-  const triangles = baked.children.reduce((sum, mesh) => sum + mesh.geometry.attributes.position.count / 3, 0);
+  const triangles = baked.children.reduce((sum, mesh) => sum + (mesh.geometry.index?.count ?? mesh.geometry.attributes.position.count) / 3, 0);
   manifest.push({ id, file: `${id}.glb`, bytes: binary.byteLength, triangles, drawCalls: baked.children.length, source: 'Авторская геометрия PLAY YOUR LIFE; MIT' });
 }
 await writeFile(new URL('manifest.json', out), JSON.stringify(manifest, null, 2));

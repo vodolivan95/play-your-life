@@ -12,6 +12,7 @@ import {
 } from '../city';
 import type { CityStyle } from '../city';
 import RoomScene from './RoomScene';
+import LivingBuilding from './LivingBuilding';
 import './BuildingInterior.css';
 const names: Record<string, string> = {
   health: 'Центр здоровья',
@@ -80,6 +81,7 @@ export default function BuildingInterior({
           Сфера и квесты →
         </button>
       </div>
+      <LivingBuilding key={id} state={state} id={id} onChange={onChange} />
       <div className="building-workspace">
         <div className="building-scene-wrap">
           <RoomScene id={id} building={b} icon={s.icon} />

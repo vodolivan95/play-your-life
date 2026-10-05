@@ -452,6 +452,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 </div>
                 {sphereTab === 'projects' && (
                   <SphereProjects
+                    onChange={setState}
                     state={state}
                     id={sphere.id}
                     onNew={() => setModal('goal')}
@@ -1220,5 +1221,4 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
     </TickTickContext.Provider>
   );
 }
-
 

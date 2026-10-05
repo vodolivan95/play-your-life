@@ -164,6 +164,7 @@ export type MonthReflection = {
   updatedAt: string;
 };
 export type GameState = {
+  cityPurchases?: import('./city').CityPurchase[];
   sphereProgressionModel?: typeof SPHERE_PROGRESSION_MODEL;
   city?: import('./city').CityState;
   shop?: import('./shop').ShopState;

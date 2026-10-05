@@ -9,6 +9,7 @@ import Icon from './Icon';
 import ProjectArt from './ProjectArt';
 import { projectStyle } from './projectStyle';
 import './SphereCity.css';
+import LivingBuilding from './LivingBuilding';
 
 export function SphereBuilding({ id }: { id: string }) {
   return <CityBuildingArt id={id} />;
@@ -113,6 +114,7 @@ const templates: Record<string, [string, string, string][]> = {
 };
 
 export function SphereProjects({
+  onChange,
   state,
   id,
   onOpen,
@@ -122,6 +124,7 @@ export function SphereProjects({
   state: GameState;
   id: string;
   onOpen: (goal: Goal) => void;
+  onChange: (state: GameState) => void;
   onNew: () => void;
   onTemplate: (name: string, description: string) => void;
 }) {
@@ -250,6 +253,7 @@ export function SphereProjects({
   }
   return (
     <div className="district-projects">
+      <LivingBuilding key={id} state={state} id={id} onChange={onChange} />
       <div className="section-heading">
         <h2>
           Активные проекты{' '}

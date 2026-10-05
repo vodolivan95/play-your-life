@@ -40,5 +40,13 @@ export default function CityBuildingArt({ id, building, variant = 'scene' }: { i
       {gold && <>{[87,183].map(a=><g key={a}><path d={`M${a} 157V126`} stroke="#8c7453" strokeWidth="2" /><circle cx={a} cy="125" r="3" fill="#ffe9a4" /><circle cx={a} cy="125" r="7" fill="#ffe9a4" opacity=".23" /></g>)}</>}
     </g>}
     {b.slots.map((item,i)=>item&&<Decor key={i} item={item} x={x+[45,135,228][i]} y={y+[151,158,152][i]} />)}
+    {variant === 'scene' && [0, 1, 2].map(person => <g key={person} transform={`translate(${x + 105 + person * 44} ${y + 130 - person * 5})`} aria-hidden="true">
+      <g className="district-walker" style={{ animationDelay: `-${person * 4}s` }}>
+        <ellipse cy="13" rx="5" ry="2" fill="#365e54" opacity=".25" />
+        <circle r="3" fill="#efc59f" />
+        <path d="M0 4v5" stroke={['#e58979', '#6c9bd0', '#a38aca'][person]} strokeWidth="5" strokeLinecap="round" />
+        <path d="M-2 9v4m4-4v4" stroke="#526475" strokeWidth="2" />
+      </g>
+    </g>)}
   </svg>;
 }

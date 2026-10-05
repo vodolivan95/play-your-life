@@ -1,7 +1,7 @@
 import CityBuildingArt from './CityBuildingArt';
 import { cityLandmarks as districts } from '../cityLandmarks';
 import { useState } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, Dispatch, SetStateAction } from 'react';
 import { spheres } from '../game';
 import type { GameState } from '../game';
 import Icon from './Icon';
@@ -18,7 +18,7 @@ export default function LifeCity({
 }: {
   state: GameState;
   onOpen: (id: string) => void;
-  onChange: (state: GameState) => void;
+  onChange: Dispatch<SetStateAction<GameState>>;
   notify: (message: string) => void;
 }) {
   const [inside, setInside] = useState<string | null>(null);

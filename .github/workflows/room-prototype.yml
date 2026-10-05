@@ -1,0 +1,28 @@
+name: Verify 3D sport prototype
+on:
+  push:
+    branches: [room/3d-sport, main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prototype:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - name: Verify WebGL, economy and placement in browser
+        run: node --experimental-strip-types scripts/room-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sport-3d-preview
+          path: room-preview/
+          if-no-files-found: ignore

@@ -164,6 +164,7 @@ export type MonthReflection = {
   updatedAt: string;
 };
 export type GameState = {
+  rooms?: Partial<Record<import('./roomEngine').RoomId, import('./roomEngine').RoomData>>;
   cityPurchases?: import('./city').CityPurchase[];
   sphereProgressionModel?: typeof SPHERE_PROGRESSION_MODEL;
   city?: import('./city').CityState;

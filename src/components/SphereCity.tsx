@@ -1,6 +1,6 @@
 import { sphereProgress, MAX_SPHERE_LEVEL } from '../sphereProgress';
 import CityBuildingArt from './CityBuildingArt';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, Dispatch, SetStateAction } from 'react';
 import { spheres } from '../game';
 import type { GameState, Goal } from '../game';
 import { formatDate, goalStatus } from '../planning';
@@ -9,7 +9,7 @@ import Icon from './Icon';
 import ProjectArt from './ProjectArt';
 import { projectStyle } from './projectStyle';
 import './SphereCity.css';
-import LivingBuilding from './LivingBuilding';
+import RoomEntry from './room3d/RoomEntry';
 
 export function SphereBuilding({ id }: { id: string }) {
   return <CityBuildingArt id={id} />;
@@ -124,7 +124,7 @@ export function SphereProjects({
   state: GameState;
   id: string;
   onOpen: (goal: Goal) => void;
-  onChange: (state: GameState) => void;
+  onChange: Dispatch<SetStateAction<GameState>>;
   onNew: () => void;
   onTemplate: (name: string, description: string) => void;
 }) {
@@ -253,7 +253,7 @@ export function SphereProjects({
   }
   return (
     <div className="district-projects">
-      <LivingBuilding key={id} state={state} id={id} onChange={onChange} />
+      {id === 'sport' && <RoomEntry state={state} onChange={onChange} />}
       <div className="section-heading">
         <h2>
           Активные проекты{' '}

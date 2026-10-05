@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { ContactShadows, PerformanceMonitor, useProgress } from '@react-three/drei';
-import { ACESFilmicToneMapping, SRGBColorSpace } from 'three';
+import { ACESFilmicToneMapping, PerspectiveCamera, SRGBColorSpace } from 'three';
 import type { ObjectId, RoomId, RoomObject, Vec3 } from '../../roomEngine';
 import RoomEnvironment from './RoomEnvironment';
 import RoomLighting from './RoomLighting';
@@ -20,10 +20,13 @@ type Props = {
   onFloor: (position: Vec3) => void; onSelect: (id: ObjectId) => void;
 };
 function Rendering({ time }: { time: RoomTime }) {
-  const { gl, invalidate } = useThree();
+  const { gl, invalidate, camera, size } = useThree();
   // WebGL renderer and canvas dataset are imperative Three/DOM resources.
   // eslint-disable-next-line react-hooks/immutability
   useEffect(() => { gl.outputColorSpace = SRGBColorSpace; gl.toneMapping = ACESFilmicToneMapping; gl.toneMappingExposure = time === 'day' ? 1 : time === 'night' ? .95 : 1.05; invalidate(); }, [gl, invalidate, time]);
+  // The perspective lens adapts to the actual viewport, without a second camera engine.
+  // eslint-disable-next-line react-hooks/immutability
+  useEffect(() => { if (camera instanceof PerspectiveCamera) { camera.fov = size.width < size.height ? 86 : 68; camera.updateProjectionMatrix(); invalidate(); } }, [camera, size.width, size.height, invalidate]);
   return null;
 }
 function Ready({ onReady }: { onReady: (value: boolean) => void }) {

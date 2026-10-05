@@ -7,6 +7,9 @@ import { moveRoomObject, objectSpec, placementValid, placeRoomObject, purchaseRo
 import { sphereProgress } from '../../sphereProgress';
 import type { RoomQuality, RoomTime } from './RoomScene3D';
 import './RoomEngine.css';
+import RoomHUD from './RoomHUD';
+import Shop from './Shop';
+import Inventory from './Inventory';
 import type { CameraPreset } from './RoomCamera';
 import { sportAssets, futureAssetSlots } from './assetSlots';
 
@@ -70,18 +73,9 @@ export default function RoomEngine({ state, onChange, onBack, roomId = 'sport', 
     <div className="room3d-stage" data-testid="room-scene">
       {webgl ? <SceneBoundary><Suspense fallback={<div className="room3d-loading"><strong>PLAY YOUR LIFE</strong><span>Загрузка спортзала…</span><i /></div>}><Scene roomId={roomId} objects={room.objects} ghost={ghost} valid={valid} build={build} selected={selected} time={time} quality={quality} cameraPreset={cameraPreset} cameraRevision={cameraRevision} onFloor={floor} onSelect={id => { setSelected(id); if (!build) setMessage(`${objectSpec(id).name}${id === 'treadmill' ? ' · Нажми, чтобы включить экран' : ''}`); }} /></Suspense></SceneBoundary> : <div className="room3d-unavailable">Для комнаты нужен WebGL 2. Попробуй актуальный Chrome или Safari. Покупки и позиции сохранены.</div>}
     </div>
-    <header className="room3d-hud">
-      <button className="room3d-back" onClick={onBack} aria-label="Вернуться из комнаты">←</button>
-      <div><strong>{config.title}</strong><span>LVL {level} / 100 · {state.coins.toLocaleString('ru-RU')} Coins</span></div>
-      <div className="room3d-completion"><b>{config.catalog.length ? Math.round(room.objects.length / config.catalog.length * 100) : 0}%</b><span>Комната</span></div>
-      <button className="room3d-settings" onClick={() => setSheet('settings')} aria-label="Настройки комнаты">⚙</button>
-    </header>
+    <RoomHUD title={config.title} level={level} coins={state.coins} progress={config.catalog.length ? Math.round(room.objects.length / config.catalog.length * 100) : 0} preset={cameraPreset} onBack={onBack} onSettings={() => setSheet('settings')} onView={view => { setCameraPreset(view); setCameraRevision(n => n + 1); }} />
     {build && <div className="room3d-build-label">РЕЖИМ ОБУСТРОЙСТВА</div>}
     {demoNotice && !build && <span className="room3d-demo-note" title={demoNotice}>SANDBOX</span>}
-    <nav className="room3d-camera" aria-label="Ракурсы камеры">
-      {(['overview', 'left', 'center', 'right'] as const).map(view => <button key={view} className={cameraPreset === view ? 'active' : ''} onClick={() => { setCameraPreset(view); setCameraRevision(n => n + 1); }}>{({ overview: 'Общий', left: 'Левый', center: 'Центр', right: 'Правый' })[view]}</button>)}
-      <button aria-label="RESET CAMERA" onClick={() => { setCameraPreset('overview'); setCameraRevision(n => n + 1); }}>↺</button>
-    </nav>
     <div className="room3d-controls">
       <p className="room3d-status" role="status">{ghost ? valid ? 'Место свободно' : 'Место занято или за границей комнаты' : message}</p>
       {ghost ? <>
@@ -105,16 +99,8 @@ export default function RoomEngine({ state, onChange, onBack, roomId = 'sport', 
           <p>Сетка: 0.5 м. Камера остаётся внутри зала. Текущий запрос качества: {quality.toUpperCase()}; при падении FPS включается LOW.</p>
           {new URLSearchParams(location.search).has('room-dev') && <details><summary>DEV · Asset status</summary>{Object.entries(sportAssets).map(([id, asset]) => <p key={id}>{asset.file}: {asset.available && asset.license ? 'GLB' : 'PLACEHOLDER ASSET'}</p>)}<p>Дополнительные слоты: {futureAssetSlots.join(', ')}</p></details>}
           <p>Вращение — мышь или один палец. Приближение — колесо или два пальца. В режиме установки выбери точку на полу.</p>
-        </div> : <div className="room3d-catalog">
-          {config.catalog.filter(item => sheet === 'shop' || room.purchased.includes(item.id)).map(item => {
-            const owned = room.purchased.includes(item.id), installed = room.objects.find(object => object.id === item.id), locked = level < item.level;
-            return <article key={item.id}><div><h3>{item.name}</h3><p>{sheet === 'shop' ? `LVL ${item.level} · ${item.price} Coins` : installed ? 'Установлен в комнате' : 'В инвентаре'}</p></div>
-              {sheet === 'shop' ? <button disabled={owned || locked || state.coins < item.price} onClick={() => apply(current => purchaseRoomObject(current, roomId, item.id), `${item.name} куплен. Открой инвентарь для установки.`)}>{owned ? 'Куплено' : locked ? `Нужен LVL ${item.level}` : 'Купить'}</button> : <button onClick={() => start(item.id, installed)}>{installed ? 'Переместить' : 'Установить'}</button>}
-              {sheet === 'inventory' && installed && <button onClick={() => apply(current => removeRoomObject(current, roomId, item.id), 'Предмет возвращён в инвентарь.')}>Убрать</button>}
-            </article>;
-          })}
-          {sheet === 'inventory' && !room.purchased.length && <p>Пока пусто. Купи первый предмет в магазине.</p>}
-        </div>}
+        </div> : sheet === 'shop' ? <Shop catalog={config.catalog} room={room} level={level} coins={state.coins} onBuy={id => apply(current => purchaseRoomObject(current, roomId, id), `${objectSpec(id).name} куплен. Открой инвентарь для установки.`)} /> : <Inventory catalog={config.catalog} room={room} onPlace={start} onRemove={id => apply(current => removeRoomObject(current, roomId, id), 'Предмет возвращён в инвентарь.')} />}
+
         <p className="room3d-sheet-status" role="status">{message}</p>
       </section>
     </div>}

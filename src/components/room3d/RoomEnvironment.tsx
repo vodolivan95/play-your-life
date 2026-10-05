@@ -31,10 +31,10 @@ function Skyline({ time }: { time: RoomTime }) {
   // Three textures are imperative GPU resources, not React state.
   // eslint-disable-next-line react-hooks/immutability
   useEffect(() => { texture.colorSpace = SRGBColorSpace; }, [texture]);
-  return <mesh position={[0, 9, -27]}>
+  return <group><mesh position={[0, 3.5, -27]}>
     <planeGeometry args={[96, 48]} />
     <meshBasicMaterial map={texture} color="#ffffff" toneMapped={false} />
-  </mesh>;
+  </mesh><mesh position={[27, 3.5, 0]} rotation={[0, -Math.PI / 2, 0]}><planeGeometry args={[96, 48]} /><meshBasicMaterial map={texture} toneMapped={false} /></mesh></group>;
 }
 export default function RoomEnvironment({ time, quality }: { time: RoomTime; quality: RoomQuality }) {
   const maps = useMemo(() => ({ stone: surface('stone'), normal: surface('stone', true), wood: surface('wood') }), []);
@@ -63,6 +63,10 @@ export default function RoomEnvironment({ time, quality }: { time: RoomTime; qua
       </group>)}
     </group>)}
     {[-5.9, -3, 0, 3, 5.9].map(x => <group key={x}>{block([x, 2.65, -5], [.085, 5.3, .15], '#172027', .85, .3)}</group>)}
+    {[-4.9, -2.5, 0, 2.5, 4.9].map(z => <group key={`side-${z}`}>{block([6, 2.65, z], [.15, 5.3, .085], '#172027', .85, .3)}</group>)}
+    {[.12, 5.1].map(y => <group key={`side-${y}`}>{block([6, y, 0], [.15, .12, 10], '#172027', .85, .3)}</group>)}
+    <mesh position={[6.02, 2.65, 0]} rotation={[0, -Math.PI / 2, 0]}><planeGeometry args={[9.8, 5]} /><meshPhysicalMaterial color="#d1e9f4" transparent opacity={.045} roughness={.12} metalness={.1} depthWrite={false} /></mesh>
+    {block([0, 2.7, 5.14], [12.4, 5.4, .2], '#716961', 0, .85)}
     {[.12, 5.1].map(y => <group key={y}>{block([0, y, -5], [12, .12, .15], '#172027', .85, .3)}</group>)}
     <mesh position={[0, 2.65, -5.02]}><planeGeometry args={[11.8, 5]} /><meshPhysicalMaterial color="#d1e9f4" transparent opacity={.045} roughness={.12} metalness={.1} depthWrite={false} /></mesh>
     {[-5.84, 5.84].map(x => <group key={x}>

@@ -1,95 +1,12 @@
-import { test } from "node:test";
-import assert from "node:assert/strict";
-import { newAccountGame } from "../src/accountGame.ts";
-import {
-  sphereMetrics,
-  filteredSpheres,
-  demoSphereRecommendation,
-} from "../src/sphereAnalytics.ts";
-import { spheres } from "../src/game.ts";
-test("аналитика считает среднее, разрыв и отставание из девяти реальных сфер", () => {
-  const state = newAccountGame("Игрок");
-  spheres.forEach((s, i) => {
-    state.spheres[s.id].score = i + 1;
-  });
-  const m = sphereMetrics(state);
-  assert.equal(m.average, 5);
-  assert.equal(m.gap, 8);
-  assert.equal(m.deficit, 4);
-  assert.equal(m.strongest.id, "hobby");
-  assert.equal(m.weakest.id, "health");
-  state.spheres.health.score = 9;
-  state.spheres.hobby.score = 0;
-  assert.equal(sphereMetrics(state).weakest.id, "hobby");
-});
-test("нулевая новая игра имеет равный баланс без фиктивных проектов и задач", () => {
-  const state = newAccountGame("Игрок"),
-    m = sphereMetrics(state);
-  assert.equal(m.average, 0);
-  assert.equal(m.gap, 0);
-  assert.equal(m.deficit, 0);
-  assert(m.equal);
-  assert.equal(filteredSpheres(state, "all").length, 9);
-  for (const filter of ["active", "working", "completed"] as const)
-    assert.equal(filteredSpheres(state, filter).length, 0);
-  assert(m.rows.every((r) => r.projects === 0 && r.tasks === 0));
-});
-test("фильтры и счётчики берут проекты и квесты только своей сферы", () => {
-  const state = newAccountGame("Игрок");
-  state.goals.push({
-    id: "a",
-    name: "Сон",
-    sphere: "health",
-    current: 0,
-    target: 100,
-    created: "2026-10-05",
-    reward: 0,
-    rewarded: false,
-  });
-  state.quests.push({
-    id: "b",
-    name: "Книга",
-    sphere: "growth",
-    xp: 20,
-    done: true,
-    difficulty: "Simple",
-  });
-  assert.deepEqual(
-    filteredSpheres(state, "working").map((r) => r.id),
-    ["health"],
-  );
-  assert.deepEqual(
-    filteredSpheres(state, "completed").map((r) => r.id),
-    ["growth"],
-  );
-  assert.deepEqual(
-    filteredSpheres(state, "active").map((r) => r.id),
-    ["health", "growth"],
-  );
-  assert.equal(
-    sphereMetrics(state).rows.find((r) => r.id === "health")!.projects,
-    1,
-  );
-  assert.equal(
-    sphereMetrics(state).rows.find((r) => r.id === "health")!.tasks,
-    0,
-  );
-});
-test("демо-рекомендация соответствует выбранной сфере и допускает будущий AI источник", () => {
-  for (const sphere of spheres) {
-    const idea = demoSphereRecommendation(sphere.id);
-    assert.equal(idea.sphereId, sphere.id);
-    assert(idea.title);
-    assert.equal(idea.source, "demo");
-  }
-});
-
-test('общий баланс нормализуется в шкалу 0–100, оценки сфер остаются 0–9', () => {
- const state = newAccountGame('Игрок');
- assert.equal(sphereMetrics(state).balance100,0);
- spheres.forEach(s => { state.spheres[s.id].score=9; });
- assert.equal(sphereMetrics(state).balance100,100);
- spheres.forEach(s => { state.spheres[s.id].score=4.5; });
- assert.equal(sphereMetrics(state).balance100,50);
- assert.equal(sphereMetrics(state).average,4.5);
-});
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {sphereProgress, MAX_SPHERE_LEVEL, SPHERE_PROGRESSION_MODEL} from '../src/sphereProgress.ts';
+import {newAccountGame} from '../src/accountGame.ts';
+import {initialState, completeQuest, spheres} from '../src/game.ts';
+import {restoreBackup,backupText} from '../src/backup.ts';
+import {sphereMetrics,filteredSpheres} from '../src/sphereAnalytics.ts';
+test('уровень сферы зависит от XP, отдельный прогресс внутри уровня и предел100',()=>{assert.equal(sphereProgress(0).level,0);assert.equal(sphereProgress(199).level,0);assert.equal(sphereProgress(200).level,1);assert.equal(sphereProgress(640).level,3);assert.equal(sphereProgress(640).currentXP,40);assert.equal(sphereProgress(640).progress,20);assert.equal(sphereProgress(999999).level,MAX_SPHERE_LEVEL);assert.equal(sphereProgress(999999).progress,100);assert.equal(sphereProgress(999999).remainingXP,0);});
+test('одно действие добавляет только свой XP, не назначает уровни другим сферам',()=>{const s=newAccountGame('Игрок');s.quests.push({id:'a',name:'Читать',sphere:'growth',xp:20,done:false,difficulty:'Medium'});const n=completeQuest(s,'a');assert.equal(n.spheres.growth.xp,20);assert.equal(sphereProgress(n.spheres.growth.xp).level,0);assert.equal(n.spheres.health.xp,0);assert.strictEqual(completeQuest(n,'a'),n);});
+test('адаптация старого сохранения сохраняет XP, архив оценок, проекты и историю; идемпотентна',()=>{const s=initialState();delete s.sphereProgressionModel;const n=restoreBackup(backupText(s));assert.equal(n.sphereProgressionModel,SPHERE_PROGRESSION_MODEL);assert.deepEqual(n.spheres,s.spheres);assert.deepEqual(n.goals,s.goals);assert.deepEqual(n.events,s.events);assert.equal(n.xp,s.xp);assert.equal(n.coins,s.coins);assert.deepEqual(restoreBackup(backupText(n)),n);});
+test('баланс считается по уровням активных сфер, архив оценки не влияет',()=>{const s=newAccountGame('Игрок');s.spheres.health.xp=2800;s.spheres.english.xp=1800;const m=sphereMetrics(s);assert.equal(m.average,11.5);assert.equal(m.strongest.id,'health');assert.equal(m.weakest.id,'english');assert.equal(m.gap,5);s.spheres.english.score=9;assert.equal(sphereMetrics(s).average,11.5);assert.equal(m.activeCount,2);});
+test('нулевая игра и фильтры работают без выдуманного прогресса',()=>{const s=newAccountGame('Игрок');assert.equal(sphereMetrics(s).average,0);assert.equal(filteredSpheres(s,'all').length,spheres.length);assert.equal(filteredSpheres(s,'active').length,0);s.quests.push({id:'a',name:'Читать',sphere:'growth',xp:20,done:false,difficulty:'Medium'});assert.deepEqual(filteredSpheres(s,'working').map(r=>r.id),['growth']);assert.equal(filteredSpheres(s,'completed').length,0);});

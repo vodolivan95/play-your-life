@@ -1,3 +1,4 @@
+import { SPHERE_PROGRESSION_MODEL, MAX_SPHERE_LEVEL, sphereProgress } from './sphereProgress.ts';
 import { validateState } from './stateValidation.ts';
 export const spheres = [
   {
@@ -163,6 +164,7 @@ export type MonthReflection = {
   updatedAt: string;
 };
 export type GameState = {
+  sphereProgressionModel?: typeof SPHERE_PROGRESSION_MODEL;
   city?: import('./city').CityState;
   shop?: import('./shop').ShopState;
   version: 1;
@@ -285,6 +287,7 @@ export function migrateState(
   const profile = state.profile;
   return {
     ...state,
+    sphereProgressionModel: SPHERE_PROGRESSION_MODEL,
     monthlyTracking: state.monthlyTracking ?? {
       since: new Date().toISOString(),
       scores: Object.fromEntries(
@@ -337,6 +340,7 @@ export function longestStreak(dates: string[], now = new Date()) {
 export function initialState(): GameState {
   return {
     version: 1,
+    sphereProgressionModel: SPHERE_PROGRESSION_MODEL,
     profile: { ...defaultProfile },
     mainGoalId: 'b2',
     monthlyTracking: {
@@ -649,12 +653,12 @@ export const achievements = [
     progress: (s: GameState) =>
       Math.min(
         1,
-        Math.max(0, ...Object.values(s.spheres).map((sp) => sp.highScore)) / 9,
+        Math.max(0, ...Object.values(s.spheres).map((sp) => sp.highScore === 9 ? MAX_SPHERE_LEVEL : sphereProgress(sp.xp).level)) / MAX_SPHERE_LEVEL,
       ),
     name: 'Личный стандарт',
     icon: '💎',
-    description: 'Достигни Life Score 9',
+    description: `Достигни ${MAX_SPHERE_LEVEL} уровня сферы` ,
     unlocked: (s: GameState) =>
-      Object.values(s.spheres).some((v) => v.highScore === 9),
+      Object.values(s.spheres).some((v) => v.highScore === 9 || sphereProgress(v.xp).maxed),
   },
 ];

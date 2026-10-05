@@ -1,3 +1,4 @@
+import { SPHERE_PROGRESSION_MODEL } from './sphereProgress.ts';
 import { validCity } from './city.ts';
 import { shopItems } from './shop.ts';
 import { validProjectImage } from './projectImage.ts';
@@ -40,6 +41,7 @@ export function validateState(value: unknown): asserts value is SavedState {
     );
   };
   if (!record(value) || value.version !== 1) return fail();
+  if (value.sphereProgressionModel !== undefined && value.sphereProgressionModel !== SPHERE_PROGRESSION_MODEL) return fail();
   if (value.city !== undefined && !validCity(value.city)) return fail();
   if (value.shop !== undefined) {
     const shop = value.shop;

@@ -1,3 +1,4 @@
+import { MAX_SPHERE_LEVEL, sphereProgress } from '../sphereProgress';
 import { useState } from 'react';
 import type { GameState } from '../game';
 import { spheres } from '../game';
@@ -44,7 +45,7 @@ export default function BuildingInterior({
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [tab, setTab] = useState<'improve' | 'decorate'>('improve');
   const cost = b.tier === 1 ? 60 : 120;
-  const sphereLevel = Math.floor(state.spheres[id].xp / 200) + 1;
+  const sphereLevel = sphereProgress(state.spheres[id].xp).level;
   const ready = state.coins >= cost && sphereLevel >= b.tier + 1;
   function act(action: () => GameState, message: string) {
     try {
@@ -72,7 +73,7 @@ export default function BuildingInterior({
           </h2>
           <p>
             {tiers[b.tier - 1]} · Улучшение {b.tier}/3 · Уровень сферы{' '}
-            {sphereLevel}
+            {sphereLevel} / {MAX_SPHERE_LEVEL}
           </p>
         </div>
         <button className="secondary-button" onClick={onSphere}>
@@ -283,7 +284,7 @@ export default function BuildingInterior({
           )}
           <p className="building-local-note">
             Изменения сохраняются в твоей игре. Улучшения не начисляют XP и не
-            меняют Life Score.
+            меняют уровень сферы.
           </p>
         </aside>
       </div>

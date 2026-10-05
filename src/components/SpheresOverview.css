@@ -577,3 +577,15 @@
 @media(max-width:1360px) { .app-shell .spheres-overview .spheres-summary { grid-template-columns:minmax(190px,.85fr) minmax(350px,1.9fr); }.focus-heading { grid-column:1/-1; } }
 @media(max-width:1000px) { .app-shell .spheres-overview .spheres-summary { grid-template-columns:1fr; } }
 @media(max-width:760px) { .app-shell .spheres-overview .radar-and-insights { display:block; }.app-shell .spheres-overview .radar-label { width:82px; padding:5px 3px; }.app-shell .spheres-overview .radar-label > span { width:18px; height:18px; }.app-shell .spheres-overview .radar-label strong { font-size:8px; }.app-shell .spheres-overview .radar-label small { font-size:10px; }.app-shell .spheres-overview .balance-insights > div { padding:33px 9px 9px; min-height:120px; }.insight-symbol { top:7px; left:9px; }.insight-bars,.insight-sphere-art { display:none; }.app-shell .spheres-overview .focus-copy { padding-right:85px; }.app-shell .spheres-overview .life-balance-panel > .sphere-building { height:165px; }.app-shell .spheres-overview .life-balance-value { font-size:44px; } }
+.app-shell .spheres-overview .life-balance-value { font-size:clamp(28px,2.5vw,42px); }
+.app-shell .spheres-overview .balance-insights b { font-size:18px; }
+.app-shell .spheres-overview .radar-label small { font-size:9px; white-space:nowrap; }
+.app-shell .spheres-overview .radar-label { width:108px; }
+.app-shell .spheres-overview .district-caption small { display:block; font-size:9px; color:#526b8b; margin-top:4px; }
+.app-shell .spheres-overview .district-caption span { font-size:10px; }
+.home-sphere small { display:block; }
+@media(max-width:760px) { .app-shell .spheres-overview .radar-label { width:84px; }.app-shell .spheres-overview .radar-label small { font-size:8px; }.app-shell .spheres-overview .life-balance-value { font-size:34px; }.app-shell .spheres-overview .balance-insights b { font-size:15px; } }
+
+.app-shell .spheres-overview .insight-gap b { font-size:14px; white-space:nowrap; }
+
+.app-shell .spheres-overview .insight-gap b { font-size:14px; white-space:nowrap; }

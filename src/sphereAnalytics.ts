@@ -1,3 +1,4 @@
+import { sphereProgress } from './sphereProgress.ts';
 import { spheres } from "./game.ts";
 import type { GameState } from "./game.ts";
 export type SphereFilter = "all" | "active" | "working" | "completed";
@@ -17,34 +18,36 @@ export function sphereMetrics(state: GameState) {
       projects.some((g) => g.current >= g.target) || tasks.some((q) => q.done);
     return {
       ...info,
-      score: state.spheres[info.id].score,
+      ...sphereProgress(state.spheres[info.id].xp),
       projects: projects.length,
       tasks: tasks.length,
       working,
       completed,
       active:
         state.spheres[info.id].xp > 0 ||
-        state.spheres[info.id].score > 0 ||
+        
         projects.length > 0 ||
         tasks.length > 0,
     };
   });
-  const average = rows.reduce((sum, row) => sum + row.score, 0) / rows.length;
-  const strongest = rows.reduce((best, row) =>
-    row.score > best.score ? row : best,
+  const active = rows.filter(row => row.active);
+  const pool = active.length ? active : rows;
+  const average = active.length ? active.reduce((sum, row) => sum + row.level, 0) / active.length : 0;
+  const strongest = pool.reduce((best, row) =>
+    row.level > best.level ? row : best,
   );
-  const weakest = rows.reduce((best, row) =>
-    row.score < best.score ? row : best,
+  const weakest = pool.reduce((best, row) =>
+    row.level < best.level ? row : best,
   );
-  const gap = strongest.score - weakest.score;
+  const gap = strongest.level - weakest.level;
   return {
     rows,
     average,
-    balance100: average / 9 * 100,
+    activeCount: active.length,
     strongest,
     weakest,
     gap,
-    deficit: average - weakest.score,
+    deficit: average - weakest.level,
     equal: gap === 0,
   };
 }

@@ -7,11 +7,13 @@ import type { GameState } from '../../game';
 import type { CityTime } from '../../weatherSystem';
 import { buildingState } from '../../city';
 import type { WeatherRuntime } from './WeatherSystem';
-export const cityPositions = spheres.map((s, i) => ({ id: s.id, x: (i % 3 - 1) * 10, z: (Math.floor(i / 3) - 1) * 8 }));
+import { cityPositions } from './cityConfig';
 function Building({ index, state, runtime, time, onOpen }: { index: number; state: GameState; runtime: WeatherRuntime; time: CityTime; onOpen: (id: string) => void }) {
   const s = spheres[index], p = cityPositions[index], building = buildingState(state, s.id);
   const roof = useRef<MeshStandardMaterial>(null), windows = useRef<MeshStandardMaterial>(null);
   const height = 2.6 + building.tier * .65 + index % 3 * .4;
+  // Three.js resources are mutable GPU/scene objects, outside React render state.
+  // eslint-disable-next-line react-hooks/immutability
   useFrame(() => {
     if (roof.current) roof.current.color.copy(new Color('#d2d9d5').lerp(new Color('#f5f8ff'), runtime.current.snowAmount));
     if (windows.current) { windows.current.emissiveIntensity = time === 'night' ? 1.7 : time === 'sunset' ? .5 : .05; windows.current.roughness = .12 + runtime.current.cloudiness * .25; }
@@ -28,6 +30,8 @@ function Building({ index, state, runtime, time, onOpen }: { index: number; stat
 export default function CityArchitecture({ state, runtime, time, onOpen }: { state: GameState; runtime: WeatherRuntime; time: CityTime; onOpen: (id: string) => void }) {
   const road = useMemo(() => new MeshStandardMaterial({ color: '#374550', metalness: .35, roughness: .9 }), []), pavement = useRef<MeshStandardMaterial>(null);
   useEffect(() => () => road.dispose(), [road]);
+  // Three.js resources are mutable GPU/scene objects, outside React render state.
+  // eslint-disable-next-line react-hooks/immutability
   useFrame(() => { road.roughness = .92 - runtime.current.wetness * .78; if (pavement.current) pavement.current.roughness = .8 - runtime.current.wetness * .6; });
   return <><mesh position={[0, .02, 0]} receiveShadow><boxGeometry args={[34, .12, 29]} /><meshStandardMaterial ref={pavement} color="#c0bdb1" metalness={.1} roughness={.8} /></mesh>
     {[-12, 12].map(z => <mesh key={`z${z}`} position={[0, .1, z]} receiveShadow><boxGeometry args={[33, .05, 2.5]} /><primitive object={road} attach="material" /></mesh>)}

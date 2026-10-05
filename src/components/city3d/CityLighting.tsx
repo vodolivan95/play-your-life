@@ -8,6 +8,8 @@ export default function CityLighting({ runtime, time, quality, reduced, paused }
   const sun = useRef<DirectionalLight>(null), ambient = useRef<HemisphereLight>(null);
   const { scene } = useThree();
   const sky = useRef(new Color(colors.day[0])), flash = useRef(0), clock = useRef(0);
+  // Three.js resources are mutable GPU/scene objects, outside React render state.
+  // eslint-disable-next-line react-hooks/immutability
   useFrame((_, delta) => {
     const w = runtime.current;
     if (!paused) clock.current += delta;

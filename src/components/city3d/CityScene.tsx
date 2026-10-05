@@ -6,11 +6,12 @@ import { ACESFilmicToneMapping, Vector3 } from 'three';
 import type { GameState } from '../../game';
 import { automaticTime, automaticWeather, initialWeather, weatherLabels } from '../../weatherSystem';
 import type { CityTime, WeatherKind, WeatherParameters } from '../../weatherSystem';
-import WeatherSystem, { useWeatherRuntime } from './WeatherSystem';
+import WeatherSystem from './WeatherSystem';
 import CityLighting from './CityLighting';
 import { EnvironmentSystem, WaterSystem } from './EnvironmentSystem';
 import TrafficSystem, { PedestrianSystem } from './TrafficSystem';
-import CityArchitecture, { cityPositions } from './CityArchitecture';
+import CityArchitecture from './CityArchitecture';
+import { cityPositions } from './cityConfig';
 import WeatherParticles from './WeatherParticles';
 import './CityScene.css';
 class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -24,7 +25,9 @@ function settings(): Settings {
   try { const v = JSON.parse(localStorage.getItem(storageKey) || '{}'); return { weather: v.weather === 'auto' || v.weather in weatherLabels ? v.weather : 'clear', time: ['day', 'sunset', 'night', 'auto'].includes(v.time) ? v.time : 'day', quality: ['auto', 'low', 'medium', 'high'].includes(v.quality) ? v.quality : 'auto' }; } catch { return { weather: 'clear', time: 'day', quality: 'auto' }; }
 }
 function CityWorld({ state, onOpen, weather, time, quality, paused, speed, reduced, telemetry }: { state: GameState; onOpen: (id: string) => void; weather: WeatherKind; time: CityTime; quality: string; paused: boolean; speed: number; reduced: boolean; telemetry: (w: WeatherParameters) => void }) {
-  const runtime = useWeatherRuntime(), { gl, camera, size } = useThree(), scratch = useRef(new Vector3());
+  const runtime = useRef(initialWeather()), { gl, camera, size } = useThree(), scratch = useRef(new Vector3());
+  // Three.js resources are mutable GPU/scene objects, outside React render state.
+  // eslint-disable-next-line react-hooks/immutability
   useFrame(() => {
     gl.domElement.dataset.ready = 'true';
     const p = cityPositions.find(p => p.id === 'sport')!;
@@ -36,7 +39,7 @@ function CityWorld({ state, onOpen, weather, time, quality, paused, speed, reduc
     gl.domElement.dataset.fog = runtime.current.fogDensity.toFixed(4);
     gl.domElement.dataset.trafficSpeed = runtime.current.trafficSpeed.toFixed(3);
   });
-  return <><WeatherSystem runtime={runtime} kind={weather} paused={paused} onTelemetry={telemetry} /><CityLighting runtime={runtime} time={time} quality={quality} reduced={reduced} paused={paused} /><WaterSystem runtime={runtime} time={time} paused={paused} reduced={reduced} /><EnvironmentSystem runtime={runtime} paused={paused} reduced={reduced} /><CityArchitecture state={state} runtime={runtime} time={time} onOpen={onOpen} /><TrafficSystem runtime={runtime} time={time} paused={paused || reduced} speed={speed} /><PedestrianSystem runtime={runtime} paused={paused || reduced} speed={speed} /><WeatherParticles runtime={runtime} quality={quality} paused={paused} reduced={reduced} /><OrbitControls target={[0, 0, 0]} minDistance={32} maxDistance={72} minPolarAngle={.35} maxPolarAngle={1.05} enablePan={false} maxAzimuthAngle={.8} minAzimuthAngle={-.8} /></>;
+  return <><WeatherSystem weatherRef={runtime} kind={weather} paused={paused} onTelemetry={telemetry} /><CityLighting runtime={runtime} time={time} quality={quality} reduced={reduced} paused={paused} /><WaterSystem runtime={runtime} time={time} paused={paused} reduced={reduced} /><EnvironmentSystem runtime={runtime} paused={paused} reduced={reduced} /><CityArchitecture state={state} runtime={runtime} time={time} onOpen={onOpen} /><TrafficSystem runtime={runtime} time={time} paused={paused || reduced} speed={speed} /><PedestrianSystem runtime={runtime} paused={paused || reduced} speed={speed} /><WeatherParticles runtime={runtime} quality={quality} paused={paused} reduced={reduced} /><OrbitControls target={[0, 0, 0]} minDistance={32} maxDistance={72} minPolarAngle={.35} maxPolarAngle={1.05} enablePan={false} maxAzimuthAngle={.8} minAzimuthAngle={-.8} /></>;
 }
 export default function CityScene({ state, onOpen, paused, speed }: { state: GameState; onOpen: (id: string) => void; paused: boolean; speed: number }) {
   const [options, setOptions] = useState(settings), [now, setNow] = useState(() => new Date()), [slow, setSlow] = useState(false), [telemetry, setTelemetry] = useState(initialWeather);

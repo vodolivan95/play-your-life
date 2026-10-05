@@ -7,6 +7,8 @@ export function WaterSystem({ runtime, time, paused, reduced }: { runtime: Weath
   const geometry = useMemo(() => new PlaneGeometry(180, 180, 36, 36), []);
   const material = useRef<MeshStandardMaterial>(null), elapsed = useRef(0);
   useEffect(() => () => geometry.dispose(), [geometry]);
+  // Three.js resources are mutable GPU/scene objects, outside React render state.
+  // eslint-disable-next-line react-hooks/immutability
   useFrame((_, dt) => {
     if (!paused && !reduced) elapsed.current += dt;
     const w = runtime.current, positions = geometry.attributes.position;
@@ -21,6 +23,8 @@ export function WaterSystem({ runtime, time, paused, reduced }: { runtime: Weath
 }
 export function EnvironmentSystem({ runtime, paused, reduced }: { runtime: WeatherRuntime; paused: boolean; reduced: boolean }) {
   const plants = useRef<Group>(null), clouds = useRef<Group>(null), lawn = useRef<MeshStandardMaterial>(null), clock = useRef(0);
+  // Three.js resources are mutable GPU/scene objects, outside React render state.
+  // eslint-disable-next-line react-hooks/immutability
   useFrame((_, dt) => {
     if (!paused && !reduced) clock.current += dt;
     if (plants.current) for (let i = 0; i < plants.current.children.length; i++) plants.current.children[i].rotation.z = Math.sin(clock.current * 1.5 + i) * runtime.current.windStrength * .07;

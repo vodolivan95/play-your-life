@@ -60,7 +60,7 @@ export default function RoomEngine({ state, onChange, onBack, roomId = 'sport', 
     if (ghost) setGhost({ ...ghost, rotation: [0, (ghost.rotation[1] + Math.PI / 2) % (Math.PI * 2), 0] });
     else if (selected) { const item = room.objects.find(item => item.id === selected); if (item) { start(selected, item); setGhost({ ...item, rotation: [0, (item.rotation[1] + Math.PI / 2) % (Math.PI * 2), 0] }); } }
   }
-  function confirm() { if (ghost && valid && apply(current => moving ? moveRoomObject(current, roomId, ghost) : placeRoomObject(current, roomId, ghost), 'Предмет установлен. Положение сохранено.')) setGhost(null); }
+  function confirm() { if (ghost && valid && apply(current => moving ? moveRoomObject(current, roomId, ghost) : placeRoomObject(current, roomId, ghost), 'Предмет установлен. Положение сохранено.')) { setGhost(null); setSelected(null); } }
   const chosen = selected ? room.objects.find(item => item.id === selected) : null;
   return createPortal(<section className="room3d" aria-label="3D-комната Спорт">
     <div className="room3d-stage" data-testid="room-scene">

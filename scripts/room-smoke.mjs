@@ -1,3 +1,4 @@
+/* global fetch, setTimeout, localStorage, document, innerWidth */
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -8,7 +9,7 @@ const server = spawn('npm', ['run', 'preview', '--', '--port', '4173'], { stdio:
 await mkdir('room-preview', { recursive: true });
 let browser;
 try {
-  for (let i = 0; i < 60; i++) { try { if ((await fetch('http://localhost:4173')).ok) break; } catch {} await new Promise(resolve => setTimeout(resolve, 500)); }
+  for (let i = 0; i < 60; i++) { try { if ((await fetch('http://localhost:4173')).ok) break; } catch { /* Vite ещё запускается. */ } await new Promise(resolve => setTimeout(resolve, 500)); }
   browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist', '--enable-unsafe-swiftshader'] });
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   const errors = []; page.on('pageerror', error => errors.push(error.message));

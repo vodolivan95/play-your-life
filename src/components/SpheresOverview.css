@@ -526,3 +526,54 @@
   }
 }
 
+/* Analytical panels follow the supplied light-blue composition. */
+.app-shell .spheres-overview .spheres-summary { grid-template-columns: minmax(205px,.9fr) minmax(420px,2fr) minmax(250px,1.1fr); gap: 12px; }
+.app-shell .spheres-overview .spheres-summary .panel { background: linear-gradient(140deg,#fcfeff 5%,#edf7ff 100%); border: 1px solid #e4f3fd; box-shadow: 0 4px 18px #70b6df12, inset 0 0 0 4px #ffffff55; }
+.app-shell .spheres-overview .spheres-summary .life-balance-panel { background: linear-gradient(125deg,#eaf8ff,#cfeeff); }
+.app-shell .spheres-overview .life-balance-panel .eyebrow, .app-shell .spheres-overview .focus-heading .eyebrow { font-size: 11px; text-transform: uppercase; font-weight: 800; color: #4c69a3; }
+.app-shell .spheres-overview .life-balance-value { font-size: clamp(36px,3.1vw,52px); color:#122348; margin-top:18px; }
+.app-shell .spheres-overview .life-balance-value small { font-size: .5em; }
+.app-shell .spheres-overview .life-balance-panel > .progress { height:12px; background:#bddffc; }
+.app-shell .spheres-overview .life-balance-panel > .progress > span { background:linear-gradient(90deg,#22b9ff,#008cff); }
+.app-shell .spheres-overview .life-balance-panel > p { font-size:13px; }
+.app-shell .spheres-overview .life-balance-panel > .sphere-building { height:175px; mask-image:linear-gradient(transparent,black 22%,black); }
+.app-shell .spheres-overview .radar-and-insights { grid-template-columns:minmax(0,1fr) 155px; gap:8px; }
+.app-shell .spheres-overview .sphere-radar { max-width:440px; aspect-ratio:440/360; }
+.app-shell .spheres-overview .radar-legend { display:flex; flex-wrap:wrap; gap:12px; margin:10px 0 6px; }
+.app-shell .spheres-overview .radar-legend > span { display:inline-flex; align-items:center; gap:5px; }
+.app-shell .spheres-overview .radar-legend i { width:8px; height:8px; background:#1697ff; border-radius:50%; }
+.app-shell .spheres-overview .radar-legend > span:last-child i { background:#c8e2ff; }
+.app-shell .spheres-overview .radar-label { width:clamp(86px,26%,108px); background:linear-gradient(135deg,#fff,#eff8ff); border:1px solid #dfedff; box-shadow:0 2px 7px #83b8ee26; padding:6px; }
+.app-shell .spheres-overview .radar-label strong { font-size:9px; overflow-wrap:normal; }
+.app-shell .spheres-overview .radar-label small { font-size:11px; }
+.app-shell .spheres-overview .balance-insights > div { position:relative; min-height:86px; padding:11px 37px 10px 36px; gap:4px; }
+.app-shell .spheres-overview .balance-insights strong { font-size:12px; }
+.app-shell .spheres-overview .balance-insights .insight-strong { background:linear-gradient(120deg,#dcf8ef,#eafbf6); }
+.app-shell .spheres-overview .balance-insights .insight-weak { background:linear-gradient(120deg,#ffebee,#fff4f6); }
+.app-shell .spheres-overview .balance-insights .insight-gap { background:linear-gradient(120deg,#ddeeff,#eaf5ff); }
+.insight-symbol { position:absolute; left:8px; top:12px; width:22px; height:22px; display:grid; place-items:center; font-style:normal; font-size:17px; border-radius:50%; color:white; background:#12c5a5; }
+.insight-weak .insight-symbol { background:#ff4b79; }
+.insight-gap .insight-symbol { background:transparent; color:#4c69a3; font-size:24px; }
+.insight-bars { position:absolute; right:8px; bottom:13px; display:flex; align-items:flex-end; gap:3px; height:34px; }
+.insight-bars i { display:block; width:8px; border-radius:2px 2px 0 0; background:linear-gradient(#1fd9c2,#c0f4eb); height:15px; }
+.insight-bars i:nth-child(2) { height:24px; }.insight-bars i:nth-child(3) { height:34px; }
+.insight-gap .insight-bars i { background:linear-gradient(#589dff,#c9e1ff); }
+.insight-sphere-art { position:absolute; width:28px; height:28px; right:6px; bottom:17px; }
+.focus-heading { display:flex; align-items:center; justify-content:space-between; gap:5px; }
+.focus-badge { background:#e0efff; color:#526c94; font-size:8px; white-space:nowrap; padding:6px 8px; border-radius:9px; }
+.app-shell .spheres-overview .sphere-focus-panel { gap:16px; }
+.app-shell .spheres-overview .focus-copy { padding-right:82px; min-height:130px; }
+.app-shell .spheres-overview .focus-copy p { font-size:13px; line-height:1.65; }
+.app-shell .spheres-overview .focus-copy b { color:#f26829; }
+.focus-art { position:absolute; width:80px; height:84px; right:-4px; top:15px; }
+.focus-art > .sphere-building { width:100%; height:74px; border-radius:38% 40% 25% 28%; box-shadow:0 5px 10px #0c92c925; }
+.focus-art > span { position:absolute; width:32px; height:32px; right:-2px; bottom:0; }
+.app-shell .spheres-overview .recommendation-label { display:flex; gap:6px; align-items:center; font-size:11px; font-weight:750; color:#24394d; }
+.recommendation-label > .game-art { width:23px; height:23px; }
+.app-shell .spheres-overview .focus-project { min-height:64px; font-size:12px; background:linear-gradient(120deg,#fff,#eef8ff); box-shadow:0 3px 9px #87bcea22; }
+.focus-project strong { flex:1; }
+.app-shell .spheres-overview .sphere-focus-panel .primary-button { min-height:44px; font-size:13px; }
+@media(max-width:1450px) and (min-width:1361px) { .app-shell .spheres-overview .radar-and-insights { grid-template-columns:minmax(0,1fr) 125px; }.app-shell .spheres-overview .balance-insights > div { padding:10px 8px 10px 33px; }.insight-bars,.insight-sphere-art { display:none; } }
+@media(max-width:1360px) { .app-shell .spheres-overview .spheres-summary { grid-template-columns:minmax(190px,.85fr) minmax(350px,1.9fr); }.focus-heading { grid-column:1/-1; } }
+@media(max-width:1000px) { .app-shell .spheres-overview .spheres-summary { grid-template-columns:1fr; } }
+@media(max-width:760px) { .app-shell .spheres-overview .radar-and-insights { display:block; }.app-shell .spheres-overview .radar-label { width:82px; padding:5px 3px; }.app-shell .spheres-overview .radar-label > span { width:18px; height:18px; }.app-shell .spheres-overview .radar-label strong { font-size:8px; }.app-shell .spheres-overview .radar-label small { font-size:10px; }.app-shell .spheres-overview .balance-insights > div { padding:33px 9px 9px; min-height:120px; }.insight-symbol { top:7px; left:9px; }.insight-bars,.insight-sphere-art { display:none; }.app-shell .spheres-overview .focus-copy { padding-right:85px; }.app-shell .spheres-overview .life-balance-panel > .sphere-building { height:165px; }.app-shell .spheres-overview .life-balance-value { font-size:44px; } }

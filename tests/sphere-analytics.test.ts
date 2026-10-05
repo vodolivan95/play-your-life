@@ -83,3 +83,13 @@ test("демо-рекомендация соответствует выбран�
     assert.equal(idea.source, "demo");
   }
 });
+
+test('общий баланс нормализуется в шкалу 0–100, оценки сфер остаются 0–9', () => {
+ const state = newAccountGame('Игрок');
+ assert.equal(sphereMetrics(state).balance100,0);
+ spheres.forEach(s => { state.spheres[s.id].score=9; });
+ assert.equal(sphereMetrics(state).balance100,100);
+ spheres.forEach(s => { state.spheres[s.id].score=4.5; });
+ assert.equal(sphereMetrics(state).balance100,50);
+ assert.equal(sphereMetrics(state).average,4.5);
+});

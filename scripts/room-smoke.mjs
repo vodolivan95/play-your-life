@@ -45,6 +45,24 @@ try {
   await page.waitForTimeout(2000);
   const reloaded = JSON.parse(await page.evaluate(key => localStorage.getItem(key), saveKey));
   assert.deepEqual(reloaded.rooms.sport.objects, saved.rooms.sport.objects);
+  const placements = [{ name: 'Коврик', x: -3, z: -2 }, { name: 'Гантели', x: 0, z: -3 }, { name: 'Скамья', x: 3, z: -2 }, { name: 'Фитбол', x: -3, z: 1 }, { name: 'Растение', x: 0, z: 3 }];
+  for (const item of placements) {
+    await page.getByRole('button', { name: 'Магазин', exact: true }).click();
+    await page.locator('.room3d-catalog article').filter({ hasText: item.name }).getByRole('button', { name: 'Купить', exact: true }).click();
+    await page.getByRole('button', { name: 'Закрыть панель' }).click();
+    await page.getByRole('button', { name: 'Инвентарь', exact: true }).click();
+    await page.locator('.room3d-catalog article').filter({ hasText: item.name }).getByRole('button', { name: 'Установить', exact: true }).click();
+    if (item.name === 'Коврик') assert.equal(await page.getByRole('button', { name: '✓ Установить', exact: true }).isDisabled(), true, 'Нельзя поставить коврик внутри дорожки');
+    for (let i = 0; i < Math.abs(item.x); i++) await page.getByRole('button', { name: item.x < 0 ? 'Сдвинуть влево' : 'Сдвинуть вправо' }).click();
+    for (let i = 0; i < Math.abs(item.z); i++) await page.getByRole('button', { name: item.z < 0 ? 'Сдвинуть назад' : 'Сдвинуть вперёд' }).click();
+    await page.getByRole('button', { name: '✓ Установить', exact: true }).click();
+    await page.getByRole('button', { name: '✓ Готово', exact: true }).click();
+  }
+  await page.waitForTimeout(1000);
+  const furnished = JSON.parse(await page.evaluate(key => localStorage.getItem(key), saveKey));
+  assert.equal(furnished.rooms.sport.objects.length, 6);
+  assert.equal(furnished.coins, 360);
+  await page.screenshot({ path: 'room-preview/sport-all-six.png' });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(1500);
   await page.getByRole('button', { name: 'Настройки комнаты' }).click();
@@ -53,7 +71,7 @@ try {
   await page.screenshot({ path: 'room-preview/sport-mobile-night.png' });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   assert.deepEqual(errors, []);
-  await writeFile('room-preview/result.json', JSON.stringify({ passed: true, coins: reloaded.coins, object: reloaded.rooms.sport.objects[0], errors }, null, 2));
+  await writeFile('room-preview/result.json', JSON.stringify({ passed: true, coinsAfterTreadmill: reloaded.coins, object: reloaded.rooms.sport.objects[0], allSix: furnished.rooms.sport.objects, coinsAfterAllSix: furnished.coins, errors }, null, 2));
 } catch (error) {
   await writeFile('room-preview/error.txt', String(error.stack || error)); throw error;
 } finally { await browser?.close(); server.kill('SIGTERM'); }

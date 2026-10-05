@@ -18,11 +18,11 @@ const m = {
   glass: mat('weather-glass', '#399bbe', .18, .38, { emissive: '#b7c8b3', emissiveIntensity: .03 }),
   frame: mat('window-mullions', '#edf4ed', .35, .25), blue: mat('ocean-blue', '#187dd1', .22, .35),
   cyan: mat('water', '#27c4d5', .16, .35), dark: mat('charcoal', '#263c46', .5, .2),
-  green: mat('leaves', '#3d9049', .8), lime: mat('leaves-light', '#83b950', .8), trunk: mat('palm-bark', '#ad8858', .9),
+  green: mat('leaves', '#2c793c', .8), lime: mat('leaves-light', '#72a943', .8), trunk: mat('palm-bark', '#ad8858', .9),
   gold: mat('polished-gold', '#e7b443', .22, .65), red: mat('heart-red', '#fa484e', .24, .15),
-  pink: mat('flowers', '#e071b1', .65), orange: mat('track', '#cd6943', .85), turf: mat('lawn', '#6c9b62', .85),
-  paving: mat('wet-pavement', '#e1d7bb', .85, .05), road: mat('wet-road', '#657079', .9, .05),
-  rock: mat('granite', '#a8a696', .92), sand: mat('sand', '#e9d9a9', 1), water: mat('pool', '#35bed7', .15, .2),
+  pink: mat('flowers', '#e071b1', .65), orange: mat('track', '#cd6943', .85), turf: mat('lawn', '#458345', .85),
+  paving: mat('wet-pavement', '#e1d7bb', .85, .05), road: mat('wet-road', '#435455', .9, .05),
+  rock: mat('granite', '#8b8978', .92, 0, { flatShading: true }), sand: mat('sand', '#d6c596', 1), water: mat('pool', '#35bed7', .15, .2),
 };
 function add(root, geometry, material, p = [0, 0, 0], scale = [1, 1, 1], rotation = [0, 0, 0]) {
   const mesh = new T.Mesh(geometry, material); mesh.position.set(...p); mesh.scale.set(...scale); mesh.rotation.set(...rotation); root.add(mesh); return mesh;
@@ -50,6 +50,16 @@ function palm(root, x, z, height = 4) {
     for (let k = 0; k <= 8; k++) { const t = k / 8, r = t * height * .55, width = Math.sin(t * Math.PI) * .32, y = height + .35 * Math.sin(t * Math.PI) - t * t * .95;
       for (const side of [-1, 1]) verts.push(x + .5 + Math.cos(a) * r - Math.sin(a) * width * side, y, z + Math.sin(a) * r + Math.cos(a) * width * side);
       if (k < 8) { const b = k * 2; indices.push(b, b + 1, b + 2, b + 1, b + 3, b + 2); }
+    }
+    for (let k = 1; k <= 5; k++) {
+      const t = k / 6, r = t * height * .55, y = height + .35 * Math.sin(t * Math.PI) - t * t * .95;
+      for (const side of [-1, 1]) {
+        const b = verts.length / 3, length = .45 * Math.sin(t * Math.PI);
+        const cx = x + .5 + Math.cos(a) * r, cz = z + Math.sin(a) * r;
+        verts.push(cx, y, cz, cx + Math.cos(a) * .12, y + .025, cz + Math.sin(a) * .12,
+          cx - Math.sin(a) * length * side + Math.cos(a) * .25, y - .25, cz + Math.cos(a) * length * side + Math.sin(a) * .25);
+        indices.push(b, b + 1, b + 2);
+      }
     }
     const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute(verts, 3)); geo.setIndex(indices); geo.computeVertexNormals();
     const leaf = add(root, geo, j % 2 ? m.green : m.lime); leaf.material.side = T.DoubleSide;
@@ -88,7 +98,8 @@ function portal(root, height = 7) {
 }
 function civic(id) {
   const root = new T.Group(); root.name = id;
-  cyl(root, 5.8, .15, [0, .08, 0], m.paving, 48, [1, 1, 1.05]);
+  cyl(root, 5.8, .15, [0, .08, 0], m.turf, 48, [1, 1, 1.05]);
+  box(root, [1.7, .08, 5.6], [0, .2, 2.5], m.paving);
   const three = ['health', 'english', 'growth'].includes(id);
   wing(root, -3.15, -1.15, 2.65, three ? 3 : 2); wing(root, 3.15, -1.15, 2.65, three ? 3 : 2);
   portal(root, id === 'health' || id === 'english' ? 7.2 : 5.3);

@@ -40,9 +40,9 @@ export function IslandLandscape({ runtime }: { runtime: WeatherRuntime }) {
   /* eslint-disable react-hooks/immutability */
   useFrame(() => {
     for (const material of materials) {
-      if (material.name === 'wet-road') { material.roughness = .92 - runtime.current.wetness * .75; material.color.copy(new Color('#657079').lerp(new Color('#394d57'), runtime.current.wetness * .6)); }
+      if (material.name === 'wet-road') { material.roughness = .92 - runtime.current.wetness * .75; material.color.copy(new Color('#435455').lerp(new Color('#394d57'), runtime.current.wetness * .6)); }
       if (material.name === 'wet-pavement') material.roughness = .85 - runtime.current.wetness * .6;
-      if (material.name === 'lawn') material.color.copy(new Color('#6c9b62').lerp(new Color('#e6ece8'), runtime.current.snowAmount));
+      if (material.name === 'lawn') material.color.copy(new Color('#458345').lerp(new Color('#e6ece8'), runtime.current.snowAmount));
     }
   });
   /* eslint-enable react-hooks/immutability */
@@ -50,7 +50,7 @@ export function IslandLandscape({ runtime }: { runtime: WeatherRuntime }) {
 }
 export function IslandPalms({ runtime, paused, reduced }: { runtime: WeatherRuntime; paused: boolean; reduced: boolean }) {
   const { scene } = useGLTF(asset('palm')), group = useRef<Group>(null), clock = useRef(0);
-  const palms = useMemo(() => Array.from({ length: 44 }, (_, i) => ({ model: scene.clone(true), x: Math.cos(i / 44 * Math.PI * 2) * 29, z: Math.sin(i / 44 * Math.PI * 2) * 26.2, size: .8 + i % 4 * .12 })), [scene]);
+  const palms = useMemo(() => Array.from({ length: 44 }, (_, i) => ({ model: (() => { const model = scene.clone(true); model.traverse(n => { if (n instanceof Mesh) n.castShadow = true; }); return model; })(), x: Math.cos(i / 44 * Math.PI * 2) * 29, z: Math.sin(i / 44 * Math.PI * 2) * 26.2, size: .8 + i % 4 * .12 })), [scene]);
   useFrame((_, dt) => {
     if (!paused && !reduced) clock.current += dt;
     group.current?.children.forEach((child, i) => { child.rotation.z = Math.sin(clock.current * 1.2 + i) * runtime.current.windStrength * .028; });

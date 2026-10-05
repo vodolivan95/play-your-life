@@ -47,6 +47,8 @@ try {
   await page.waitForTimeout(18000);
   await page.setViewportSize({ width: 390, height: 844 }); await canvas.scrollIntoViewIfNeeded();
   await page.screenshot({ path: 'room-preview/city-mobile.png' });
+  await page.getByRole('button', { name: 'Весь остров', exact: true }).click(); await page.waitForTimeout(800);
+  await page.screenshot({ path: 'room-preview/island-mobile-overview.png' });
   const rect = await canvas.boundingBox(); const [x, y] = (await canvas.getAttribute('data-sport-point')).split(',').map(Number);
   await page.touchscreen.tap(rect.x + x, rect.y + y); await page.locator('.room3d canvas[data-ready="true"]').waitFor();
   await page.getByRole('button', { name: 'Вернуться из комнаты' }).click(); await canvas.waitFor();

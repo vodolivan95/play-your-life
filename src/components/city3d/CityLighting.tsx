@@ -21,8 +21,8 @@ export default function CityLighting({ runtime, time, quality, reduced, paused }
     if (!(scene.fog instanceof FogExp2)) scene.fog = new FogExp2(sky.current, w.fogDensity);
     scene.fog.color.copy(sky.current); // The island is larger than the initial city prototype; preserve readable near geometry.
     scene.fog.density = w.fogDensity * .55;
-    if (sun.current) { sun.current.intensity = MathUtils.damp(sun.current.intensity, w.sunIntensity * (time === 'night' ? .16 : 1) + flash.current, flash.current ? 12 : 2, delta); sun.current.color.lerp(new Color(colors[time][1]), 1 - Math.exp(-delta * 2)); sun.current.shadow.radius = 1 + w.cloudiness * 4; }
-    if (ambient.current) { ambient.current.intensity = (time === 'night' ? 1.1 : 1.5) + flash.current; ambient.current.color.copy(time === 'night' ? new Color('#799dc6') : sky.current); }
+    if (sun.current) { sun.current.intensity = MathUtils.damp(sun.current.intensity, w.sunIntensity * (time === 'night' ? .16 : .7) + flash.current, flash.current ? 12 : 2, delta); sun.current.color.lerp(new Color(colors[time][1]), 1 - Math.exp(-delta * 2)); sun.current.shadow.radius = 1 + w.cloudiness * 4; }
+    if (ambient.current) { ambient.current.intensity = (time === 'night' ? 1.1 : .95) + flash.current; ambient.current.color.copy(time === 'night' ? new Color('#799dc6') : sky.current); }
   });
   /* eslint-enable react-hooks/immutability */
   return <><hemisphereLight ref={ambient} args={['#cde9ff', '#596b65', 1.4]} /><directionalLight ref={sun} position={[-25, 55, 30]} castShadow={quality !== 'low'} shadow-mapSize={quality === 'high' ? [2048, 2048] : [1024, 1024]} shadow-camera-left={-43} shadow-camera-right={43} shadow-camera-top={43} shadow-camera-bottom={-43} shadow-normalBias={.08} shadow-bias={-.0002} /></>;

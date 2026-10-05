@@ -12,6 +12,8 @@ let browser;
 async function enterSportFromBuilding(page, touch = false) {
   const canvas = page.locator('.city3d-scene canvas[data-ready="true"]');
   await canvas.waitFor();
+  const overview = page.getByRole('button', { name: 'Весь остров', exact: true });
+  if (await overview.isVisible()) { await overview.click(); await page.waitForTimeout(400); }
   await canvas.scrollIntoViewIfNeeded();
   const rect = await canvas.boundingBox();
   const [px, py] = (await canvas.getAttribute('data-sport-point')).split(',').map(Number);

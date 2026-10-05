@@ -11,3 +11,5 @@
 .city3d-dev small { flex-basis: 100%; }
 .city3d-hint { font-size: 12px; color: #657e93; margin: 12px 0; }
 @media (max-width: 700px) { .city3d-scene { height: 78dvh; min-height: 430px; } .city3d-label { font-size: 10px; padding: 4px 6px; } }
+
+.city3d-overview { position:absolute; right:12px; top:12px; border:1px solid #d9f0f7; border-radius:10px; background:#ffffffed; color:#234b63; padding:9px 12px; font:inherit; font-size:12px; cursor:pointer; }

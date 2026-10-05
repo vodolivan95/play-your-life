@@ -1,26 +1,28 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Group } from 'three';
+import { useGLTF } from '@react-three/drei';
+import { Group, Mesh, MeshStandardMaterial } from 'three';
 import type { CityTime } from '../../weatherSystem';
 import type { WeatherRuntime } from './WeatherSystem';
 export default function TrafficSystem({ runtime, time, paused, speed }: { runtime: WeatherRuntime; time: CityTime; paused: boolean; speed: number }) {
+  const { scene } = useGLTF(`${import.meta.env.BASE_URL}models/city/car.glb`);
+  const models = useMemo(() => Array.from({ length: 8 }, (_, i) => { const clone = scene.clone(true); clone.traverse(n => { if (n instanceof Mesh) { n.castShadow = true; if (n.material instanceof MeshStandardMaterial && n.material.name === 'ocean-blue') { n.material = n.material.clone(); n.material.color.set(['#edb655', '#397fae', '#f2f1de', '#cf645a'][i % 4]); } } }); return clone; }), [scene]);
   const cars = useRef<Group>(null), elapsed = useRef(0);
   useFrame((_, dt) => {
     if (!paused) elapsed.current += dt * speed * runtime.current.trafficSpeed;
     cars.current?.children.forEach((car, i) => {
-      const distance = (elapsed.current * 2 + i * 14) % 108;
+      const distance = (elapsed.current * 2 + i * 14) % 196;
       let x = 0, z = 0, angle = 0;
-      if (distance < 30) { x = -15 + distance; z = -12; angle = Math.PI / 2; }
-      else if (distance < 54) { x = 15; z = -12 + distance - 30; }
-      else if (distance < 84) { x = 15 - (distance - 54); z = 12; angle = -Math.PI / 2; }
-      else { x = -15; z = 12 - (distance - 84); angle = Math.PI; }
-      car.position.set(x, .45, z); car.rotation.y = angle;
-      car.children[2].visible = time === 'night' || runtime.current.rainIntensity > .1 || runtime.current.fogDensity > .02;
+      if (distance < 50) { x = -25 + distance; z = -25; angle = Math.PI / 2; }
+      else if (distance < 98) { x = 25; z = -25 + distance - 50; }
+      else if (distance < 148) { x = 25 - (distance - 98); z = 25; angle = -Math.PI / 2; }
+      else { x = -25; z = 25 - (distance - 148); angle = Math.PI; }
+      car.position.set(x, .5, z); car.rotation.y = angle;
+      car.children[1].visible = time === 'night' || runtime.current.rainIntensity > .1 || runtime.current.fogDensity > .02;
     });
   });
   return <group ref={cars}>{Array.from({ length: 8 }, (_, i) => <group key={i}>
-    <mesh castShadow><boxGeometry args={[.85, .45, 1.8]} /><meshStandardMaterial color={['#e9a34d', '#5078b2', '#dedfdc', '#b36a66'][i % 4]} metalness={.45} roughness={.3} /></mesh>
-    <mesh position={[0, .35, -.1]}><boxGeometry args={[.7, .35, 1]} /><meshStandardMaterial color="#29404f" metalness={.4} roughness={.2} /></mesh>
+    <primitive object={models[i]} />
     <group>{[-.28, .28].map(x => <group key={x}><mesh position={[x, 0, .92]}><boxGeometry args={[.17, .14, .03]} /><meshStandardMaterial emissive="#fff3b5" emissiveIntensity={3} color="#fff3b5" /></mesh><mesh position={[x, 0, -.92]}><boxGeometry args={[.17, .14, .03]} /><meshStandardMaterial emissive="#e94545" emissiveIntensity={2} color="#e94545" /></mesh><mesh position={[x, -.38, 1.2]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[.6, 1.8]} /><meshBasicMaterial color="#f6e4a6" transparent opacity={.18} depthWrite={false} /></mesh></group>)}</group>
   </group>)}</group>;
 }
@@ -30,7 +32,7 @@ export function PedestrianSystem({ runtime, paused, speed }: { runtime: WeatherR
     if (!paused) elapsed.current += dt * speed * (.4 + runtime.current.trafficSpeed * .6);
     people.current?.children.forEach((person, i) => {
       person.visible = i / 20 < runtime.current.pedestrianDensity;
-      person.position.set(-12 + (elapsed.current * .55 + i * 2.4) % 24, .35, i % 2 ? 9.5 : -9.5);
+      person.position.set(-22 + (elapsed.current * .55 + i * 3.4) % 44, .7, i % 2 ? 9.8 : -9.8);
       person.children[2].visible = runtime.current.rainIntensity > .3;
     });
   });

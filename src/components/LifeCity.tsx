@@ -15,9 +15,11 @@ export default function LifeCity({
   onOpen,
   onChange,
   notify,
+  roomNotice,
 }: {
   state: GameState;
-  onOpen: (id: string) => void;
+  onOpen?: (id: string) => void;
+  roomNotice?: string;
   onChange: Dispatch<SetStateAction<GameState>>;
   notify: (message: string) => void;
 }) {
@@ -33,7 +35,8 @@ export default function LifeCity({
         onChange={onChange}
         notify={notify}
         onBack={() => setInside(null)}
-        onSphere={() => onOpen(inside)}
+        onSphere={onOpen ? () => onOpen(inside) : undefined}
+        roomNotice={roomNotice}
       />
     );
   return (

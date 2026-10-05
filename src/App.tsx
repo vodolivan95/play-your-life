@@ -452,7 +452,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 </div>
                 {sphereTab === 'projects' && (
                   <SphereProjects
-                    onChange={setState}
+                    onMap={() => navigate('city')}
                     state={state}
                     id={sphere.id}
                     onNew={() => setModal('goal')}

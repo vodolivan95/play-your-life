@@ -30,7 +30,7 @@ function Skyline({ time }: { time: RoomTime }) {
   const texture = useTexture(`${import.meta.env.BASE_URL}environments/sport-city${time === 'sunset' ? '' : `-${time}`}.jpg`);
   // Three textures are imperative GPU resources, not React state.
   // eslint-disable-next-line react-hooks/immutability
-  useEffect(() => { texture.colorSpace = SRGBColorSpace; }, [texture]);
+  useEffect(() => { texture.colorSpace = SRGBColorSpace; texture.needsUpdate = true; }, [texture]);
   return <group><mesh position={[0, 3.5, -27]}>
     <planeGeometry args={[96, 48]} />
     <meshBasicMaterial map={texture} color="#ffffff" toneMapped={false} />
@@ -40,7 +40,7 @@ export default function RoomEnvironment({ time, quality }: { time: RoomTime; qua
   const stone = useTexture(`${import.meta.env.BASE_URL}environments/sport-stone.jpg`);
   // Texture sampler configuration is an imperative GPU operation.
   // eslint-disable-next-line react-hooks/immutability
-  useEffect(() => { stone.wrapS = stone.wrapT = RepeatWrapping; stone.repeat.set(8, 7); stone.colorSpace = SRGBColorSpace; stone.anisotropy = 4; }, [stone]);
+  useEffect(() => { stone.wrapS = stone.wrapT = RepeatWrapping; stone.repeat.set(8, 7); stone.colorSpace = SRGBColorSpace; stone.anisotropy = 4; stone.needsUpdate = true; }, [stone]);
   const maps = useMemo(() => ({ normal: surface('stone', true), wood: surface('wood') }), []);
   useEffect(() => () => Object.values(maps).forEach(texture => texture.dispose()), [maps]);
   const geometry = useMemo(() => new BoxGeometry(), []);

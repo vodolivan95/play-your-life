@@ -22,7 +22,7 @@ class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
 const storageKey = 'play-your-life-city-weather-v1';
 type Settings = { weather: WeatherKind | 'auto'; time: CityTime | 'auto'; quality: 'auto' | 'low' | 'medium' | 'high' };
 function settings(): Settings {
-  try { const v = JSON.parse(localStorage.getItem(storageKey) || '{}'); return { weather: v.weather === 'auto' || v.weather in weatherLabels ? v.weather : 'clear', time: ['day', 'sunset', 'night', 'auto'].includes(v.time) ? v.time : 'day', quality: ['auto', 'low', 'medium', 'high'].includes(v.quality) ? v.quality : 'auto' }; } catch { return { weather: 'clear', time: 'day', quality: 'auto' }; }
+  try { const v = JSON.parse(localStorage.getItem(storageKey) || '{}'); return { weather: v.weather === 'auto' || Object.hasOwn(weatherLabels, v.weather) ? v.weather : 'clear', time: ['day', 'sunset', 'night', 'auto'].includes(v.time) ? v.time : 'day', quality: ['auto', 'low', 'medium', 'high'].includes(v.quality) ? v.quality : 'auto' }; } catch { return { weather: 'clear', time: 'day', quality: 'auto' }; }
 }
 function CityWorld({ state, onOpen, weather, time, quality, paused, speed, reduced, telemetry }: { state: GameState; onOpen: (id: string) => void; weather: WeatherKind; time: CityTime; quality: string; paused: boolean; speed: number; reduced: boolean; telemetry: (w: WeatherParameters) => void }) {
   const runtime = useRef(initialWeather()), { gl, camera, size } = useThree(), scratch = useRef(new Vector3());

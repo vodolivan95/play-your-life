@@ -19,7 +19,8 @@ export default function CityLighting({ runtime, time, quality, reduced, paused }
     sky.current.lerp(target, 1 - Math.exp(-delta * 2));
     scene.background = sky.current;
     if (!(scene.fog instanceof FogExp2)) scene.fog = new FogExp2(sky.current, w.fogDensity);
-    scene.fog.color.copy(sky.current); scene.fog.density = w.fogDensity;
+    scene.fog.color.copy(sky.current); // The island is larger than the initial city prototype; preserve readable near geometry.
+    scene.fog.density = w.fogDensity * .55;
     if (sun.current) { sun.current.intensity = MathUtils.damp(sun.current.intensity, w.sunIntensity * (time === 'night' ? .16 : 1) + flash.current, flash.current ? 12 : 2, delta); sun.current.color.lerp(new Color(colors[time][1]), 1 - Math.exp(-delta * 2)); sun.current.shadow.radius = 1 + w.cloudiness * 4; }
     if (ambient.current) { ambient.current.intensity = (time === 'night' ? 1.1 : 1.5) + flash.current; ambient.current.color.copy(time === 'night' ? new Color('#799dc6') : sky.current); }
   });

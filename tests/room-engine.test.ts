@@ -34,17 +34,17 @@ test('установка, перенос, поворот, инвентарь и 
   assert.deepEqual(roomData(removed, 'sport').purchased, ['treadmill']);
   assert.equal(removed.coins, 650);
 });
-test('пересечения, стены, дробная сетка, наклон и масштаб не допускаются', () => {
+test('пересечения, стены, шаг сетки 0.5 м, наклон и масштаб не допускаются', () => {
   let state = purchaseRoomObject(player(), 'sport', 'treadmill');
   state = placeRoomObject(state, 'sport', treadmill);
   state = purchaseRoomObject(state, 'sport', 'mat');
   const mat: RoomObject = { id: 'mat', position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1] };
   assert.throws(() => placeRoomObject(state, 'sport', mat), /занято/);
   assert.equal(placementValid(roomData(state, 'sport'), { ...treadmill, position: [5, 0, 4] }, 'sport'), false);
-  assert.equal(placementValid(roomData(state, 'sport'), { ...mat, position: [3.5, 0, 2] }, 'sport'), false);
+  assert.equal(placementValid(roomData(state, 'sport'), { ...mat, position: [3.25, 0, 2] }, 'sport'), false);
   assert.equal(placementValid(roomData(state, 'sport'), { ...mat, rotation: [0, .3, 0] }, 'sport'), false);
   assert.equal(placementValid(roomData(state, 'sport'), { ...mat, scale: [2, 2, 2] }, 'sport'), false);
-  assert.equal(placementValid(roomData(state, 'sport'), { ...mat, position: [3, 0, 2] }, 'sport'), true);
+  assert.equal(placementValid(roomData(state, 'sport'), { ...mat, position: [3.5, 0, 2] }, 'sport'), true);
 });
 test('валидация отклоняет повреждённые и пересекающиеся сохранения', () => {
   assert.equal(validRooms({ sport: { purchased: ['treadmill'], objects: [null] } }), false);

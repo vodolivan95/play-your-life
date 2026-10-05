@@ -1,16 +1,11 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useGLTF } from '@react-three/drei';
+import SportsDisplay from './SportsDisplay';
 import { BoxGeometry, CylinderGeometry, SphereGeometry, MeshStandardMaterial, Group } from 'three';
 import type { ObjectId, Vec3 } from '../../roomEngine';
 
-function GLB({ url }: { url: string }) {
-  const { scene } = useGLTF(url);
-  const copy = useMemo(() => scene.clone(true), [scene]);
-  return <primitive object={copy} />;
-}
-export default function Model3D({ id, ghost, active = false, reduced = false, assetUrl }: {
-  id: ObjectId; ghost?: 'valid' | 'invalid'; active?: boolean; reduced?: boolean; assetUrl?: string;
+export default function Model3D({ id, ghost, active = false, reduced = false }: {
+  id: ObjectId; ghost?: 'valid' | 'invalid'; active?: boolean; reduced?: boolean;
 }) {
   const plant = useRef<Group>(null);
   const geometries = useMemo(() => ({ box: new BoxGeometry(1, 1, 1), cylinder: new CylinderGeometry(.5, .5, 1, 12), sphere: new SphereGeometry(.5, 16, 12) }), []);
@@ -23,7 +18,7 @@ export default function Model3D({ id, ghost, active = false, reduced = false, as
   useFrame(({ clock }) => { if (plant.current && !reduced) plant.current.rotation.z = Math.sin(clock.elapsedTime * .6) * .012; });
   const box = (pos: Vec3, size: Vec3, mat = materials.dark, rotation: Vec3 = [0, 0, 0]) => <mesh position={pos} scale={size} rotation={rotation} geometry={geometries.box} material={mat} castShadow={!ghost} receiveShadow />;
   const cylinder = (pos: Vec3, size: Vec3, mat = materials.steel, rotation: Vec3 = [0, 0, 0]) => <mesh position={pos} scale={size} rotation={rotation} geometry={geometries.cylinder} material={mat} castShadow={!ghost} receiveShadow />;
-  if (assetUrl && !ghost) return <GLB url={assetUrl} />;
+
   return <group dispose={null}>
     {id === 'mat' && box([0, .035, 0], [1.8, .07, .8], materials.fabric)}
     {id === 'dumbbells' && [-.22, .22].map(z => <group key={z}>
@@ -50,7 +45,7 @@ export default function Model3D({ id, ghost, active = false, reduced = false, as
       {box([0, .32, .25], [.95, .06, 1.9], materials.rubber)}
       {[-.59, .59].map(x => <group key={x}>{box([x, .75, -.9], [.1, 1.2, .1], materials.steel, [-.15, 0, 0])}{box([x, 1.05, -.35], [.1, .1, 1.3], materials.dark)}</group>)}
       {box([0, 1.4, -1], [1.2, .3, .42], materials.dark, [-.3, 0, 0])}
-      {box([0, 1.5, -.82], [.6, .03, .25], materials.screen, [-.3, 0, 0])}
+      {!ghost && <SportsDisplay active={active} />}
       {box([0, 1.22, -.57], [1.2, .09, .09], materials.dark)}
     </>}
   </group>;

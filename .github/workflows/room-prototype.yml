@@ -1,7 +1,7 @@
 name: Verify 3D sport prototype
 on:
   push:
-    branches: [room/3d-sport, main]
+    branches: [room/3d-sport, room/sport-premium, main]
   workflow_dispatch:
 permissions:
   contents: read

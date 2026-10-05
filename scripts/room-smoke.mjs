@@ -26,6 +26,7 @@ try {
   await page.getByRole('button', { name: 'Инвентарь', exact: true }).click();
   await page.locator('.room3d-catalog article').filter({ hasText: 'Беговая дорожка' }).getByRole('button', { name: 'Установить', exact: true }).click();
   await page.getByRole('button', { name: 'Сдвинуть вправо' }).click();
+  await page.getByRole('button', { name: 'Сдвинуть вправо' }).click();
   await page.getByRole('button', { name: 'Повернуть', exact: true }).click();
   await page.getByRole('button', { name: '✓ Установить', exact: true }).click();
   await page.waitForTimeout(1200);
@@ -33,12 +34,15 @@ try {
   assert.equal(saved.coins, 1200);
   assert.deepEqual(saved.rooms.sport.objects[0].position, [1, 0, 0]);
   assert.equal(saved.rooms.sport.objects[0].rotation[1], Math.PI / 2);
-  await page.getByRole('button', { name: '✓ Готово', exact: true }).click();
   await page.screenshot({ path: 'room-preview/sport-treadmill.png' });
   const canvas = page.locator('.room3d canvas'); const bounds = await canvas.boundingBox();
   await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2); await page.mouse.down(); await page.mouse.move(bounds.x + bounds.width / 2 + 120, bounds.y + bounds.height / 2 - 40, { steps: 10 }); await page.mouse.up();
   await page.mouse.wheel(0, -160); await page.waitForTimeout(1000);
   await page.screenshot({ path: 'room-preview/sport-angle.png' });
+  const angle = await canvas.getAttribute('data-camera');
+  await page.getByRole('button', { name: 'Левый', exact: true }).click(); await page.waitForTimeout(1600);
+  assert.notEqual(await canvas.getAttribute('data-camera'), angle);
+  await page.getByRole('button', { name: 'RESET CAMERA' }).click(); await page.waitForTimeout(1600);
   await page.reload();
 
   await page.locator('.room3d canvas').waitFor();
@@ -53,11 +57,10 @@ try {
     await page.getByRole('button', { name: 'Инвентарь', exact: true }).click();
     await page.locator('.room3d-catalog article').filter({ hasText: item.name }).getByRole('button', { name: 'Установить', exact: true }).click();
     if (item.name === 'Коврик') assert.equal(await page.getByRole('button', { name: '✓ Установить', exact: true }).isDisabled(), true, 'Нельзя поставить коврик внутри дорожки');
-    for (let i = 0; i < Math.abs(item.x); i++) await page.getByRole('button', { name: item.x < 0 ? 'Сдвинуть влево' : 'Сдвинуть вправо' }).click();
-    for (let i = 0; i < Math.abs(item.z); i++) await page.getByRole('button', { name: item.z < 0 ? 'Сдвинуть назад' : 'Сдвинуть вперёд' }).click();
+    for (let i = 0; i < Math.abs(item.x) * 2; i++) await page.getByRole('button', { name: item.x < 0 ? 'Сдвинуть влево' : 'Сдвинуть вправо' }).click();
+    for (let i = 0; i < Math.abs(item.z) * 2; i++) await page.getByRole('button', { name: item.z < 0 ? 'Сдвинуть назад' : 'Сдвинуть вперёд' }).click();
     await page.getByRole('button', { name: '✓ Установить', exact: true }).click();
-    await page.getByRole('button', { name: '✓ Готово', exact: true }).click();
-  }
+    }
   await page.waitForTimeout(1000);
   const furnished = JSON.parse(await page.evaluate(key => localStorage.getItem(key), saveKey));
   assert.equal(furnished.rooms.sport.objects.length, 6);
@@ -66,8 +69,15 @@ try {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(1500);
   await page.getByRole('button', { name: 'Настройки комнаты' }).click();
+  await page.getByRole('combobox', { name: 'Время суток' }).selectOption('day');
+  await page.getByRole('combobox', { name: 'Качество' }).selectOption('low');
+  await page.getByRole('button', { name: 'Закрыть панель' }).click(); await page.waitForTimeout(1500);
+  await page.screenshot({ path: 'room-preview/sport-mobile-day.png' });
+  await page.getByRole('button', { name: 'Настройки комнаты' }).click();
   await page.getByRole('combobox', { name: 'Время суток' }).selectOption('night');
+  await page.getByRole('combobox', { name: 'Качество' }).selectOption('medium');
   await page.getByRole('button', { name: 'Закрыть панель' }).click();
+  await page.waitForTimeout(1500);
   await page.screenshot({ path: 'room-preview/sport-mobile-night.png' });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   assert.deepEqual(errors, []);

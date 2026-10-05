@@ -1,4 +1,4 @@
-/* global fetch, setTimeout, localStorage, document, innerWidth */
+/* global fetch, setTimeout, localStorage, document, innerWidth, getComputedStyle */
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';

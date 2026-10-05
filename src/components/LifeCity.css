@@ -339,3 +339,115 @@
     font-size: 9px !important;
   }
 }
+
+/* Области входа принадлежат карте и загружаются вместе с ней. */
+.life-city .city-balance,
+.city-balance {
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 800;
+  color: #ad8536;
+  background: #fff7df;
+  padding: 10px 16px;
+  border-radius: 20px;
+}
+.city-jump {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: #7d91ae;
+  font-size: 11px;
+}
+.city-jump select {
+  width: 230px;
+  background: white;
+  border: 1px solid #dce6f5;
+  border-radius: 12px;
+  padding: 10px;
+  color: #486582;
+  font: inherit;
+}
+.city-building-hit {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 27%;
+  height: 24%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 45%;
+  transition:
+    background 0.2s,
+    filter 0.2s;
+}
+.city-building-hit:hover,
+.city-building-hit:focus-visible {
+  background: #c4f8ff1a;
+  outline: 2px dashed #ffffffbc;
+  box-shadow: 0 0 20px #54bbff80;
+  z-index: 2;
+}
+.city-hover-name {
+  opacity: 0;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 800;
+  color: #234e83;
+  background: #ffffffe8;
+  border-radius: 20px;
+  padding: 8px 13px;
+  box-shadow: 0 4px 18px #24557922;
+  pointer-events: none;
+}
+.city-hover-name small {
+  margin-left: 9px;
+  color: #678daf;
+  font-size: 10px;
+}
+.city-building-hit:hover .city-hover-name,
+.city-building-hit:focus-visible .city-hover-name {
+  opacity: 1;
+}
+.city-upgrade-badge {
+  position: absolute;
+  right: 12%;
+  top: 5%;
+  color: #f7bf48;
+  font-size: 20px;
+  text-shadow: 0 1px 4px white;
+  pointer-events: none;
+}
+.city-placed-decor {
+  position: absolute;
+  bottom: 5%;
+  font-size: 27px;
+  filter: drop-shadow(0 3px 2px #356d6055);
+  pointer-events: none;
+}
+.city-placed-decor.decor-0 {
+  left: 8%;
+}
+.city-placed-decor.decor-1 {
+  left: 45%;
+  bottom: -8%;
+}
+.city-placed-decor.decor-2 {
+  right: 7%;
+}
+.city-building-hit.style-tropical {
+  filter: saturate(1.08);
+}
+.city-building-hit.tier-3 {
+  box-shadow: inset 0 -9px 20px #ffd97424;
+}
+
+@media (max-width: 700px) {
+  .city-jump { display: block; }
+  .city-jump select { width: 100%; margin-top: 8px; }
+  .city-building-hit { height: 25%; }
+}

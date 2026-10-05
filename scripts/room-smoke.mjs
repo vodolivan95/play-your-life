@@ -11,7 +11,7 @@ let browser;
 try {
   for (let i = 0; i < 60; i++) { try { if ((await fetch('http://localhost:4173')).ok) break; } catch { /* Vite ещё запускается. */ } await new Promise(resolve => setTimeout(resolve, 500)); }
   browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist', '--enable-unsafe-swiftshader'] });
-  const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, hasTouch: true });
   const errors = []; page.on('pageerror', error => errors.push(error.message));
 
   await page.goto('http://localhost:4173/?room-demo=sport');
@@ -66,6 +66,23 @@ try {
   assert.equal(furnished.rooms.sport.objects.length, 6);
   assert.equal(furnished.coins, 360);
   await page.screenshot({ path: 'room-preview/sport-all-six.png' });
+  // Move on the finer grid, return an item to inventory, reinstall and reload.
+  await page.getByRole('button', { name: 'Инвентарь', exact: true }).click();
+  await page.locator('.room3d-catalog article').filter({ hasText: 'Беговая дорожка' }).getByRole('button', { name: 'Переместить', exact: true }).click();
+  await page.getByRole('button', { name: 'Сдвинуть вправо' }).click();
+  await page.getByRole('button', { name: '✓ Установить', exact: true }).click();
+  await page.getByRole('button', { name: 'Инвентарь', exact: true }).click();
+  const plant = page.locator('.room3d-catalog article').filter({ hasText: 'Растение' });
+  await plant.getByRole('button', { name: 'Убрать', exact: true }).click();
+  let edited = JSON.parse(await page.evaluate(key => localStorage.getItem(key), saveKey));
+  assert.equal(edited.rooms.sport.objects.length, 5); assert.equal(edited.coins, 360);
+  await plant.getByRole('button', { name: 'Установить', exact: true }).click();
+  for (let i = 0; i < 6; i++) await page.getByRole('button', { name: 'Сдвинуть вперёд' }).click();
+  await page.getByRole('button', { name: '✓ Установить', exact: true }).click();
+  await page.reload(); await page.locator('.room3d canvas[data-ready="true"]').waitFor();
+  edited = JSON.parse(await page.evaluate(key => localStorage.getItem(key), saveKey));
+  assert.equal(edited.rooms.sport.objects.find(item => item.id === 'treadmill').position[0], 1.5);
+  assert.equal(edited.rooms.sport.objects.length, 6); assert.equal(edited.coins, 360);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(1500);
   await page.getByRole('button', { name: 'Настройки комнаты' }).click();
@@ -79,6 +96,19 @@ try {
   await page.getByRole('button', { name: 'Закрыть панель' }).click();
   await page.waitForTimeout(1500);
   await page.screenshot({ path: 'room-preview/sport-mobile-night.png' });
+  const cdp = await page.context().newCDPSession(page);
+  const beforeTouch = await canvas.getAttribute('data-camera');
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 190, y: 400, id: 0 }] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 290, y: 420, id: 0 }] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await page.waitForTimeout(800);
+  assert.notEqual(await canvas.getAttribute('data-camera'), beforeTouch, 'Touch drag should rotate the 3D camera');
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 140, y: 400, id: 0 }, { x: 240, y: 400, id: 1 }] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 110, y: 400, id: 0 }, { x: 270, y: 400, id: 1 }] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await page.waitForTimeout(800);
+  const position = (await canvas.getAttribute('data-camera')).split(',').map(Number);
+  assert.ok(Math.abs(position[0]) <= 5.35 && Math.abs(position[2]) <= 4.35 && position[1] >= 2.2 && position[1] <= 4.65, 'Camera stays inside bounds');
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   assert.deepEqual(errors, []);
   await writeFile('room-preview/result.json', JSON.stringify({ passed: true, coinsAfterTreadmill: reloaded.coins, object: reloaded.rooms.sport.objects[0], allSix: furnished.rooms.sport.objects, coinsAfterAllSix: furnished.coins, errors }, null, 2));

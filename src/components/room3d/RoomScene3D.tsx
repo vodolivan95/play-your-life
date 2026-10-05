@@ -4,7 +4,8 @@ import { ContactShadows, PerformanceMonitor, useProgress } from '@react-three/dr
 import { ACESFilmicToneMapping, SRGBColorSpace } from 'three';
 import type { ObjectId, RoomId, RoomObject, Vec3 } from '../../roomEngine';
 import RoomEnvironment from './RoomEnvironment';
-import RoomLighting, { roomLighting } from './RoomLighting';
+import RoomLighting from './RoomLighting';
+import { roomLighting } from './lightingPresets';
 import RoomCamera from './RoomCamera';
 import type { CameraPreset } from './RoomCamera';
 import RoomItemRenderer from './RoomItemRenderer';
@@ -20,11 +21,15 @@ type Props = {
 };
 function Rendering({ time }: { time: RoomTime }) {
   const { gl, invalidate } = useThree();
+  // WebGL renderer and canvas dataset are imperative Three/DOM resources.
+  // eslint-disable-next-line react-hooks/immutability
   useEffect(() => { gl.outputColorSpace = SRGBColorSpace; gl.toneMapping = ACESFilmicToneMapping; gl.toneMappingExposure = time === 'day' ? 1 : time === 'night' ? .95 : 1.05; invalidate(); }, [gl, invalidate, time]);
   return null;
 }
 function Ready({ onReady }: { onReady: (value: boolean) => void }) {
   const { gl } = useThree();
+  // WebGL renderer and canvas dataset are imperative Three/DOM resources.
+  // eslint-disable-next-line react-hooks/immutability
   useEffect(() => { gl.domElement.dataset.ready = 'true'; onReady(true); }, [gl, onReady]);
   return null;
 }

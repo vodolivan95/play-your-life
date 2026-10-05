@@ -28,6 +28,8 @@ function surface(kind: 'stone' | 'wood', normal = false) {
 }
 function Skyline({ time }: { time: RoomTime }) {
   const texture = useTexture(`${import.meta.env.BASE_URL}environments/sport-city${time === 'sunset' ? '' : `-${time}`}.jpg`);
+  // Three textures are imperative GPU resources, not React state.
+  // eslint-disable-next-line react-hooks/immutability
   useEffect(() => { texture.colorSpace = SRGBColorSpace; }, [texture]);
   return <mesh position={[0, 9, -27]}>
     <planeGeometry args={[96, 48]} />
@@ -39,7 +41,7 @@ export default function RoomEnvironment({ time, quality }: { time: RoomTime; qua
   useEffect(() => () => Object.values(maps).forEach(texture => texture.dispose()), [maps]);
   const block = (pos: Vec3, scale: Vec3, color = '#222b31', metalness = .5, roughness = .45) => <mesh position={pos} scale={scale} castShadow receiveShadow><boxGeometry /><meshStandardMaterial color={color} metalness={metalness} roughness={roughness} /></mesh>;
   return <group>
-    <Environment resolution={quality === 'low' ? 64 : 128} frames={1}>
+    <Environment key={time} resolution={quality === 'low' ? 64 : 128} frames={1}>
       <Lightformer position={[0, 4, -8]} scale={[12, 5, 1]} intensity={time === 'night' ? .5 : 2} color={time === 'day' ? '#dceeff' : '#ffba80'} />
       <Lightformer position={[-8, 2, 0]} rotation={[0, Math.PI / 2, 0]} scale={[8, 4, 1]} intensity={1.5} color="#ffcf99" />
       <Lightformer position={[6, 2, 0]} rotation={[0, -Math.PI / 2, 0]} scale={[8, 4, 1]} intensity={1} color="#94c9e5" />

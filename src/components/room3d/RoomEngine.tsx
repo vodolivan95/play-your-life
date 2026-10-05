@@ -110,6 +110,7 @@ export default function RoomEngine({ state, onChange, onBack, roomId = 'sport', 
             const owned = room.purchased.includes(item.id), installed = room.objects.find(object => object.id === item.id), locked = level < item.level;
             return <article key={item.id}><div><h3>{item.name}</h3><p>{sheet === 'shop' ? `LVL ${item.level} · ${item.price} Coins` : installed ? 'Установлен в комнате' : 'В инвентаре'}</p></div>
               {sheet === 'shop' ? <button disabled={owned || locked || state.coins < item.price} onClick={() => apply(current => purchaseRoomObject(current, roomId, item.id), `${item.name} куплен. Открой инвентарь для установки.`)}>{owned ? 'Куплено' : locked ? `Нужен LVL ${item.level}` : 'Купить'}</button> : <button onClick={() => start(item.id, installed)}>{installed ? 'Переместить' : 'Установить'}</button>}
+              {sheet === 'inventory' && installed && <button onClick={() => apply(current => removeRoomObject(current, roomId, item.id), 'Предмет возвращён в инвентарь.')}>Убрать</button>}
             </article>;
           })}
           {sheet === 'inventory' && !room.purchased.length && <p>Пока пусто. Купи первый предмет в магазине.</p>}

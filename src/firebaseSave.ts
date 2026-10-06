@@ -185,12 +185,12 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
         lastCommittedState = savedState;
         return true;
       }
-      // Security Rules validate at most three changed definitions per transaction.
+      // Keep each reward transaction within the Security Rules expression limit.
       // Split migration and offline queues without dropping any queued action.
       const seeds = recordChanges(records, seed);
-      for (let i = 0; i < seeds.length; i += 3) {
+      for (let i = 0; i < seeds.length; i += 1) {
         const chunk = { ...records };
-        for (const id of seeds.slice(i, i + 3)) chunk[id] = seed[id];
+        for (const id of seeds.slice(i, i + 1)) chunk[id] = seed[id];
         if (!(await commit(chunk, before))) return null;
       }
       const wanted = economyRecords(state, records);
@@ -204,9 +204,9 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
             wanted[id].sphere !== records[id].sphere ||
             wanted[id].item !== records[id].item),
       );
-      for (let i = 0; i < edits.length; i += 3) {
+      for (let i = 0; i < edits.length; i += 1) {
         const chunk = { ...records };
-        for (const id of edits.slice(i, i + 3))
+        for (const id of edits.slice(i, i + 1))
           chunk[id] = {
             ...records[id],
             coins: wanted[id].coins,
@@ -225,7 +225,7 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
       let changes = recordChanges(records, wanted);
       while (changes.length) {
         const chunk = { ...records };
-        for (const id of changes.slice(0, 3)) {
+        for (const id of changes.slice(0, 1)) {
           const old = records[id],
             next = wanted[id];
           if (next.type === "habit") {

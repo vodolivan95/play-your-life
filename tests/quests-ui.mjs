@@ -17,26 +17,30 @@ const server = spawn(
 );
 let browser;
 try {
-  await new Promise((resolve, reject) => {
-    let errors = "";
-    const timer = setTimeout(
-      () => reject(new Error("Vite не запустился: " + errors)),
-      10000,
-    );
-    server.stderr.on("data", (data) => {
-      errors += String(data);
-    });
-    server.stdout.on("data", (data) => {
-      if (String(data).includes("http://127.0.0.1:5174")) {
-        clearTimeout(timer);
-        resolve();
-      }
-    });
-    server.on("exit", (code) => {
-      clearTimeout(timer);
-      reject(new Error("Vite завершился " + code + ": " + errors));
-    });
+  let serverOutput = "";
+  server.stdout.on("data", (data) => {
+    serverOutput += String(data);
   });
+  server.stderr.on("data", (data) => {
+    serverOutput += String(data);
+  });
+  const deadline = Date.now() + 30000;
+  let ready = false;
+  while (Date.now() < deadline && server.exitCode === null) {
+    try {
+      const response = await fetch("http://127.0.0.1:5174/", {
+        signal: AbortSignal.timeout(1000),
+      });
+      if (response.ok) {
+        ready = true;
+        break;
+      }
+    } catch {
+      /* Vite is still starting. */
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  assert.ok(ready, "Vite не запустился: " + serverOutput);
 
   browser = await chromium.launch({
     executablePath: process.env.LIFEGAME_CHROMIUM_PATH || undefined,

@@ -6,7 +6,6 @@ service cloud.firestore {
       function oldRecords() { return resource.data.get('economyRecords', {}); }
       function newRecords() { return request.resource.data.get('economyRecords', {}); }
       function changes() { return request.resource.data.get('recordChanges', []); }
-      function oldRecord(id) { return oldRecords().get(id, {}); }
       function validRecord(r) {
         return r.keys().hasOnly(['type','coins','xp','item','sphere','locked','completed','progress','claims','offset','weekdays','active','createdDay'])
           && r.keys().hasAll(['type','coins','xp','item','sphere','locked','completed','progress','claims','offset','weekdays','active','createdDay'])
@@ -73,35 +72,33 @@ service cloud.firestore {
         return !paid || (next.coins == old.coins && next.xp == old.xp && next.sphere == old.sphere && next.item == old.item && id in proofs && (next.type == 'quest'
           ? questProof(id,next,proofs[id]) : habitProof(id,next,proofs[id],proofs[id].claimDay)));
       }
-      function validAt(i) {
-        let exists = i < changes().size();
-        let id = exists ? changes()[i] : '';
-        let next = exists ? newRecords()[id] : {};
-        let old = oldRecord(id);
-        return !exists || (validRecord(next) && (old.size() == 0
+      function validChange(id, old, next) {
+        return validRecord(next) && (old.size() == 0
           ? next.claims.size() == 0
           : (next.type == old.type && next.createdDay == old.createdDay && next.offset == old.offset
             && (!old.locked || (next.locked && next.coins == old.coins && next.xp == old.xp && next.item == old.item && next.sphere == old.sphere))
             && (!old.completed || next.completed) && next.progress >= old.progress
             && (next.progress == 0 || next.locked)
-            && (next.type == 'quest' || validHabitClaims(id, old, next)) && validProof(id,old,next))));
+            && (next.type == 'quest' || validHabitClaims(id, old, next)) && validProof(id,old,next)));
       }
-      function incomeAt(i) {
-        let exists = i < changes().size();
-        let id = exists ? changes()[i] : '';
-        let next = exists ? newRecords()[id] : {};
-        let old = oldRecord(id);
-        return !exists || old.size() == 0 ? 0 : (next.type == 'quest'
+      function income(old, next) {
+        return old.size() == 0 ? 0 : (next.type == 'quest'
           ? (!old.completed && next.completed ? old.coins : 0)
           : (next.claims.size() - old.claims.size()) * old.coins);
       }
       function economyValid() {
-        return oldRecords() is map && newRecords() is map && changes() is list
-          && changes().size() <= 3 && changes().toSet().size() == changes().size()
-          && newRecords().keys().hasAll(oldRecords().keys())
-          && newRecords().diff(oldRecords()).affectedKeys() == changes().toSet()
-          && validAt(0) && validAt(1) && validAt(2)
-          && request.resource.data.state.coins <= resource.data.state.coins + incomeAt(0) + incomeAt(1) + incomeAt(2);
+        let previous = oldRecords();
+        let next = newRecords();
+        let changed = changes();
+        let id = changed.size() == 1 ? changed[0] : '';
+        let prior = previous.get(id, {});
+        let updated = next.get(id, {});
+        return previous is map && next is map && changed is list
+          && changed.size() <= 1
+          && next.keys().hasAll(previous.keys())
+          && next.diff(previous).affectedKeys() == changed.toSet()
+          && (changed.size() == 0 || validChange(id,prior,updated))
+          && request.resource.data.state.coins <= resource.data.state.coins + (changed.size() == 0 ? 0 : income(prior,updated));
       }
       function valid() {
         return request.resource.data.keys().hasOnly(['state','revision','updatedAt','economyRecords','recordChanges','rewardProofs'])

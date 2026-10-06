@@ -1,5 +1,6 @@
 import { SPHERE_PROGRESSION_MODEL, MAX_SPHERE_LEVEL, sphereProgress } from './sphereProgress.ts';
 import { validateState } from './stateValidation.ts';
+import { questCoins, recordQuestReward } from './personalQuests.ts';
 export const spheres = [
   {
     id: 'health',
@@ -99,6 +100,18 @@ export const streakRewards: Record<number, number> = {
   365: 1000,
 };
 export type Quest = {
+  sourceType?: 'SYSTEM' | 'USER_CREATED';
+  ownerId?: string;
+  createdAt?: string;
+  coverImage?: string;
+  targetValue?: number;
+  currentValue?: number;
+  unit?: string;
+  rewardCoins?: number;
+  virtualRewardId?: string;
+  rewardClaimed?: boolean;
+  rewardClaimedAt?: string;
+  rewardLocked?: boolean;
   id: string;
   name: string;
   sphere: string;
@@ -145,12 +158,13 @@ export type SphereState = {
   previousScore: number;
 };
 export type Event = {
+  sourceId?: string;
   id: string;
   sphere: string;
   title: string;
   xp: number;
   date: string;
-  kind?: 'quest' | 'score' | 'goal' | 'streak';
+  kind?: 'quest' | 'habit' | 'score' | 'goal' | 'streak';
   scoreBefore?: number;
   scoreAfter?: number;
 };
@@ -164,6 +178,10 @@ export type MonthReflection = {
   updatedAt: string;
 };
 export type GameState = {
+  habits?: import('./personalQuests').Habit[];
+  habitCompletions?: import('./personalQuests').HabitCompletion[];
+  coinTransactions?: import('./personalQuests').CoinTransaction[];
+  rewardInventory?: import('./personalQuests').RewardItem[];
   rooms?: Partial<Record<import('./roomEngine').RoomId, import('./roomEngine').RoomData>>;
   cityPurchases?: import('./city').CityPurchase[];
   sphereProgressionModel?: typeof SPHERE_PROGRESSION_MODEL;
@@ -420,7 +438,7 @@ export function award(
   sphere: string,
   xp: number,
   title: string,
-  details: Pick<Event, 'kind' | 'scoreBefore' | 'scoreAfter'> = {},
+  details: Pick<Event, 'kind' | 'scoreBefore' | 'scoreAfter' | 'sourceId'> = {},
 ): GameState {
   return {
     ...state,
@@ -444,20 +462,26 @@ export function award(
 }
 export function completeQuest(state: GameState, id: string): GameState {
   const quest = state.quests.find((q) => q.id === id);
-  if (!quest || quest.done) return state;
-  let next = award(state, quest.sphere, quest.xp, quest.name, {
+  if (!quest || quest.done || quest.rewardClaimed) return state;
+  if (quest.sourceType === 'USER_CREATED' && quest.startsAt && new Date(quest.startsAt) > new Date()) return state;
+  const coins = questCoins(quest);
+  const xp = quest.sourceType === 'USER_CREATED' ? difficulties[quest.difficulty as keyof typeof difficulties] : quest.xp;
+  if (!Number.isFinite(xp) || xp < 0) throw new Error('Некорректная награда XP.');
+  let next = award(state, quest.sphere, xp, quest.name, {
     kind: 'quest',
+    sourceId: quest.id,
   });
   next = {
     ...next,
     completed: next.completed + 1,
-    coins: next.coins + Math.ceil(quest.xp / 5),
+    coins: next.coins + coins,
     quests: next.quests.map((q) =>
       q.id === id
-        ? { ...q, done: true, completedAt: new Date().toISOString() }
+        ? { ...q, done: true, currentValue: q.targetValue ?? 1, completedAt: new Date().toISOString(), rewardClaimed: true, rewardClaimedAt: new Date().toISOString(), rewardLocked: true }
         : q,
     ),
   };
+  next = recordQuestReward(next, quest, coins);
   const today = dateKey();
   if (!next.activeDates.includes(today))
     next.activeDates = [...next.activeDates, today];

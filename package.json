@@ -14,7 +14,8 @@
     "lint": "eslint .",
     "check": "npm run lint && npm run build",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
-    "city:models": "node scripts/build-city-models.mjs"
+    "city:models": "node scripts/build-city-models.mjs",
+    "test:quests-ui": "node tests/quests-ui.mjs"
   },
   "dependencies": {
     "firebase": "12.19.0",

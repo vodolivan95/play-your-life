@@ -29,3 +29,20 @@ jobs:
       - run: npm ci
       - name: Check Firestore isolation with emulator
         run: npx --yes --package firebase-tools@15.32.1 firebase emulators:exec --only firestore --project demo-play-your-life "node --experimental-strip-types --test tests/firebase-rules.test.mjs"
+
+  quests-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:quests-ui
+      - name: Save mobile and desktop previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quests-previews
+          path: work/quests-*.png

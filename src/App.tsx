@@ -8,7 +8,7 @@ import SidebarReference from './components/SidebarReference';
 import citySidebarImage from './assets/life-city.webp';
 import { CityAppearanceContext } from './cityAppearanceContext';
 import { useEffect, useRef, useState } from 'react';
-import type { CSSProperties, FormEvent, Dispatch, SetStateAction, ReactNode } from 'react';
+import type { CSSProperties, Dispatch, SetStateAction, ReactNode } from 'react';
 import Icon from './components/Icon';
 import LifeCity from './components/LifeCity';
 import GameArt from './components/GameArt';
@@ -35,11 +35,9 @@ import {
   achievements,
   completeQuest,
   dateKey,
-  difficulties,
   loadState,
   getStorageProblem,
   clearStorageProblem,
-  questsForToday,
   playerProgress,
   spheres,
   streak,
@@ -47,6 +45,9 @@ import {
   removeQuest,
 } from './game';
 import type { Quest, GameState } from './game';
+import QuestBoard from './components/QuestBoard';
+import QuestWizard from './components/QuestWizard';
+import { saveCustomQuest, saveHabit } from './personalQuests';
 
 const navigation = [
   { id: 'home', label: 'Главная', icon: 'home' },
@@ -129,16 +130,11 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
     if (userId && state.profile.onboardingComplete)
       queueMicrotask(() => setModal(current => current === 'start' ? null : current));
   }, [userId, state.profile.onboardingComplete]);
-  const [filter, setFilter] = useState('today');
   const [achievementFilter, setAchievementFilter] = useState('all');
   const [treeView, setTreeView] = useState('map');
   const [sphereTab, setSphereTab] = useState('projects');
-  const [questDifficulty, setQuestDifficulty] = useState('Simple');
   const [questSphere, setQuestSphere] = useState('english');
-  const [questTemplate, setQuestTemplate] = useState<{
-    name: string;
-    sphere: string;
-  } | null>(null);
+  const [questTemplate, setQuestTemplate] = useState<Partial<Quest> | null>(null);
   const [toast, setToast] = useState('');
   const [storageError, setStorageError] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -162,7 +158,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
     };
   }, []);
   useEffect(() => {
-    if (modal) dialog.current?.showModal();
+    if (modal && modal !== 'quest') dialog.current?.showModal();
     else dialog.current?.close();
   }, [modal]);
   useEffect(
@@ -192,7 +188,6 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   }
   const unlocked = achievements.filter((a) => a.unlocked(state)).length;
   const active = state.quests.filter((q) => !q.done);
-  const todayTasks = questsForToday(state, new Date(`${today}T12:00:00`));
   const {
     level: currentLevel,
     progress: levelProgress,
@@ -200,7 +195,6 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   } = playerProgress(state);
   function newQuest() {
     setQuestTemplate(null);
-    setQuestDifficulty('Simple');
     setQuestSphere(selected || 'english');
     setModal('quest');
   }
@@ -275,36 +269,6 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
       <Progress value={p.progress} color={info.color} label={ 'XP: ' + info.name }/>
       <div className="overview-project-counts">{sphereCount(state.goals.filter(g => g.sphere === id).length,'projects')} <span>|</span> {sphereCount(state.quests.filter(q => q.sphere === id).length,'tasks')}</div>
     </button>;
-  }
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const name = String(data.get('name')).trim();
-    if (!name) return;
-    const id = crypto.randomUUID();
-    const sphereId = String(data.get('sphere'));
-    if (modal === 'quest') {
-      const difficulty = String(
-        data.get('difficulty'),
-      ) as keyof typeof difficulties;
-      setState((s) => ({
-        ...s,
-        quests: [
-          ...s.quests,
-          {
-            id,
-            name,
-            sphere: sphereId,
-            xp: difficulties[difficulty],
-            difficulty,
-            notes: String(data.get('notes') || '').trim(),
-            done: false,
-          },
-        ],
-      }));
-      notify('Новый квест готов. Вперёд!');
-    }
-    setModal(null);
   }
   return (
     <TickTickContext.Provider value={tickTick}>
@@ -692,108 +656,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 </button>
               </div>
             )}
-            {page === 'quests' && (
-              <>
-                <div className="page-toolbar">
-                  <div className="tabs">
-                    {[
-                      ['today', 'Сегодня'],
-                      ['all', 'Все'],
-                      ['active', 'Активные'],
-                      ['done', 'Выполненные'],
-                    ].map(([id, label]) => (
-                      <button
-                        key={id}
-                        className={filter === id ? 'selected' : ''}
-                        onClick={() => setFilter(id)}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <section className="panel">
-                  {(filter === 'today' ? todayTasks : state.quests)
-                    .filter(
-                      (q) =>
-                        filter === 'all' ||
-                        (filter === 'today'
-                          ? todayTasks.some((t) => t.id === q.id)
-                          : filter === 'done'
-                            ? q.done
-                            : !q.done),
-                    )
-                    .map((q) => (
-                      <QuestRow key={q.id} quest={q} removable />
-                    ))}
-                  {!state.quests.some(
-                    (q) =>
-                      filter === 'all' ||
-                      (filter === 'today'
-                        ? todayTasks.some((t) => t.id === q.id)
-                        : filter === 'done'
-                          ? q.done
-                          : !q.done),
-                  ) && (
-                    <div className="empty">
-                      <span>✨</span>
-                      <h3>Здесь пока нет квестов</h3>
-                      <p>Каждое приключение начинается с первого шага.</p>
-                    </div>
-                  )}
-                </section>
-                <button className="primary-button" onClick={newQuest}>
-                  <Icon name="plus" size={18} /> Новый квест
-                </button>
-                <section className="quest-templates">
-                  <div className="section-heading">
-                    <h2>Шаблоны квестов</h2>
-                    <span className="muted">Выбери первый шаг</span>
-                  </div>
-                  {[
-                    { name: 'Медитация 10 минут', sphere: 'health', xp: 10 },
-                    { name: 'Изучение нового слова', sphere: 'english', xp: 5 },
-                    { name: 'Прочитать 20 страниц', sphere: 'growth', xp: 20 },
-                  ].map((t) => (
-                    <button
-                      className="template-row"
-                      key={t.name}
-                      onClick={() => {
-                        setQuestTemplate(t);
-                        setQuestSphere(t.sphere);
-                        setQuestDifficulty(
-                          t.xp === 5
-                            ? 'Micro'
-                            : t.xp === 10
-                              ? 'Simple'
-                              : 'Medium',
-                        );
-                        setModal('quest');
-                      }}
-                    >
-                      <span>
-                        <GameArt kind={t.sphere} />
-                      </span>
-                      <div>
-                        <strong>{t.name}</strong>
-                        <small>
-                          {spheres.find((sp) => sp.id === t.sphere)?.name}
-                        </small>
-                      </div>
-                      <b>+{t.xp} XP</b>
-                      <Icon name="arrow" size={14} />
-                    </button>
-                  ))}
-                </section>
-                <div className="difficulty-legend">
-                  {Object.entries(difficulties).map(([name, xp]) => (
-                    <span key={name}>
-                      {name} <b>+{xp} XP</b>
-                    </span>
-                  ))}
-                </div>
-              </>
-            )}
+            {page === 'quests' && <QuestBoard state={state} onChange={setState} ownerId={userId ?? 'local'} today={today} notify={notify} onCreate={q => { setQuestTemplate(q ?? null); setQuestSphere(q?.sphere ?? 'health'); setModal('quest'); }} />}
             {page === 'goals' && (
               <GoalsBoard
                 state={state}
@@ -1132,84 +995,10 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                   Пропущенный день начинает новую серию.
                 </p>
               </>
-            ) : modal === 'quest' ? (
-              <form onSubmit={submit}>
-                <div className="eyebrow">НОВЫЙ ШАГ ВПЕРЁД</div>
-                <h2>Создать квест</h2>
-                <label>
-                  Название
-                  <input
-                    autoFocus
-                    name="name"
-                    defaultValue={questTemplate?.name ?? ''}
-                    required
-                    maxLength={100}
-                    placeholder={
-                      modal === 'quest'
-                        ? 'Что сделаешь сегодня?'
-                        : 'О чём ты мечтаешь?'
-                    }
-                  />
-                </label>
-                <label className="quest-sphere-field">
-                  Сфера жизни
-                  <span className="quest-field-art">
-                    <GameArt kind={questSphere} />
-                  </span>
-                  <select
-                    name="sphere"
-                    value={questSphere}
-                    onChange={(e) => setQuestSphere(e.target.value)}
-                  >
-                    {spheres.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Описание (необязательно)
-                  <textarea
-                    name="notes"
-                    placeholder="Короткое описание квеста"
-                    maxLength={2000}
-                  />
-                </label>
-                <fieldset className="difficulty-picker">
-                  <legend>Сложность</legend>
-                  {Object.entries(difficulties).map(([name, xp]) => (
-                    <label
-                      key={name}
-                      className={questDifficulty === name ? 'selected' : ''}
-                    >
-                      <input
-                        type="radio"
-                        name="difficulty"
-                        value={name}
-                        checked={questDifficulty === name}
-                        onChange={() => setQuestDifficulty(name)}
-                      />
-                      <strong>{name}</strong>
-                      <span>{xp} XP</span>
-                    </label>
-                  ))}
-                </fieldset>
-                <div className="quest-xp-preview">
-                  <small>XP за выполнение</small>
-                  <b>
-                    ⚡{' '}
-                    {difficulties[questDifficulty as keyof typeof difficulties]}{' '}
-                    XP
-                  </b>
-                </div>
-                <button className="primary-button submit-button" type="submit">
-                  Добавить квест <Icon name="arrow" size={18} />
-                </button>
-              </form>
             ) : null}
           </div>
         </dialog>
+        {modal === 'quest' && <QuestWizard initial={{ sphere: questSphere, ...questTemplate }} onClose={closeModal} onQuest={q => { const next = saveCustomQuest(state, q, userId ?? 'local'); setState(next); notify('Новый квест готов. Вперёд!'); }} onHabit={h => setState(saveHabit(state, h, userId ?? 'local'))} />}
         {toast && (
           <div className="toast" role="status">
             <span>✦</span>

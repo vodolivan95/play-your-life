@@ -3,23 +3,123 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /players/{userId} {
       function owner() { return request.auth != null && request.auth.uid == userId; }
+      function oldRecords() { return resource.data.get('economyRecords', {}); }
+      function newRecords() { return request.resource.data.get('economyRecords', {}); }
+      function changes() { return request.resource.data.get('recordChanges', []); }
+      function oldRecord(id) { return oldRecords().get(id, {}); }
+      function validRecord(r) {
+        return r.keys().hasOnly(['type','coins','xp','item','sphere','locked','completed','progress','claims','offset','weekdays','active','createdDay'])
+          && r.keys().hasAll(['type','coins','xp','item','sphere','locked','completed','progress','claims','offset','weekdays','active','createdDay'])
+          && r.type in ['quest','habit'] && r.coins is int && r.coins >= 0
+          && r.xp is int && r.xp in [5,10,20,35,50]
+          && r.item in ['', 'plant_basic','book_basic','cup_basic','crown_basic','key_basic','medal_basic']
+          && r.sphere in ['health','sport','growth','english','finance','together','driving','tasks','hobby']
+          && r.locked is bool && r.completed is bool && r.active is bool
+          && r.progress is number && r.progress >= 0 && (r.progress == 0 || r.locked) && r.claims is map
+          && r.offset is int && r.offset >= -720 && r.offset <= 840
+          && r.createdDay is int && r.createdDay >= 0
+          && r.weekdays is list && r.weekdays.toSet().size() == r.weekdays.size()
+          && r.weekdays.hasOnly([0,1,2,3,4,5,6])
+          && (r.type == 'quest'
+            ? (r.coins <= 100 && r.claims.size() == 0 && r.weekdays.size() == 0 && r.offset == 0 && r.createdDay == 0 && (!r.completed || r.locked))
+            : (r.coins <= 10 && r.xp == 5 && r.item == '' && !r.completed && r.progress == 0 && r.weekdays.size() > 0 && (r.claims.size() == 0 || r.locked)));
+      }
+      function validHabitClaims(id, old, next) {
+        let added = next.claims.diff(old.claims).affectedKeys();
+        let day = request.resource.data.get('rewardProofs', {}).get(id, {}).get('claimDay', '0');
+        return next.claims.keys().hasAll(old.claims.keys())
+          && next.claims.diff(old.claims).changedKeys().size() == 0
+          && added.size() <= 1
+          && (added.size() == 0 || (added.hasOnly([day]) && next.active && next.claims[day] == true
+            && day == string(int(day)) && int(day) >= next.createdDay
+            && int(day) <= int((request.time.toMillis() + next.offset * 60000) / 86400000)
+            && next.weekdays.hasAny([(int(day) + 4) % 7])));
+      }
+      function questXp(d) {
+        return d == 'Micro' ? 5 : d == 'Simple' ? 10 : d == 'Medium' ? 20 : d == 'Hard' ? 35 : d == 'Very Hard' ? 50 : -1;
+      }
+      function receipt(r, p, claimId, sourceId, kind) {
+        let ledger = request.resource.data.state.get('coinTransactions', []);
+        let t = p.receiptIndex >= 0 && p.receiptIndex < ledger.size() ? ledger[p.receiptIndex] : {};
+        return t.size() > 0 && t.transactionId == claimId && t.userId == userId
+          && t.sourceId == sourceId && t.amount == r.coins && t.type == kind;
+      }
+      function questProof(id, r, p) {
+        let qs = request.resource.data.state.quests;
+        let q = p.sourceIndex >= 0 && p.sourceIndex < qs.size() ? qs[p.sourceIndex] : {};
+        return q.size() > 0 && id == 'quest:' + q.id && q.get('ownerId', userId) == userId
+          && q.done && q.rewardClaimed && q.completedAt is string && q.rewardClaimedAt is string
+          && q.sphere == r.sphere && q.xp == r.xp
+          && (q.get('sourceType','SYSTEM') != 'USER_CREATED' || q.xp == questXp(q.difficulty)) && q.get('virtualRewardId','') == r.item
+          && r.coins == (q.get('sourceType','SYSTEM') == 'USER_CREATED' ? q.rewardCoins : int((q.xp + 4) / 5))
+          && receipt(r,p,id,q.id,'QUEST_REWARD');
+      }
+      function habitProof(id, r, p, day) {
+        let hs = request.resource.data.state.get('habits', []);
+        let cs = request.resource.data.state.get('habitCompletions', []);
+        let h = p.sourceIndex >= 0 && p.sourceIndex < hs.size() ? hs[p.sourceIndex] : {};
+        let c = p.completionIndex >= 0 && p.completionIndex < cs.size() ? cs[p.completionIndex] : {};
+        return h.size() > 0 && c.size() > 0 && id == 'habit:' + h.id && h.ownerId == userId
+          && h.sphere == r.sphere && h.rewardCoins == r.coins && h.rewardXp == 5
+          && h.isActive && h.rewardLocked && h.weekdays == r.weekdays && h.timezoneMinutes == r.offset
+          && c.value == h.targetValue && c.habitId == h.id && c.ownerId == userId && c.dayOrdinal == int(day) && c.rewardClaimed
+          && c.id == 'habit:' + h.id + ':' + c.day && c.rewardClaimedAt is string
+          && receipt(r,p,c.id,h.id,'HABIT_REWARD');
+      }
+      function validProof(id, old, next) {
+        let days = next.claims.diff(old.claims).addedKeys();
+        let paid = next.type == 'quest' ? !old.completed && next.completed : days.size() > 0;
+        let proofs = request.resource.data.get('rewardProofs', {});
+        return !paid || (next.coins == old.coins && next.xp == old.xp && next.sphere == old.sphere && next.item == old.item && id in proofs && (next.type == 'quest'
+          ? questProof(id,next,proofs[id]) : habitProof(id,next,proofs[id],proofs[id].claimDay)));
+      }
+      function validAt(i) {
+        let exists = i < changes().size();
+        let id = exists ? changes()[i] : '';
+        let next = exists ? newRecords()[id] : {};
+        let old = oldRecord(id);
+        return !exists || (validRecord(next) && (old.size() == 0
+          ? next.claims.size() == 0
+          : (next.type == old.type && next.createdDay == old.createdDay && next.offset == old.offset
+            && (!old.locked || (next.locked && next.coins == old.coins && next.xp == old.xp && next.item == old.item && next.sphere == old.sphere))
+            && (!old.completed || next.completed) && next.progress >= old.progress
+            && (next.progress == 0 || next.locked)
+            && (next.type == 'quest' || validHabitClaims(id, old, next)) && validProof(id,old,next))));
+      }
+      function incomeAt(i) {
+        let exists = i < changes().size();
+        let id = exists ? changes()[i] : '';
+        let next = exists ? newRecords()[id] : {};
+        let old = oldRecord(id);
+        return !exists || old.size() == 0 ? 0 : (next.type == 'quest'
+          ? (!old.completed && next.completed ? old.coins : 0)
+          : (next.claims.size() - old.claims.size()) * old.coins);
+      }
+      function economyValid() {
+        return oldRecords() is map && newRecords() is map && changes() is list
+          && changes().size() <= 3 && changes().toSet().size() == changes().size()
+          && newRecords().keys().hasAll(oldRecords().keys())
+          && newRecords().diff(oldRecords()).affectedKeys() == changes().toSet()
+          && validAt(0) && validAt(1) && validAt(2)
+          && request.resource.data.state.coins <= resource.data.state.coins + incomeAt(0) + incomeAt(1) + incomeAt(2);
+      }
       function valid() {
-        return request.resource.data.keys().hasOnly(['state', 'revision', 'updatedAt'])
-          && request.resource.data.keys().hasAll(['state', 'revision', 'updatedAt'])
+        return request.resource.data.keys().hasOnly(['state','revision','updatedAt','economyRecords','recordChanges','rewardProofs'])
+          && request.resource.data.keys().hasAll(['state','revision','updatedAt'])
           && request.resource.data.state is map
           && request.resource.data.state.profile.mode == 'personal'
           && request.resource.data.state.xp is int && request.resource.data.state.xp >= 0
           && request.resource.data.state.coins is int && request.resource.data.state.coins >= 0
-          && request.resource.data.revision is int
-          && request.resource.data.updatedAt == request.time;
+          && request.resource.data.revision is int && request.resource.data.updatedAt == request.time;
       }
       allow get: if owner();
       allow list, delete: if false;
       allow create: if owner() && valid() && request.resource.data.revision == 1
-        && request.resource.data.state.xp == 0 && request.resource.data.state.coins == 0;
+        && request.resource.data.state.xp == 0 && request.resource.data.state.coins == 0
+        && request.resource.data.get('economyRecords', {}).size() == 0
+        && request.resource.data.get('recordChanges', []).size() == 0;
       allow update: if owner() && valid()
-        && request.resource.data.revision == resource.data.revision + 1;
+        && request.resource.data.revision == resource.data.revision + 1 && economyValid();
     }
   }
 }
-

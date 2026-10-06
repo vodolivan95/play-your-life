@@ -4,6 +4,7 @@ import { newAccountGame } from "../src/accountGame.ts";
 import { completeQuest } from "../src/game.ts";
 import { backupText, restoreBackup } from "../src/backup.ts";
 import {
+  checkCoins,
   completeHabit,
   habitDay,
   habitStreak,
@@ -69,6 +70,7 @@ test("персональный квест, цель, независимые XP/c
   assert.ok(placed.rooms!.sport!.purchased.includes("plant"));
 });
 test("границы Coins, произвольные XP, предметы, ownership и испорченные копии", () => {
+  assert.equal(Object.is(checkCoins(-0, 100), -0), false);
   for (const coins of [-1, 101, 1.5, NaN, Infinity])
     assert.throws(() => quest(coins));
   for (const coins of [0, 100])

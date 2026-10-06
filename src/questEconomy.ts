@@ -80,7 +80,7 @@ export function economyRecords(
       completed: false,
       progress: 0,
       claims,
-      offset: h.timezoneMinutes,
+      offset: h.timezoneMinutes || 0,
       weekdays: h.weekdays,
       active: h.isActive,
       createdDay: Math.floor(

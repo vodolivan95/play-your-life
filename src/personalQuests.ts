@@ -84,7 +84,7 @@ export function checkCoins(value: number, max: number) {
     throw new Error(
       `Награда должна быть целым числом от 0 до ${max} Life Coins.`,
     );
-  return value;
+  return value === 0 ? 0 : value;
 }
 export function questCoins(q: Quest) {
   return q.sourceType === "USER_CREATED"
@@ -340,7 +340,8 @@ export function saveHabit(
     throw new Error("Награда и сфера зафиксированы после первого выполнения.");
   const h: Habit = {
     ...old,
-    timezoneMinutes: old?.timezoneMinutes ?? -new Date().getTimezoneOffset(),
+    timezoneMinutes:
+      (old?.timezoneMinutes ?? -new Date().getTimezoneOffset()) || 0,
     id: old?.id ?? crypto.randomUUID(),
     ownerId,
     title: input.title.trim(),

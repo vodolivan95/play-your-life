@@ -23,9 +23,8 @@ service cloud.firestore {
             ? (r.coins <= 100 && r.claims.size() == 0 && r.weekdays.size() == 0 && r.offset == 0 && r.createdDay == 0 && (!r.completed || r.locked))
             : (r.coins <= 10 && r.xp == 5 && r.item == '' && !r.completed && r.progress == 0 && r.weekdays.size() > 0 && (r.claims.size() == 0 || r.locked)));
       }
-      function validHabitClaims(id, old, next) {
+      function validHabitClaims(old, next, day) {
         let added = next.claims.diff(old.claims).affectedKeys();
-        let day = request.resource.data.get('rewardProofs', {}).get(id, {}).get('claimDay', '0');
         return next.claims.keys().hasAll(old.claims.keys())
           && next.claims.diff(old.claims).changedKeys().size() == 0
           && added.size() <= 1
@@ -72,14 +71,26 @@ service cloud.firestore {
         return !paid || (next.coins == old.coins && next.xp == old.xp && next.sphere == old.sphere && next.item == old.item && id in proofs && (next.type == 'quest'
           ? questProof(id,next,proofs[id]) : habitProof(id,next,proofs[id],proofs[id].claimDay)));
       }
+      function habitReward(id, old, next) {
+        let proof = request.resource.data.get('rewardProofs', {}).get(id, {});
+        let day = proof.get('claimDay', '0');
+        // The previously validated definition is immutable during a payout.
+        // Revalidating every definition field here exceeds the expression budget.
+        return old.type == 'habit'
+          && next.diff(old).affectedKeys().hasOnly(['locked','claims','weekdays','active'])
+          && next.locked && next.active
+          && next.weekdays is list && next.weekdays.size() > 0
+          && next.weekdays.hasOnly([0,1,2,3,4,5,6]) && next.weekdays.toSet().size() == next.weekdays.size()
+          && validHabitClaims(old,next,day) && habitProof(id,next,proof,day);
+      }
       function validChange(id, old, next) {
-        return validRecord(next) && (old.size() == 0
-          ? next.claims.size() == 0
-          : (next.type == old.type && next.createdDay == old.createdDay && next.offset == old.offset
-            && (!old.locked || (next.locked && next.coins == old.coins && next.xp == old.xp && next.item == old.item && next.sphere == old.sphere))
-            && (!old.completed || next.completed) && next.progress >= old.progress
-            && (next.progress == 0 || next.locked)
-            && (next.type == 'quest' || validHabitClaims(id, old, next)) && validProof(id,old,next)));
+        return old.size() == 0 ? (validRecord(next) && next.claims.size() == 0)
+          : (next.type == 'habit' && next.claims.size() > old.claims.size()
+            ? habitReward(id,old,next)
+            : (validRecord(next) && next.type == old.type && next.createdDay == old.createdDay && next.offset == old.offset
+              && (!old.locked || (next.locked && next.coins == old.coins && next.xp == old.xp && next.item == old.item && next.sphere == old.sphere))
+              && (!old.completed || next.completed) && next.progress >= old.progress
+              && (next.type == 'quest' || next.claims == old.claims) && validProof(id,old,next)));
       }
       function income(old, next) {
         return old.size() == 0 ? 0 : (next.type == 'quest'

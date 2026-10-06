@@ -203,11 +203,16 @@ test("привычка: только 0–10 монет, однократное �
     },
     "alice",
   );
-  let row = await driver.save(s, fresh.revision);
-  row = await driver.save(
-    completeHabit(row.state, s.habits[0].id, "alice"),
-    row.revision,
-  );
+  let row;
+  await assert.doesNotReject(async () => {
+    row = await driver.save(s, fresh.revision);
+  }, "Регистрация привычки");
+  await assert.doesNotReject(async () => {
+    row = await driver.save(
+      completeHabit(row.state, s.habits[0].id, "alice"),
+      row.revision,
+    );
+  }, "Ежедневная выплата привычки");
   assert.equal(row.state.coins, 10);
   assert.equal(row.state.habitCompletions.length, 1);
   const same = await driver.save(

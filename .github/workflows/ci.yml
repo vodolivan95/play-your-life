@@ -29,6 +29,9 @@ jobs:
       - run: npm ci
       - name: Check Firestore isolation with emulator
         run: npx --yes --package firebase-tools@15.32.1 firebase emulators:exec --only firestore --project demo-play-your-life "node --experimental-strip-types --test tests/firebase-rules.test.mjs"
+      - name: Show emulator details on failure
+        if: failure()
+        run: tail -n 120 firestore-debug.log
 
   quests-ui:
     runs-on: ubuntu-latest

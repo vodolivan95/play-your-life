@@ -1,3 +1,4 @@
+import { validPersonalState, validQuestExtension } from './questValidation.ts';
 import { SPHERE_PROGRESSION_MODEL } from './sphereProgress.ts';
 import { validCity, cityPrices, cityRooms } from './city.ts';
 import { validRooms } from './roomEngine.ts';
@@ -42,6 +43,7 @@ export function validateState(value: unknown): asserts value is SavedState {
     );
   };
   if (!record(value) || value.version !== 1) return fail();
+  if (!validPersonalState(value)) return fail();
   if (value.rooms !== undefined && !validRooms(value.rooms)) return fail();
   if (value.cityPurchases !== undefined) {
     if (!list(value.cityPurchases, (p) =>
@@ -105,6 +107,7 @@ export function validateState(value: unknown): asserts value is SavedState {
     !list(
       value.quests,
       (q) =>
+        validQuestExtension(q) &&
         text(q.id) &&
         !!q.id &&
         text(q.name) &&
@@ -171,6 +174,7 @@ export function validateState(value: unknown): asserts value is SavedState {
     !list(
       value.events,
       (e) =>
+        (e.sourceId === undefined || text(e.sourceId)) &&
         text(e.id) &&
         !!e.id &&
         text(e.title) &&

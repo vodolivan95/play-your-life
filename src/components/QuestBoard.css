@@ -1,0 +1,869 @@
+.pyl-quest-board {
+  color: #163556;
+  display: grid;
+  gap: 22px;
+  min-width: 0;
+}
+.pyl-quest-board h1,
+.pyl-quest-board h2,
+.pyl-quest-board h3,
+.pyl-quest-board p {
+  margin: 0;
+}
+.pyl-quest-board h2 {
+  font-size: 20px;
+}
+.pyl-quest-hero {
+  border-radius: 18px;
+  min-height: 170px;
+  background-size: cover;
+  background-position: center 46%;
+  padding: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  color: white;
+  box-shadow: 0 10px 30px #0085bb14;
+}
+.pyl-quest-hero h1 {
+  font-size: 38px;
+  letter-spacing: -1px;
+}
+.pyl-quest-hero h2 {
+  font-size: 17px;
+  margin: 8px 0;
+}
+.pyl-quest-hero p {
+  max-width: 400px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #dcefff;
+}
+.pyl-hero-progress {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  background: #092b59b3;
+  padding: 20px;
+  border-radius: 14px;
+  min-width: 205px;
+}
+.pyl-hero-progress > b {
+  font-size: 26px;
+  border: 4px solid #5cb6e6;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  display: grid;
+  place-items: center;
+}
+.pyl-hero-progress span {
+  font-size: 11px;
+  display: grid;
+  gap: 10px;
+}
+.pyl-hero-progress strong {
+  font-size: 22px;
+}
+.pyl-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.pyl-section-title small {
+  font-size: 12px;
+}
+.pyl-section-title button,
+.pyl-card-edit button {
+  color: #058deb;
+  background: none;
+  border: 0;
+  font-size: 12px;
+  padding: 9px;
+  cursor: pointer;
+}
+.pyl-quest-spheres {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 8px;
+}
+.pyl-quest-spheres > button {
+  background: #fff;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px #1784aa0d;
+  text-align: left;
+  overflow: hidden;
+  padding: 4px 4px 8px;
+  min-width: 0;
+  cursor: pointer;
+}
+.pyl-quest-spheres .sphere-building {
+  width: 100%;
+  height: 65px;
+  object-fit: cover;
+  display: block;
+}
+.pyl-quest-spheres strong {
+  display: block;
+  font-size: 10px;
+  min-height: 27px;
+  padding: 4px;
+}
+.pyl-quest-spheres small {
+  font-size: 9px;
+  padding: 4px;
+  display: block;
+  color: #537292;
+}
+.pyl-quest-board .selected,
+.pyl-quest-dialog .selected {
+  border-color: #079fff !important;
+  background: #e7f5ff !important;
+  color: #0866ad;
+}
+.pyl-meter {
+  height: 6px;
+  border-radius: 10px;
+  background: #e1eef8;
+  overflow: hidden;
+}
+.pyl-meter span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #04bd9c, #20d4b1);
+  border-radius: 10px;
+  transition: width 0.35s;
+}
+.pyl-quest-navigation {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pyl-quest-navigation nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  flex: 1;
+}
+.pyl-quest-navigation nav button {
+  padding: 9px 11px;
+  border: 1px solid transparent;
+  background: #eaf4fc;
+  color: #537699;
+  border-radius: 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.pyl-quest-navigation > .primary-button {
+  font-size: 12px;
+  white-space: nowrap;
+  flex: none;
+}
+.pyl-quest-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  gap: 22px;
+}
+.pyl-quest-columns main {
+  display: grid;
+  align-content: start;
+  gap: 25px;
+  min-width: 0;
+}
+.pyl-quest-aside {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+.pyl-quest-aside section {
+  border-radius: 14px;
+  padding: 18px;
+  background: linear-gradient(160deg, #fff, #eef8ff);
+  box-shadow: 0 4px 20px #0789b30b;
+  display: grid;
+  gap: 12px;
+}
+.pyl-quest-aside h3 {
+  font-size: 14px;
+}
+.pyl-quest-aside p {
+  font-size: 12px;
+  line-height: 1.65;
+}
+.pyl-quest-aside small {
+  color: #7b96ac;
+  font-size: 11px;
+}
+.pyl-inventory {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.pyl-inventory > div {
+  display: grid;
+  gap: 4px;
+  text-align: center;
+}
+.pyl-inventory span {
+  font-size: 30px;
+  background: #fff8da;
+  border-radius: 8px;
+  padding: 6px;
+}
+.pyl-inventory button {
+  font-size: 10px;
+  border: 0;
+  border-radius: 5px;
+  padding: 4px;
+  background: #e3f4ff;
+  color: #078fe9;
+}
+.pyl-habit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+.pyl-habit-card {
+  padding: 12px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px #149aba0d;
+  display: grid;
+  gap: 10px;
+  animation: pyl-appear 0.25s ease-out;
+}
+.pyl-habit-heading {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.pyl-habit-heading > span {
+  font-size: 28px;
+}
+.pyl-habit-heading strong {
+  font-size: 12px;
+}
+.pyl-habit-card p,
+.pyl-habit-card small {
+  font-size: 10px;
+}
+.pyl-habit-card > button {
+  background: #edf7ff;
+  color: #0980cb;
+  border: 0;
+  border-radius: 6px;
+  min-height: 36px;
+  font-size: 12px;
+}
+.pyl-card-edit {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+.pyl-card-edit button {
+  padding: 4px;
+  min-height: 30px;
+  font-size: 11px;
+}
+.pyl-habit-card.is-done {
+  background: #f0fffa;
+}
+.pyl-habit-card > button:disabled {
+  color: #599182;
+}
+.pyl-quest-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 14px 0;
+}
+.pyl-quest-filters label {
+  flex: 1;
+  min-width: 130px;
+}
+.pyl-quest-filters .tabs {
+  margin: 0;
+}
+.pyl-quest-filters .tabs button {
+  font-size: 11px;
+  padding: 7px 10px;
+}
+.pyl-quest-filters input,
+.pyl-quest-filters select {
+  width: 100%;
+  margin: 0;
+  background: white;
+  border: 1px solid #deedf9;
+  padding: 9px;
+  font-size: 11px;
+  border-radius: 6px;
+  color: #315675;
+}
+.pyl-quest-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+  gap: 14px;
+}
+.pyl-custom-card {
+  background: white;
+  overflow: hidden;
+  border-radius: 14px;
+  box-shadow: 0 4px 20px #149aba0d;
+  animation: pyl-appear 0.25s ease-out;
+}
+.pyl-quest-cover {
+  position: relative;
+  height: 130px;
+  overflow: hidden;
+  background: #e8f6ff;
+}
+.pyl-quest-cover img,
+.pyl-quest-cover .sphere-building {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+.pyl-quest-cover > span {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  border-radius: 6px;
+  padding: 5px 8px;
+  background: #fff9;
+  color: #1d5d76;
+  font-size: 10px;
+  backdrop-filter: blur(4px);
+}
+.pyl-quest-card-body {
+  padding: 14px;
+  display: grid;
+  gap: 11px;
+}
+.pyl-quest-card-body h3 {
+  font-size: 14px;
+  line-height: 1.4;
+}
+.pyl-sphere-badge {
+  font-size: 10px;
+  color: #058ee7;
+}
+.pyl-quest-notes {
+  font-size: 12px;
+  color: #6b889f;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.pyl-quest-card-body > p:not(.pyl-quest-notes) {
+  font-size: 11px;
+  font-weight: 700;
+}
+.pyl-quest-card-body > small {
+  font-size: 10px;
+  color: #66849c;
+}
+.pyl-card-reward {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+}
+.pyl-card-reward b:first-child {
+  color: #028df4;
+}
+.pyl-card-reward b:nth-child(2) {
+  color: #a87b1b;
+}
+.pyl-card-reward span {
+  font-size: 27px;
+  margin-left: auto;
+}
+.pyl-quest-card-body > .primary-button {
+  width: 100%;
+  font-size: 12px;
+  min-height: 38px;
+}
+.pyl-custom-card.is-done .pyl-quest-cover > span {
+  background: #d8fff2;
+}
+.pyl-empty {
+  padding: 24px;
+  background: #f4fbff;
+  border: 1px dashed #c5e4f7;
+  border-radius: 12px;
+  display: grid;
+  gap: 12px;
+  font-size: 13px;
+  text-align: center;
+}
+.pyl-empty button {
+  justify-self: center;
+  border: 0;
+  border-radius: 8px;
+  background: #078ef6;
+  color: white;
+  padding: 12px;
+}
+.pyl-recommendations > p {
+  font-size: 12px;
+  color: #7290a7;
+  margin: 10px 0;
+}
+.pyl-recommendations > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.pyl-recommendations button {
+  display: grid;
+  gap: 10px;
+  text-align: left;
+  padding: 18px;
+  background: white;
+  border: 1px solid #dbeefb;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.pyl-recommendations button > span {
+  font-size: 26px;
+}
+.pyl-recommendations strong {
+  font-size: 12px;
+}
+.pyl-recommendations small {
+  font-size: 11px;
+  color: #0798ec;
+}
+.pyl-quest-dialog {
+  width: min(530px, calc(100vw - 28px));
+  max-height: 90dvh;
+  padding: 24px;
+  border: 1px solid #c7e6f9;
+  border-radius: 18px;
+  color: #193c60;
+  box-shadow: 0 20px 70px #12334a33;
+  overflow: auto;
+}
+.pyl-quest-dialog::backdrop {
+  background: #10334770;
+  backdrop-filter: blur(3px);
+}
+.pyl-quest-dialog form {
+  display: grid;
+  gap: 16px;
+}
+.pyl-quest-dialog h2,
+.pyl-quest-dialog h3 {
+  margin: 0;
+}
+.pyl-dialog-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #7292aa;
+}
+.pyl-dialog-top button {
+  background: #ecf6ff;
+  border: 0;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  color: #1d6096;
+}
+.pyl-quest-dialog label,
+.pyl-overlay label {
+  font-size: 13px;
+  display: grid;
+  gap: 8px;
+  color: #385b7b;
+}
+.pyl-quest-dialog input:not([type="file"]),
+.pyl-quest-dialog textarea,
+.pyl-quest-dialog select,
+.pyl-overlay input {
+  width: 100%;
+  border: 1px solid #c8e4fa;
+  border-radius: 7px;
+  padding: 12px;
+  background: white;
+  color: #183c60;
+  box-sizing: border-box;
+  font: inherit;
+}
+.pyl-quest-dialog input:disabled,
+.pyl-quest-dialog select:disabled {
+  background: #edf2f7;
+}
+.pyl-quest-dialog textarea {
+  min-height: 90px;
+}
+.pyl-sphere-picker {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.pyl-sphere-picker button {
+  padding: 5px;
+  border: 2px solid #dfedf8;
+  background: #fff;
+  border-radius: 10px;
+  font-size: 11px;
+  cursor: pointer;
+  color: #395b7b;
+}
+.pyl-sphere-picker .sphere-building {
+  display: block;
+  width: 100%;
+  height: 65px;
+}
+.pyl-sphere-picker span {
+  display: block;
+  padding: 4px;
+}
+.pyl-quest-dialog fieldset {
+  border: 1px solid #d9eaf6;
+  border-radius: 10px;
+  margin: 0;
+  padding: 12px;
+}
+.pyl-icon-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pyl-icon-picker button {
+  min-width: 42px;
+  min-height: 42px;
+  border: 2px solid #dbeefb;
+  background: #f6fbff;
+  border-radius: 8px;
+  font-size: 20px;
+}
+.pyl-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.pyl-photo-preview {
+  height: 190px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #eaf7ff;
+}
+.pyl-photo-preview img,
+.pyl-photo-preview .sphere-building {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pyl-upload {
+  position: relative;
+  background: #078dff;
+  padding: 13px;
+  border-radius: 8px;
+  text-align: center;
+  color: white !important;
+  cursor: pointer;
+}
+.pyl-upload input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.pyl-help {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #6888a3;
+  margin: 0;
+}
+.pyl-reward-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px;
+  background: #fff9e7;
+  border-radius: 10px;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+.pyl-reward-preview .game-art {
+  width: 30px;
+  height: 30px;
+}
+.pyl-wizard-review {
+  background: #f1f9ff;
+  padding: 22px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.pyl-quest-dialog footer,
+.pyl-overlay footer {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.pyl-quest-dialog footer button {
+  min-height: 44px;
+  flex: 1;
+}
+.pyl-error {
+  background: #fff1f3;
+  border-radius: 8px;
+  padding: 12px;
+  color: #aa324d;
+  font-size: 13px;
+}
+.pyl-overlay {
+  position: fixed;
+  inset: 0;
+  background: #163b6477;
+  display: grid;
+  place-items: center;
+  z-index: 1100;
+  padding: 16px;
+}
+.pyl-overlay form {
+  width: min(450px, 100%);
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  display: grid;
+  gap: 16px;
+  box-sizing: border-box;
+}
+.pyl-overlay h2 {
+  font-size: 20px;
+}
+.pyl-overlay footer button {
+  min-height: 40px;
+}
+.pyl-celebration {
+  position: fixed;
+  inset: 30% 20%;
+  background: #fffefa;
+  border: 1px solid #f4d480;
+  border-radius: 22px;
+  text-align: center;
+  z-index: 1200;
+  display: grid;
+  place-content: center;
+  gap: 25px;
+  padding: 30px;
+  box-shadow: 0 20px 90px #08608755;
+  animation: pyl-appear 0.4s ease-out;
+}
+.pyl-celebration > span {
+  font-size: 45px;
+  color: #ffba15;
+}
+.pyl-celebration h2 {
+  font-size: 24px;
+}
+.pyl-celebration button {
+  background: #078dff;
+  color: white;
+  border: 0;
+  padding: 14px;
+  border-radius: 9px;
+}
+.pyl-quest-board button:focus-visible,
+.pyl-quest-dialog button:focus-visible,
+.pyl-quest-board input:focus-visible,
+.pyl-quest-dialog input:focus-visible {
+  outline: 3px solid #f1b535;
+  outline-offset: 2px;
+}
+.pyl-quest-board button:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+@keyframes pyl-appear {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 1200px) {
+  .pyl-quest-columns {
+    grid-template-columns: minmax(0, 1fr) 220px;
+  }
+  .pyl-quest-spheres {
+    grid-template-columns: repeat(5, minmax(90px, 1fr));
+  }
+  .pyl-quest-spheres .sphere-building {
+    height: 75px;
+  }
+}
+@media (max-width: 800px) {
+  .pyl-quest-columns {
+    grid-template-columns: 1fr;
+  }
+  .pyl-quest-aside {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .pyl-quest-hero {
+    padding: 22px;
+  }
+  .pyl-hero-progress {
+    min-width: 0;
+    padding: 12px;
+  }
+  .pyl-hero-progress > b {
+    width: 62px;
+    height: 62px;
+    font-size: 20px;
+  }
+  .pyl-quest-hero h1 {
+    font-size: 30px;
+  }
+  .pyl-quest-hero h2 {
+    font-size: 14px;
+  }
+}
+@media (max-width: 520px) {
+  .pyl-quest-board {
+    gap: 18px;
+  }
+  .pyl-quest-hero {
+    display: block;
+    padding: 20px;
+    min-height: 0;
+  }
+  .pyl-hero-progress {
+    margin-top: 18px;
+    display: flex;
+    width: max-content;
+  }
+  .pyl-quest-hero h1 {
+    font-size: 30px;
+  }
+  .pyl-hero-progress > b {
+    width: 44px;
+    height: 44px;
+    font-size: 15px;
+    border-width: 3px;
+  }
+  .pyl-hero-progress strong {
+    font-size: 16px;
+  }
+  .pyl-hero-progress span {
+    gap: 5px;
+  }
+  .pyl-quest-spheres {
+    display: grid;
+    grid-template-columns: repeat(9, 100px);
+    overflow: auto;
+    padding-bottom: 8px;
+    scroll-snap-type: x mandatory;
+  }
+  .pyl-quest-spheres > button {
+    scroll-snap-align: start;
+  }
+  .pyl-quest-spheres strong {
+    font-size: 11px;
+    min-height: 28px;
+  }
+  .pyl-quest-navigation {
+    display: block;
+  }
+  .pyl-quest-navigation > .primary-button {
+    margin-top: 12px;
+    width: 100%;
+  }
+  .pyl-section-title {
+    align-items: flex-start;
+  }
+  .pyl-section-title h2 {
+    font-size: 17px;
+  }
+  .pyl-section-title h2 small {
+    display: block;
+  }
+  .pyl-section-title button {
+    padding: 6px;
+    white-space: nowrap;
+    font-size: 11px;
+  }
+  .pyl-habit-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .pyl-quest-grid {
+    grid-template-columns: 1fr;
+  }
+  .pyl-quest-cover {
+    height: 180px;
+  }
+  .pyl-quest-card-body {
+    padding: 18px;
+  }
+  .pyl-quest-card-body h3 {
+    font-size: 17px;
+  }
+  .pyl-card-edit button {
+    min-height: 38px;
+    font-size: 12px;
+  }
+  .pyl-quest-aside {
+    grid-template-columns: 1fr;
+  }
+  .pyl-recommendations > div {
+    grid-template-columns: 1fr;
+  }
+  .pyl-recommendations button {
+    grid-template-columns: auto 1fr;
+    align-items: center;
+  }
+  .pyl-recommendations small {
+    grid-column: 2;
+  }
+  .pyl-quest-dialog {
+    padding: 18px;
+  }
+  .pyl-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .pyl-quest-dialog input:not([type="file"]),
+  .pyl-quest-dialog select {
+    font-size: 16px;
+  }
+  .pyl-celebration {
+    inset: 25% 16px;
+    height: max-content;
+  }
+  .pyl-celebration h2 {
+    font-size: 20px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pyl-quest-board *,
+  .pyl-quest-dialog * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+/* Grid children must be allowed to shrink before the sphere strip scrolls. */
+.pyl-quest-board {
+  grid-template-columns: minmax(0, 1fr);
+}
+.pyl-quest-board > section {
+  min-width: 0;
+}
+.pyl-quest-spheres {
+  max-width: 100%;
+}

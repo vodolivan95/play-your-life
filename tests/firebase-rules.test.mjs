@@ -207,6 +207,86 @@ test("привычка: только 0–10 монет, однократное �
   await assert.doesNotReject(async () => {
     row = await driver.save(s, fresh.revision);
   }, "Регистрация привычки");
+  const ref = doc(db, "players", "alice"),
+    approved = (await getDoc(ref)).data(),
+    id = `habit:${s.habits[0].id}`,
+    completed = JSON.parse(
+      JSON.stringify(completeHabit(row.state, s.habits[0].id, "alice")),
+    ),
+    day = String(completed.habitCompletions[0].dayOrdinal);
+  const payout = {
+    state: completed,
+    economyRecords: {
+      ...approved.economyRecords,
+      [id]: {
+        ...approved.economyRecords[id],
+        locked: true,
+        claims: { [day]: true },
+      },
+    },
+    recordChanges: [id],
+    rewardProofs: {
+      [id]: {
+        sourceIndex: 0,
+        completionIndex: 0,
+        receiptIndex: 0,
+        claimDay: day,
+      },
+    },
+    revision: approved.revision + 1,
+    updatedAt: serverTimestamp(),
+  };
+  await assertFails(
+    updateDoc(ref, {
+      ...payout,
+      state: { ...completed, coinTransactions: [] },
+    }),
+  );
+  await assertFails(
+    updateDoc(ref, {
+      ...payout,
+      state: {
+        ...completed,
+        habits: completed.habits.map((h) => ({ ...h, ownerId: "bob" })),
+      },
+    }),
+  );
+  await assertFails(
+    updateDoc(ref, {
+      ...payout,
+      state: {
+        ...completed,
+        coins: 11,
+        habits: completed.habits.map((h) => ({ ...h, rewardCoins: 11 })),
+        coinTransactions: completed.coinTransactions.map((t) => ({
+          ...t,
+          amount: 11,
+        })),
+      },
+      economyRecords: {
+        ...payout.economyRecords,
+        [id]: { ...payout.economyRecords[id], coins: 11 },
+      },
+    }),
+  );
+  const future = String(Number(day) + 1);
+  await assertFails(
+    updateDoc(ref, {
+      ...payout,
+      state: {
+        ...completed,
+        habitCompletions: completed.habitCompletions.map((c) => ({
+          ...c,
+          dayOrdinal: Number(future),
+        })),
+      },
+      economyRecords: {
+        ...payout.economyRecords,
+        [id]: { ...payout.economyRecords[id], claims: { [future]: true } },
+      },
+      rewardProofs: { [id]: { ...payout.rewardProofs[id], claimDay: future } },
+    }),
+  );
   await assert.doesNotReject(async () => {
     row = await driver.save(
       completeHabit(row.state, s.habits[0].id, "alice"),
@@ -220,9 +300,7 @@ test("привычка: только 0–10 монет, однократное �
     row.revision,
   );
   assert.equal(same.state.coins, 10);
-  const ref = doc(db, "players", "alice"),
-    data = (await getDoc(ref)).data(),
-    id = `habit:${s.habits[0].id}`;
+  const data = (await getDoc(ref)).data();
   await assertFails(
     updateDoc(ref, {
       economyRecords: {

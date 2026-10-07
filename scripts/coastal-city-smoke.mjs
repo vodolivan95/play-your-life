@@ -16,7 +16,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1100 }, hasTouch: true });
   const errors = [], failedAssets = [];
   page.on('pageerror', error => errors.push(error.message));
-  page.on('response', response => { if (response.url().includes('/assets/') && !response.ok()) failedAssets.push(response.url()); });
+  page.on('response', response => { if (response.url().includes('/assets/') && response.status() >= 400) failedAssets.push(response.url()); });
   await page.goto('http://localhost:4173/?room-demo=sport');
   const map = page.locator('.coastal-map');
   await map.waitFor();

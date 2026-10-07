@@ -1,6 +1,7 @@
 import cityBackground from './assets/coastal-city.jpg';
 import cityPreview from './assets/city-preview.webp';
 import citySkyline from './assets/city-skyline.webp';
+import cleanSurfaces from './assets/city-clean-surfaces.webp';
 import existingIcons from './assets/sphere-icons.png';
 import health from './assets/buildings/health.webp';
 import sport from './assets/buildings/sport.webp';
@@ -23,7 +24,7 @@ import hobbyCover from './assets/quest-covers/leisure.webp';
 import { coastalBuildings } from './coastalCity';
 
 // Фотографии из MASTER VISUAL SOURCE. UI-иконки и комнаты не переоформляются.
-export const cityAssets = { background: cityBackground, preview: cityPreview, skyline: citySkyline, width: 1005, height: 1280 };
+export const cityAssets = { background: cityBackground, cleanSurfaces, preview: cityPreview, skyline: citySkyline, width: 1005, height: 1280 };
 const thumbnails = { health, sport, growth, english, finance, together, driving, tasks, hobby };
 const covers = {health:healthCover,sport:sportCover,growth:growthCover,english:englishCover,finance:financeCover,together:togetherCover,driving:drivingCover,tasks:tasksCover,hobby:hobbyCover};
 export const sphereAssets = Object.fromEntries(coastalBuildings.map(building => [building.id, {

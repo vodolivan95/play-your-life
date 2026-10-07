@@ -110,12 +110,12 @@ export class CitySimulation {
     const position=path.at(distance), kind=path.route.kind;
     const waterSprite=path.route.id==='ocean-yachts'?0:path.route.id==='ocean-speedboats'?1:path.route.id==='west-sail'?2:3;
     const sprite=kind==='water' ? waterSprite : Math.floor(this.random()*5);
-    const radius=kind==='water' ? [12,9,11,15][sprite] : kind==='road' ? 7 : 1.6;
+    const radius=kind==='water' ? [21,15,23,24][sprite] : kind==='road' ? 7 : 1.6;
     if (this.agents.some(a=>a.kind===kind&&Math.hypot(position.x-a.position.x,position.y-a.position.y)<radius+a.safeRadius+24)) return false;
     const agent=this.pool.pop() ?? {} as Agent;
     Object.assign(agent,{ id:this.nextId++,kind,path,distance,position,currentSpeed:0,
       targetSpeed:path.route.speed*(.86+this.random()*.15),acceleration:kind==='road'?6:kind==='water'?2:4,
-      deceleration:kind==='road'?15:kind==='water'?5:8,safeDistance:kind==='water'?45:kind==='road'?27:9,
+      deceleration:kind==='road'?15:kind==='water'?5:8,safeDistance:kind==='water'?70:kind==='road'?27:9,
       safeRadius:radius,vehicleAhead:null,sprite,state:'WALK',wait:0,age:0 });
     delete agent.retireAt;
     this.agents.push(agent); return true;

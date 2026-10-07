@@ -1,10 +1,11 @@
 /* global fetch, setTimeout, document, innerWidth */
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 import { mkdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
-const server = spawn('npm', ['run', 'preview', '--', '--port', '4173'], { stdio: 'ignore' });
+const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', '4173', '--strictPort'], { stdio: 'ignore' });
 await mkdir('room-preview', { recursive: true });
 let browser;
 try {
@@ -75,4 +76,11 @@ try {
 } catch (error) {
   await writeFile('room-preview/coastal-error.txt', String(error.stack || error));
   throw error;
-} finally { await browser?.close(); server.kill('SIGTERM'); }
+} finally {
+  await browser?.close();
+  if (server.exitCode === null && server.signalCode === null) {
+    const stopped = once(server, 'exit');
+    server.kill('SIGTERM');
+    await stopped;
+  }
+}

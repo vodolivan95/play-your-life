@@ -1,11 +1,12 @@
 /* global fetch, setTimeout, localStorage, document, innerWidth */
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 import { mkdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
 const saveKey = 'play-your-life-3d-sport-demo-v1';
-const server = spawn('npm', ['run', 'preview', '--', '--port', '4173'], { stdio: 'ignore' });
+const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', '4173', '--strictPort'], { stdio: 'ignore' });
 await mkdir('room-preview', { recursive: true });
 let browser;
 // Нажимаем именно на изображение здания, а не на текстовую кнопку под картой.
@@ -153,4 +154,11 @@ try {
   await writeFile('room-preview/result.json', JSON.stringify({ passed: true, coinsAfterTreadmill: reloaded.coins, object: reloaded.rooms.sport.objects[0], allSix: furnished.rooms.sport.objects, coinsAfterAllSix: furnished.coins, errors }, null, 2));
 } catch (error) {
   await writeFile('room-preview/error.txt', String(error.stack || error)); throw error;
-} finally { await browser?.close(); server.kill('SIGTERM'); }
+} finally {
+  await browser?.close();
+  if (server.exitCode === null && server.signalCode === null) {
+    const stopped = once(server, 'exit');
+    server.kill('SIGTERM');
+    await stopped;
+  }
+}

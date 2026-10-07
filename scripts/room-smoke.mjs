@@ -10,16 +10,12 @@ await mkdir('room-preview', { recursive: true });
 let browser;
 // Нажимаем именно на изображение здания, а не на текстовую кнопку под картой.
 async function enterSportFromBuilding(page, touch = false) {
-  const canvas = page.locator('.city3d-scene canvas[data-ready="true"]');
-  await canvas.waitFor();
-  const overview = page.getByRole('button', { name: 'Весь остров', exact: true });
-  if (await overview.isVisible()) { await overview.click(); await page.waitForTimeout(400); }
-  await canvas.scrollIntoViewIfNeeded();
-  const rect = await canvas.boundingBox();
-  const [px, py] = (await canvas.getAttribute('data-sport-point')).split(',').map(Number);
-  assert.ok(px > 0 && py > 0 && px < rect.width && py < rect.height, 'Здание SPORT видно в 3D-камере');
-  if (touch) await page.touchscreen.tap(rect.x + px, rect.y + py);
-  else await page.mouse.click(rect.x + px, rect.y + py);
+  const building = page.locator('[data-building="sport"]');
+  await building.waitFor();
+  await building.scrollIntoViewIfNeeded();
+  const rect = await building.boundingBox();
+  if (touch) await page.touchscreen.tap(rect.x + rect.width / 2, rect.y + rect.height / 2);
+  else await building.click();
   await page.locator('.room3d canvas[data-ready="true"]').waitFor();
 }
 try {

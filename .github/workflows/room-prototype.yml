@@ -1,14 +1,14 @@
-name: Verify 3D sport prototype
+name: Verify coastal city and 3D rooms
 on:
   push:
-    branches: [room/3d-sport, room/sport-premium, room/map-entry, room/map-hit-fix, city/weather, city/reference-island, main]
+    branches: [room/3d-sport, room/sport-premium, room/map-entry, room/map-hit-fix, city/weather, city/reference-island, feat/coastal-city-map, main]
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   prototype:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -18,8 +18,8 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npx playwright install --with-deps chromium
-      - name: Verify 3D city weather
-        run: node --experimental-strip-types scripts/weather-smoke.mjs
+      - name: Verify coastal map and nine entrances
+        run: node --experimental-strip-types scripts/coastal-city-smoke.mjs
       - name: Save city preview before the full room scenario
         uses: actions/upload-artifact@v4
         with:

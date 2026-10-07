@@ -1,10 +1,10 @@
-import { lazy, Suspense, useState } from 'react';
+import { useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { spheres } from '../game';
 import type { GameState } from '../game';
 import BuildingInterior from './BuildingInterior';
 import './LifeCity.css';
-const CityScene = lazy(() => import('./city3d/CityScene'));
+import CoastalCity from './CoastalCity';
 export default function LifeCity({
   state,
   onOpen,
@@ -68,9 +68,9 @@ export default function LifeCity({
       <div className="city-simulation-controls" aria-label="Управление окружением">
         <button aria-pressed={paused} onClick={() => setPaused(!paused)}>{paused ? '▶ Продолжить' : '⏸ Пауза'}</button>
         <label>Скорость <select aria-label="Скорость города" value={speed} onChange={e => setSpeed(Number(e.target.value))}><option value={1}>1×</option><option value={2}>2×</option><option value={3}>3×</option></select></label>
-        <span>{paused ? 'Город на паузе' : 'Город живёт: жители, транспорт и вода'}</span>
+        <span>{paused ? 'Город на паузе' : 'Оживлённые фонтаны и погода'}</span>
       </div>
-      <Suspense fallback={<p role="status">Загрузка 3D-города…</p>}><CityScene state={state} onOpen={setInside} paused={paused} speed={speed} /></Suspense>
+      <CoastalCity state={state} onOpen={setInside} paused={paused} speed={speed} />
     </section>
   );
 }

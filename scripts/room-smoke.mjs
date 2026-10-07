@@ -1,25 +1,23 @@
 /* global fetch, setTimeout, localStorage, document, innerWidth */
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import process from 'node:process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
 const saveKey = 'play-your-life-3d-sport-demo-v1';
-const server = spawn('npm', ['run', 'preview', '--', '--port', '4173'], { stdio: 'ignore' });
+const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', '4173', '--strictPort'], { stdio: 'ignore' });
 await mkdir('room-preview', { recursive: true });
 let browser;
 // Нажимаем именно на изображение здания, а не на текстовую кнопку под картой.
 async function enterSportFromBuilding(page, touch = false) {
-  const canvas = page.locator('.city3d-scene canvas[data-ready="true"]');
-  await canvas.waitFor();
-  const overview = page.getByRole('button', { name: 'Весь остров', exact: true });
-  if (await overview.isVisible()) { await overview.click(); await page.waitForTimeout(400); }
-  await canvas.scrollIntoViewIfNeeded();
-  const rect = await canvas.boundingBox();
-  const [px, py] = (await canvas.getAttribute('data-sport-point')).split(',').map(Number);
-  assert.ok(px > 0 && py > 0 && px < rect.width && py < rect.height, 'Здание SPORT видно в 3D-камере');
-  if (touch) await page.touchscreen.tap(rect.x + px, rect.y + py);
-  else await page.mouse.click(rect.x + px, rect.y + py);
+  const building = page.locator('[data-building="sport"]');
+  await building.waitFor();
+  await building.scrollIntoViewIfNeeded();
+  const rect = await building.boundingBox();
+  if (touch) await page.touchscreen.tap(rect.x + rect.width / 2, rect.y + rect.height / 2);
+  else await building.click();
   await page.locator('.room3d canvas[data-ready="true"]').waitFor();
 }
 try {
@@ -157,4 +155,11 @@ try {
   await writeFile('room-preview/result.json', JSON.stringify({ passed: true, coinsAfterTreadmill: reloaded.coins, object: reloaded.rooms.sport.objects[0], allSix: furnished.rooms.sport.objects, coinsAfterAllSix: furnished.coins, errors }, null, 2));
 } catch (error) {
   await writeFile('room-preview/error.txt', String(error.stack || error)); throw error;
-} finally { await browser?.close(); server.kill('SIGTERM'); }
+} finally {
+  await browser?.close();
+  if (server.exitCode === null && server.signalCode === null) {
+    const stopped = once(server, 'exit');
+    server.kill('SIGTERM');
+    await stopped;
+  }
+}

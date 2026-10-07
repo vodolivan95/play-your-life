@@ -9,24 +9,29 @@
 .coastal-scroll { overflow:auto; width:min(100%,calc(78vh * 1005 / 1280)); width:min(100%,calc(78svh * 1005 / 1280)); max-height:78vh; max-height:78svh; margin-inline:auto; border-radius:22px; border:1px solid #c8e4f3; background:#31adca; box-shadow:0 12px 32px #16759620; overscroll-behavior:contain; }
 .coastal-map { position:relative; aspect-ratio:1005 / 1280; isolation:isolate; }
 .coastal-map > img { display:block; width:100%; height:auto; user-select:none; transition:filter 1s; }
-.coastal-map[data-time=sunset] > img { filter:brightness(.85) sepia(.25) saturate(1.15); }
-.coastal-map[data-time=night] > img { filter:brightness(.48) saturate(.8) hue-rotate(8deg); }
-.coastal-water, .coastal-atmosphere { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
-.coastal-ripple { fill:none; stroke:#e4ffff; stroke-width:2; animation:coastal-ripple calc(3s / var(--city-rate)) ease-out infinite; }
-.coastal-atmosphere { opacity:0; transition:opacity .6s; }
-.coastal-map[data-weather=partlyCloudy] .coastal-atmosphere { opacity:.12; background:linear-gradient(135deg,transparent 30%,white 45%,transparent 70%); }
-.coastal-map[data-weather=cloudy] .coastal-atmosphere { opacity:.22; background:#748598; }
-.coastal-map[data-weather=fog] .coastal-atmosphere { opacity:.48; background:linear-gradient(transparent,#eef4f8 35%,#eef4f8aa); }
-.coastal-map[data-weather=rain] .coastal-atmosphere, .coastal-map[data-weather=thunderstorm] .coastal-atmosphere { opacity:.35; background:repeating-linear-gradient(110deg,transparent 0 24px,#d6f4ff88 25px 26px,transparent 27px 45px),#223d6233; background-size:90px 180px; animation:coastal-rain calc(.8s / var(--city-rate)) linear infinite; }
-.coastal-map[data-weather=thunderstorm] .coastal-atmosphere { opacity:.5; }
-.coastal-map[data-weather=snow] .coastal-atmosphere { opacity:.65; background-image:radial-gradient(circle,#fff 1px,transparent 2px),radial-gradient(circle,#fff 2px,transparent 3px); background-size:45px 65px,70px 80px; animation:coastal-snow calc(5s / var(--city-rate)) linear infinite; }
 .coastal-map[data-paused=true] * { animation-play-state:paused; }
 .coastal-building { position:absolute; background:transparent; border:0; padding:0; border-radius:22%; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .coastal-building:hover, .coastal-building:focus-visible { background:#b8f8ff18; outline:3px solid #ecffff; outline-offset:-3px; box-shadow:0 0 22px #36dfff; z-index:1; }
 .coastal-building > span { position:absolute; left:50%; bottom:5%; transform:translateX(-50%); max-width:95%; width:max-content; padding:7px 10px; border-radius:12px; background:#fffffff2; color:#1c466a; font-size:clamp(9px,1.3vw,14px); font-weight:800; opacity:0; pointer-events:none; }
 .coastal-building:hover > span, .coastal-building:focus-visible > span { opacity:1; }
-@keyframes coastal-ripple { from { transform:scale(.6); opacity:.8; } to { transform:scale(1.45); opacity:0; } }
-@keyframes coastal-rain { to { background-position:-45px 180px; } }
-@keyframes coastal-snow { to { background-position:20px 65px,-20px 80px; } }
 @media(max-width:700px) { .coastal-scroll { border-radius:16px; } .coastal-controls label { flex:1 1 calc(50% - 10px); min-width:0; } .coastal-controls select { min-width:0; width:100%; max-width:190px; } .coastal-zoom { margin-left:0; width:100%; } .coastal-hint { font-size:11px; line-height:1.5; } }
 @media(prefers-reduced-motion:reduce) { .coastal-map *, .coastal-map > img { animation:none!important; transition:none; } }
+
+.live-city-canvas { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+.live-city-canvas.is-editing { pointer-events:auto; cursor:crosshair; z-index:3; }
+.live-city-fps { position:absolute; top:8px; left:8px; z-index:4; pointer-events:none; background:#122e46e8; color:#e9ffff; font:10px monospace; border-radius:7px; padding:7px; }
+.coastal-map[data-editing=true] .coastal-building { pointer-events:none; }
+.coastal-building:active { background:#adf6ff33; box-shadow:0 0 20px #36dfff; }
+.city-dev-tools { padding:12px; margin-bottom:12px; border:1px solid #d5e8f4; border-radius:12px; background:#f5faff; color:#355874; font-size:12px; }
+.city-dev-tools summary { cursor:pointer; min-height:32px; font-weight:700; }
+.city-dev-tools p { line-height:1.5; }
+.city-debug-flags, .city-route-editor { display:flex; flex-wrap:wrap; gap:10px; }
+.city-debug-flags label { display:flex; align-items:center; gap:5px; min-height:36px; }
+.city-route-editor label { display:flex; align-items:center; gap:6px; max-width:100%; }
+.city-route-editor input:not([type=checkbox]), .city-route-editor select, .city-route-editor button { min-width:0; max-width:100%; min-height:44px; border:1px solid #cbddeb; border-radius:8px; padding:7px; background:white; color:#305777; font:inherit; }
+.city-route-editor input[type=file] { width:190px; }
+.city-route-editor input:not([type=file]):not([type=checkbox]) { width:130px; }
+.city-route-editor select { max-width:200px; }
+.city-route-editor button { cursor:pointer; }
+.city-route-editor button:disabled { opacity:.5; }
+@media(max-width:700px) { .coastal-controls label { flex:1 1 calc(50% - 10px); } .city-route-editor label { flex-wrap:wrap; } }

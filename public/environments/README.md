@@ -5,3 +5,5 @@
 sport-city.jpg — SUNSET; sport-city-day.jpg — DAY; sport-city-night.jpg — NIGHT. JPEG ~2K. Не являются HDR источниками освещения: свет и отражения создаются отдельным RoomLighting / Environment.
 
 sport-stone.jpg — созданная нейтральная limestone baseColor, 1K; только материал пола, не интерьерная картинка. Normal/grout задаются отдельно.
+
+С октября 2026 эти три старые панорамы сохранены только для отката. `RoomEnvironment` использует `cityAssets.skyline` из `src/sphereAssets.ts` — вырезку нового master-города; тон DAY/SUNSET/NIGHT задаётся материалом. Камера, геометрия и предметы спортзала не изменены.

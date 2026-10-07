@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { CanvasTexture, RepeatWrapping, SRGBColorSpace, MeshStandardMaterial, BoxGeometry } from 'three';
 import { Environment, Lightformer, useTexture } from '@react-three/drei';
 import type { Vec3 } from '../../roomEngine';
+import { cityAssets } from '../../sphereAssets';
 import type { RoomQuality, RoomTime } from './RoomScene3D';
 
 function surface(kind: 'stone' | 'wood', normal = false) {
@@ -27,14 +28,14 @@ function surface(kind: 'stone' | 'wood', normal = false) {
   return texture;
 }
 function Skyline({ time }: { time: RoomTime }) {
-  const texture = useTexture(`${import.meta.env.BASE_URL}environments/sport-city${time === 'sunset' ? '' : `-${time}`}.jpg`);
+  const texture = useTexture(cityAssets.skyline);
   // Three textures are imperative GPU resources, not React state.
   // eslint-disable-next-line react-hooks/immutability
   useEffect(() => { texture.colorSpace = SRGBColorSpace; texture.needsUpdate = true; }, [texture]);
   return <group><mesh position={[0, 3.5, -27]}>
     <planeGeometry args={[96, 48]} />
-    <meshBasicMaterial map={texture} color="#ffffff" toneMapped={false} />
-  </mesh><mesh position={[27, 3.5, 0]} rotation={[0, -Math.PI / 2, 0]}><planeGeometry args={[96, 48]} /><meshBasicMaterial map={texture} toneMapped={false} /></mesh></group>;
+    <meshBasicMaterial map={texture} color={time === 'night' ? '#50628c' : time === 'sunset' ? '#ecc5a2' : '#ffffff'} toneMapped={false} />
+  </mesh><mesh position={[27, 3.5, 0]} rotation={[0, -Math.PI / 2, 0]}><planeGeometry args={[96, 48]} /><meshBasicMaterial map={texture} color={time === 'night' ? '#50628c' : time === 'sunset' ? '#ecc5a2' : '#ffffff'} toneMapped={false} /></mesh></group>;
 }
 export default function RoomEnvironment({ time, quality }: { time: RoomTime; quality: RoomQuality }) {
   const stone = useTexture(`${import.meta.env.BASE_URL}environments/sport-stone.jpg`);

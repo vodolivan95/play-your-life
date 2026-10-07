@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import spritesUrl from '../assets/city-traffic.svg';
 import globeUrl from '../assets/city-globe.webp';
 import { cityAssets } from '../sphereAssets';
@@ -14,6 +14,7 @@ type Props = {
   weather:string; debug:DebugFlags; draft:Point[]; editing:boolean; onPoint:(p:Point)=>void;
 };
 export default function LiveCityCanvas(props:Props) {
+  const [loadError,setLoadError]=useState(false);
   const canvas=useRef<HTMLCanvasElement>(null),live=useRef(props),fps=useRef<HTMLOutputElement>(null);
   useEffect(()=>{live.current=props;},[props]);
   const routes=props.routes,mode=props.quality;
@@ -25,12 +26,12 @@ export default function LiveCityCanvas(props:Props) {
     const sim=new CitySimulation(routes),quality=new QualityManager(mode,window.innerWidth<=760);
     sim.initialize(quality.budget);
     const renderer=new CityRenderer(ctx);
-    const background=new Image(),sprites=new Image(),globe=new Image();
-    background.src=cityAssets.background;sprites.src=spritesUrl;globe.src=globeUrl;
+    const background=new Image(),sprites=new Image(),globe=new Image(),clean=new Image();
+    background.src=cityAssets.background;sprites.src=spritesUrl;globe.src=globeUrl;clean.src=cityAssets.cleanSurfaces;
     let frame=0,previous=0,lastStats=0,visible=true,disposed=false,ready=false,lastSignature='',renderMs=0,simulationMs=0;
     const resize=()=>{
       const width=Math.max(1,node.getBoundingClientRect().width);
-      if (mode==='auto'&&window.innerWidth<=760)quality.low=true;
+      if (mode==='auto'&&window.innerWidth<=760)quality.medium=true;
       // LOW reduces object/effect counts, not the sharpness of the mobile canvas.
       const ratio=Math.min(2,window.devicePixelRatio||1);
       node.width=Math.round(Math.min(1400,width*ratio));node.height=Math.round(node.width*MAP_HEIGHT/MAP_WIDTH);
@@ -42,7 +43,8 @@ export default function LiveCityCanvas(props:Props) {
       if (disposed||document.hidden||!visible||!ready) {previous=0;return;}
       const settings=live.current,rawDelta=previous ? (now-previous)/1000:1/60,dt=Math.min(rawDelta,.1);previous=now;
       const wasLow=quality.low;quality.observe(rawDelta);if (wasLow!==quality.low) resize();
-      // LifeCity applies the system preference initially. Explicit Continue must override it.
+      const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if(reduced)quality.low=true;
       const paused=settings.paused;
       const simulationStart=performance.now();
       if (!paused) sim.step(dt*settings.speed,quality.budget,['rain','thunderstorm'].includes(settings.weather));
@@ -50,13 +52,13 @@ export default function LiveCityCanvas(props:Props) {
       const signature=JSON.stringify([settings.time,settings.weather,settings.debug,settings.draft,node.width]);
       if (!paused||signature!==lastSignature) {
         if (paused) Object.assign(renderer,timeLighting(settings.time,sim.elapsed));
-        const renderStart=performance.now();renderer.draw(sim,{...settings,low:quality.low,background,sprites,globe});renderMs=renderMs*.9+(performance.now()-renderStart)*.1;lastSignature=signature;
+        const renderStart=performance.now();renderer.draw(sim,{...settings,low:quality.level!=='high',reduced,background,sprites,globe,clean});renderMs=renderMs*.9+(performance.now()-renderStart)*.1;lastSignature=signature;
       }
       if (now-lastStats>1000) {
         lastStats=now;
-        const stats={elapsed:Math.round(sim.elapsed*100)/100,renderMs:Math.round(renderMs*10)/10,simulationMs:Math.round(simulationMs*10)/10,fps:Math.round(quality.fps),quality:quality.low?'low':'high',
+        const stats={elapsed:Math.round(sim.elapsed*100)/100,renderMs:Math.round(renderMs*10)/10,simulationMs:Math.round(simulationMs*10)/10,fps:Math.round(quality.fps),quality:quality.level,
           counts:Object.fromEntries(['road','water','pedestrian'].map(kind=>[kind,sim.agents.filter(a=>a.kind===kind).length])),
-          positions:sim.normalizedPositions,collisionStops:sim.collisionStops,fountains:fountains.length,waterfalls:waterfalls.length,paused};
+          positions:sim.normalizedPositions,collisionStops:sim.collisionStops,fountains:fountains.length,waterfalls:waterfalls.length,paused,reduced,level:quality.level};
         node.dataset.stats=JSON.stringify(stats);node.dataset.ready='true';
         if (fps.current) fps.current.value=`${stats.fps} FPS · ${stats.quality.toUpperCase()} · ${stats.counts.road} авто · ${stats.counts.water} суда · ${stats.counts.pedestrian} NPC`;
       }
@@ -65,7 +67,7 @@ export default function LiveCityCanvas(props:Props) {
     const resume=()=>{ if (!frame&&!disposed&&ready&&!document.hidden&&visible) {previous=0;frame=requestAnimationFrame(tick);} };
     const intersection=new IntersectionObserver(entries=>{visible=entries[0]?.isIntersecting??false;if (!visible) {cancelAnimationFrame(frame);frame=0;}else resume();});
     intersection.observe(node);document.addEventListener('visibilitychange',resume);
-    Promise.all([background.decode(),sprites.decode(),globe.decode()]).then(()=>{ready=true;resize();resume();}).catch(()=>{node.dataset.error='city-assets-unavailable';});
+    Promise.all([background.decode(),sprites.decode(),globe.decode().catch(()=>undefined),clean.decode().catch(()=>undefined)]).then(()=>{ready=true;resize();resume();}).catch(()=>{node.dataset.error='city-assets-unavailable';if(!disposed)setLoadError(true);});
     return ()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();intersection.disconnect();document.removeEventListener('visibilitychange',resume);};
   },[routes,mode]);
   return <>
@@ -76,5 +78,6 @@ export default function LiveCityCanvas(props:Props) {
         props.onPoint({x:Math.max(0,Math.min(1,(e.clientX-bounds.left)/bounds.width)),y:Math.max(0,Math.min(1,(e.clientY-bounds.top)/bounds.height))});
       }} />
     {props.debug.fps&&<output className="live-city-fps" ref={fps} aria-live="off" />}
+    {loadError&&<div className="city-load-error" role="status">Анимация не загрузилась. <button onClick={()=>window.location.reload()}>Обновить страницу</button></div>}
   </>;
 }

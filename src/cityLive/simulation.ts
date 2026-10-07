@@ -68,21 +68,27 @@ export class IntersectionController {
     return true;
   }
 }
-export type Quality = 'auto'|'high'|'low';
-export const qualityBudgets = { low:{road:9,water:4,pedestrian:10},high:{road:14,water:5,pedestrian:18} };
+export type Quality = 'auto'|'high'|'medium'|'low';
+export const qualityBudgets = { low:{road:6,water:3,pedestrian:4},medium:{road:9,water:4,pedestrian:10},high:{road:14,water:5,pedestrian:18} };
 export class QualityManager {
   low: boolean;
+  medium: boolean;
   slowSeconds = 0;
   fps = 60;
   mode: Quality;
-  constructor(mode: Quality, mobile: boolean) { this.mode=mode;this.low=mode==='low'||(mode==='auto'&&mobile); }
+  constructor(mode: Quality, mobile: boolean) { this.mode=mode;this.low=mode==='low';this.medium=mode==='medium'||(mode==='auto'&&mobile); }
   observe(frameTime: number) {
     this.fps=this.fps*.94+Math.min(120,1/Math.max(.001,frameTime))*.06;
     if (this.mode!=='auto'||this.low) return;
     this.slowSeconds=this.fps<27 ? this.slowSeconds+frameTime : 0;
-    if (this.slowSeconds>3) this.low=true;
+    if (this.slowSeconds>3) {
+      if (this.medium) this.low=true;
+      else this.medium=true;
+      this.slowSeconds=0;
+    }
   }
-  get budget() { return qualityBudgets[this.low?'low':'high']; }
+  get level() { return this.low?'low':this.medium?'medium':'high'; }
+  get budget() { return qualityBudgets[this.level]; }
 }
 
 export class CitySimulation {
@@ -104,12 +110,12 @@ export class CitySimulation {
     const position=path.at(distance), kind=path.route.kind;
     const waterSprite=path.route.id==='ocean-yachts'?0:path.route.id==='ocean-speedboats'?1:path.route.id==='west-sail'?2:3;
     const sprite=kind==='water' ? waterSprite : Math.floor(this.random()*5);
-    const radius=kind==='water' ? [12,9,11,15][sprite] : kind==='road' ? 5 : 1.6;
+    const radius=kind==='water' ? [21,15,23,24][sprite] : kind==='road' ? 7 : 1.6;
     if (this.agents.some(a=>a.kind===kind&&Math.hypot(position.x-a.position.x,position.y-a.position.y)<radius+a.safeRadius+24)) return false;
     const agent=this.pool.pop() ?? {} as Agent;
     Object.assign(agent,{ id:this.nextId++,kind,path,distance,position,currentSpeed:0,
       targetSpeed:path.route.speed*(.86+this.random()*.15),acceleration:kind==='road'?6:kind==='water'?2:4,
-      deceleration:kind==='road'?15:kind==='water'?5:8,safeDistance:kind==='water'?45:kind==='road'?27:9,
+      deceleration:kind==='road'?15:kind==='water'?5:8,safeDistance:kind==='water'?70:kind==='road'?27:9,
       safeRadius:radius,vehicleAhead:null,sprite,state:'WALK',wait:0,age:0 });
     delete agent.retireAt;
     this.agents.push(agent); return true;

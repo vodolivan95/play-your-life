@@ -83,15 +83,24 @@ try {
     await d.getByRole("button", { name: "Далее →" }).click();
     await d.getByRole("button", { name: "Спорт", exact: true }).click();
     await d.getByRole("button", { name: "Далее →" }).click();
+    const fallback=d.locator('[data-quest-cover="master-city"]');
+    await fallback.waitFor();
+    assert.ok(await fallback.evaluate(async image=>{await image.decode();return image.naturalWidth>=500&&image.currentSrc.includes('/quest-covers/');}),'Крупная обложка не использует thumbnail');
+    await d.locator('.pyl-photo-preview').screenshot({path:`work/quest-cover-${mobile?'mobile':'desktop'}.png`});
+    const uploaded=await page.evaluate(()=>{
+      const canvas=document.createElement('canvas');canvas.width=1920;canvas.height=1200;
+      const ctx=canvas.getContext('2d');const gradient=ctx.createLinearGradient(0,0,1920,1200);gradient.addColorStop(0,'#129de5');gradient.addColorStop(1,'#f7bf48');ctx.fillStyle=gradient;ctx.fillRect(0,0,1920,1200);
+      return canvas.toDataURL('image/png').split(',')[1];
+    });
     await d.locator("input[type=file]").setInputFiles({
       name: "cover.png",
       mimeType: "image/png",
-      buffer: Buffer.from(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jqCEAAAAASUVORK5CYII=",
-        "base64",
-      ),
+      buffer: Buffer.from(uploaded,"base64"),
     });
     await d.locator(".pyl-photo-preview img").waitFor();
+    await page.waitForFunction(()=>document.querySelector('.pyl-photo-preview img')?.src.startsWith('blob:'));
+    assert.deepEqual(await d.locator('.pyl-photo-preview img').evaluate(async image=>{await image.decode();return [image.naturalWidth,image.naturalHeight];}),[1920,1200]);
+    assert.equal(await d.locator('.pyl-photo-preview img').evaluate(async image=>{const bytes=new Uint8Array(await (await fetch(image.src)).arrayBuffer());return btoa(Array.from(bytes,b=>String.fromCharCode(b)).join(''));}),uploaded,'Фото не перекодируется');
     await d.getByRole("button", { name: "Далее →" }).click();
     await d.getByLabel("Цель / количество *").fill("10");
     await d.getByLabel("Единица измерения").fill("км");

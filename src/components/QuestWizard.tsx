@@ -6,6 +6,7 @@ import type { Habit } from "../personalQuests";
 import { SphereBuilding } from "./SphereCity";
 import GameArt from "./GameArt";
 import { inspectQuestPhoto } from "../questPhoto";
+import { sphereAssets } from '../sphereAssets';
 
 type Draft = {
   name: string;
@@ -304,7 +305,7 @@ export default function QuestWizard({
               {photo || coverImage ? (
                 <img src={photo || coverImage} alt="Предпросмотр обложки" />
               ) : (
-                <SphereBuilding id={draft.sphere} />
+                <img src={sphereAssets[draft.sphere as keyof typeof sphereAssets]?.questCover} alt="Изображение здания сферы" data-quest-cover="master-city" />
               )}
             </div>
             <label className="pyl-upload">

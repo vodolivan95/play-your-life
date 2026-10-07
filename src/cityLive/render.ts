@@ -1,12 +1,13 @@
 import { bridgeMasks, fountains, lightPoints, MAP_HEIGHT, MAP_WIDTH, palms, pixels, roadGraph, waterRegions, waterfalls } from './paths.ts';
 import type { Point } from './paths.ts';
 import type { Agent, CitySimulation } from './simulation.ts';
+import { boatCleanupMasks, carCleanupMasks } from './cleanSurfaces.ts';
 
 export type CityTime = 'day'|'sunset'|'night'|'sunrise'|'auto';
 export type DebugFlags = { road:boolean;water:boolean;pedestrian:boolean;hitboxes:boolean;spawn:boolean;intersections:boolean;fps:boolean };
 export type RenderOptions = {
-  time: CityTime; weather:string; low:boolean; debug:DebugFlags;
-  draft:Point[]; background:HTMLImageElement; sprites:HTMLImageElement; globe:HTMLImageElement;
+  time: CityTime; weather:string; low:boolean; reduced?:boolean; debug:DebugFlags;
+  draft:Point[]; background:HTMLImageElement; sprites:HTMLImageElement; globe:HTMLImageElement; clean:HTMLImageElement;
 };
 const polygon = (ctx: CanvasRenderingContext2D, points: number[][]) => {
   ctx.moveTo(points[0][0],points[0][1]); for (const [x,y] of points.slice(1)) ctx.lineTo(x,y); ctx.closePath();
@@ -27,6 +28,7 @@ export function timeLighting(time: CityTime,elapsed:number) {
 }
 
 export class CityRenderer {
+  cleanupCache:HTMLCanvasElement[]=[];
   night=0; warm=0; cool=0;
   lastTime=0;
   ctx:CanvasRenderingContext2D;
@@ -37,17 +39,21 @@ export class CityRenderer {
     const target=timeLighting(opts.time,t),blend=1-Math.exp(-delta/2.5);
     this.night+=(target.night-this.night)*blend;this.warm+=(target.warm-this.warm)*blend;this.cool+=(target.cool-this.cool)*blend;
     ctx.clearRect(0,0,MAP_WIDTH,MAP_HEIGHT);
+    this.cleanupLayer(opts.clean,false);
     this.waterLayer(t,opts);
     this.waterTrafficLayer(sim,opts);
     this.bridgeLayer(opts.background);
+    this.cleanupLayer(opts.clean,true);
     this.nightLightingLayer(t,opts);
     this.roadTrafficLayer(sim,opts);
     this.pedestrianLayer(sim,opts);
     this.waterfallLayer(t,opts);
     this.fountainLayer(t,opts);
     this.buildingEffectsLayer(t,opts);
-    this.vegetationLayer(t,opts);
-    this.ambientLayer(t,opts);
+    if(!opts.reduced) {
+      this.vegetationLayer(t,opts);
+      this.ambientLayer(t,opts);
+    }
     this.weatherLayer(t,opts);
     this.debugLayer(sim,opts);
     ctx.globalAlpha=1;
@@ -72,6 +78,22 @@ export class CityRenderer {
       ctx.beginPath();ctx.moveTo(a[0],a[1]+(1-phase)*12);ctx.quadraticCurveTo((a[0]+b[0])/2,(a[1]+b[1])/2+5+(1-phase)*12,b[0],b[1]+(1-phase)*12);ctx.stroke();
     }
   }
+  private cleanupLayer(image:HTMLImageElement,roads:boolean) {
+    if(!image.complete||!image.naturalWidth)return;
+    const index=roads?1:0;
+    if(!this.cleanupCache[index]) {
+      const tile=document.createElement('canvas'),mask=document.createElement('canvas');
+      tile.width=mask.width=MAP_WIDTH;tile.height=mask.height=MAP_HEIGHT;
+      const paint=tile.getContext('2d')!,cut=mask.getContext('2d')!;
+      cut.fillStyle='white';cut.beginPath();
+      if(roads)for(const [x,y,rx,ry] of carCleanupMasks){cut.moveTo(x+rx,y);cut.ellipse(x,y,rx,ry,0,0,Math.PI*2);}
+      else for(const shape of boatCleanupMasks)polygon(cut,shape);
+      cut.fill();paint.drawImage(image,0,0,MAP_WIDTH,MAP_HEIGHT);
+      paint.globalCompositeOperation='destination-in';paint.filter=roads?'blur(3px)':'blur(10px)';paint.drawImage(mask,0,0);
+      this.cleanupCache[index]=tile;
+    }
+    this.ctx.drawImage(this.cleanupCache[index],0,0);
+  }
   private bridgeLayer(image:HTMLImageElement) {
     const ctx=this.ctx;ctx.save();ctx.beginPath();for (const mask of bridgeMasks) polygon(ctx,mask);ctx.clip();
     ctx.drawImage(image,0,0,MAP_WIDTH,MAP_HEIGHT);ctx.restore();
@@ -79,7 +101,7 @@ export class CityRenderer {
   private sprite(agent:Agent,image:HTMLImageElement,t:number) {
     const ctx=this.ctx,p=agent.position;
     const boat=agent.kind==='water';
-    const size=boat ? [28,23,25,35][agent.sprite] : [18,19,18,17,20][agent.sprite];
+    const size=boat ? [48,35,52,55][agent.sprite] : [18,19,18,17,20][agent.sprite];
     const rock=boat&&agent.sprite===2 ? Math.sin(t*.65+agent.id)*.022 : 0;
     ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle+rock);
     let alpha=Math.min(1,agent.age/2);

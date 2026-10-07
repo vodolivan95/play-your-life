@@ -60,7 +60,8 @@ test('AUTO уменьшает качество при устойчивом па�
   const quality=new QualityManager('auto',false);
   for (let i=0;i<160;i++)quality.observe(.05);
   assert.equal(quality.low,true);
-  const mobile=new QualityManager('auto',true);assert.equal(mobile.low,true);
+  const mobile=new QualityManager('auto',true);assert.equal(mobile.level,'medium');
+  const medium=new QualityManager('medium',false);assert.equal(medium.level,'medium');
   const high=new QualityManager('high',true);assert.equal(high.low,false);
   assert.ok(mobile.budget.road<=12&&mobile.budget.water<=5&&mobile.budget.pedestrian<=15);
 });

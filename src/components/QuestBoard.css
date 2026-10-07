@@ -551,7 +551,7 @@
   gap: 12px;
 }
 .pyl-photo-preview {
-  height: 190px;
+  height: clamp(160px, 50vw, 300px);
   border-radius: 12px;
   overflow: hidden;
   background: #eaf7ff;

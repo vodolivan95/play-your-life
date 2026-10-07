@@ -35,6 +35,12 @@ try {
   assert.ok(Math.abs(canvasBounds.width-mapBounds.width)<1);assert.ok(Math.abs(canvasBounds.height-mapBounds.height)<1);
   const mobileStats=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));
   assert.equal(mobileStats.quality,'low');
+  assert.equal(mobileStats.paused,false);
+  const pixelRatio=await page.evaluate(()=>Math.min(2,devicePixelRatio));
+  assert.ok(await page.locator('.live-city-canvas').evaluate((node,ratio)=>node.width>=Math.min(1400,node.getBoundingClientRect().width*ratio)-1,pixelRatio),'sharp canvas '+width);
+  await page.waitForTimeout(2200);
+  const moving=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));
+  for(const kind of ['road','water','pedestrian'])assert.ok(moving.positions.some(p=>p.kind===kind&&mobileStats.positions.some(b=>b.id===p.id&&Math.hypot(b.x-p.x,b.y-p.y)>.0001)),kind+' mobile movement '+width);
   await page.locator('.coastal-map').screenshot({path:'work/live-city/mobile-'+width+'.png'});
   results.push({width,stats:JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'))});
  }
@@ -66,6 +72,16 @@ try {
  await page.getByRole('button',{name:'Исходные маршруты',exact:true}).click();
  assert.equal(await page.evaluate(()=>localStorage.getItem('play-your-life-live-city-routes-v1')),null);
  assert.deepEqual(errors,[]);await context.close();
+ // System reduced motion initially pauses, but explicit Continue enables the whole scene.
+ const reducedContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:3,reducedMotion:'reduce'});
+ const reducedPage=await reducedContext.newPage();await reducedPage.goto('http://127.0.0.1:5175/?room-demo=sport');
+ await reducedPage.locator('.coastal-map').scrollIntoViewIfNeeded();await reducedPage.locator('.live-city-canvas[data-ready=true]').waitFor();
+ const stopped=JSON.parse(await reducedPage.locator('.live-city-canvas').getAttribute('data-stats'));assert.equal(stopped.paused,true);
+ await reducedPage.getByRole('button',{name:'▶ Продолжить',exact:true}).click();await reducedPage.locator('.coastal-map').scrollIntoViewIfNeeded();await reducedPage.waitForTimeout(4000);
+ const resumed=JSON.parse(await reducedPage.locator('.live-city-canvas').getAttribute('data-stats'));assert.equal(resumed.paused,false);assert.ok(resumed.elapsed>stopped.elapsed+1);
+ for(const kind of ['road','water','pedestrian'])assert.ok(resumed.positions.some(p=>p.kind===kind&&stopped.positions.some(b=>b.id===p.id&&Math.hypot(b.x-p.x,b.y-p.y)>.0001)),kind+' resumes under reduced motion');
+ assert.ok(await reducedPage.locator('.live-city-canvas').evaluate(node=>node.width>=node.getBoundingClientRect().width*2-1));
+ await reducedPage.locator('.coastal-map').screenshot({path:'work/live-city/mobile-resumed.png'});await reducedContext.close();
  // Карточки: новый аккаунт только локальный, тот же путь, что в существующих quests-ui.
  const cardsContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});const cards=await cardsContext.newPage();
  await cards.goto('http://127.0.0.1:5175/');

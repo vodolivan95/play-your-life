@@ -79,7 +79,7 @@ export class CityRenderer {
   private sprite(agent:Agent,image:HTMLImageElement,t:number) {
     const ctx=this.ctx,p=agent.position;
     const boat=agent.kind==='water';
-    const size=boat ? [28,23,25,35][agent.sprite] : [14,15,14,13,16][agent.sprite];
+    const size=boat ? [28,23,25,35][agent.sprite] : [18,19,18,17,20][agent.sprite];
     const rock=boat&&agent.sprite===2 ? Math.sin(t*.65+agent.id)*.022 : 0;
     ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle+rock);
     let alpha=Math.min(1,agent.age/2);

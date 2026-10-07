@@ -31,7 +31,8 @@ export default function LiveCityCanvas(props:Props) {
     const resize=()=>{
       const width=Math.max(1,node.getBoundingClientRect().width);
       if (mode==='auto'&&window.innerWidth<=760)quality.low=true;
-      const ratio=quality.low ? 1 : Math.min(1.5,window.devicePixelRatio||1);
+      // LOW reduces object/effect counts, not the sharpness of the mobile canvas.
+      const ratio=Math.min(2,window.devicePixelRatio||1);
       node.width=Math.round(Math.min(1400,width*ratio));node.height=Math.round(node.width*MAP_HEIGHT/MAP_WIDTH);
       ctx.setTransform(node.width/MAP_WIDTH,0,0,node.height/MAP_HEIGHT,0,0);
     };
@@ -41,8 +42,8 @@ export default function LiveCityCanvas(props:Props) {
       if (disposed||document.hidden||!visible||!ready) {previous=0;return;}
       const settings=live.current,rawDelta=previous ? (now-previous)/1000:1/60,dt=Math.min(rawDelta,.1);previous=now;
       const wasLow=quality.low;quality.observe(rawDelta);if (wasLow!==quality.low) resize();
-      const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const paused=settings.paused||reduced;
+      // LifeCity applies the system preference initially. Explicit Continue must override it.
+      const paused=settings.paused;
       const simulationStart=performance.now();
       if (!paused) sim.step(dt*settings.speed,quality.budget,['rain','thunderstorm'].includes(settings.weather));
       simulationMs=simulationMs*.9+(performance.now()-simulationStart)*.1;

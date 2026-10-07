@@ -53,3 +53,21 @@ jobs:
           path: |
             work/quests-*.png
             work/logo-*.png
+
+  live-city-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:live-city
+      - name: Save live city mobile and desktop previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-city-previews
+          path: work/live-city/

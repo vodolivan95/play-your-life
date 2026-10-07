@@ -20,7 +20,8 @@ import type { Habit } from "../personalQuests";
 import { sphereProgress } from "../sphereProgress";
 import { SphereBuilding } from "./SphereCity";
 import QuestWizard from "./QuestWizard";
-import hero from "../assets/life-city.webp";
+import { cityAssets } from "../sphereAssets";
+const hero = cityAssets.preview;
 import "./QuestBoard.css";
 
 const nav = [

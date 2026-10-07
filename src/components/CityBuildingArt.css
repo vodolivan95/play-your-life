@@ -10,3 +10,5 @@
 .city-map[data-time=evening] .city-exteriors { filter:brightness(.8) sepia(.23) saturate(1.1); }
 .city-map[data-time=night] .city-exteriors { filter:brightness(.42) saturate(.7) hue-rotate(12deg); }
 @media(prefers-reduced-motion:reduce) { .city-exteriors { transition:none; } }
+
+img.city-building-art { object-fit:cover; object-position:center; aspect-ratio:1.5; }

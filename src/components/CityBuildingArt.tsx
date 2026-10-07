@@ -4,6 +4,7 @@ import type { BuildingState } from '../city';
 import { CityAppearanceContext } from '../cityAppearanceContext';
 import cityImage from '../assets/life-city.webp';
 import './CityBuildingArt.css';
+import { sphereAssets } from '../sphereAssets';
 
 const initial: BuildingState = { tier: 1, style: 'coastal', owned: [], slots: [null, null, null] };
 function Palm({ x, y }: { x: number; y: number }) {
@@ -25,11 +26,20 @@ export default function CityBuildingArt({ id, building, variant = 'scene' }: { i
   const b = building ?? city?.buildings[id] ?? initial;
   const d = cityLandmarks[id];
   if (!d) return null;
+  if (variant !== 'icon') {
+    const asset = sphereAssets[id as keyof typeof sphereAssets];
+    if (!asset) return null;
+    return <img className={`city-building-art ${variant === 'scene' ? 'sphere-building' : ''} building-art-${variant}`}
+      src={asset.buildingThumbnail} alt={d.name} loading="lazy" decoding="async"
+      data-sphere={id} data-tier={b.tier} data-style={b.style} data-building-source="master-city" />;
+  }
+  // Существующая фотографическая UI-иконка English остаётся без изменений.
+
   const x = (d.x - 15) * 9;
   const y = (d.y - 12) * 6;
   const gold = b.tier === 3;
   const trim = gold ? '#edc465' : '#c5edf2';
-  return <svg className={`city-building-art ${variant === 'scene' ? 'sphere-building' : ''} building-art-${variant}`} viewBox={`${x} ${y} 270 165`} preserveAspectRatio="xMidYMid slice" role="img" aria-label={`${d.name} · улучшение ${b.tier}/3`} data-sphere={id} data-tier={b.tier} data-style={b.style}>
+  return <svg className={`city-building-art building-art-${variant}`} viewBox={`${x} ${y} 270 165`} preserveAspectRatio="xMidYMid slice" role="img" aria-label={`${d.name} · улучшение ${b.tier}/3`} data-sphere={id} data-tier={b.tier} data-style={b.style}>
     <image className={`building-source style-${b.style}`} href={cityImage} width="900" height="600" />
     {b.tier >= 2 && <g className="building-enhancements" transform={`translate(${x} ${y - 10})`}>
       <path d="M79 151L132 140L185 153L132 169Z" fill={gold?'#e8d6a4':'#e1edf0'} stroke={trim} strokeWidth="1.5" />
@@ -40,13 +50,5 @@ export default function CityBuildingArt({ id, building, variant = 'scene' }: { i
       {gold && <>{[87,183].map(a=><g key={a}><path d={`M${a} 157V126`} stroke="#8c7453" strokeWidth="2" /><circle cx={a} cy="125" r="3" fill="#ffe9a4" /><circle cx={a} cy="125" r="7" fill="#ffe9a4" opacity=".23" /></g>)}</>}
     </g>}
     {b.slots.map((item,i)=>item&&<Decor key={i} item={item} x={x+[45,135,228][i]} y={y+[151,158,152][i]} />)}
-    {variant === 'scene' && [0, 1, 2].map(person => <g key={person} transform={`translate(${x + 105 + person * 44} ${y + 130 - person * 5})`} aria-hidden="true">
-      <g className="district-walker" style={{ animationDelay: `-${person * 4}s` }}>
-        <ellipse cy="13" rx="5" ry="2" fill="#365e54" opacity=".25" />
-        <circle r="3" fill="#efc59f" />
-        <path d="M0 4v5" stroke={['#e58979', '#6c9bd0', '#a38aca'][person]} strokeWidth="5" strokeLinecap="round" />
-        <path d="M-2 9v4m4-4v4" stroke="#526475" strokeWidth="2" />
-      </g>
-    </g>)}
   </svg>;
 }

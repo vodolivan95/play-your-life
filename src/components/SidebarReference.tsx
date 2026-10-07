@@ -1,4 +1,5 @@
-import city from '../assets/sidebar-city-sharp.webp';
+import { cityAssets } from '../sphereAssets';
+const city = cityAssets.preview;
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return <svg className="sidebar-brand-vector" viewBox={compact ? '0 0 220 73' : '0 0 220 80'} role="img" aria-label="PLAY YOUR LIFE — Твоя жизнь. Твоя игра.">
@@ -17,5 +18,5 @@ function Brand({ compact = false }: { compact?: boolean }) {
 
 export default function SidebarReference({ part }: { part: 'logo' | 'city' }) {
   if (part === 'logo') return <div className="sidebar-reference sidebar-reference-logo"><Brand /></div>;
-  return <div className="sidebar-reference sidebar-reference-city"><img src={city} alt="Два тропических острова с дворцами PLAY YOUR LIFE" /><Brand compact /></div>;
+  return <div className="sidebar-reference sidebar-reference-city"><img src={city} alt="Прибрежный город PLAY YOUR LIFE с девятью зданиями" /><Brand compact /></div>;
 }

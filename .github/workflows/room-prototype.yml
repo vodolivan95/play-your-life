@@ -1,7 +1,7 @@
 name: Verify coastal city and 3D rooms
 on:
   push:
-    branches: [room/3d-sport, room/sport-premium, room/map-entry, room/map-hit-fix, city/weather, city/reference-island, feat/coastal-city-map, main]
+    branches: [room/3d-sport, room/sport-premium, room/map-entry, room/map-hit-fix, city/weather, city/reference-island, feat/coastal-city-map, feat/live-city-20261007, main]
   workflow_dispatch:
 permissions:
   contents: read

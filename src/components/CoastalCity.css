@@ -28,5 +28,5 @@
 @keyframes coastal-ripple { from { transform:scale(.6); opacity:.8; } to { transform:scale(1.45); opacity:0; } }
 @keyframes coastal-rain { to { background-position:-45px 180px; } }
 @keyframes coastal-snow { to { background-position:20px 65px,-20px 80px; } }
-@media(max-width:700px) { .coastal-scroll { border-radius:16px; } .coastal-controls label { flex:1; } .coastal-controls select { min-width:0; width:100%; max-width:190px; } .coastal-zoom { margin-left:0; } .coastal-hint { font-size:11px; line-height:1.5; } }
+@media(max-width:700px) { .coastal-scroll { border-radius:16px; } .coastal-controls label { flex:1 1 calc(50% - 10px); min-width:0; } .coastal-controls select { min-width:0; width:100%; max-width:190px; } .coastal-zoom { margin-left:0; width:100%; } .coastal-hint { font-size:11px; line-height:1.5; } }
 @media(prefers-reduced-motion:reduce) { .coastal-map *, .coastal-map > img { animation:none!important; transition:none; } }

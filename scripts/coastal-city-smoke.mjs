@@ -2,6 +2,7 @@
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
+import process from 'node:process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
@@ -48,6 +49,7 @@ try {
   await page.getByRole('button', { name: '▶ Продолжить', exact: true }).click();
   await page.getByRole('combobox', { name: 'Время города', exact: true }).selectOption('day');
   await page.getByRole('combobox', { name: 'Погода города', exact: true }).selectOption('clear');
+  await page.waitForTimeout(1100);
   await page.setViewportSize({ width: 390, height: 844 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   const rects = await page.locator('.coastal-building').evaluateAll(nodes => nodes.map(node => {

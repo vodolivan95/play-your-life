@@ -94,7 +94,10 @@ function Login({ onGuest }: { onGuest: () => void }) {
   return (
     <div className="account-screen">
       <section className="account-card">
-        <div className="eyebrow">PLAY YOUR LIFE</div>
+        <div className="account-brand">
+          <img src={`${import.meta.env.BASE_URL}logo-96.png`} width="44" height="44" alt="" />
+          <span>PLAY YOUR LIFE</span>
+        </div>
         <h1>
           {mode === 'register'
             ? 'Начни свою игру'

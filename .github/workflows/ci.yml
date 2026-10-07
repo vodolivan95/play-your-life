@@ -43,9 +43,13 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:quests-ui
+      - run: npm run build
+      - run: node tests/logo-ui.mjs
       - name: Save mobile and desktop previews
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: quests-previews
-          path: work/quests-*.png
+          path: |
+            work/quests-*.png
+            work/logo-*.png

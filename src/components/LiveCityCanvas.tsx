@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import spritesUrl from '../assets/city-traffic.svg';
 import globeUrl from '../assets/city-globe.webp';
 import { cityAssets } from '../sphereAssets';
@@ -14,6 +14,7 @@ type Props = {
   weather:string; debug:DebugFlags; draft:Point[]; editing:boolean; onPoint:(p:Point)=>void;
 };
 export default function LiveCityCanvas(props:Props) {
+  const [loadError,setLoadError]=useState(false);
   const canvas=useRef<HTMLCanvasElement>(null),live=useRef(props),fps=useRef<HTMLOutputElement>(null);
   useEffect(()=>{live.current=props;},[props]);
   const routes=props.routes,mode=props.quality;
@@ -66,7 +67,7 @@ export default function LiveCityCanvas(props:Props) {
     const resume=()=>{ if (!frame&&!disposed&&ready&&!document.hidden&&visible) {previous=0;frame=requestAnimationFrame(tick);} };
     const intersection=new IntersectionObserver(entries=>{visible=entries[0]?.isIntersecting??false;if (!visible) {cancelAnimationFrame(frame);frame=0;}else resume();});
     intersection.observe(node);document.addEventListener('visibilitychange',resume);
-    Promise.all([background.decode(),sprites.decode(),globe.decode(),clean.decode()]).then(()=>{ready=true;resize();resume();}).catch(()=>{node.dataset.error='city-assets-unavailable';});
+    Promise.all([background.decode(),sprites.decode(),globe.decode().catch(()=>undefined),clean.decode().catch(()=>undefined)]).then(()=>{ready=true;resize();resume();}).catch(()=>{node.dataset.error='city-assets-unavailable';if(!disposed)setLoadError(true);});
     return ()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();intersection.disconnect();document.removeEventListener('visibilitychange',resume);};
   },[routes,mode]);
   return <>
@@ -77,5 +78,6 @@ export default function LiveCityCanvas(props:Props) {
         props.onPoint({x:Math.max(0,Math.min(1,(e.clientX-bounds.left)/bounds.width)),y:Math.max(0,Math.min(1,(e.clientY-bounds.top)/bounds.height))});
       }} />
     {props.debug.fps&&<output className="live-city-fps" ref={fps} aria-live="off" />}
+    {loadError&&<div className="city-load-error" role="status">Анимация не загрузилась. <button onClick={()=>window.location.reload()}>Обновить страницу</button></div>}
   </>;
 }

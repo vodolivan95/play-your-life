@@ -79,6 +79,7 @@ export class CityRenderer {
     }
   }
   private cleanupLayer(image:HTMLImageElement,roads:boolean) {
+    if(!image.complete||!image.naturalWidth)return;
     const index=roads?1:0;
     if(!this.cleanupCache[index]) {
       const tile=document.createElement('canvas'),mask=document.createElement('canvas');

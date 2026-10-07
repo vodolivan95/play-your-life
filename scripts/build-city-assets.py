@@ -22,10 +22,9 @@ buildings = {
 for name, bounds in buildings.items():
     tile = source.crop(bounds)
     tile.thumbnail((480, 320))
-    tile.save(assets / f'buildings/{name}.webp', 'WEBP', quality=88, method=6)
+    tile.save(assets / f'buildings/{name}.webp', 'WEBP', lossless=True, method=6)
 preview = source.copy()
-preview.thumbnail((420, 535))
-preview.save(assets / 'city-preview.webp', 'WEBP', quality=85, method=6)
+preview.save(assets / 'city-preview.webp', 'WEBP', lossless=True, method=6)
 source.crop((0, 0, 1005, 380)).save(assets / 'city-skyline.webp', 'WEBP', quality=88, method=6)
 # Математическое вращение фактуры исходного декоративного глобуса.
 # Невидимое полушарие продолжено зеркально, это не новая географическая карта.

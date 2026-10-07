@@ -29,7 +29,7 @@ try {
       assert.equal(await page.evaluate(async ({href,size}) => { const img = new Image(); img.src = href; await img.decode(); return img.naturalWidth === size && img.naturalHeight === size; }, {href,size}), true);
     }
     const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
-    const manifest = await (await page.request.get(manifestHref)).json();
+    const manifest = await (await page.request.get(new URL(manifestHref, page.url()).href)).json();
     assert.equal(manifest.name, 'PLAY YOUR LIFE');
     assert.equal(manifest.short_name, 'PLAY YOUR LIFE');
     assert.equal(manifest.display, 'standalone');

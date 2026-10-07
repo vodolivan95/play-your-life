@@ -20,7 +20,7 @@ import type { Habit } from "../personalQuests";
 import { sphereProgress } from "../sphereProgress";
 import { SphereBuilding } from "./SphereCity";
 import QuestWizard from "./QuestWizard";
-import { cityAssets } from "../sphereAssets";
+import { cityAssets, sphereAssets } from "../sphereAssets";
 const hero = cityAssets.preview;
 import "./QuestBoard.css";
 
@@ -428,7 +428,7 @@ export default function QuestBoard({
                         {q.coverImage ? (
                           <img src={q.coverImage} alt="" />
                         ) : (
-                          <SphereBuilding id={q.sphere} />
+                          <img src={sphereAssets[q.sphere as keyof typeof sphereAssets]?.questCover} alt="" />
                         )}
                         <span>
                           {q.done

@@ -30,7 +30,7 @@ export default function LiveCityCanvas(props:Props) {
     let frame=0,previous=0,lastStats=0,visible=true,disposed=false,ready=false,lastSignature='',renderMs=0,simulationMs=0;
     const resize=()=>{
       const width=Math.max(1,node.getBoundingClientRect().width);
-      if (mode==='auto'&&window.innerWidth<=760)quality.low=true;
+      if (mode==='auto'&&window.innerWidth<=760)quality.medium=true;
       // LOW reduces object/effect counts, not the sharpness of the mobile canvas.
       const ratio=Math.min(2,window.devicePixelRatio||1);
       node.width=Math.round(Math.min(1400,width*ratio));node.height=Math.round(node.width*MAP_HEIGHT/MAP_WIDTH);
@@ -42,7 +42,8 @@ export default function LiveCityCanvas(props:Props) {
       if (disposed||document.hidden||!visible||!ready) {previous=0;return;}
       const settings=live.current,rawDelta=previous ? (now-previous)/1000:1/60,dt=Math.min(rawDelta,.1);previous=now;
       const wasLow=quality.low;quality.observe(rawDelta);if (wasLow!==quality.low) resize();
-      // LifeCity applies the system preference initially. Explicit Continue must override it.
+      const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if(reduced)quality.low=true;
       const paused=settings.paused;
       const simulationStart=performance.now();
       if (!paused) sim.step(dt*settings.speed,quality.budget,['rain','thunderstorm'].includes(settings.weather));
@@ -50,13 +51,13 @@ export default function LiveCityCanvas(props:Props) {
       const signature=JSON.stringify([settings.time,settings.weather,settings.debug,settings.draft,node.width]);
       if (!paused||signature!==lastSignature) {
         if (paused) Object.assign(renderer,timeLighting(settings.time,sim.elapsed));
-        const renderStart=performance.now();renderer.draw(sim,{...settings,low:quality.low,background,sprites,globe});renderMs=renderMs*.9+(performance.now()-renderStart)*.1;lastSignature=signature;
+        const renderStart=performance.now();renderer.draw(sim,{...settings,low:quality.level!=='high',reduced,background,sprites,globe});renderMs=renderMs*.9+(performance.now()-renderStart)*.1;lastSignature=signature;
       }
       if (now-lastStats>1000) {
         lastStats=now;
-        const stats={elapsed:Math.round(sim.elapsed*100)/100,renderMs:Math.round(renderMs*10)/10,simulationMs:Math.round(simulationMs*10)/10,fps:Math.round(quality.fps),quality:quality.low?'low':'high',
+        const stats={elapsed:Math.round(sim.elapsed*100)/100,renderMs:Math.round(renderMs*10)/10,simulationMs:Math.round(simulationMs*10)/10,fps:Math.round(quality.fps),quality:quality.level,
           counts:Object.fromEntries(['road','water','pedestrian'].map(kind=>[kind,sim.agents.filter(a=>a.kind===kind).length])),
-          positions:sim.normalizedPositions,collisionStops:sim.collisionStops,fountains:fountains.length,waterfalls:waterfalls.length,paused};
+          positions:sim.normalizedPositions,collisionStops:sim.collisionStops,fountains:fountains.length,waterfalls:waterfalls.length,paused,reduced,level:quality.level};
         node.dataset.stats=JSON.stringify(stats);node.dataset.ready='true';
         if (fps.current) fps.current.value=`${stats.fps} FPS · ${stats.quality.toUpperCase()} · ${stats.counts.road} авто · ${stats.counts.water} суда · ${stats.counts.pedestrian} NPC`;
       }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { spheres } from '../game';
 import type { GameState } from '../game';
-import { coastalBuildings } from '../coastalCity';
+import { coastalBuildings, coastalHitShapes } from '../coastalCity';
 import { buildingState } from '../city';
 import { cityAssets } from '../sphereAssets';
 import { defaultRoutes, validRoutes } from '../cityLive/paths';
@@ -12,6 +12,7 @@ import type { Quality } from '../cityLive/simulation';
 import type { CityTime, DebugFlags } from '../cityLive/render';
 import LiveCityCanvas from './LiveCityCanvas';
 import './CoastalCity.css';
+import { useCityZoom } from '../cityLive/useCityZoom';
 
 const weatherOptions = [
   ['clear','Ясно'],['partlyCloudy','Переменная облачность'],['cloudy','Облачно'],
@@ -23,7 +24,7 @@ function readPreferences():{time:CityTime;weather:string;quality:Quality} {
     const value=JSON.parse(localStorage.getItem(preferenceKey)??'{}');
     return {time:['auto','day','sunset','night','sunrise'].includes(value.time)?value.time:'auto',
       weather:weatherOptions.some(([id])=>id===value.weather)?value.weather:'clear',
-      quality:['auto','high','low'].includes(value.quality)?value.quality:'auto'};
+      quality:['auto','high','medium','low'].includes(value.quality)?value.quality:'auto'};
   } catch {return {time:'auto',weather:'clear',quality:'auto'};}
 }
 const debugDefaults:DebugFlags={road:false,water:false,pedestrian:false,hitboxes:false,spawn:false,intersections:false,fps:false};
@@ -32,7 +33,8 @@ const debugLabels:Record<keyof DebugFlags,string>={road:'Дороги',water:'В
 export default function CoastalCity({ state,onOpen,paused,speed }: {
   state:GameState;onOpen:(id:string)=>void;paused:boolean;speed:number;
 }) {
-  const [zoom,setZoom]=useState(1),[preferences,setPreferences]=useState(readPreferences);
+  const {zoom,setZoom,scroll}=useCityZoom();
+  const [preferences,setPreferences]=useState(readPreferences);
   const [routes,setRoutes]=useState(()=>{try{return readRoutes(localStorage);}catch{return defaultRoutes;}});
   const [debug,setDebug]=useState(debugDefaults);
   const dev=new URLSearchParams(window.location.search).get('city-dev')==='1';
@@ -61,7 +63,7 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
         {weatherOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
       </select></label>
       <label>Качество <select aria-label="Качество города" value={preferences.quality} onChange={e=>setPreferences({...preferences,quality:e.target.value as Quality})}>
-        <option value="auto">AUTO</option><option value="high">HIGH</option><option value="low">LOW</option>
+        <option value="auto">AUTO</option><option value="high">HIGH</option><option value="medium">MEDIUM</option><option value="low">LOW</option>
       </select></label>
       <div className="coastal-zoom" aria-label="Масштаб карты">
         <button aria-label="Уменьшить карту" disabled={zoom===1} onClick={()=>setZoom(Math.max(1,zoom-.5))}>−</button>
@@ -95,8 +97,8 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
       </div>
       <p role="status">{message||`${draft.length} точек · SAVE сохраняет только маршруты; прогресс игры не изменяется.`}</p>
     </details>}
-    <p className="coastal-hint" id="coastal-hint">{editing?'Нажимай на карту, чтобы добавить точки маршрута.':'Нажми на здание, чтобы войти. Увеличенную карту можно листать.'}</p>
-    <div className="coastal-scroll" aria-label="Прибрежная карта" aria-describedby="coastal-hint">
+    <p className="coastal-hint" id="coastal-hint">{editing?'Нажимай на карту, чтобы добавить точки маршрута.':'Нажми на здание, чтобы войти. Масштаб — двумя пальцами, колёсиком или кнопками. Увеличенную карту можно листать.'}</p>
+    <div ref={scroll} className="coastal-scroll" aria-label="Прибрежная карта" aria-describedby="coastal-hint">
       <div className="coastal-map" data-time={preferences.time} data-weather={preferences.weather} data-paused={paused} data-editing={editing}
         style={{width:`${zoom*100}%`,'--city-rate':speed} as CSSProperties}>
         <img src={cityAssets.background} width="1005" height="1280" alt="Прибрежный город на островах: девять зданий сфер жизни, мосты, водопады и пляж" draggable={false}/>
@@ -106,7 +108,7 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
           const sphere=spheres.find(s=>s.id===building.id)!,tier=buildingState(state,building.id).tier;
           return <button key={building.id} className="coastal-building" data-building={building.id}
             aria-label={`Войти: ${sphere.name}`} onClick={()=>onOpen(building.id)}
-            style={{left:`${building.x}%`,top:`${building.y}%`,width:`${building.width}%`,height:`${building.height}%`}}>
+            style={{left:`${building.x}%`,top:`${building.y}%`,width:`${building.width}%`,height:`${building.height}%`,clipPath:coastalHitShapes[building.id]}}>
             <span>{sphere.icon} {sphere.name}{tier>1?` · Здание ${tier} ур.`:''}</span>
           </button>;
         })}

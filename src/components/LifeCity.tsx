@@ -19,7 +19,7 @@ export default function LifeCity({
   notify: (message: string) => void;
 }) {
   const [inside, setInside] = useState<string | null>(null);
-  const [paused, setPaused] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const [paused, setPaused] = useState(false);
   const [speed, setSpeed] = useState(1);
   if (inside)
     return (

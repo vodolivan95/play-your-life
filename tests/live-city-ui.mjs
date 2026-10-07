@@ -34,7 +34,7 @@ try {
   const canvasBounds=await page.locator('.live-city-canvas').boundingBox();const mapBounds=await page.locator('.coastal-map').boundingBox();
   assert.ok(Math.abs(canvasBounds.width-mapBounds.width)<1);assert.ok(Math.abs(canvasBounds.height-mapBounds.height)<1);
   const mobileStats=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));
-  assert.equal(mobileStats.quality,'low');
+  assert.equal(mobileStats.quality,'medium');
   assert.equal(mobileStats.paused,false);
   const pixelRatio=await page.evaluate(()=>Math.min(2,devicePixelRatio));
   assert.ok(await page.locator('.live-city-canvas').evaluate((node,ratio)=>node.width>=Math.min(1400,node.getBoundingClientRect().width*ratio)-1,pixelRatio),'sharp canvas '+width);
@@ -55,6 +55,20 @@ try {
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  const canvasBounds=await page.locator('.live-city-canvas').boundingBox(),mapBounds=await page.locator('.coastal-map').boundingBox();assert.ok(Math.abs(canvasBounds.width-mapBounds.width)<1);
  await page.getByRole('button',{name:'Весь остров',exact:true}).click();
+ // Actual multi-touch events and wheel zoom scale the common map coordinate system.
+ await page.locator('.coastal-scroll').scrollIntoViewIfNeeded();
+ const touch=await context.newCDPSession(page),region=await page.locator('.coastal-scroll').boundingBox();
+ const cx=region.x+region.width/2,cy=Math.max(50,Math.min(650,region.y+region.height/2));
+ await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:cx-35,y:cy},{x:cx+35,y:cy}]});
+ await touch.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:cx-65,y:cy},{x:cx+65,y:cy}]});
+ await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForTimeout(300);
+ assert.ok(await page.locator('.coastal-map').evaluate(node=>parseFloat(node.style.width)>150),'pinch enlarges map');
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ await page.getByRole('button',{name:'Весь остров',exact:true}).click();
+ await page.locator('.coastal-scroll').scrollIntoViewIfNeeded();const wheelBounds=await page.locator('.coastal-scroll').boundingBox();
+ await page.mouse.move(wheelBounds.x+wheelBounds.width/2,Math.max(50,Math.min(650,wheelBounds.y+wheelBounds.height/2)));await page.mouse.wheel(0,-100);await page.waitForTimeout(300);
+ assert.ok(await page.locator('.coastal-map').evaluate(node=>parseFloat(node.style.width)>100),'wheel enlarges map');
+ await page.getByRole('button',{name:'Весь остров',exact:true}).click();
  await page.getByRole('button',{name:'⏸ Пауза',exact:true}).click();
  await page.locator('.coastal-map').scrollIntoViewIfNeeded();await page.waitForTimeout(1200);const paused=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));
  await page.waitForTimeout(1200);const paused2=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));assert.equal(paused.elapsed,paused2.elapsed);
@@ -72,12 +86,12 @@ try {
  await page.getByRole('button',{name:'Исходные маршруты',exact:true}).click();
  assert.equal(await page.evaluate(()=>localStorage.getItem('play-your-life-live-city-routes-v1')),null);
  assert.deepEqual(errors,[]);await context.close();
- // System reduced motion initially pauses, but explicit Continue enables the whole scene.
+ // Reduced motion removes ambient effects and lowers budget, without freezing the transport.
  const reducedContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:3,reducedMotion:'reduce'});
  const reducedPage=await reducedContext.newPage();await reducedPage.goto('http://127.0.0.1:5175/?room-demo=sport');
  await reducedPage.locator('.coastal-map').scrollIntoViewIfNeeded();await reducedPage.locator('.live-city-canvas[data-ready=true]').waitFor();
- const stopped=JSON.parse(await reducedPage.locator('.live-city-canvas').getAttribute('data-stats'));assert.equal(stopped.paused,true);
- await reducedPage.getByRole('button',{name:'▶ Продолжить',exact:true}).click();await reducedPage.locator('.coastal-map').scrollIntoViewIfNeeded();await reducedPage.waitForTimeout(4000);
+ const stopped=JSON.parse(await reducedPage.locator('.live-city-canvas').getAttribute('data-stats'));assert.equal(stopped.paused,false);assert.equal(stopped.reduced,true);assert.equal(stopped.quality,'low');
+ await reducedPage.waitForTimeout(4000);
  const resumed=JSON.parse(await reducedPage.locator('.live-city-canvas').getAttribute('data-stats'));assert.equal(resumed.paused,false);assert.ok(resumed.elapsed>stopped.elapsed+1);
  for(const kind of ['road','water','pedestrian'])assert.ok(resumed.positions.some(p=>p.kind===kind&&stopped.positions.some(b=>b.id===p.id&&Math.hypot(b.x-p.x,b.y-p.y)>.0001)),kind+' resumes under reduced motion');
  assert.ok(await reducedPage.locator('.live-city-canvas').evaluate(node=>node.width>=node.getBoundingClientRect().width*2-1));

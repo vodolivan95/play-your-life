@@ -5,7 +5,7 @@ import type { Agent, CitySimulation } from './simulation.ts';
 export type CityTime = 'day'|'sunset'|'night'|'sunrise'|'auto';
 export type DebugFlags = { road:boolean;water:boolean;pedestrian:boolean;hitboxes:boolean;spawn:boolean;intersections:boolean;fps:boolean };
 export type RenderOptions = {
-  time: CityTime; weather:string; low:boolean; debug:DebugFlags;
+  time: CityTime; weather:string; low:boolean; reduced?:boolean; debug:DebugFlags;
   draft:Point[]; background:HTMLImageElement; sprites:HTMLImageElement; globe:HTMLImageElement;
 };
 const polygon = (ctx: CanvasRenderingContext2D, points: number[][]) => {
@@ -46,8 +46,10 @@ export class CityRenderer {
     this.waterfallLayer(t,opts);
     this.fountainLayer(t,opts);
     this.buildingEffectsLayer(t,opts);
-    this.vegetationLayer(t,opts);
-    this.ambientLayer(t,opts);
+    if(!opts.reduced) {
+      this.vegetationLayer(t,opts);
+      this.ambientLayer(t,opts);
+    }
     this.weatherLayer(t,opts);
     this.debugLayer(sim,opts);
     ctx.globalAlpha=1;

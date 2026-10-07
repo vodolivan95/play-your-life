@@ -19,10 +19,18 @@ buildings = {
     'leisure': (714, 869, 1005, 1091),
 }
 (assets / 'buildings').mkdir(exist_ok=True)
+(assets / 'quest-covers').mkdir(exist_ok=True)
 for name, bounds in buildings.items():
     tile = source.crop(bounds)
     tile.thumbnail((480, 320))
     tile.save(assets / f'buildings/{name}.webp', 'WEBP', lossless=True, method=6)
+    # Larger photographic composition for a quest, never upscaled from the card tile.
+    left, top, right, bottom = bounds
+    width = min(600, (right-left)*2)
+    height = round(width*0.625)
+    x = max(0, min(source.width-width, (left+right-width)//2))
+    y = max(0, min(source.height-height, (top+bottom-height)//2))
+    source.crop((x,y,x+width,y+height)).save(assets / f'quest-covers/{name}.webp', 'WEBP', lossless=True, method=6)
 preview = source.copy()
 preview.save(assets / 'city-preview.webp', 'WEBP', lossless=True, method=6)
 source.crop((0, 0, 1005, 380)).save(assets / 'city-skyline.webp', 'WEBP', quality=88, method=6)

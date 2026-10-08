@@ -10,14 +10,13 @@ import finance from './assets/sphere-buildings/finance-building.jpg';
 import together from './assets/sphere-buildings/joint-tasks-building.jpg';
 import driving from './assets/sphere-buildings/driving-building.jpg';
 import tasks from './assets/sphere-buildings/tasks-building.jpg';
-import hobby from './assets/buildings/leisure.webp';
-import hobbyCover from './assets/quest-covers/leisure.webp';
+import hobby from './assets/sphere-buildings/leisure-building.webp';
 import { coastalBuildings } from './coastalCity';
 
 // Фотографии UI отделены от ресурсов игровой карты. Иконки и комнаты сохраняются.
 export const cityAssets = { background: cityBackground, cleanSurfaces, preview: cityBackground, skyline: citySkyline, width: 1005, height: 1280 };
 const thumbnails = { health, sport, growth, english, finance, together, driving, tasks, hobby };
-const covers = {health,sport,growth,english,finance,together,driving,tasks,hobby:hobbyCover};
+const covers = {health,sport,growth,english,finance,together,driving,tasks,hobby};
 export const sphereAssets = Object.fromEntries(coastalBuildings.map(building => [building.id, {
   icon: { source: existingIcons, id: building.id },
   buildingThumbnail: thumbnails[building.id],

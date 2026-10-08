@@ -410,6 +410,7 @@ test('SDK сохраняет цель, этапы, заметки, прогре�
   assert.equal(loaded.state.goals[0].stages[1].status, 'completed');
   assert.equal(loaded.state.quests[0].stageId, stageId);
   assert.equal(loaded.state.events.filter(e => e.goalId === goalId && e.kind === 'goal').length, 1);
+  assert.equal(loaded.state.events.find(e => e.kind === 'quest' && e.stageId === stageId).stageProgress, 100);
   assert.deepEqual(completeQuest(loaded.state, taskId), loaded.state);
   assert.equal(await driver.save(state, planned.revision), null);
   assert.equal(loaded.revision, completed.revision);

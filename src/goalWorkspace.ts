@@ -58,6 +58,20 @@ export function stageAccess(state: GameState, goal: Goal, stage: GoalStage) {
   }
   return '';
 }
+export function activeGoalStage(
+  state: GameState,
+  goal: Goal,
+  now = new Date(),
+) {
+  const available = (goal.stages ?? []).filter(
+    (s) =>
+      !stageAccess(state, goal, s) &&
+      !stageMetrics(state, goal, s).complete &&
+      s.status !== 'paused' &&
+      (!s.startsAt || Date.parse(s.startsAt) <= now.getTime()),
+  );
+  return available.find((s) => s.status === 'active') ?? available[0];
+}
 export function stageState(
   state: GameState,
   goal: Goal,
@@ -67,19 +81,7 @@ export function stageState(
   if (stageAccess(state, goal, stage)) return 'locked';
   if (stageMetrics(state, goal, stage).complete) return 'completed';
   if (stage.status === 'paused') return 'paused';
-  if (
-    stage.status === 'planned' ||
-    (stage.startsAt && Date.parse(stage.startsAt) > now.getTime())
-  )
-    return 'planned';
-  const first = goal.stages?.find(
-    (s) =>
-      !stageMetrics(state, goal, s).complete &&
-      !stageAccess(state, goal, s) &&
-      s.status !== 'paused' &&
-      s.status !== 'planned',
-  );
-  return stage.status === 'active' || first?.id === stage.id
+  return activeGoalStage(state, goal, now)?.id === stage.id
     ? 'active'
     : 'planned';
 }
@@ -128,12 +130,16 @@ export function nextGoalTask(state: GameState, goal: Goal, now = new Date()) {
     if (
       q.goalId !== goal.id ||
       q.done ||
+      q.rewardClaimed ||
       (q.startsAt && Date.parse(q.startsAt) > now.getTime())
     )
       return false;
     const stage = goal.stages?.find((s) => s.id === q.stageId);
     return (
-      !stage || (!stageAccess(state, goal, stage) && stage.status !== 'paused')
+      !stage ||
+      (!stageAccess(state, goal, stage) &&
+        stage.status !== 'paused' &&
+        (!stage.startsAt || Date.parse(stage.startsAt) <= now.getTime()))
     );
   });
   const rank = (q: Quest) => {
@@ -167,12 +173,22 @@ export function goalHistory(
     (q) => q.goalId === goal.id && (!stageId || q.stageId === stageId),
   );
   const ids = new Set(tasks.map((q) => q.id));
-  const events = state.events.filter(
-    (e) =>
-      (e.goalId === goal.id && (!stageId || e.stageId === stageId)) ||
-      (!!e.sourceId && ids.has(e.sourceId)) ||
-      (!stageId && e.kind === 'goal' && e.sourceId === goal.id),
-  );
+  const legacyRewardUnambiguous =
+    state.goals.filter((g) => g.name === goal.name && g.sphere === goal.sphere)
+      .length === 1;
+  const events = state.events.filter((e) => {
+    if (e.goalId)
+      return e.goalId === goal.id && (!stageId || e.stageId === stageId);
+    if (e.sourceId && ids.has(e.sourceId)) return true;
+    if (stageId || e.kind !== 'goal') return false;
+    return (
+      e.sourceId === goal.id ||
+      (!e.sourceId &&
+        legacyRewardUnambiguous &&
+        e.sphere === goal.sphere &&
+        e.title === `Цель: ${goal.name}`)
+    );
+  });
   const stage = goal.stages?.find((s) => s.id === stageId);
   const created = stageId ? stage?.createdAt : goal.created;
   return [

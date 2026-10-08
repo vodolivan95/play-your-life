@@ -7,7 +7,7 @@ import {
   syncGoalTasks,
 } from "./game.ts";
 import type { GameState, Quest } from "./game.ts";
-import { stageAccess, goalProgressValue } from './goalWorkspace.ts';
+import { stageAccess, goalProgressValue, stageMetrics } from './goalWorkspace.ts';
 import { validProjectImage } from "./projectImage.ts";
 export const MAX_CUSTOM_QUEST_COINS = 100;
 export const MAX_DAILY_HABIT_COINS = 10;
@@ -223,7 +223,21 @@ export function progressQuest(
   };
   if (value === target) return completeQuest(next, id);
   const synced = q.goalId ? syncGoalTasks(next, q.goalId) : next;
-  if (goal) synced.events = [{ id: crypto.randomUUID(), sphere: q.sphere, title: `Обновлён прогресс задачи: ${q.name} (${value} / ${target})`, xp: 0, date: new Date().toISOString(), kind: 'planning', goalId: goal.id, ...(q.stageId ? { stageId: q.stageId } : {}), sourceId: q.id, goalProgress: goalProgressValue(synced, goal) }, ...synced.events];
+  if (goal) {
+    synced.events = [{
+      id: crypto.randomUUID(),
+      sphere: q.sphere,
+      title: `Обновлён прогресс задачи: ${q.name} (${value} / ${target})`,
+      xp: 0,
+      date: new Date().toISOString(),
+      kind: 'planning',
+      goalId: goal.id,
+      ...(q.stageId ? { stageId: q.stageId } : {}),
+      sourceId: q.id,
+      goalProgress: goalProgressValue(synced, goal),
+      ...(stage ? { stageProgress: stageMetrics(synced, goal, stage).progress } : {}),
+    }, ...synced.events];
+  }
   return synced;
 }
 export function recordQuestReward(

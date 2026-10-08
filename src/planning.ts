@@ -17,6 +17,12 @@ export function toISO(value: string): string | undefined {
   if (Number.isNaN(date.getTime())) throw new Error('Укажи корректную дату.');
   return date.toISOString();
 }
+/** Keep the original precision when a minute-based date input is unchanged. */
+export function preserveDateInput(value: string, original?: string) {
+  return original && value === localDateTime(new Date(original))
+    ? original
+    : toISO(value);
+}
 export function durationEnd(start: string, amount: number, unit: DurationUnit) {
   const date = new Date(start);
   if (
@@ -100,6 +106,7 @@ export function planEvent(
 ): GameState {
   const goal = state.goals.find((g) => g.id === goalId);
   if (!goal) return state;
+  const stage = goal.stages?.find((s) => s.id === stageId);
   return {
     ...state,
     events: [
@@ -113,6 +120,9 @@ export function planEvent(
         goalId,
         stageId,
         goalProgress: goalProgressValue(state, goal),
+        ...(stage
+          ? { stageProgress: stageMetrics(state, goal, stage).progress }
+          : {}),
       },
       ...state.events,
     ],

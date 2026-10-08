@@ -21,6 +21,7 @@ import {
   stageMetrics,
   stageAccess,
   stageState,
+  activeGoalStage,
   nextGoalTask,
   goalHistory,
   stageDays,
@@ -29,6 +30,7 @@ import { goalRoute, readGoalRoute } from '../src/goalRoutes.ts';
 import { validateState } from '../src/stateValidation.ts';
 import { progressQuest } from '../src/personalQuests.ts';
 import { MAX_SPHERE_LEVEL } from '../src/sphereProgress.ts';
+import { chartCoordinates, goalStatistics } from '../src/goalStatistics.ts';
 import type { GameState } from '../src/game.ts';
 function fixture() {
   let s = initialState();
@@ -141,6 +143,11 @@ test('автоматическое завершение, история и на�
   assert.ok(goal(s, id).stages![0].completedAt);
   assert.equal(s.xp - beforeXP, 205);
   assert.equal(
+    s.events.find((e) => e.sourceId === task.id && e.kind === 'quest')!
+      .stageProgress,
+    100,
+  );
+  assert.equal(
     goalHistory(s, goal(s, id)).filter((e) => e.kind === 'goal').length,
     1,
   );
@@ -154,6 +161,157 @@ test('автоматическое завершение, история и на�
   validateState(restored);
   assert.deepEqual(completeQuest(restored, task.id), restored);
   assert.equal(syncGoalTasks(restored, id, true).xp, s.xp);
+});
+test('активный этап автоматически сменяется; будущий старт и пауза учитываются', () => {
+  const { s: before, id, a, b } = fixture();
+  const now = new Date('2026-10-08T12:00:00Z');
+  assert.equal(activeGoalStage(before, goal(before, id), now)!.id, a);
+  let s = saveStage(before, id, {
+    ...goal(before, id).stages![0],
+    completionMode: 'manual',
+  });
+  s = finishStage(s, id, a);
+  assert.equal(
+    stageState(s, goal(s, id), goal(s, id).stages![1], now),
+    'active',
+  );
+  s = saveStage(s, id, {
+    ...goal(s, id).stages![1],
+    startsAt: '2027-01-01T12:00:00Z',
+  });
+  assert.equal(activeGoalStage(s, goal(s, id), now), undefined);
+  s = saveTask(s, {
+    name: 'Будущий этап',
+    sphere: 'english',
+    difficulty: 'Micro',
+    goalId: id,
+    stageId: b,
+  });
+  assert.equal(nextGoalTask(s, goal(s, id), now), undefined);
+  s = saveStage(s, id, {
+    ...goal(s, id).stages![1],
+    startsAt: undefined,
+    status: 'paused',
+  });
+  assert.equal(activeGoalStage(s, goal(s, id), now), undefined);
+});
+test('история с ID остаётся у исходной цели при перемещении задачи; старые награды связываются только однозначно', () => {
+  const f = fixture();
+  let s = saveTask(f.s, {
+    name: 'С историей',
+    sphere: 'english',
+    difficulty: 'Micro',
+    goalId: f.id,
+    stageId: f.a,
+  });
+  const task = s.quests.at(-1)!;
+  const historical = {
+    id: 'task-history',
+    sourceId: task.id,
+    goalId: f.id,
+    stageId: f.a,
+    title: 'Прогресс задачи',
+    sphere: 'english',
+    xp: 0,
+    date: '2026-10-08T12:00:00Z',
+    kind: 'planning',
+  } as const;
+  s = { ...s, events: [historical, ...s.events] };
+  s = saveGoal(s, {
+    name: 'Другая цель',
+    sphere: 'english',
+    target: 100,
+    reward: 100,
+  });
+  const destination = s.goals.at(-1)!;
+  s = saveTask(s, { ...task, goalId: destination.id, stageId: undefined });
+  assert.ok(goalHistory(s, goal(s, f.id)).some((e) => e.id === historical.id));
+  assert.ok(
+    !goalHistory(s, goal(s, destination.id)).some(
+      (e) => e.id === historical.id,
+    ),
+  );
+  const legacy = {
+    id: 'legacy',
+    title: `Цель: ${destination.name}`,
+    sphere: 'english' as const,
+    xp: 10,
+    date: '2026-10-08T12:00:00Z',
+    kind: 'goal' as const,
+  };
+  s = { ...s, events: [legacy, ...s.events] };
+  assert.ok(
+    goalHistory(s, goal(s, destination.id)).some((e) => e.id === 'legacy'),
+  );
+  s = saveGoal(s, {
+    name: destination.name,
+    sphere: 'english',
+    target: 100,
+    reward: 100,
+  });
+  assert.ok(
+    !goalHistory(s, goal(s, destination.id)).some((e) => e.id === 'legacy'),
+  );
+});
+test('графики различают прогресс цели и этапа, не выдумывают даты и используют реальные интервалы', () => {
+  const f = fixture();
+  let s = saveTask(f.s, {
+    name: 'Частичная',
+    sphere: 'english',
+    difficulty: 'Micro',
+    goalId: f.id,
+    stageId: f.a,
+    targetValue: 10,
+  });
+  const q = s.quests.at(-1)!;
+  s = saveTask(s, {
+    name: 'Другой этап',
+    sphere: 'english',
+    difficulty: 'Micro',
+    goalId: f.id,
+    stageId: f.b,
+  });
+  s = progressQuest(s, q.id, 5, 'test');
+  assert.equal(goalStatistics(s, goal(s, f.id)).progress.at(-1)!.value, 25);
+  assert.equal(
+    goalStatistics(s, goal(s, f.id), f.a).progress.at(-1)!.value,
+    50,
+  );
+  s = completeQuest(s, q.id);
+  const taskXP = goalStatistics(s, goal(s, f.id), f.a).totalXP;
+  assert.equal(taskXP, 5);
+  const undated = {
+    ...s,
+    quests: s.quests.map((t) =>
+      t.id === q.id ? { ...t, completedAt: undefined } : t,
+    ),
+  };
+  assert.equal(
+    goalStatistics(undated, goal(undated, f.id), f.a).undatedDone,
+    1,
+  );
+  assert.ok(
+    goalStatistics(undated, goal(undated, f.id), f.a).rows.every(
+      (row) => row.actual === 0,
+    ),
+  );
+  const points = chartCoordinates(
+    [
+      { date: '2026-01-01', value: 10 },
+      { date: '2026-01-02', value: 20 },
+      { date: '2026-01-11', value: 30 },
+    ],
+    100,
+  );
+  assert.ok(
+    Math.abs((points[1].x - points[0].x) / (points[2].x - points[0].x) - 0.1) <
+      0.000001,
+  );
+  assert.equal(
+    chartCoordinates([{ date: '2026-01-01', value: 10 }], 100)[0].x,
+    300,
+  );
+  assert.deepEqual(chartCoordinates([], 100), []);
 });
 test('заблокированный и приостановленный этап не выдаёт XP из общих действий квеста', () => {
   const f = fixture();

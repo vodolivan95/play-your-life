@@ -178,6 +178,7 @@ export type Event = {
   goalId?: string;
   stageId?: string;
   goalProgress?: number;
+  stageProgress?: number;
   id: string;
   sphere: string;
   title: string;
@@ -458,7 +459,9 @@ export function award(
   sphere: string,
   xp: number,
   title: string,
-  details: Pick<Event, 'kind' | 'scoreBefore' | 'scoreAfter' | 'sourceId' | 'goalId' | 'stageId' | 'goalProgress'> = {},
+  details: Pick<Event,
+    'kind' | 'scoreBefore' | 'scoreAfter' | 'sourceId' | 'goalId' | 'stageId' | 'goalProgress' | 'stageProgress'
+  > = {},
 ): GameState {
   return {
     ...state,
@@ -522,7 +525,15 @@ export function completeQuest(state: GameState, id: string): GameState {
   if (quest.goalId) {
     next = syncGoalTasks(next, quest.goalId, true);
     const goal = next.goals.find((g) => g.id === quest.goalId);
-    if (goal) next.events = next.events.map((e) => e.kind === 'quest' && e.sourceId === quest.id ? { ...e, goalProgress: goalProgressValue(next, goal) } : e);
+    if (goal) {
+      next.events = next.events.map((e) => e.kind === 'quest' && e.sourceId === quest.id
+        ? {
+            ...e,
+            goalProgress: goalProgressValue(next, goal),
+            ...(parentStage ? { stageProgress: stageMetrics(next, goal, parentStage).progress } : {}),
+          }
+        : e);
+    }
   }
   return next;
 }

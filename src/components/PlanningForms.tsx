@@ -2,7 +2,13 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { difficulties, spheres } from '../game';
 import type { GameState, Goal, GoalStage, Quest } from '../game';
-import { durationEnd, formatDate, localDateTime, toISO } from '../planning';
+import {
+  durationEnd,
+  formatDate,
+  localDateTime,
+  preserveDateInput,
+  toISO,
+} from '../planning';
 import type { DurationUnit } from '../planning';
 import Icon from './Icon';
 import ProjectImagePicker from './ProjectImagePicker';
@@ -61,8 +67,8 @@ export function GoalForm({
         target: mode === 'tasks' ? 100 : Number(data.get('target')),
         reward: Number(data.get('reward')),
         progressMode: mode,
-        startsAt: toISO(start),
-        dueAt: toISO(end),
+        startsAt: preserveDateInput(start, initial?.startsAt),
+        dueAt: preserveDateInput(end, initial?.dueAt),
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Проверь данные.');
@@ -318,8 +324,11 @@ export function StageForm({
           id: initial?.id,
           name: String(data.get('name')).trim(),
           description: String(data.get('description')),
-          startsAt: toISO(String(data.get('start'))),
-          dueAt: toISO(String(data.get('end'))),
+          startsAt: preserveDateInput(
+            String(data.get('start')),
+            initial?.startsAt,
+          ),
+          dueAt: preserveDateInput(String(data.get('end')), initial?.dueAt),
           status: String(data.get('status')) as GoalStage['status'],
           completionMode: String(
             data.get('completionMode'),
@@ -516,24 +525,31 @@ export function TaskForm({
   const [sphereId, setSphereId] = useState(initial?.sphere ?? 'tasks');
   const earliest = stage?.startsAt ?? goal?.startsAt;
   const latest = stage?.dueAt ?? goal?.dueAt;
-  const requestedStart = anchor
-    ? new Date(`${anchor}T09:00:00`).toISOString()
-    : new Date().toISOString();
-  const defaultStart =
-    initial?.startsAt ??
-    (earliest && new Date(earliest) > new Date(requestedStart)
-      ? earliest
-      : requestedStart);
-  const defaultEnd =
-    initial?.dueAt ??
-    new Date(
-      Math.min(
-        new Date(defaultStart).getTime() + 30 * 60000,
-        latest ? new Date(latest).getTime() : Infinity,
-      ),
-    ).toISOString();
-  const [start, setStart] = useState(localDateTime(new Date(defaultStart)));
-  const [end, setEnd] = useState(localDateTime(new Date(defaultEnd)));
+  const [dateSources, setDateSources] = useState(() => {
+    if (initial) return { start: initial.startsAt, end: initial.dueAt };
+    const requested = anchor
+      ? new Date(`${anchor}T09:00:00`).toISOString()
+      : new Date().toISOString();
+    const start =
+      earliest && new Date(earliest) > new Date(requested)
+        ? earliest
+        : requested;
+    return {
+      start,
+      end: new Date(
+        Math.min(
+          Date.parse(start) + 30 * 60000,
+          latest ? Date.parse(latest) : Infinity,
+        ),
+      ).toISOString(),
+    };
+  });
+  const [start, setStart] = useState(
+    dateSources.start ? localDateTime(new Date(dateSources.start)) : '',
+  );
+  const [end, setEnd] = useState(
+    dateSources.end ? localDateTime(new Date(dateSources.end)) : '',
+  );
   const [error, setError] = useState('');
   function updateParent(nextGoal: string, nextStage: string) {
     setChosenGoal(nextGoal);
@@ -544,17 +560,12 @@ export function TaskForm({
       to = s?.dueAt ?? g?.dueAt;
     const first =
       from && new Date(from) > new Date() ? from : new Date().toISOString();
+    const last = new Date(
+      Math.min(Date.parse(first) + 30 * 60000, to ? Date.parse(to) : Infinity),
+    ).toISOString();
+    setDateSources({ start: first, end: last });
     setStart(localDateTime(new Date(first)));
-    setEnd(
-      localDateTime(
-        new Date(
-          Math.min(
-            new Date(first).getTime() + 30 * 60000,
-            to ? new Date(to).getTime() : Infinity,
-          ),
-        ),
-      ),
-    );
+    setEnd(localDateTime(new Date(last)));
   }
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -570,8 +581,8 @@ export function TaskForm({
         difficulty: String(data.get('difficulty')),
         goalId: chosenGoal || undefined,
         stageId: chosenStage || undefined,
-        startsAt: toISO(start),
-        dueAt: toISO(end),
+        startsAt: preserveDateInput(start, dateSources.start),
+        dueAt: preserveDateInput(end, dateSources.end),
         estimateMinutes:
           Number(data.get('estimate')) * Number(data.get('estimateUnit')),
         priority: String(data.get('priority')) as Quest['priority'],

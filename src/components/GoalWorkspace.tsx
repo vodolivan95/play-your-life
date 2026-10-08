@@ -19,6 +19,8 @@ import {
   goalHistory,
   goalActivityStreak,
 } from '../goalWorkspace';
+import { goalStatistics, chartCoordinates } from '../goalStatistics';
+import type { ProgressPoint } from '../goalStatistics';
 import { goalRoute } from '../goalRoutes';
 import {
   saveGoal,
@@ -260,6 +262,80 @@ function Timeline({ stage, onEdit }: { stage: GoalStage; onEdit: () => void }) {
     </Card>
   );
 }
+function DataChart({
+  label,
+  series,
+  maximum,
+  extent,
+  percent = false,
+}: {
+  label: string;
+  series: {
+    name: string;
+    color: string;
+    points: ProgressPoint[];
+    dashed?: boolean;
+  }[];
+  maximum: number;
+  extent?: string[];
+  percent?: boolean;
+}) {
+  const domain = extent ?? series.flatMap((s) => s.points.map((p) => p.date));
+  return (
+    <svg
+      className="gw-chart"
+      viewBox="0 0 600 194"
+      role="img"
+      aria-label={label}
+    >
+      {[0, 0.5, 1].map((f) => (
+        <g key={f}>
+          <path
+            d={`M24 ${154 - f * 130}H580`}
+            stroke="#e5f0f8"
+            strokeDasharray="4 4"
+          />
+          <text x="22" y={151 - f * 130} fill="#6e809c" fontSize="11">
+            {Number((maximum * f).toFixed(1))}
+            {percent ? '%' : ''}
+          </text>
+        </g>
+      ))}
+      {series.map((item) => {
+        const points = chartCoordinates(item.points, maximum, domain);
+        return (
+          <g key={item.name}>
+            <polyline
+              points={points.map((p) => `${p.x},${p.y}`).join(' ')}
+              fill="none"
+              stroke={item.color}
+              strokeWidth="3"
+              strokeDasharray={item.dashed ? '6 4' : undefined}
+            />
+            {points.map((p, i) => (
+              <circle key={i} cx={p.x} cy={p.y} r="3.5" fill={item.color}>
+                <title>
+                  {item.name}: {p.value}
+                  {percent ? '%' : ''} · {shortDate(p.date)}
+                </title>
+              </circle>
+            ))}
+          </g>
+        );
+      })}
+      {domain.length > 0 && (
+        <>
+          <text x="24" y="186" fill="#6e809c" fontSize="11">
+            {shortDate(domain[0])}
+          </text>
+          <text x="580" y="186" textAnchor="end" fill="#6e809c" fontSize="11">
+            {shortDate(domain.at(-1))}
+          </text>
+        </>
+      )}
+    </svg>
+  );
+}
 function Statistics({
   state,
   goal,
@@ -269,81 +345,40 @@ function Statistics({
   goal: Goal;
   stageId?: string;
 }) {
-  const tasks = state.quests.filter(
-    (q) => q.goalId === goal.id && (!stageId || q.stageId === stageId),
+  const data = goalStatistics(state, goal, stageId);
+  const dates = data.rows.map((r) => r.date);
+  const counts = Math.max(
+    1,
+    ...data.rows.flatMap((r) => [r.planned, r.actual]),
   );
-  const events = goalHistory(state, goal, stageId).filter((e) => e.xp > 0);
-  const dateList = [
-    ...new Set(
-      [
-        ...tasks.flatMap((q) =>
-          [q.dueAt, q.completedAt].filter((d): d is string => !!d),
-        ),
-        ...events.map((e) => e.date),
-      ].map((d) => dayKey(new Date(d))),
-    ),
-  ].sort();
-  const dates = dateList.slice(-30);
-  const carriedXP = events.reduce((sum, e) => sum + e.xp, 0);
-  const rows = dates.map((day) => {
-    const xp = events
-      .filter((e) => dayKey(new Date(e.date)) <= day)
-      .reduce((sum, e) => sum + e.xp, 0);
-    return {
-      day,
-      planned: tasks.filter((q) => q.dueAt && dayKey(new Date(q.dueAt)) <= day)
-        .length,
-      actual: tasks.filter(
-        (q) => q.completedAt && dayKey(new Date(q.completedAt)) <= day,
-      ).length,
-      xp,
-    };
-  });
-  const plot = (field: 'planned' | 'actual' | 'xp', max: number) =>
-    rows
-      .map(
-        (r, i) =>
-          `${24 + (i / Math.max(1, rows.length - 1)) * 552},${154 - (r[field] / Math.max(1, max)) * 130}`,
-      )
-      .join(' ');
-  const max = Math.max(1, ...rows.flatMap((r) => [r.planned, r.actual]));
-  const progressEvents = goalHistory(state, goal)
-    .filter((e) => e.goalProgress !== undefined)
-    .reverse();
+  const points = (field: 'planned' | 'actual' | 'xp') =>
+    data.rows.map((r) => ({ date: r.date, value: r[field] }));
   return (
     <div className="gw-statistics">
       <Card title="План и факт выполнения" icon="▥">
-        {rows.length ? (
+        {data.rows.length ? (
           <>
-            <svg
-              className="gw-chart"
-              viewBox="0 0 600 180"
-              role="img"
-              aria-label="План и факт выполнения задач по сохранённым срокам и датам завершения"
-            >
-              <path d="M24 20V154H580" fill="none" stroke="#bed8e9" />
-              <polyline
-                points={plot('planned', max)}
-                fill="none"
-                stroke="#b38ae4"
-                strokeWidth="3"
-                strokeDasharray="6 4"
-              />
-              <polyline
-                points={plot('actual', max)}
-                fill="none"
-                stroke="#00a8ef"
-                strokeWidth="4"
-              />
-            </svg>
+            <DataChart
+              label="План и факт выполнения задач по сохранённым срокам и датам завершения"
+              maximum={counts}
+              extent={dates}
+              series={[
+                {
+                  name: 'План',
+                  color: '#b38ae4',
+                  points: points('planned'),
+                  dashed: true,
+                },
+                { name: 'Факт', color: '#00a8ef', points: points('actual') },
+              ]}
+            />
             <div className="gw-chart-legend">
-              <span>План: {tasks.filter((q) => q.dueAt).length}</span>
-              <span>Факт: {tasks.filter((q) => q.done).length}</span>
+              <span>План: {data.planned}</span>
+              <span>Факт: {data.done}</span>
             </div>
             <small className="gw-muted">
-              {shortDate(`${dates[0]}T12:00:00`)} —{' '}
-              {shortDate(`${dates.at(-1)}T12:00:00`)}. Последние 30 дат с
-              событиями.
+              Последние 30 дат с событиями. Расстояния между точками
+              соответствуют датам.
             </small>
             <details>
               <summary>Данные графика</summary>
@@ -356,9 +391,9 @@ function Statistics({
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r) => (
-                    <tr key={r.day}>
-                      <td>{r.day}</td>
+                  {data.rows.map((r) => (
+                    <tr key={r.date}>
+                      <td>{shortDate(r.date)}</td>
                       <td>{r.planned}</td>
                       <td>{r.actual}</td>
                     </tr>
@@ -372,25 +407,42 @@ function Statistics({
             Нет задач со сроками или сохранёнными датами выполнения.
           </p>
         )}
+        {data.undatedDone > 0 && (
+          <p className="gw-muted">
+            У {data.undatedDone} выполненных задач дата завершения не сохранена.
+            Они учтены в общем результате, но не привязаны к дню на графике.
+          </p>
+        )}
       </Card>
       <Card title="Заработанный XP" icon="⭐">
-        {events.length ? (
+        {data.totalXP > 0 ? (
           <>
-            <svg
-              className="gw-chart"
-              viewBox="0 0 600 180"
-              role="img"
-              aria-label="Накопленный XP по событиям этой цели"
-            >
-              <path d="M24 20V154H580" fill="none" stroke="#bed8e9" />
-              <polyline
-                points={plot('xp', Math.max(1, carriedXP))}
-                fill="none"
-                stroke="#f3b02a"
-                strokeWidth="4"
-              />
-            </svg>
-            <b>{events.reduce((sum, e) => sum + e.xp, 0)} XP</b>
+            <DataChart
+              label="Накопленный XP по событиям этой цели"
+              maximum={Math.max(1, data.totalXP)}
+              extent={dates}
+              series={[{ name: 'XP', color: '#f3b02a', points: points('xp') }]}
+            />
+            <b>{data.totalXP} XP</b>
+            <details>
+              <summary>Начисления по датам</summary>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Дата</th>
+                    <th>Накопленный XP</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.rows.map((r) => (
+                    <tr key={r.date}>
+                      <td>{shortDate(r.date)}</td>
+                      <td>{r.xp}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </details>
           </>
         ) : (
           <p className="gw-muted">
@@ -398,36 +450,48 @@ function Statistics({
           </p>
         )}
       </Card>
-      {!stageId && (
-        <Card title="История прогресса">
-          {progressEvents.length ? (
-            <svg
-              className="gw-chart"
-              viewBox="0 0 600 180"
-              role="img"
-              aria-label="Процент цели по сохранённым событиям"
-            >
-              <path d="M24 20V154H580" fill="none" stroke="#bed8e9" />
-              <polyline
-                points={progressEvents
-                  .map(
-                    (e, i) =>
-                      `${24 + (i / Math.max(1, progressEvents.length - 1)) * 552},${154 - e.goalProgress! * 1.3}`,
-                  )
-                  .join(' ')}
-                fill="none"
-                stroke="#17c499"
-                strokeWidth="4"
-              />
-            </svg>
-          ) : (
-            <p className="gw-muted">
-              История процентов появится после новых действий. Текущий прогресс:{' '}
-              {Math.round(goalProgressValue(state, goal))}%.
-            </p>
-          )}
-        </Card>
-      )}
+      <Card title={stageId ? 'История прогресса этапа' : 'История прогресса'}>
+        {data.progress.length ? (
+          <>
+            <DataChart
+              label={
+                stageId
+                  ? 'Процент этапа по сохранённым событиям'
+                  : 'Процент цели по сохранённым событиям'
+              }
+              maximum={100}
+              percent
+              series={[
+                { name: 'Прогресс', color: '#17c499', points: data.progress },
+              ]}
+            />
+            <details>
+              <summary>Сохранённые значения прогресса</summary>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Дата</th>
+                    <th>Прогресс</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.progress.map((p, i) => (
+                    <tr key={i}>
+                      <td>{new Date(p.date).toLocaleString('ru-RU')}</td>
+                      <td>{Number(p.value.toFixed(1))}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </details>
+          </>
+        ) : (
+          <p className="gw-muted">
+            История процентов появится после новых действий. Ранее не записанные
+            значения не восстанавливаются.
+          </p>
+        )}
+      </Card>
     </div>
   );
 }
@@ -449,6 +513,19 @@ export default function GoalWorkspace(p: Props) {
     const current = stages.find((s) => stageState(state, goal, s) === 'active');
     return current ? [current.id] : [];
   });
+  const activeId = stages.find(
+    (s) => stageState(state, goal, s, new Date(now)) === 'active',
+  )?.id;
+  const previousActiveId = useRef(activeId);
+  useEffect(() => {
+    if (previousActiveId.current !== activeId) {
+      previousActiveId.current = activeId;
+      if (activeId)
+        queueMicrotask(() =>
+          setExpanded((v) => (v.includes(activeId) ? v : [...v, activeId])),
+        );
+    }
+  }, [activeId]);
   const [detail, setDetail] = useState<{
     kind: 'reward' | 'motivation' | 'notes' | 'task';
     task?: Quest;
@@ -468,27 +545,53 @@ export default function GoalWorkspace(p: Props) {
   ).length;
   const group = stage ? stageMetrics(state, goal, stage) : null;
   const scopeTasks = stage ? group!.tasks : tasks;
+  const visibleTasks = scopeTasks.filter(
+    (q) =>
+      stage ||
+      filter === 'all' ||
+      (filter === 'none'
+        ? !q.stageId || !stages.some((s) => s.id === q.stageId)
+        : q.stageId === filter),
+  );
+  const viewedTask =
+    detail?.kind === 'task'
+      ? state.quests.find(
+          (q) =>
+            q.id === detail.task?.id &&
+            q.goalId === goal.id &&
+            (!stage || q.stageId === stage.id),
+        )
+      : undefined;
   const xp = scopeTasks.reduce((sum, q) => sum + q.xp, 0);
   const coins = scopeTasks.reduce((sum, q) => sum + questCoins(q), 0);
   const mutate = (fn: (s: GameState) => GameState) => {
     try {
       p.onChange(fn(state));
+      return true;
     } catch (e) {
       p.onNotify(e instanceof Error ? e.message : 'Изменение не сохранено.');
+      return false;
     }
   };
   const stageLink = (s: GoalStage, text: ReactNode, className = '') => {
+    const label =
+      className === 'gw-stage-enter' ? `Открыть этап: ${s.name}` : undefined;
     const blocked = stageAccess(state, goal, s);
     return blocked ? (
       <button
         className={className}
         aria-disabled="true"
+        aria-label={label}
         onClick={() => p.onNotify(blocked)}
       >
         {text}
       </button>
     ) : (
-      <a className={className} href={`#${goalRoute(goal.id, s.id)}`}>
+      <a
+        className={className}
+        aria-label={label}
+        href={`#${goalRoute(goal.id, s.id)}`}
+      >
         {text}
       </a>
     );
@@ -500,13 +603,13 @@ export default function GoalWorkspace(p: Props) {
       (stageAccess(state, goal, parent) || parent.status === 'paused')
     ) {
       p.onNotify(stageAccess(state, goal, parent) || 'Этап приостановлен.');
-      return;
+      return false;
     }
     if (task.startsAt && Date.parse(task.startsAt) > now) {
       p.onNotify('Задача запланирована на будущую дату.');
-      return;
+      return false;
     }
-    mutate((s) => completeQuest(s, task.id));
+    return mutate((s) => completeQuest(s, task.id));
   }
   function taskRow(task: Quest) {
     const parent = stages.find((s) => s.id === task.stageId);
@@ -1095,6 +1198,7 @@ export default function GoalWorkspace(p: Props) {
                       <label>
                         Этап
                         <select
+                          aria-label="Фильтр по этапу"
                           value={filter}
                           onChange={(e) => setFilter(e.target.value)}
                         >
@@ -1115,19 +1219,13 @@ export default function GoalWorkspace(p: Props) {
                       ＋ Добавить задачу
                     </button>
                   </div>
-                  {scopeTasks
-                    .filter(
-                      (q) =>
-                        stage ||
-                        filter === 'all' ||
-                        (filter === 'none'
-                          ? !q.stageId ||
-                            !stages.some((s) => s.id === q.stageId)
-                          : q.stageId === filter),
-                    )
-                    .map(taskRow)}
-                  {!scopeTasks.length && (
-                    <p className="gw-muted">Задач пока нет.</p>
+                  {visibleTasks.map(taskRow)}
+                  {!visibleTasks.length && (
+                    <p className="gw-muted">
+                      {scopeTasks.length
+                        ? 'В выбранном этапе задач пока нет.'
+                        : 'Задач пока нет.'}
+                    </p>
                   )}
                 </Card>
               ) : null}
@@ -1323,9 +1421,9 @@ export default function GoalWorkspace(p: Props) {
                     ? 'Награда цели получена'
                     : 'Награда цели ещё не получена'}
               </p>
-              {(stage?.achievementTitle || goal.achievementTitle) && (
+              {(stage ? stage.achievementTitle : goal.achievementTitle) && (
                 <strong>
-                  {stage?.achievementTitle || goal.achievementTitle}
+                  {stage ? stage.achievementTitle : goal.achievementTitle}
                 </strong>
               )}
             </>
@@ -1336,12 +1434,13 @@ export default function GoalWorkspace(p: Props) {
               onSubmit={(e) => {
                 e.preventDefault();
                 const text = String(new FormData(e.currentTarget).get('text'));
-                if (detail.kind === 'notes' && stage)
-                  mutate((s) =>
-                    saveStage(s, goal.id, { ...stage, notes: text }),
-                  );
-                else mutate((s) => saveGoal(s, { ...goal, motivation: text }));
-                setDetail(null);
+                const saved =
+                  detail.kind === 'notes' && stage
+                    ? mutate((s) =>
+                        saveStage(s, goal.id, { ...stage, notes: text }),
+                      )
+                    : mutate((s) => saveGoal(s, { ...goal, motivation: text }));
+                if (saved) setDetail(null);
               }}
             >
               <h2>
@@ -1368,18 +1467,24 @@ export default function GoalWorkspace(p: Props) {
               </button>
             </form>
           )}
-          {detail?.kind === 'task' && detail.task && (
+          {detail?.kind === 'task' && !viewedTask && (
+            <p className="gw-muted">
+              Эта задача больше не находится в цели. Закройте окно и выберите
+              доступный шаг.
+            </p>
+          )}
+          {detail?.kind === 'task' && viewedTask && (
             <>
-              <h2>{detail.task.name}</h2>
-              <p>{detail.task.notes || 'Описание задачи не добавлено.'}</p>
+              <h2>{viewedTask.name}</h2>
+              <p>{viewedTask.notes || 'Описание задачи не добавлено.'}</p>
               <p>
-                {shortDate(detail.task.dueAt)} · +{detail.task.xp} XP ·{' '}
-                {questCoins(detail.task)} Life Coins
+                {shortDate(viewedTask.dueAt)} · +{viewedTask.xp} XP ·{' '}
+                {questCoins(viewedTask)} Life Coins
               </p>
-              <p>{detail.task.done ? '✓ Выполнена' : 'В плане'}</p>
-              {!detail.task.done &&
-                detail.task.targetValue &&
-                detail.task.targetValue > 1 && (
+              <p>{viewedTask.done ? '✓ Выполнена' : 'В плане'}</p>
+              {!viewedTask.done &&
+                viewedTask.targetValue &&
+                viewedTask.targetValue > 1 && (
                   <form
                     className="planning-form"
                     onSubmit={(e) => {
@@ -1387,26 +1492,28 @@ export default function GoalWorkspace(p: Props) {
                       const value = Number(
                         new FormData(e.currentTarget).get('progress'),
                       );
-                      mutate((s) =>
-                        progressQuest(s, detail.task!.id, value, p.ownerId),
-                      );
-                      setDetail(null);
+                      if (
+                        mutate((s) =>
+                          progressQuest(s, viewedTask!.id, value, p.ownerId),
+                        )
+                      )
+                        setDetail(null);
                     }}
                   >
                     <label>
-                      Прогресс задачи ({detail.task.unit || 'ед.'})
+                      Прогресс задачи ({viewedTask.unit || 'ед.'})
                       <input
                         name="progress"
                         type="number"
-                        min={detail.task.currentValue ?? 0}
-                        max={detail.task.targetValue}
+                        min={viewedTask.currentValue ?? 0}
+                        max={viewedTask.targetValue}
                         step="any"
                         required
-                        defaultValue={detail.task.currentValue ?? 0}
+                        defaultValue={viewedTask.currentValue ?? 0}
                       />
                     </label>
                     <small>
-                      Цель: {detail.task.targetValue} {detail.task.unit}
+                      Цель: {viewedTask.targetValue} {viewedTask.unit}
                     </small>
                     <button className="primary-button" type="submit">
                       Сохранить прогресс
@@ -1416,19 +1523,18 @@ export default function GoalWorkspace(p: Props) {
               <div className="gw-task-toolbar">
                 <button
                   className="primary-button"
-                  disabled={detail.task.done}
+                  disabled={viewedTask.done}
                   onClick={() => {
-                    finish(detail.task!);
-                    setDetail(null);
+                    if (finish(viewedTask!)) setDetail(null);
                   }}
                 >
                   Выполнить задачу
                 </button>
-                {!detail.task.done && (
+                {!viewedTask.done && (
                   <button
                     className="secondary-button"
                     onClick={() => {
-                      p.onEditTask(detail.task!);
+                      p.onEditTask(viewedTask!);
                       setDetail(null);
                     }}
                   >
@@ -1438,7 +1544,7 @@ export default function GoalWorkspace(p: Props) {
                 <button
                   className="text-button"
                   onClick={() => {
-                    p.onTransfer(detail.task);
+                    p.onTransfer(viewedTask);
                     setDetail(null);
                   }}
                 >
@@ -1454,10 +1560,10 @@ export default function GoalWorkspace(p: Props) {
                     ) {
                       mutate((s) =>
                         planEvent(
-                          removeQuest(s, detail.task!.id),
+                          removeQuest(s, viewedTask!.id),
                           goal.id,
-                          `Удалена задача: ${detail.task!.name}`,
-                          detail.task!.stageId,
+                          `Удалена задача: ${viewedTask!.name}`,
+                          viewedTask!.stageId,
                         ),
                       );
                       setDetail(null);

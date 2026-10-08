@@ -233,6 +233,8 @@ export function validateState(value: unknown): asserts value is SavedState {
         optionalText(e.stageId) &&
         (e.goalProgress === undefined ||
           (number(e.goalProgress) && Number(e.goalProgress) <= 100)) &&
+        (e.stageProgress === undefined ||
+          (number(e.stageProgress) && Number(e.stageProgress) <= 100)) &&
         text(e.id) &&
         !!e.id &&
         text(e.title) &&

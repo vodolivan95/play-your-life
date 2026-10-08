@@ -44,7 +44,7 @@ try {
     headless: true,
     args: ['--no-sandbox', '--disable-dev-shm-usage'],
   });
-  for (const width of [1440, 768, 390]) {
+  for (const width of [1440, 768, 390, 360]) {
     const context = await browser.newContext({
       viewport: { width, height: width < 600 ? 844 : 1100 },
       isMobile: width < 600,
@@ -77,6 +77,7 @@ try {
         target: 100,
         reward: 200,
         description: 'Реальное описание тестовой цели',
+        achievementTitle: 'Трофей родительской цели',
         image: canvas.toDataURL('image/jpeg'),
         progressMode: 'tasks',
       });
@@ -130,7 +131,18 @@ try {
       });
       s.goals.at(-1).current = 68;
       localStorage.setItem('play-your-life-v1', JSON.stringify(s));
-      return { id, a, b, c, manual: s.goals.at(-1).id };
+      const stageDates = s.goals
+        .find((g) => g.id === id)
+        .stages.find((x) => x.id === b);
+      return {
+        id,
+        a,
+        b,
+        c,
+        manual: s.goals.at(-1).id,
+        startsAt: stageDates.startsAt,
+        dueAt: stageDates.dueAt,
+      };
     });
     await page
       .getByRole('button', { name: 'Продолжить игру на этом устройстве' })
@@ -144,11 +156,9 @@ try {
     await workspace
       .getByRole('button', { name: 'Изменить обложку цели' })
       .click();
-    const coverEditor = page
-      .locator('dialog[open]')
-      .filter({
-        has: page.getByRole('heading', { name: 'Настроить цель', exact: true }),
-      });
+    const coverEditor = page.locator('dialog[open]').filter({
+      has: page.getByRole('heading', { name: 'Настроить цель', exact: true }),
+    });
     const photo = await page.evaluate(
       (id) =>
         JSON.parse(localStorage.getItem('play-your-life-v1'))
@@ -156,13 +166,11 @@ try {
           .image.split(',')[1],
       ids.id,
     );
-    await coverEditor
-      .getByLabel('Изображение проекта')
-      .setInputFiles({
-        name: 'cover.jpg',
-        mimeType: 'image/jpeg',
-        buffer: Buffer.from(photo, 'base64'),
-      });
+    await coverEditor.getByLabel('Изображение проекта').setInputFiles({
+      name: 'cover.jpg',
+      mimeType: 'image/jpeg',
+      buffer: Buffer.from(photo, 'base64'),
+    });
     await coverEditor
       .getByRole('button', { name: 'Заменить картинку' })
       .waitFor();
@@ -191,6 +199,54 @@ try {
     assert.ok(
       await workspace.getByText('LVL 0 / 100', { exact: true }).count(),
     );
+    await workspace.locator('.gw-reward-content').click();
+    await workspace
+      .locator('dialog[open]')
+      .getByRole('heading', { name: '🏆 Награды цели', exact: true })
+      .waitFor();
+    await workspace
+      .locator('dialog[open]')
+      .getByText('Трофей родительской цели', { exact: true })
+      .waitFor();
+    await workspace
+      .locator('dialog[open]')
+      .getByRole('button', { name: 'Закрыть', exact: true })
+      .click();
+    await workspace
+      .getByRole('button', { name: 'Все события →', exact: true })
+      .click();
+    assert.equal(
+      await tabs
+        .getByRole('button', { name: 'История', exact: true })
+        .getAttribute('aria-current'),
+      'page',
+    );
+    await tabs.getByRole('button', { name: 'Обзор', exact: true }).click();
+    await workspace.locator('.gw-sphere').click();
+    await page
+      .getByText('Английский · Твой район развития', { exact: true })
+      .waitFor();
+    await page.evaluate((id) => {
+      location.hash = `/goals/${id}`;
+    }, ids.id);
+    await workspace.waitFor();
+    await workspace
+      .getByRole('button', { name: 'Начать →', exact: true })
+      .click();
+    await workspace
+      .locator('dialog[open]')
+      .getByRole('heading', { name: 'Посмотреть фильм', exact: true })
+      .waitFor();
+    await workspace
+      .locator('dialog[open]')
+      .getByRole('button', { name: 'Закрыть', exact: true })
+      .click();
+    await tabs.getByRole('button', { name: 'Задачи', exact: true }).click();
+    await workspace.getByLabel('Фильтр по этапу').selectOption(ids.c);
+    await workspace
+      .getByText('В выбранном этапе задач пока нет.', { exact: true })
+      .waitFor();
+    await tabs.getByRole('button', { name: 'Обзор', exact: true }).click();
     const stageA = workspace.locator(`[data-stage="${ids.a}"]`),
       stageB = workspace.locator(`[data-stage="${ids.b}"]`);
     await stageA
@@ -231,7 +287,89 @@ try {
     );
     await stageA.getByRole('link', { name: 'Продолжить →' }).click();
     await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.a}`);
+    await workspace.getByRole('link', { name: 'Перейти к цели →' }).click();
+    await stageB
+      .getByRole('button', { name: 'Раскрыть этап: Разговорная практика' })
+      .click();
+    await stageB.getByRole('link', { name: 'Продолжить →' }).click();
+    await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.b}`);
+    await page.goBack();
+    await page.waitForURL(`**/#/goals/${ids.id}`);
+    await page.goBack();
+    await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.a}`);
+    await page.goForward();
+    await page.waitForURL(`**/#/goals/${ids.id}`);
+    await stageB
+      .getByRole('link', {
+        name: 'Открыть этап: Разговорная практика',
+        exact: true,
+      })
+      .click();
+    await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.b}`);
+    await workspace.getByRole('link', { name: 'Перейти к цели →' }).click();
+    await stageA
+      .getByRole('link', { name: 'Открыть этап: База A1–A2', exact: true })
+      .click();
+    await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.a}`);
     assert.equal(await tabs.getByRole('button').count(), 5);
+    await workspace.locator('.gw-reward-content').click();
+    await workspace
+      .locator('dialog[open]')
+      .getByRole('heading', { name: '🏆 Награды этапа', exact: true })
+      .waitFor();
+    assert.equal(
+      await workspace
+        .locator('dialog[open]')
+        .getByText('Трофей родительской цели', { exact: true })
+        .count(),
+      0,
+    );
+    await workspace
+      .locator('dialog[open]')
+      .getByRole('button', { name: 'Закрыть', exact: true })
+      .click();
+    await workspace.getByRole('button', { name: /Приостановить этап/ }).click();
+    await workspace.getByRole('button', { name: /^Выучить слова/ }).click();
+    const pausedDialog = workspace.locator('dialog[open]');
+    await pausedDialog.getByLabel('Прогресс задачи (слова)').fill('1');
+    await pausedDialog
+      .getByRole('button', { name: 'Сохранить прогресс' })
+      .click();
+    assert.ok(
+      await pausedDialog.isVisible(),
+      'Ошибка сохранения не должна закрывать окно',
+    );
+    assert.equal(
+      await pausedDialog.getByLabel('Прогресс задачи (слова)').inputValue(),
+      '1',
+    );
+    await pausedDialog
+      .getByRole('button', { name: 'Закрыть', exact: true })
+      .click();
+    await workspace.getByRole('button', { name: /Возобновить этап/ }).click();
+    await workspace.getByRole('button', { name: /^Выучить слова/ }).click();
+    await workspace
+      .locator('dialog[open]')
+      .getByRole('button', { name: 'Редактировать задачу' })
+      .click();
+    const unchangedTask = page.locator('dialog[open]').filter({
+      has: page.getByRole('heading', {
+        name: 'Изменить задачу',
+        exact: true,
+      }),
+    });
+    await unchangedTask
+      .getByRole('button', { name: 'Сохранить задачу' })
+      .click();
+    const undated = await page.evaluate(
+      (id) =>
+        JSON.parse(localStorage.getItem('play-your-life-v1')).quests.find(
+          (q) => q.goalId === id && q.name === 'Выучить слова',
+        ),
+      ids.id,
+    );
+    assert.equal(undated.startsAt, undefined);
+    assert.equal(undated.dueAt, undefined);
     await workspace.getByRole('button', { name: /^Выучить слова/ }).click();
     const partialDialog = workspace.locator('dialog[open]');
     await partialDialog.getByLabel('Прогресс задачи (слова)').fill('1');
@@ -262,6 +400,10 @@ try {
         .isDisabled(),
     );
     await workspace.getByRole('link', { name: 'Перейти к цели →' }).click();
+    await stageB.locator('.gw-stage-tasks').waitFor();
+    assert.ok(
+      await stageB.evaluate((el) => el.classList.contains('gw-stage-active')),
+    );
     await workspace
       .locator('.gw-banner')
       .getByRole('img', { name: 'Общий прогресс цели: 50%' })
@@ -277,6 +419,22 @@ try {
         exact: true,
       })
       .waitFor();
+    await workspace
+      .getByRole('button', { name: 'Редактировать этап', exact: true })
+      .click();
+    const exactStage = page.locator('dialog[open]').filter({
+      has: page.getByRole('heading', { name: 'Изменить этап', exact: true }),
+    });
+    await exactStage.getByRole('button', { name: 'Сохранить этап' }).click();
+    const unchangedDates = await page.evaluate(
+      (ids) =>
+        JSON.parse(localStorage.getItem('play-your-life-v1'))
+          .goals.find((g) => g.id === ids.id)
+          .stages.find((s) => s.id === ids.b),
+      ids,
+    );
+    assert.equal(unchangedDates.startsAt, ids.startsAt);
+    assert.equal(unchangedDates.dueAt, ids.dueAt);
     const month = await workspace.locator('.gw-calendar-heading b').innerText();
     await workspace.getByRole('button', { name: 'Следующий месяц' }).click();
     assert.notEqual(
@@ -366,11 +524,9 @@ try {
     await workspace
       .getByRole('button', { name: '＋ Добавить задачу', exact: true })
       .click();
-    const taskEditor = page
-      .locator('dialog[open]')
-      .filter({
-        has: page.getByRole('heading', { name: 'Новая задача', exact: true }),
-      });
+    const taskEditor = page.locator('dialog[open]').filter({
+      has: page.getByRole('heading', { name: 'Новая задача', exact: true }),
+    });
     await taskEditor
       .getByLabel('Название задачи', { exact: true })
       .fill('Созданная задача');
@@ -380,14 +536,12 @@ try {
       .locator('dialog[open]')
       .getByRole('button', { name: 'Редактировать задачу' })
       .click();
-    const editTask = page
-      .locator('dialog[open]')
-      .filter({
-        has: page.getByRole('heading', {
-          name: 'Изменить задачу',
-          exact: true,
-        }),
-      });
+    const editTask = page.locator('dialog[open]').filter({
+      has: page.getByRole('heading', {
+        name: 'Изменить задачу',
+        exact: true,
+      }),
+    });
     await editTask
       .getByLabel('Название задачи', { exact: true })
       .fill('Изменённая задача');

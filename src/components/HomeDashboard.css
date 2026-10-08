@@ -79,10 +79,7 @@
 .home-week .completed { background:#168dff; border-color:#168dff; }
 .home-week .today { border-color:#168dff; }
 .home-week small { color:#7290ab; font-size:9px; }
-.play-brand { display:flex; align-items:center; gap:10px; color:#142957; }
-.play-brand-crown { width:34px; height:38px; flex-shrink:0; }
-.play-brand-copy strong { display:block; font-size:21px; line-height:1.05; font-weight:900; letter-spacing:-.4px; }
-.play-brand-copy small { display:block; font-size:9px; color:#7692af; margin-top:7px; }
+.play-brand { display:block; object-fit:contain; margin-inline:auto; }
 .app-shell .sidebar .brand { min-height:90px; padding:5px 0; }
 .sidebar-city { margin:18px -20px 0; position:relative; }
 .sidebar-city > img { width:100%; height:190px; display:block; object-fit:cover; object-position:50% 52%; mask-image:linear-gradient(transparent,black 12%,black 82%,transparent); }
@@ -115,7 +112,7 @@
 @media(max-width:380px) { .home-sphere-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .dashboard-date { font-size:9px; } .home-weather > span { font-size:20px; } .home-weather strong { font-size:8px; } .home-weather small { font-size:8px; } }
 
 .mobile-city-footer { display:none; }
-@media(max-width:760px) { .mobile-city-footer { display:block; margin:25px 16px; text-align:center; } .mobile-city-footer > img { display:block; width:100%; height:135px; object-fit:cover; border-radius:18px; mask-image:linear-gradient(transparent,black 10%,black 85%,transparent); } .mobile-city-footer .play-brand { justify-content:center; margin-top:10px; text-align:left; } }
+@media(max-width:760px) { .mobile-city-footer { display:block; margin:25px 16px; text-align:center; } .mobile-city-footer > img:not(.brand-logo) { display:block; width:100%; height:135px; object-fit:cover; border-radius:18px; mask-image:linear-gradient(transparent,black 10%,black 85%,transparent); } .mobile-city-footer .play-brand { margin:10px auto 0; width:128px; height:128px; } }
 
 @media(max-width:760px) { .home-welcome { background-position:82% center; } .home-welcome h1 { max-width:62%; } }
 @media(min-width:761px) { .home-demo-start { top:auto; bottom:16px; left:25px; right:auto; } }

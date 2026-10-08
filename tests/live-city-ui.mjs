@@ -106,6 +106,8 @@ try {
  assert.equal(await cards.locator('.home-spheres img[data-building-source="master-city"]').count(),9);
  assert.equal(await cards.locator('.home-spheres [data-sphere-icon]').count(),9);
  assert.equal(await cards.locator('.home-spheres canvas').count(),0);
+ for(const photo of await cards.locator('.home-spheres img[data-sphere]').all()){await photo.scrollIntoViewIfNeeded();await photo.evaluate(image=>image.decode());}
+ assert.ok(await cards.evaluate(async()=>{const {sphereAssets}=await import('/src/sphereAssets.ts');return [...document.querySelectorAll('.home-spheres img[data-sphere]')].every(image=>image.naturalWidth>0&&image.getAttribute('src')===sphereAssets[image.dataset.sphere].buildingThumbnail);}),'Все фотографии загружены и соответствуют реестру');
  assert.equal(await cards.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  await cards.locator('.home-spheres').screenshot({path:'work/live-city/sphere-cards-mobile.png'});
  for(const width of [360,390,412,430]){await cards.setViewportSize({width,height:844});assert.equal(await cards.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'home overflow '+width);}

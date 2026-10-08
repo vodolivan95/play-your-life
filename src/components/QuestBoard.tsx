@@ -17,7 +17,7 @@ import {
   virtualRewards,
 } from "../personalQuests";
 import type { Habit } from "../personalQuests";
-import { sphereProgress } from "../sphereProgress";
+import { MAX_SPHERE_LEVEL, sphereProgress } from "../sphereProgress";
 import { SphereBuilding } from "./SphereCity";
 import QuestWizard from "./QuestWizard";
 import { cityAssets, sphereAssets } from "../sphereAssets";
@@ -217,7 +217,7 @@ export default function QuestBoard({
                 <strong>
                   {s.icon} {s.name}
                 </strong>
-                <small>LVL {p.level} / 100</small>
+                <small>LVL {p.level} / {MAX_SPHERE_LEVEL}</small>
                 <Meter value={p.progress} label={`Прогресс: ${s.name}`} />
               </button>
             );

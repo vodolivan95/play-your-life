@@ -33,7 +33,11 @@ function clean(state: GameState) {
     throw new Error("Сохранение слишком большое. Скачайте резервную копию.");
   return result;
 }
-export function firebaseSave(database: Firestore, userId: string): SaveDriver {
+export function firebaseSave(
+  database: Firestore,
+  userId: string,
+  goalEconomyEnabled = false,
+): SaveDriver {
   const ref = doc(database, "players", userId);
   return {
     async load() {
@@ -87,6 +91,14 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
       let currentRevision = revision;
       let lastCommittedState: GameState | null = null;
       const active = structuredClone(state);
+      active.goals = active.goals.map((goal) => ({
+        ...goal,
+        stages: goal.stages?.map((stage) =>
+          records[`stage:${goal.id}:${stage.id}`]
+            ? stage
+            : { ...stage, rewardClaimed: false },
+        ),
+      }));
       active.quests = active.quests.map((q) => {
         const old = before.quests.find((item) => item.id === q.id);
         return records[`quest:${q.id}`]
@@ -107,7 +119,7 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
       active.habits = active.habits?.map((h) =>
         records[`habit:${h.id}`] ? h : { ...h, rewardLocked: false },
       );
-      const definitions = economyRecords(active, records);
+      const definitions = economyRecords(active, records, goalEconomyEnabled);
       const seed = { ...records };
       for (const [id, definition] of Object.entries(definitions))
         if (!records[id]) seed[id] = definition;
@@ -124,6 +136,9 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
             receiptIndex: number;
             completionIndex?: number;
             claimDay?: string;
+            oldSourceIndex?: number;
+            goalIndex?: number;
+            stageIndex?: number;
           }
         > = {};
         for (const id of changes) {
@@ -138,6 +153,30 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
               receiptIndex: (savedState.coinTransactions ?? []).findIndex(
                 (t) => t.transactionId === id,
               ),
+            };
+          }
+          if (next.type === "stage" && !old.completed && next.completed) {
+            const goalIndex = savedState.goals.findIndex((g) =>
+              g.stages?.some((s) => `stage:${g.id}:${s.id}` === id),
+            );
+            rewardProofs[id] = {
+              sourceIndex: 0,
+              receiptIndex: 0,
+              goalIndex,
+              stageIndex: savedState.goals[goalIndex].stages!.findIndex(
+                (s) => `stage:${savedState.goals[goalIndex].id}:${s.id}` === id,
+              ),
+            };
+          }
+          if (next.type === "quest" && old.completed && !next.completed) {
+            rewardProofs[id] = {
+              sourceIndex: savedState.quests.findIndex(
+                (q) => `quest:${q.id}` === id,
+              ),
+              oldSourceIndex: before.quests.findIndex(
+                (q) => `quest:${q.id}` === id,
+              ),
+              receiptIndex: 0,
             };
           }
           if (next.type === "habit") {
@@ -193,7 +232,7 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
         for (const id of seeds.slice(i, i + 1)) chunk[id] = seed[id];
         if (!(await commit(chunk, before))) return null;
       }
-      const wanted = economyRecords(state, records);
+      const wanted = economyRecords(state, records, goalEconomyEnabled);
       // An unlocked reward can be edited before its first completion; approve the new definition first.
       const edits = Object.keys(wanted).filter(
         (id) =>

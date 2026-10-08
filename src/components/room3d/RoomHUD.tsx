@@ -1,3 +1,4 @@
+import { MAX_SPHERE_LEVEL } from '../../sphereProgress';
 import type { CameraPreset } from './RoomCamera';
 export default function RoomHUD({ title, level, coins, progress, preset, onBack, onSettings, onView }: {
   title: string; level: number; coins: number; progress: number; preset: CameraPreset;
@@ -6,7 +7,7 @@ export default function RoomHUD({ title, level, coins, progress, preset, onBack,
   return <>
     <header className="room3d-hud">
       <button className="room3d-back" onClick={onBack} aria-label="Вернуться из комнаты">←</button>
-      <div><strong>{title}</strong><span>LVL {level} / 100 · {coins.toLocaleString('ru-RU')} Coins</span></div>
+      <div><strong>{title}</strong><span>LVL {level} / {MAX_SPHERE_LEVEL} · {coins.toLocaleString('ru-RU')} Coins</span></div>
       <div className="room3d-completion"><b>{progress}%</b><span>Комната</span></div>
       <button className="room3d-settings" onClick={onSettings} aria-label="Настройки комнаты">⚙</button>
     </header>

@@ -127,14 +127,37 @@ export type Quest = {
   notes?: string;
   priority?: 'low' | 'normal' | 'high';
   tickTickSharedAt?: string;
+  required?: boolean;
+  recurrence?: 'none' | 'daily' | 'weekly' | 'monthly';
+  recurrenceParentId?: string;
 };
+export type GoalHistoryEvent = { id: string; stageId?: string; taskId?: string; type: string; title: string; timestamp: string; xp?: number; coins?: number };
+export type GoalCover = { url: string; path: string; name: string; width: number; height: number; size: number; x: number; y: number; scale: number; uploadedAt: string };
 export type GoalStage = {
+  description?: string;
+  order?: number;
+  status?: 'planned' | 'active' | 'paused' | 'completed';
+  completedAt?: string;
+  rewardXP?: number;
+  rewardCoins?: number;
+  rewardClaimed?: boolean;
+  achievement?: string;
+  rarity?: 'common' | 'rare' | 'legendary';
+  notes?: string;
+  notesUpdatedAt?: string;
+  reminder?: string;
+  autoComplete?: boolean;
+  completionMode?: 'all' | 'manual';
+  requiresPrevious?: boolean;
   id: string;
   name: string;
   startsAt?: string;
   dueAt?: string;
 };
 export type Goal = {
+  cover?: GoalCover;
+  history?: GoalHistoryEvent[];
+  updatedAt?: string;
   image?: string;
   id: string;
   name: string;
@@ -177,7 +200,9 @@ export type MonthReflection = {
   status: 'draft' | 'completed';
   updatedAt: string;
 };
+export type StageAchievement = { id: string; goalId: string; stageId: string; name: string; rarity: 'common' | 'rare' | 'legendary'; earnedAt: string };
 export type GameState = {
+  stageAchievements?: StageAchievement[];
   habits?: import('./personalQuests').Habit[];
   habitCompletions?: import('./personalQuests').HabitCompletion[];
   coinTransactions?: import('./personalQuests').CoinTransaction[];
@@ -504,7 +529,7 @@ export function syncGoalTasks(
 ): GameState {
   const goal = state.goals.find((g) => g.id === goalId);
   if (!goal || goal.progressMode !== 'tasks') return state;
-  const tasks = state.quests.filter((q) => q.goalId === goalId);
+  const tasks = state.quests.filter((q) => q.goalId === goalId && q.required !== false);
   const done = tasks.filter((q) => q.done).length;
   const current = tasks.length ? (done / tasks.length) * 100 : 0;
   let next = {

@@ -1,8 +1,8 @@
 /** Canonical sphere progression. Player progression is independent. */
 export const MIN_SPHERE_LEVEL = 0;
-export const MAX_SPHERE_LEVEL = 100;
+export const MAX_SPHERE_LEVEL = 50;
 export const SPHERE_XP_PER_LEVEL = 200;
-export const SPHERE_PROGRESSION_MODEL = 'xp-levels-100-v1' as const;
+export const SPHERE_PROGRESSION_MODEL = 'xp-levels-50-v1' as const;
 export function sphereProgress(xp: number) {
   const totalXP = Number.isFinite(xp) ? Math.max(0, xp) : 0;
   const level = Math.min(MAX_SPHERE_LEVEL, Math.floor(totalXP / SPHERE_XP_PER_LEVEL));

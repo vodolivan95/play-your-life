@@ -227,7 +227,7 @@ function CloudGame({ user }: { user: User }) {
   useEffect(() => {
     const engine = new AccountSave(
       user.uid,
-      firebaseSave(database, user.uid),
+      firebaseSave(database, user.uid,import.meta.env.VITE_GOAL_ECONOMY_ENABLED==='true'),
       accountStorage,
     );
     const unsubscribe = engine.subscribe((snapshot) =>

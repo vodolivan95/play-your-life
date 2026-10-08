@@ -394,6 +394,13 @@ test("этап, возврат и повторное начисление сох
     "alice",
     true,
   );
+  let operation = 0;
+  const saveOperation = driver.save.bind(driver);
+  driver.save = async (...args) => {
+    const step = ++operation;
+    try { return await saveOperation(...args); }
+    catch(error) { throw new Error(`Сохранение сценария этапа, операция ${step}`, {cause:error}); }
+  };
   let row = await driver.create(newAccountGame("Алиса"));
   let state = saveGoal(row.state, {
     name: "Цель",

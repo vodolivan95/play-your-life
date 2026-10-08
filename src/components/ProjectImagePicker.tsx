@@ -8,11 +8,13 @@ export default function ProjectImagePicker({
   onChange,
   onBusy,
   sphere,
+  banner = false,
 }: {
   image?: string;
   onChange: (image?: string) => void;
   onBusy: (busy: boolean) => void;
   sphere: string;
+  banner?: boolean;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const request = useRef(0);
@@ -50,7 +52,10 @@ export default function ProjectImagePicker({
             </button>
           )}
           <small>
-            Выбери из галереи или файлов. Фото будет обрезано по центру в круг.
+            Выбери из галереи или файлов.{' '}
+            {banner
+              ? 'Обложка сохраняет пропорции изображения.'
+              : 'Фото будет обрезано по центру в круг.'}
           </small>
         </div>
       </div>
@@ -70,7 +75,7 @@ export default function ProjectImagePicker({
           onBusy(true);
           setError('');
           try {
-            const next = await readProjectImage(file);
+            const next = await readProjectImage(file, banner);
             if (request.current === current) onChange(next);
           } catch (err) {
             if (request.current === current)

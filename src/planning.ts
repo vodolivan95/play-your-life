@@ -1,5 +1,10 @@
 import { validProjectImage } from './projectImage.ts';
 import { dateKey, difficulties, syncGoalTasks } from './game.ts';
+import {
+  stageMetrics,
+  stageAccess,
+  goalProgressValue,
+} from './goalWorkspace.ts';
 import type { GameState, Goal, GoalStage, Quest } from './game.ts';
 export type DurationUnit = 'hours' | 'days' | 'weeks' | 'months';
 export type PlanScope = 'day' | 'week' | 'month' | 'year' | 'all';
@@ -11,6 +16,12 @@ export function toISO(value: string): string | undefined {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) throw new Error('Укажи корректную дату.');
   return date.toISOString();
+}
+/** Keep the original precision when a minute-based date input is unchanged. */
+export function preserveDateInput(value: string, original?: string) {
+  return original && value === localDateTime(new Date(original))
+    ? original
+    : toISO(value);
 }
 export function durationEnd(start: string, amount: number, unit: DurationUnit) {
   const date = new Date(start);
@@ -87,6 +98,36 @@ function checkRange(
           'Задача или этап выходят за срок цели. Сначала измени срок цели.',
         );
 }
+export function planEvent(
+  state: GameState,
+  goalId: string,
+  title: string,
+  stageId?: string,
+): GameState {
+  const goal = state.goals.find((g) => g.id === goalId);
+  if (!goal) return state;
+  const stage = goal.stages?.find((s) => s.id === stageId);
+  return {
+    ...state,
+    events: [
+      {
+        id: crypto.randomUUID(),
+        sphere: goal.sphere,
+        title,
+        xp: 0,
+        date: new Date().toISOString(),
+        kind: 'planning',
+        goalId,
+        stageId,
+        goalProgress: goalProgressValue(state, goal),
+        ...(stage
+          ? { stageProgress: stageMetrics(state, goal, stage).progress }
+          : {}),
+      },
+      ...state.events,
+    ],
+  };
+}
 export function saveGoal(
   state: GameState,
   input: Pick<Goal, 'name' | 'sphere' | 'target' | 'reward'> & Partial<Goal>,
@@ -133,11 +174,13 @@ export function saveGoal(
     target: mode === 'tasks' ? 100 : input.target,
     progressMode: mode,
   };
-  if (existing && mode === 'tasks' && existing.progressMode !== 'tasks')
+  if (existing && mode === 'tasks' && existing.progressMode !== 'tasks') {
+    goal.current = (existing.current / existing.target) * 100;
     goal.manualProgress = {
       current: existing.current,
       target: existing.target,
     };
+  }
   if (existing && mode === 'manual' && existing.progressMode === 'tasks') {
     goal.current = existing.manualProgress?.current ?? 0;
     goal.target = input.target;
@@ -154,6 +197,14 @@ export function saveGoal(
     mainGoalId: state.mainGoalId ?? goal.id,
   };
   if (mode === 'tasks') next = syncGoalTasks(next, goal.id);
+  if (existing)
+    next = planEvent(
+      next,
+      goal.id,
+      existing.dueAt !== goal.dueAt || existing.startsAt !== goal.startsAt
+        ? 'Изменён срок цели'
+        : 'Изменены настройки цели',
+    );
   return next;
 }
 export function saveStage(
@@ -164,19 +215,38 @@ export function saveStage(
   const goal = state.goals.find((g) => g.id === goalId);
   if (!goal || !input.name.trim() || input.name.length > 100)
     throw new Error('Укажи название этапа.');
+  if (input.id && !goal.stages?.some((s) => s.id === input.id))
+    throw new Error('Этап не найден в этой цели.');
+  if (input.prerequisiteId) {
+    const visited = new Set([input.id]);
+    let id: string | undefined = input.prerequisiteId;
+    while (id) {
+      if (visited.has(id))
+        throw new Error('Этапы не могут зависеть друг от друга по кругу.');
+      visited.add(id);
+      const prior = goal.stages?.find((s) => s.id === id);
+      if (!prior) throw new Error('Предыдущий этап не найден в этой цели.');
+      id = prior.prerequisiteId;
+    }
+  }
   checkRange(input.startsAt, input.dueAt, goal);
   if (input.id)
-    for (const task of state.quests.filter((q) => q.stageId === input.id))
+    for (const task of state.quests.filter(
+      (q) => q.goalId === goalId && q.stageId === input.id,
+    ))
       checkRange(task.startsAt, task.dueAt, {
         startsAt: input.startsAt ?? goal.startsAt,
         dueAt: input.dueAt ?? goal.dueAt,
       });
+  const old = goal.stages?.find((s) => s.id === input.id);
   const stage = {
+    ...old,
     ...input,
+    createdAt: old ? old.createdAt : new Date().toISOString(),
     id: input.id ?? crypto.randomUUID(),
     name: input.name.trim(),
   };
-  return {
+  const next: GameState = {
     ...state,
     goals: state.goals.map((g) =>
       g.id === goalId
@@ -189,6 +259,16 @@ export function saveStage(
         : g,
     ),
   };
+  return planEvent(
+    next,
+    goalId,
+    old
+      ? old.dueAt !== stage.dueAt || old.startsAt !== stage.startsAt
+        ? 'Изменён срок этапа'
+        : `Изменён этап: ${stage.name}`
+      : `Добавлен этап: ${stage.name}`,
+    stage.id,
+  );
 }
 export function removeStage(
   state: GameState,
@@ -231,6 +311,11 @@ export function saveTask(
     ? goal?.stages?.find((s) => s.id === input.stageId)
     : undefined;
   if (input.stageId && !stage) throw new Error('Этап не найден.');
+  if (
+    input.weight !== undefined &&
+    (!Number.isFinite(input.weight) || input.weight <= 0 || input.weight > 1000)
+  )
+    throw new Error('Вес задачи — от 0 до 1000, не включая 0.');
   checkRange(input.startsAt, input.dueAt, goal);
   if (stage)
     checkRange(input.startsAt, input.dueAt, {
@@ -244,12 +329,26 @@ export function saveTask(
       input.estimateMinutes > 43200)
   )
     throw new Error('Длительность задачи — от 1 минуты до 30 дней.');
+  if (
+    existing &&
+    (existing.rewardLocked || (existing.currentValue ?? 0) > 0) &&
+    (input.difficulty !== existing.difficulty ||
+      (goal?.sphere ?? input.sphere) !== existing.sphere ||
+      (input.rewardCoins ?? existing.rewardCoins) !== existing.rewardCoins ||
+      (input.virtualRewardId ?? existing.virtualRewardId) !==
+        existing.virtualRewardId)
+  )
+    throw new Error(
+      'После начала прогресса награда, сложность и сфера зафиксированы.',
+    );
   if (existing?.done)
     throw new Error(
       'Выполненная задача остаётся в истории; добавь новую для следующего действия.',
     );
   const task: Quest = {
+    ...existing,
     ...input,
+    createdAt: existing ? existing.createdAt : new Date().toISOString(),
     id: existing?.id ?? input.id ?? crypto.randomUUID(),
     name: input.name.trim(),
     sphere: goal?.sphere ?? input.sphere,
@@ -266,6 +365,15 @@ export function saveTask(
   if (existing?.goalId && existing.goalId !== task.goalId)
     next = syncGoalTasks(next, existing.goalId);
   if (task.goalId) next = syncGoalTasks(next, task.goalId);
+  if (task.goalId)
+    next = planEvent(
+      next,
+      task.goalId,
+      existing
+        ? `Изменена задача: ${task.name}`
+        : `Добавлена задача: ${task.name}`,
+      task.stageId,
+    );
   return next;
 }
 export function deleteGoal(state: GameState, id: string): GameState {
@@ -416,4 +524,88 @@ export function planCalendar(tasks: Quest[], state: GameState) {
       })
       .join('\r\n') + '\r\n'
   );
+}
+
+export function moveStage(
+  state: GameState,
+  goalId: string,
+  stageId: string,
+  position: number,
+) {
+  const goal = state.goals.find((g) => g.id === goalId);
+  if (!goal) throw new Error('Цель не найдена.');
+  const stages = [...(goal.stages ?? [])];
+  const index = stages.findIndex((s) => s.id === stageId);
+  if (
+    index < 0 ||
+    !Number.isInteger(position) ||
+    position < 0 ||
+    position >= stages.length
+  )
+    throw new Error('Проверь порядок этапов.');
+  const [stage] = stages.splice(index, 1);
+  stages.splice(position, 0, stage);
+  return planEvent(
+    {
+      ...state,
+      goals: state.goals.map((g) => (g.id === goalId ? { ...g, stages } : g)),
+    },
+    goalId,
+    'Изменён порядок этапов',
+    stageId,
+  );
+}
+export function duplicateStage(
+  state: GameState,
+  goalId: string,
+  stageId: string,
+) {
+  const goal = state.goals.find((g) => g.id === goalId),
+    stage = goal?.stages?.find((s) => s.id === stageId);
+  if (!goal || !stage) throw new Error('Этап не найден.');
+  let next = saveStage(state, goalId, {
+    ...stage,
+    id: undefined,
+    name: `${stage.name.slice(0, 90)} (копия)`,
+    status: 'planned',
+    createdAt: undefined,
+    completedAt: undefined,
+  });
+  const newStage = next.goals.find((g) => g.id === goalId)!.stages!.at(-1)!;
+  for (const task of state.quests.filter(
+    (q) => q.goalId === goalId && q.stageId === stageId,
+  ))
+    next = saveTask(next, {
+      ...task,
+      id: undefined,
+      stageId: newStage.id,
+      done: false,
+      createdAt: undefined,
+      currentValue: 0,
+      completedAt: undefined,
+      rewardClaimed: false,
+      rewardClaimedAt: undefined,
+      rewardLocked: false,
+      tickTickSharedAt: undefined,
+    });
+  return next;
+}
+export function finishStage(state: GameState, goalId: string, stageId: string) {
+  const goal = state.goals.find((g) => g.id === goalId),
+    stage = goal?.stages?.find((s) => s.id === stageId);
+  if (!goal || !stage) throw new Error('Этап не найден.');
+  const blocked = stageAccess(state, goal, stage);
+  if (blocked) throw new Error(blocked);
+  if (stage.status === 'completed') return state;
+  if (
+    stage.completionMode !== 'manual' &&
+    !stageMetrics(state, goal, stage).complete
+  )
+    throw new Error('Сначала выполните все обязательные задачи этапа.');
+  const next = saveStage(state, goalId, {
+    ...stage,
+    status: 'completed',
+    completedAt: new Date().toISOString(),
+  });
+  return planEvent(next, goalId, `Завершён этап: ${stage.name}`, stageId);
 }

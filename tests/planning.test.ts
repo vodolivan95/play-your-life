@@ -17,6 +17,7 @@ import {
   periodItems,
   planCalendar,
   planTransferText,
+  preserveDateInput,
   removeStage,
   saveGoal,
   saveStage,
@@ -50,6 +51,25 @@ function add(s: GameState, name = 'Первый шаг', extra = {}) {
     ...extra,
   });
 }
+test('редактирование текста не округляет сохранённые сроки; изменение и очистка даты явные', () => {
+  for (const original of [
+    '2027-03-02T09:05:38.123Z',
+    '2027-03-02T12:05:38+03:00',
+    '2027-03-02',
+  ]) {
+    assert.equal(
+      preserveDateInput(localDateTime(new Date(original)), original),
+      original,
+    );
+  }
+  assert.equal(preserveDateInput('', undefined), undefined);
+  assert.equal(preserveDateInput('', '2027-03-02T09:05:38.123Z'), undefined);
+  const changed = '2027-03-03T10:45';
+  assert.equal(
+    preserveDateInput(changed, '2027-03-02T09:05:38.123Z'),
+    toISO(changed),
+  );
+});
 test('сроки в часах, днях, неделях, месяцах и годах; конец месяца ограничен', () => {
   assert.equal(
     durationEnd('2027-01-31T12:00:00Z', 2, 'hours'),
@@ -117,7 +137,7 @@ test('смена режима сохраняет числовой результ
   s = updateGoal(s, 'b2', 68);
   s = saveGoal(s, { ...s.goals[0], progressMode: 'tasks' });
   let g = s.goals[0];
-  assert.equal(g.current, 0);
+  assert.equal(g.current, 68);
   assert.deepEqual(g.manualProgress, { current: 68, target: 100 });
   const xp = s.xp;
   s = saveGoal(s, { ...g, progressMode: 'manual' });

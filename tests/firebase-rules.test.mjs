@@ -384,3 +384,35 @@ test("начисление без журнала или с чужим ownerId з
   };
   await assert.rejects(driver.save(stolen, row.revision));
 });
+
+test('SDK сохраняет цель, этапы, заметки, прогресс и однократные награды в той же игре', async () => {
+  const { saveGoal, saveStage, saveTask, moveStage } = await import('../src/planning.ts');
+  const { goalProgressValue } = await import('../src/goalWorkspace.ts');
+  const driver = firebaseSave(env.authenticatedContext('alice').firestore(), 'alice');
+  const fresh = await driver.create(newAccountGame('Алиса'));
+  let state = saveGoal(fresh.state, { name: 'Личная цель', sphere: 'english', target: 100, reward: 200, progressMode: 'tasks', motivation: 'Моя мотивация' });
+  const goalId = state.goals[0].id;
+  state = saveStage(state, goalId, { name: 'Первый этап', notes: 'Мои заметки', status: 'active' });
+  state = saveStage(state, goalId, { name: 'Второй этап', status: 'planned', completionMode: 'manual', startsAt: '2026-01-01T12:00:00Z', dueAt: '2027-12-31T12:00:00Z' });
+  const [stageId, secondId] = state.goals[0].stages.map(s => s.id);
+  state = saveTask(state, { name: 'Первый шаг', sphere: 'english', difficulty: 'Micro', goalId, stageId, required: true, weight: 2 });
+  const taskId = state.quests[0].id;
+  const planned = await driver.save(state, fresh.revision);
+  assert.ok(planned);
+  state = completeQuest(planned.state, taskId);
+  state = moveStage(state, goalId, secondId, 0);
+  const completed = await driver.save(state, planned.revision);
+  const reopened = firebaseSave(env.authenticatedContext('alice').firestore(), 'alice');
+  const loaded = await reopened.load();
+  assert.equal(goalProgressValue(loaded.state, loaded.state.goals[0]), 100);
+  assert.equal(loaded.state.goals[0].motivation, 'Моя мотивация');
+  assert.equal(loaded.state.goals[0].stages[1].notes, 'Мои заметки');
+  assert.equal(loaded.state.goals[0].stages[1].status, 'completed');
+  assert.equal(loaded.state.quests[0].stageId, stageId);
+  assert.equal(loaded.state.events.filter(e => e.goalId === goalId && e.kind === 'goal').length, 1);
+  assert.equal(loaded.state.events.find(e => e.kind === 'quest' && e.stageId === stageId).stageProgress, 100);
+  assert.deepEqual(completeQuest(loaded.state, taskId), loaded.state);
+  assert.equal(await driver.save(state, planned.revision), null);
+  assert.equal(loaded.revision, completed.revision);
+  await assertFails(getDoc(doc(env.authenticatedContext('bob').firestore(), 'players', 'alice')));
+});

@@ -1,3 +1,4 @@
+import { readGoalRoute, goalRoute } from './goalRoutes';
 import { sphereProgress, MAX_SPHERE_LEVEL } from './sphereProgress';
 import { sphereCount } from './sphereAnalytics';
 import SpheresOverview from './components/SpheresOverview';
@@ -114,7 +115,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   const setState = onChange ?? setLocalState;
   const tickTick = useTickTick(state, setState, userId);
   const [page, setPage] = useState(() =>
-    location.hash === '#city'
+    readGoalRoute() || location.hash === '#goals' ? 'goals' : location.hash === '#city'
       ? 'city'
       : location.hash.startsWith('#ticktick=')
         ? 'plan'
@@ -122,7 +123,8 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   );
   const [goalOrigin, setGoalOrigin] = useState<string | null>(null);
   const [today, setToday] = useState(dateKey);
-  const [focusedGoalId, setFocusedGoalId] = useState<string | null>(null);
+  const [focusedGoalId, setFocusedGoalId] = useState<string | null>(() => readGoalRoute()?.goalId ?? null);
+  const [goalLocation, setGoalLocation] = useState(readGoalRoute);
   const [selected, setSelected] = useState<string | null>(null);
   const [modal, setModal] = useState<
     'quest' | 'goal' | 'streak' | 'start' | 'profile' | null
@@ -131,6 +133,15 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
     if (userId && state.profile.onboardingComplete)
       queueMicrotask(() => setModal(current => current === 'start' ? null : current));
   }, [userId, state.profile.onboardingComplete]);
+  useEffect(() => {
+    const changed = () => {
+      const route = readGoalRoute(); setGoalLocation(route);
+      if (route || location.hash === '#goals') { setPage('goals'); setFocusedGoalId(route?.goalId ?? null); }
+      else { setFocusedGoalId(null); setPage(location.hash === '#city' ? 'city' : location.hash.startsWith('#ticktick=') ? 'plan' : 'home'); }
+    };
+    window.addEventListener('hashchange', changed); window.addEventListener('popstate', changed);
+    return () => { window.removeEventListener('hashchange', changed); window.removeEventListener('popstate', changed); };
+  }, []);
   const [achievementFilter, setAchievementFilter] = useState('all');
   const [treeView, setTreeView] = useState('map');
   const [sphereTab, setSphereTab] = useState('projects');
@@ -173,7 +184,13 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
     if (toastTimer.current) clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(''), 3200);
   }
+  function openGoal(id: string | null) {
+    setFocusedGoalId(id); setGoalLocation(id ? { goalId: id } : null);
+    window.location.hash = id ? goalRoute(id) : 'goals';
+  }
   function navigate(id: string) {
+    if (readGoalRoute() || location.hash === '#goals') window.history.pushState(null, '', location.pathname + location.search + (id === 'city' ? '#city' : ''));
+    setGoalLocation(null);
     setPage(id);
     setSelected(null);
     setSphereTab('projects');
@@ -423,7 +440,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                     onNew={() => setModal('goal')}
                     onOpen={(goal) => {
                       navigate('goals');
-                      setFocusedGoalId(goal.id);
+                      openGoal(goal.id);
                       setGoalOrigin(sphere.id);
                     }}
                     onTemplate={(name, description) => {
@@ -456,7 +473,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                         key={g.id}
                         onClick={() => {
                           navigate('goals');
-                          setFocusedGoalId(g.id);
+                          openGoal(g.id);
                         }}
                       >
                         <span className="detail-goal-icon">
@@ -660,9 +677,12 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
             {page === 'quests' && <QuestBoard state={state} onChange={setState} ownerId={userId ?? 'local'} today={today} notify={notify} onCreate={q => { setQuestTemplate(q ?? null); setQuestSphere(q?.sphere ?? 'health'); setModal('quest'); }} />}
             {page === 'goals' && (
               <GoalsBoard
+                ownerId={userId ?? 'local'}
                 state={state}
                 onChange={setState}
                 selectedId={focusedGoalId}
+                stageId={goalLocation?.goalId === focusedGoalId ? goalLocation.stageId : undefined}
+                onSphere={(id) => { navigate('spheres'); setSelected(id); setSphereTab('projects'); }}
                 backLabel={
                   goalOrigin
                     ? `← Проекты: ${spheres.find((s) => s.id === goalOrigin)?.name}`
@@ -673,7 +693,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                     const origin = goalOrigin;
                     navigate('spheres');
                     setSelected(origin);
-                  } else setFocusedGoalId(id);
+                  } else openGoal(id);
                 }}
                 onNew={() => setModal('goal')}
                 onNotify={notify}
@@ -685,7 +705,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 onChange={setState}
                 onGoal={(id) => {
                   navigate('goals');
-                  setFocusedGoalId(id);
+                  openGoal(id);
                 }}
                 onNewGoal={() => setModal('goal')}
                 onNotify={notify}

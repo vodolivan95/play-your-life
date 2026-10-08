@@ -28,6 +28,8 @@ const date = (v: unknown) =>
   text(v) && Number.isFinite(new Date(v as string).getTime());
 const score = (v: unknown) =>
   number(v) && Number.isInteger(v) && (v as number) <= 9;
+const optionalText = (v: unknown) =>
+  v === undefined || (text(v) && (v as string).length <= 8000);
 const optionalDate = (v: unknown) => v === undefined || date(v);
 function list(v: unknown, check: (item: Record<string, unknown>) => boolean) {
   return (
@@ -46,14 +48,34 @@ export function validateState(value: unknown): asserts value is SavedState {
   if (!validPersonalState(value)) return fail();
   if (value.rooms !== undefined && !validRooms(value.rooms)) return fail();
   if (value.cityPurchases !== undefined) {
-    if (!list(value.cityPurchases, (p) =>
-      text(p.id) && !!p.id && text(p.sphere) && Object.hasOwn(cityRooms, p.sphere as string) &&
-      Number.isInteger(p.slot) && (p.slot as number) >= 0 && (p.slot as number) <= 2 &&
-      p.price === cityPrices[p.slot as number] && date(p.date))) return fail();
+    if (
+      !list(
+        value.cityPurchases,
+        (p) =>
+          text(p.id) &&
+          !!p.id &&
+          text(p.sphere) &&
+          Object.hasOwn(cityRooms, p.sphere as string) &&
+          Number.isInteger(p.slot) &&
+          (p.slot as number) >= 0 &&
+          (p.slot as number) <= 2 &&
+          p.price === cityPrices[p.slot as number] &&
+          date(p.date),
+      )
+    )
+      return fail();
     const purchases = value.cityPurchases as Record<string, unknown>[];
-    if (new Set(purchases.map((p) => String(p.sphere) + ':' + String(p.slot))).size !== purchases.length) return fail();
+    if (
+      new Set(purchases.map((p) => String(p.sphere) + ':' + String(p.slot)))
+        .size !== purchases.length
+    )
+      return fail();
   }
-  if (value.sphereProgressionModel !== undefined && value.sphereProgressionModel !== SPHERE_PROGRESSION_MODEL) return fail();
+  if (
+    value.sphereProgressionModel !== undefined &&
+    value.sphereProgressionModel !== SPHERE_PROGRESSION_MODEL
+  )
+    return fail();
   if (value.city !== undefined && !validCity(value.city)) return fail();
   if (value.shop !== undefined) {
     const shop = value.shop;
@@ -71,7 +93,13 @@ export function validateState(value: unknown): asserts value is SavedState {
       )
     )
       return fail();
-    if (shop.rewardTargetId !== undefined && !shopItems.some(i => i.kind === 'reward' && i.id === shop.rewardTargetId)) return fail();
+    if (
+      shop.rewardTargetId !== undefined &&
+      !shopItems.some(
+        (i) => i.kind === 'reward' && i.id === shop.rewardTargetId,
+      )
+    )
+      return fail();
     const purchases = shop.purchases as Record<string, unknown>[];
     const frames = purchases.filter((p) =>
       shopItems.some((i) => i.id === p.itemId && i.kind === 'frame'),
@@ -128,6 +156,11 @@ export function validateState(value: unknown): asserts value is SavedState {
             (q.estimateMinutes as number) <= 43200)) &&
         (q.goalId === undefined || text(q.goalId)) &&
         (q.stageId === undefined || text(q.stageId)) &&
+        (q.required === undefined || typeof q.required === 'boolean') &&
+        (q.weight === undefined ||
+          (number(q.weight) &&
+            Number(q.weight) > 0 &&
+            Number(q.weight) <= 1000)) &&
         (q.notes === undefined || text(q.notes)),
     )
   )
@@ -150,6 +183,10 @@ export function validateState(value: unknown): asserts value is SavedState {
         optionalDate(g.startsAt) &&
         optionalDate(g.dueAt) &&
         (g.description === undefined || text(g.description)) &&
+        optionalText(g.motivation) &&
+        optionalText(g.achievementTitle) &&
+        (g.rarity === undefined ||
+          ['common', 'rare', 'epic', 'legendary'].includes(String(g.rarity))) &&
         (g.manualProgress === undefined ||
           (record(g.manualProgress) &&
             number(g.manualProgress.current) &&
@@ -164,6 +201,23 @@ export function validateState(value: unknown): asserts value is SavedState {
               text(stage.id) &&
               !!stage.id &&
               text(stage.name) &&
+              optionalText(stage.description) &&
+              optionalText(stage.notes) &&
+              optionalText(stage.completionCondition) &&
+              optionalText(stage.achievementTitle) &&
+              optionalText(stage.prerequisiteId) &&
+              (stage.rarity === undefined ||
+                ['common', 'rare', 'epic', 'legendary'].includes(
+                  String(stage.rarity),
+                )) &&
+              (stage.status === undefined ||
+                ['active', 'planned', 'paused', 'locked', 'completed'].includes(
+                  String(stage.status),
+                )) &&
+              (stage.completionMode === undefined ||
+                ['tasks', 'manual'].includes(String(stage.completionMode))) &&
+              optionalDate(stage.createdAt) &&
+              optionalDate(stage.completedAt) &&
               optionalDate(stage.startsAt) &&
               optionalDate(stage.dueAt),
           )),
@@ -175,6 +229,12 @@ export function validateState(value: unknown): asserts value is SavedState {
       value.events,
       (e) =>
         (e.sourceId === undefined || text(e.sourceId)) &&
+        optionalText(e.goalId) &&
+        optionalText(e.stageId) &&
+        (e.goalProgress === undefined ||
+          (number(e.goalProgress) && Number(e.goalProgress) <= 100)) &&
+        (e.stageProgress === undefined ||
+          (number(e.stageProgress) && Number(e.stageProgress) <= 100)) &&
         text(e.id) &&
         !!e.id &&
         text(e.title) &&

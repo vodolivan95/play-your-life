@@ -6,6 +6,7 @@ import {
   completeQuest,
   initialState,
   migrateState,
+  MAX_PLAYER_LEVEL,
   personalState,
   playerProgress,
   spheres,
@@ -14,6 +15,31 @@ import {
 const scores = Object.fromEntries(spheres.map((s) => [s.id, 5]));
 const profile = { name: '  Иван  ', avatar: avatars[2].icon };
 const goal = { name: 'Пробежать 10 километров', sphere: 'sport', target: 10 };
+test('предел игрока 100 в личной и демо-игре; XP, награды и сохранения не обрезаются', () => {
+  assert.equal(MAX_PLAYER_LEVEL, 100);
+  for (const [mode, threshold] of [
+    ['personal', 19800],
+    ['demo', 50850],
+  ] as const) {
+    const original = initialState();
+    original.profile.mode = mode;
+    original.xp = threshold - 1;
+    assert.equal(playerProgress(original).level, 99);
+    assert.equal(playerProgress(original).maxed, false);
+    original.xp = threshold;
+    assert.equal(playerProgress(original).level, 100);
+    assert.equal(playerProgress(original).progress, 100);
+    original.xp = 1000000;
+    const restored = migrateState(JSON.parse(JSON.stringify(original)));
+    assert.equal(restored.xp, 1000000);
+    assert.equal(playerProgress(restored).level, 100);
+    assert.equal(playerProgress(restored).maxed, true);
+    const earned = completeQuest(restored, 'english-1');
+    assert.equal(earned.xp, 1000020);
+    assert.equal(playerProgress(earned).level, 100);
+    assert.deepEqual(completeQuest(earned, 'english-1'), earned);
+  }
+});
 test('новая игра: нулевой XP, личная цель и собственные стартовые оценки', () => {
   const state = personalState(profile, scores, goal);
   assert.equal(state.xp, 0);

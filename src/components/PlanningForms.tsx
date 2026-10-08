@@ -5,7 +5,7 @@ import type { GameState, Goal, GoalStage, Quest } from '../game';
 import { durationEnd, formatDate, localDateTime, toISO } from '../planning';
 import type { DurationUnit } from '../planning';
 import Icon from './Icon';
-import ProjectImagePicker from './ProjectImagePicker';
+
 
 export function GoalForm({
   initial,
@@ -18,9 +18,9 @@ export function GoalForm({
     goal: Pick<Goal, 'name' | 'sphere' | 'target' | 'reward'> & Partial<Goal>,
   ) => void;
 }) {
-  const [image, setImage] = useState(initial?.image);
-  const [imageBusy, setImageBusy] = useState(false);
-  const [imageSphere, setImageSphere] = useState(initial?.sphere ?? sphereId);
+  const image = initial?.image;
+  const imageBusy = false;
+
   const [start, setStart] = useState(
     initial?.startsAt
       ? localDateTime(new Date(initial.startsAt))
@@ -76,12 +76,7 @@ export function GoalForm({
     <form className="planning-form" onSubmit={submit}>
       <div className="eyebrow">НАПРАВЛЕНИЕ ТВОЕЙ ЖИЗНИ</div>
       <h2>{initial ? 'Настроить цель' : 'Новая цель'}</h2>
-      <ProjectImagePicker
-        image={image}
-        onChange={setImage}
-        onBusy={setImageBusy}
-        sphere={imageSphere}
-      />
+<p className="score-note">Обложку можно настроить на странице цели. Новые фото не сохраняются как Base64 в Firestore; старые изображения сохраняются.</p>
       <label>
         Название
         <input
@@ -98,7 +93,7 @@ export function GoalForm({
         <select
           name="sphere"
           defaultValue={initial?.sphere ?? sphereId}
-          onChange={(e) => setImageSphere(e.target.value)}
+
         >
           {spheres.map((s) => (
             <option value={s.id} key={s.id}>
@@ -418,6 +413,8 @@ export function TaskForm({
           Number(data.get('estimate')) * Number(data.get('estimateUnit')),
         priority: String(data.get('priority')) as Quest['priority'],
         notes: String(data.get('notes')),
+        required: data.get('required') !== 'optional',
+        recurrence: String(data.get('recurrence')) as Quest['recurrence'],
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Проверь задачу.');
@@ -545,6 +542,8 @@ export function TaskForm({
           ))}
         </select>
       </label>
+<label>Тип задачи<select name="required" defaultValue={initial?.required===false?'optional':'required'}><option value="required">Обязательная</option><option value="optional">Необязательная</option></select></label>
+      <label>Повторение<select name="recurrence" defaultValue={initial?.recurrence??'none'}><option value="none">Не повторять</option><option value="daily">Ежедневно</option><option value="weekly">Еженедельно</option><option value="monthly">Ежемесячно</option></select></label>
       <label>
         Что нужно сделать
         <textarea

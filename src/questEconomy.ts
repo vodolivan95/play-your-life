@@ -6,7 +6,7 @@ import {
   virtualRewards,
 } from "./personalQuests.ts";
 export type EconomyRecord = {
-  type: "quest" | "habit";
+  type: "quest" | "habit" | "stage";
   coins: number;
   xp: number;
   item: string;
@@ -24,6 +24,7 @@ export type EconomyRecords = Record<string, EconomyRecord>;
 export function economyRecords(
   state: GameState,
   previous: EconomyRecords = {},
+  includeStages = true,
 ): EconomyRecords {
   const next: EconomyRecords = structuredClone(previous);
   for (const q of state.quests) {
@@ -48,8 +49,9 @@ export function economyRecords(
       throw new Error("Недопустимая виртуальная награда.");
     if (
       old &&
-      ((old.completed && !r.completed) ||
-        old.progress > r.progress ||
+      ((old.completed && !r.completed && !q.goalId) ||
+        (old.progress > r.progress &&
+          !(old.completed && !r.completed && q.goalId)) ||
         (old.locked &&
           (old.coins !== r.coins ||
             old.xp !== r.xp ||
@@ -61,6 +63,44 @@ export function economyRecords(
       );
     next[key] = r;
   }
+  for (const goal of includeStages ? state.goals : [])
+    for (const stage of goal.stages ?? []) {
+      const id = `stage:${goal.id}:${stage.id}`,
+        old = previous[id];
+      const r: EconomyRecord = {
+        type: "stage",
+        coins: stage.rewardCoins ?? 0,
+        xp: stage.rewardXP ?? 0,
+        item: "",
+        sphere: goal.sphere,
+        locked: !!stage.rewardClaimed,
+        completed: !!stage.rewardClaimed,
+        progress: 0,
+        claims: {},
+        offset: 0,
+        weekdays: [],
+        active: true,
+        createdDay: 0,
+      };
+      if (
+        !Number.isSafeInteger(r.xp) ||
+        r.xp < 0 ||
+        r.xp > 500 ||
+        !Number.isSafeInteger(r.coins) ||
+        r.coins < 0 ||
+        r.coins > 500
+      )
+        throw new Error("Недопустимая награда этапа.");
+      if (
+        old?.locked &&
+        (r.xp !== old.xp ||
+          r.coins !== old.coins ||
+          r.sphere !== old.sphere ||
+          !r.completed)
+      )
+        throw new Error("Награда этапа уже зафиксирована.");
+      next[id] = r;
+    }
   for (const h of state.habits ?? []) {
     const key = `habit:${h.id}`,
       old = previous[key],
@@ -102,10 +142,12 @@ export function recordIncome(
   next: EconomyRecord,
 ): number {
   if (!old) return 0;
-  return next.type === "quest"
+  return next.type !== "habit"
     ? !old.completed && next.completed
       ? old.coins
-      : 0
+      : old.completed && !next.completed
+        ? -old.coins
+        : 0
     : Object.keys(next.claims).filter((day) => !old.claims[day]).length *
         old.coins;
 }
@@ -143,8 +185,43 @@ export function stageRewards(
     xp = 0,
     completed = 0;
   const pending = new Set<string>();
+  next.goals = next.goals.map((goal) => ({
+    ...goal,
+    stages: goal.stages?.map((stage) => {
+      const id = `stage:${goal.id}:${stage.id}`;
+      if (!wanted[id]?.completed || records[id]?.completed) return stage;
+      coins += wanted[id].coins;
+      xp += wanted[id].xp;
+      sphereWithheld[goal.sphere] =
+        (sphereWithheld[goal.sphere] ?? 0) + wanted[id].xp;
+      return {
+        ...stage,
+        rewardClaimed: false,
+        status: "active" as const,
+        completedAt: undefined,
+      };
+    }),
+  }));
+  next.stageAchievements = next.stageAchievements?.filter(
+    (a) => records[a.id]?.completed || !wanted[a.id],
+  );
   next.quests = next.quests.map((q) => {
     const key = `quest:${q.id}`;
+    if (records[key]?.completed && !wanted[key]?.completed) {
+      coins -= records[key].coins;
+      xp -= records[key].xp;
+      completed--;
+      sphereWithheld[q.sphere] =
+        (sphereWithheld[q.sphere] ?? 0) - records[key].xp;
+      return {
+        ...q,
+        done: true,
+        rewardClaimed: true,
+        currentValue: q.targetValue ?? 1,
+        completedAt: new Date().toISOString(),
+        rewardClaimedAt: new Date().toISOString(),
+      };
+    }
     if (!wanted[key]?.completed || records[key]?.completed) return q;
     coins += wanted[key].coins;
     xp += wanted[key].xp;

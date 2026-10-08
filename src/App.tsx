@@ -1,3 +1,4 @@
+import { navigateGoal, readGoalRoute } from './goalNavigation';
 import { sphereProgress, MAX_SPHERE_LEVEL } from './sphereProgress';
 import { sphereCount } from './sphereAnalytics';
 import SpheresOverview from './components/SpheresOverview';
@@ -114,7 +115,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   const setState = onChange ?? setLocalState;
   const tickTick = useTickTick(state, setState, userId);
   const [page, setPage] = useState(() =>
-    location.hash === '#city'
+    readGoalRoute() ? 'goals' : location.hash === '#city'
       ? 'city'
       : location.hash.startsWith('#ticktick=')
         ? 'plan'
@@ -122,7 +123,18 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   );
   const [goalOrigin, setGoalOrigin] = useState<string | null>(null);
   const [today, setToday] = useState(dateKey);
-  const [focusedGoalId, setFocusedGoalId] = useState<string | null>(null);
+  const [focusedGoalId, setFocusedGoalId] = useState<string | null>(readGoalRoute()?.goalId ?? null);
+  useEffect(() => {
+    const update = () => {
+      const route = readGoalRoute();
+      if (route) { setPage('goals'); setFocusedGoalId(route.goalId ?? null); }
+      else { setPage(location.hash.startsWith('#page=') ? location.hash.slice(6) : location.hash === '#city' ? 'city' : 'home'); setFocusedGoalId(null); }
+    };
+    window.addEventListener('popstate', update);
+    const recovery = new URLSearchParams(location.search).get('goalRoute');
+    if (recovery && readGoalRoute()) history.replaceState(null, '', import.meta.env.BASE_URL.replace(/\/$/, '') + recovery);
+    return () => window.removeEventListener('popstate', update);
+  }, []);
   const [selected, setSelected] = useState<string | null>(null);
   const [modal, setModal] = useState<
     'quest' | 'goal' | 'streak' | 'start' | 'profile' | null
@@ -174,6 +186,10 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
     toastTimer.current = setTimeout(() => setToast(''), 3200);
   }
   function navigate(id: string) {
+    if (id === 'goals') {
+      if (!readGoalRoute()) history.replaceState(null, '', import.meta.env.BASE_URL + '#page=' + page);
+      navigateGoal({});
+    } else if (readGoalRoute()) history.pushState(null, '', import.meta.env.BASE_URL + '#page=' + id);
     setPage(id);
     setSelected(null);
     setSphereTab('projects');
@@ -187,7 +203,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
     setState(next);
     notify(`+${next.xp - state.xp} XP · Отличная работа!`);
   }
-  const unlocked = achievements.filter((a) => a.unlocked(state)).length;
+  const unlocked = achievements.filter((a) => a.unlocked(state)).length + (state.stageAchievements?.length ?? 0);
   const active = state.quests.filter((q) => !q.done);
   const {
     level: currentLevel,
@@ -423,7 +439,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                     onNew={() => setModal('goal')}
                     onOpen={(goal) => {
                       navigate('goals');
-                      setFocusedGoalId(goal.id);
+                      setFocusedGoalId(goal.id); navigateGoal({ goalId: goal.id });
                       setGoalOrigin(sphere.id);
                     }}
                     onTemplate={(name, description) => {
@@ -456,7 +472,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                         key={g.id}
                         onClick={() => {
                           navigate('goals');
-                          setFocusedGoalId(g.id);
+                          setFocusedGoalId(g.id); navigateGoal({ goalId: g.id });
                         }}
                       >
                         <span className="detail-goal-icon">
@@ -660,6 +676,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
             {page === 'quests' && <QuestBoard state={state} onChange={setState} ownerId={userId ?? 'local'} today={today} notify={notify} onCreate={q => { setQuestTemplate(q ?? null); setQuestSphere(q?.sphere ?? 'health'); setModal('quest'); }} />}
             {page === 'goals' && (
               <GoalsBoard
+                ownerId={userId}
                 state={state}
                 onChange={setState}
                 selectedId={focusedGoalId}
@@ -673,7 +690,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                     const origin = goalOrigin;
                     navigate('spheres');
                     setSelected(origin);
-                  } else setFocusedGoalId(id);
+                  } else { setFocusedGoalId(id); navigateGoal({ goalId: id ?? undefined }); }
                 }}
                 onNew={() => setModal('goal')}
                 onNotify={notify}
@@ -685,7 +702,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 onChange={setState}
                 onGoal={(id) => {
                   navigate('goals');
-                  setFocusedGoalId(id);
+                  setFocusedGoalId(id); navigateGoal({ goalId: id });
                 }}
                 onNewGoal={() => setModal('goal')}
                 onNotify={notify}
@@ -798,7 +815,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                   <span>🏆</span>
                   <div>
                     <h2>
-                      {unlocked} из {achievements.length} достижений
+                      {unlocked} из {achievements.length + (state.stageAchievements?.length ?? 0)} достижений
                     </h2>
                     <p>Каждая награда — часть твоей истории.</p>
                   </div>
@@ -819,6 +836,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                   ))}
                 </div>
                 <div className="achievement-grid">
+                  {achievementFilter !== 'locked' && state.stageAchievements?.map(a => <section key={a.id} className="panel achievement unlocked"><span className="achievement-icon"><GameArt kind="trophy" /></span><span className="mini-pill">Получено ✓</span><h2>{a.name}</h2><p>{{common:'Обычное',rare:'Редкое',legendary:'Легендарное'}[a.rarity]} · {new Date(a.earnedAt).toLocaleDateString('ru-RU')}</p><p>Награда за завершение этапа</p></section>)}
                   {achievements
                     .filter(
                       (a) =>

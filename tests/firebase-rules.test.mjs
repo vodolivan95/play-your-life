@@ -384,3 +384,74 @@ test("начисление без журнала или с чужим ownerId з
   };
   await assert.rejects(driver.save(stolen, row.revision));
 });
+
+test("этап, возврат и повторное начисление сохраняются атомарно", async () => {
+  const { saveGoal, saveTask } = await import("../src/planning.ts");
+  const { editStage, completeStage, finishGoalTask, undoGoalTask } =
+    await import("../src/goalSystem.ts");
+  const driver = firebaseSave(
+    env.authenticatedContext("alice").firestore(),
+    "alice",
+    true,
+  );
+  let row = await driver.create(newAccountGame("Алиса"));
+  let state = saveGoal(row.state, {
+    name: "Цель",
+    sphere: "english",
+    target: 100,
+    reward: 200,
+    progressMode: "tasks",
+  });
+  const goal = state.goals.at(-1);
+  state = editStage(state, goal.id, {
+    name: "Практика",
+    rewardXP: 35,
+    rewardCoins: 10,
+  });
+  const stage = state.goals.at(-1).stages[0];
+  state = saveTask(state, {
+    name: "Разговор",
+    goalId: goal.id,
+    stageId: stage.id,
+    sphere: "english",
+    difficulty: "Medium",
+  });
+  const task = state.quests.at(-1);
+  row = await driver.save(state, row.revision);
+  assert.ok(row);
+  row = await driver.save(finishGoalTask(row.state, task.id), row.revision);
+  assert.ok(row);
+  const paid = row;
+  const repeat = await driver.save(
+    finishGoalTask(row.state, task.id),
+    row.revision,
+  );
+  assert.equal(repeat.state.coins, paid.state.coins);
+  row = repeat;
+  row = await driver.save(
+    completeStage(row.state, goal.id, stage.id),
+    row.revision,
+  );
+  assert.ok(row);
+  assert.equal(row.state.coins, paid.state.coins + 10);
+  const undo = undoGoalTask(row.state, task.id),
+    version = row.revision;
+  const [one, two] = await Promise.all([
+    driver.save(undo, version),
+    driver.save(undo, version),
+  ]);
+  assert.equal([one, two].filter(Boolean).length, 1);
+  row = one ?? two;
+  assert.equal(row.state.coins, paid.state.coins + 6);
+  assert.equal(row.state.xp, paid.state.xp + 15);
+  row = await driver.save(finishGoalTask(row.state, task.id), row.revision);
+  assert.equal(row.state.coins, paid.state.coins + 10);
+  row = await driver.save(
+    completeStage(row.state, goal.id, stage.id),
+    row.revision,
+  );
+  assert.equal(row.state.coins, paid.state.coins + 10);
+  const loaded = await driver.load();
+  assert.equal(loaded.state.coins, row.state.coins);
+  assert.equal(loaded.state.goals.at(-1).stages[0].rewardClaimed, true);
+});

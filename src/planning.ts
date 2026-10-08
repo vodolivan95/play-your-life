@@ -74,7 +74,7 @@ function checkRange(
   for (const value of [startsAt, dueAt])
     if (value && Number.isNaN(new Date(value).getTime()))
       throw new Error('Проверь даты.');
-  if (startsAt && dueAt && new Date(dueAt) <= new Date(startsAt))
+  if (startsAt && dueAt && new Date(dueAt) < new Date(startsAt))
     throw new Error('Срок окончания должен быть позже начала.');
   if (parent?.startsAt)
     for (const value of [startsAt, dueAt])
@@ -244,11 +244,13 @@ export function saveTask(
       input.estimateMinutes > 43200)
   )
     throw new Error('Длительность задачи — от 1 минуты до 30 дней.');
+  if (existing?.rewardLocked && (input.difficulty !== existing.difficulty || input.sphere !== existing.sphere)) throw new Error('Начисленная награда зафиксирована.');
   if (existing?.done)
     throw new Error(
       'Выполненная задача остаётся в истории; добавь новую для следующего действия.',
     );
   const task: Quest = {
+    ...existing,
     ...input,
     id: existing?.id ?? input.id ?? crypto.randomUUID(),
     name: input.name.trim(),

@@ -9,8 +9,8 @@ service cloud.firestore {
       function validRecord(r) {
         return r.keys().hasOnly(['type','coins','xp','item','sphere','locked','completed','progress','claims','offset','weekdays','active','createdDay'])
           && r.keys().hasAll(['type','coins','xp','item','sphere','locked','completed','progress','claims','offset','weekdays','active','createdDay'])
-          && r.type in ['quest','habit'] && r.coins is int && r.coins >= 0
-          && r.xp is int && r.xp in [5,10,20,35,50]
+          && r.type in ['quest','habit','stage'] && r.coins is int && r.coins >= 0
+          && r.xp is int && (r.type == 'stage' ? r.xp >= 0 && r.xp <= 500 : r.xp in [5,10,20,35,50])
           && r.item in ['', 'plant_basic','book_basic','cup_basic','crown_basic','key_basic','medal_basic']
           && r.sphere in ['health','sport','growth','english','finance','together','driving','tasks','hobby']
           && r.locked is bool && r.completed is bool && r.active is bool
@@ -19,7 +19,7 @@ service cloud.firestore {
           && r.createdDay is int && r.createdDay >= 0
           && r.weekdays is list && r.weekdays.toSet().size() == r.weekdays.size()
           && r.weekdays.hasOnly([0,1,2,3,4,5,6])
-          && (r.type == 'quest'
+          && (r.type == 'stage' ? r.coins <= 500 && r.item == '' && r.claims.size() == 0 && r.weekdays.size() == 0 && r.offset == 0 && r.createdDay == 0 && r.progress == 0 && (!r.completed || r.locked) : r.type == 'quest'
             ? (r.coins <= 100 && r.claims.size() == 0 && r.weekdays.size() == 0 && r.offset == 0 && r.createdDay == 0 && (!r.completed || r.locked))
             : (r.coins <= 10 && r.xp == 5 && r.item == '' && !r.completed && r.progress == 0 && r.weekdays.size() > 0 && (r.claims.size() == 0 || r.locked)));
       }
@@ -64,12 +64,30 @@ service cloud.firestore {
           && c.id == 'habit:' + h.id + ':' + c.day && c.rewardClaimedAt is string
           && receipt(r,p,c.id,h.id,'HABIT_REWARD');
       }
+      function stageProof(id,r,p) {
+        let goals=request.resource.data.state.goals;
+        let g=goals[p.goalIndex];
+        let stage=g.stages[p.stageIndex];
+        return id == 'stage:' + g.id + ':' + stage.id && stage.rewardClaimed && stage.status == 'completed'
+          && stage.completedAt is string && stage.get('rewardXP',0) == r.xp && stage.get('rewardCoins',0) == r.coins && g.sphere == r.sphere;
+      }
+      function reversal(id,old,next) {
+        let p=request.resource.data.get('rewardProofs',{}).get(id,{});
+        let before=resource.data.state.quests[p.oldSourceIndex];
+        let q=request.resource.data.state.quests[p.sourceIndex];
+        return old.type == 'quest' && old.completed && !next.completed && next.locked
+          && next.diff(old).affectedKeys().hasOnly(['completed','progress']) && next.progress == 0
+          && id == 'quest:' + before.id && q.id == before.id && before.get('goalId','') != '' && q.goalId == before.goalId
+          && before.done && !q.done && !q.rewardClaimed && q.xp == old.xp && q.sphere == old.sphere
+          && request.resource.data.state.xp <= resource.data.state.xp-old.xp
+          && request.resource.data.state.spheres[old.sphere].xp <= resource.data.state.spheres[old.sphere].xp-old.xp;
+      }
       function validProof(id, old, next) {
         let days = next.claims.diff(old.claims).addedKeys();
-        let paid = next.type == 'quest' ? !old.completed && next.completed : days.size() > 0;
+        let paid = next.type != 'habit' ? !old.completed && next.completed : days.size() > 0;
         let proofs = request.resource.data.get('rewardProofs', {});
         return !paid || (next.coins == old.coins && next.xp == old.xp && next.sphere == old.sphere && next.item == old.item && id in proofs && (next.type == 'quest'
-          ? questProof(id,next,proofs[id]) : habitProof(id,next,proofs[id],proofs[id].claimDay)));
+          ? questProof(id,next,proofs[id]) : next.type == 'stage' ? stageProof(id,next,proofs[id]) : habitProof(id,next,proofs[id],proofs[id].claimDay)));
       }
       function habitReward(id, old, next) {
         let proof = request.resource.data.get('rewardProofs', {}).get(id, {});
@@ -85,7 +103,7 @@ service cloud.firestore {
       }
       function validChange(id, old, next) {
         return old.size() == 0 ? (validRecord(next) && next.claims.size() == 0)
-          : (next.type == 'habit' && next.claims.size() > old.claims.size()
+          : (old.completed && !next.completed ? reversal(id,old,next) : next.type == 'habit' && next.claims.size() > old.claims.size()
             ? habitReward(id,old,next)
             : (validRecord(next) && next.type == old.type && next.createdDay == old.createdDay && next.offset == old.offset
               && (!old.locked || (next.locked && next.coins == old.coins && next.xp == old.xp && next.item == old.item && next.sphere == old.sphere))
@@ -93,8 +111,8 @@ service cloud.firestore {
               && (next.type == 'quest' || next.claims == old.claims) && validProof(id,old,next)));
       }
       function income(old, next) {
-        return old.size() == 0 ? 0 : (next.type == 'quest'
-          ? (!old.completed && next.completed ? old.coins : 0)
+        return old.size() == 0 ? 0 : (next.type != 'habit'
+          ? (!old.completed && next.completed ? old.coins : old.completed && !next.completed ? -old.coins : 0)
           : (next.claims.size() - old.claims.size()) * old.coins);
       }
       function economyValid() {

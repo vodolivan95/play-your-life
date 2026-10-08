@@ -28,10 +28,10 @@ export default function LifeScoreChart({ state }: { state: GameState }) {
         <svg
           viewBox="0 0 360 345"
           role="img"
-          aria-label="Текущие уровни сфер, шкала от 0 до 100"
+          aria-label={`Текущие уровни сфер, шкала от 0 до ${MAX_SPHERE_LEVEL}`}
         >
           <g fill="none" stroke="#e5ebf5" strokeWidth="1.5">
-            {[25, 50, MAX_SPHERE_LEVEL].map((v) => (
+            {[MAX_SPHERE_LEVEL / 4, MAX_SPHERE_LEVEL / 2, MAX_SPHERE_LEVEL].map((v) => (
               <polygon key={v} points={polygon(spheres.map(() => v))} />
             ))}
             {spheres.map((s, i) => (

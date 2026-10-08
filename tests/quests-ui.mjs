@@ -85,7 +85,7 @@ try {
     await d.getByRole("button", { name: "Далее →" }).click();
     const fallback=d.locator('[data-quest-cover="master-city"]');
     await fallback.waitFor();
-    assert.ok(await fallback.evaluate(async image=>{await image.decode();return image.naturalWidth>=500&&image.currentSrc.includes('/quest-covers/');}),'Крупная обложка не использует thumbnail');
+    assert.ok(await fallback.evaluate(async image=>{await image.decode();return image.naturalWidth===1280&&image.currentSrc.includes('/sphere-buildings/sport-building.jpg');}),'Обложка использует исходную фотографию Спорта, а не старый crop');
     await d.locator('.pyl-photo-preview').screenshot({path:`work/quest-cover-${mobile?'mobile':'desktop'}.png`});
     const uploaded=await page.evaluate(()=>{
       const canvas=document.createElement('canvas');canvas.width=1920;canvas.height=1200;

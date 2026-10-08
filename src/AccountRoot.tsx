@@ -10,6 +10,7 @@ import {
 } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import App from './App';
+import BrandLogo from './components/BrandLogo';
 import { auth, database } from './firebaseClient';
 import { firebaseSave } from './firebaseSave';
 import { AccountSave } from './accountPersistence';
@@ -19,6 +20,10 @@ import { newAccountGame } from './accountGame';
 import { backupText } from './backup';
 import type { GameState } from './game';
 import './account.css';
+
+function AccountBrand() {
+  return <div className="account-brand"><BrandLogo size={44} decorative /><span>PLAY YOUR LIFE</span></div>;
+}
 
 function errorText(error: unknown) {
   const code =
@@ -94,10 +99,7 @@ function Login({ onGuest }: { onGuest: () => void }) {
   return (
     <div className="account-screen">
       <section className="account-card">
-        <div className="account-brand">
-          <img src={`${import.meta.env.BASE_URL}logo-96.png`} width="44" height="44" alt="" />
-          <span>PLAY YOUR LIFE</span>
-        </div>
+        <AccountBrand />
         <h1>
           {mode === 'register'
             ? 'Начни свою игру'
@@ -310,6 +312,7 @@ function CloudGame({ user }: { user: User }) {
     return (
       <div className="account-screen">
         <section className="account-card">
+          <AccountBrand />
           {bar}
           <h2>
             {unit?.snapshot.status === 'error'
@@ -336,6 +339,7 @@ function CloudGame({ user }: { user: User }) {
     return (
       <div className="account-screen">
         <section className="account-card">
+          <AccountBrand />
           {bar}
           <h2>Две версии игры</h2>
           <p>{snapshot.message} Автоматическая перезапись остановлена.</p>
@@ -416,7 +420,7 @@ export default function AccountRoot() {
   if (user === undefined)
     return (
       <div className="account-screen">
-        <p>Подключаем аккаунт…</p>
+        <div className="account-startup" role="status"><BrandLogo /><p>Подключаем аккаунт…</p></div>
       </div>
     );
   if (user) return <CloudGame key={user.uid} user={user} />;

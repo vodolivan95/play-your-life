@@ -220,7 +220,8 @@ export class CityRenderer {
       const [x,y]=palms[i],sway=Math.sin(t*.7+i*1.71)*.6;
       // Только листья, маленькая локальная маска; ствол, земля и архитектура неподвижны.
       ctx.save();ctx.beginPath();ctx.ellipse(x,y-13,7,5,0,0,Math.PI*2);ctx.clip();
-      ctx.translate(x,y-10);ctx.rotate(sway*.018);ctx.drawImage(opts.background,x-9,y-21,18,17,-9,-11,18,17);ctx.restore();
+      const sx=opts.background.naturalWidth/MAP_WIDTH,sy=opts.background.naturalHeight/MAP_HEIGHT;
+      ctx.translate(x,y-10);ctx.rotate(sway*.018);ctx.drawImage(opts.background,(x-9)*sx,(y-21)*sy,18*sx,17*sy,-9,-11,18,17);ctx.restore();
     }
   }
   private ambientLayer(t:number,opts:RenderOptions) {

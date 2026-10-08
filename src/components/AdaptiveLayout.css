@@ -1,20 +1,22 @@
-/* Keep the supplied sidebar artwork and twelve live routes within the window. */
+/* Reference sidebar: scalable wordmark, twelve live routes and separate city artwork. */
 .app-shell { max-width:none; width:100%; margin:0; }
-.app-shell .sidebar { left:0; width:238px; height:100dvh; padding:18px 16px 0; overflow:hidden; background:linear-gradient(120deg,#f9fcff,#edf8ff); border-right:1px solid #dfedf8; gap:9px; }
-.app-shell .sidebar .brand { flex:0 0 76px; min-height:0; width:100%; padding:0 4px; display:block; }
+.app-shell .sidebar { left:0; width:238px; height:100dvh; padding:12px 16px 0; overflow:hidden; background:linear-gradient(120deg,#f9fcff,#edf8ff); border-right:1px solid #dfedf8; gap:7px; }
+.app-shell .sidebar .brand { flex:0 0 65px; min-height:0; width:100%; padding:0 4px; display:block; }
 .sidebar-reference { display:block; width:100%; height:100%; }
 .app-shell .sidebar nav { flex:1; min-height:0; display:grid; grid-template-rows:repeat(12,minmax(0,1fr)); gap:2px; margin:0; }
-.app-shell .sidebar .nav-item { height:100%; min-height:0; padding:0 12px; border-radius:10px; gap:14px; color:#4c69a3; font-size:13px; font-weight:500; background:transparent; box-shadow:none; line-height:1.1; }
+.app-shell .sidebar .nav-item { height:100%; min-height:0; padding:0 12px; border-radius:11px; gap:14px; color:#294660; font-size:14px; font-weight:500; background:transparent; box-shadow:none; line-height:1.1; }
 .app-shell .sidebar .nav-item > svg { width:23px; height:23px; flex-shrink:0; }
 .app-shell .sidebar .nav-item:hover { background:#e1f0ff; }
-.app-shell .sidebar .nav-item.active { color:white; background:linear-gradient(110deg,#51b5ff,#1597ff); box-shadow:0 4px 12px #238ee72a; }
-.app-shell .sidebar .nav-count { background:#dfedff; color:#168bff; border-radius:50%; min-width:22px; height:22px; display:grid; place-items:center; padding:0 4px; font-size:12px; font-weight:700; }
-.app-shell .sidebar .sidebar-city { flex:0 0 clamp(145px,40vh,375px); height:clamp(145px,40vh,375px); margin:0 -16px; width:238px; }
+.app-shell .sidebar .nav-item.active { color:white; background:linear-gradient(110deg,#17c0fa,#009cf2); box-shadow:0 4px 12px #238ee72a; }
+.app-shell .sidebar .nav-count { background:#b6ebff; color:#098acf; border-radius:8px; min-width:22px; height:22px; display:grid; place-items:center; padding:0 4px; font-size:12px; font-weight:700; }
+.app-shell .sidebar .sidebar-city { flex:0 0 clamp(190px,53vh,650px); height:clamp(190px,53vh,650px); margin:0 -16px; width:238px; }
 .app-shell .main-wrap { margin-left:238px; max-width:none; min-width:0; }
 .app-shell .main-wrap > main { max-width:none; width:100%; margin:0; padding:12px 24px 28px; }
 .app-shell .main-wrap > .topbar { width:100%; min-height:72px; padding:12px 24px; }
-@media(min-width:761px) and (max-height:650px) { .app-shell .sidebar { padding-top:9px; gap:4px; } .app-shell .sidebar .brand { flex-basis:58px; } .app-shell .sidebar .nav-item { font-size:12px; } .app-shell .sidebar .nav-item > svg { width:20px; height:20px; } .app-shell .sidebar .sidebar-city { height:25vh; flex-basis:25vh; } }
+@media(min-width:761px) and (max-height:850px) { .app-shell .sidebar { padding-top:9px; gap:4px; } .app-shell .sidebar .brand { flex-basis:58px; } .app-shell .sidebar .nav-item { font-size:12px; } .app-shell .sidebar .nav-item > svg { width:20px; height:20px; } .app-shell .sidebar .sidebar-city { height:min(35vh,max(80px,calc(100dvh - 390px))); flex-basis:min(35vh,max(80px,calc(100dvh - 390px))); } }
+@media(min-width:761px) and (max-height:470px) { .app-shell .sidebar { overflow-y:auto; } .app-shell .sidebar nav { flex:0 0 310px; } }
 @media(min-width:761px) and (max-width:1023px) { .app-shell .sidebar { width:205px; padding-left:12px; padding-right:12px; } .app-shell .sidebar .sidebar-city { width:205px; margin-left:-12px; margin-right:-12px; } .app-shell .main-wrap { margin-left:205px; } .app-shell .sidebar .nav-item { font-size:12px; gap:9px; } }
+@media(min-width:761px) and (max-width:1023px) { .sidebar-reference-logo .play-wordmark-horizontal { gap:6px; } .sidebar-reference-logo .play-wordmark-crown { width:36px; height:35px; } .sidebar-reference-logo .play-wordmark-copy strong { font-size:20px; } .sidebar-reference-logo .play-wordmark-copy small { font-size:9px; } }
 @media(max-width:760px) { .app-shell .sidebar { display:none; } .app-shell .main-wrap { margin-left:0; width:100%; } .app-shell .main-wrap > main { padding:8px 14px 100px; width:100%; } .app-shell .main-wrap > .topbar { display:block; padding:12px 14px; } .home-dashboard { height:auto; } .dashboard-date { white-space:normal; } }
 .home-weather { color:#284769; text-decoration:none; }
 .home-weather .weather-source { display:block; font-size:8px; color:#7898b5; }

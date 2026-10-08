@@ -24,6 +24,16 @@ async function artwork(page, selector) {
     assert.ok(data.src.startsWith(new URL(iconPath, origin).href));
   }
 }
+async function cityArtwork(page, selector, width, height) {
+  await page.locator(selector).scrollIntoViewIfNeeded();
+  const data = await page.locator(selector).evaluate(async img => {
+    await img.decode();
+    return { width:img.naturalWidth, height:img.naturalHeight, src:img.src };
+  });
+  assert.equal(data.width, width);
+  assert.equal(data.height, height);
+  assert.ok(data.src.startsWith(new URL(basePath + 'assets/', origin).href));
+}
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', '5175', '--strictPort'], { env: { ...process.env, VITE_BASE_PATH: basePath } });
 let browser;
 try {
@@ -32,8 +42,9 @@ try {
     await new Promise(resolve => setTimeout(resolve, 100));
   }
   browser = await chromium.launch({ executablePath: process.env.LIFEGAME_CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
-  for (const width of [320, 390, 1440]) {
-    const page = await browser.newPage({ viewport: { width, height: 900 } });
+  for (const [width, height] of [[320,900], [390,900], [768,900], [1440,900], [1440,700], [1440,600]]) {
+    const suffix = `${width}${height < 900 ? `-h${height}` : ''}`;
+    const page = await browser.newPage({ viewport: { width, height }, isMobile: width < 600, hasTouch: width < 600 });
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     await page.goto(home);
@@ -75,27 +86,60 @@ try {
     assert.equal(await page.locator('.account-brand').isVisible(), true);
     await page.reload();
     await page.locator('.account-brand').waitFor();
-    await page.screenshot({ path: `work/logo-${width}.png`, fullPage: true });
+    await page.screenshot({ path: `work/logo-${suffix}.png`, fullPage: true });
     await page.getByRole('button', { name: 'Продолжить игру на этом устройстве' }).click();
     await page.locator('.app-shell').waitFor();
     const demo = page.getByRole('button', { name: 'Сначала посмотреть демо', exact: true });
     if (await demo.isVisible()) await demo.click();
+    const progress = await page.evaluate(() => {
+      const state = JSON.parse(localStorage.getItem('play-your-life-v1'));
+      return JSON.stringify({ goals:state.goals, quests:state.quests, xp:state.xp, coins:state.coins });
+    });
     if (width > 760) {
-      await artwork(page, '.sidebar .brand-logo');
-      assert.equal(await page.locator('.sidebar .brand-logo').count(), 2);
-      await page.screenshot({ path: `work/logo-menu-${width}.png`, fullPage: true });
-      await page.locator('.sidebar').screenshot({ path: `work/logo-sidebar-${width}.png` });
+      await cityArtwork(page, '.sidebar-city-art', 850, 1851);
+      assert.equal(await page.locator('.sidebar .play-wordmark').count(), 2);
+      const buttons = page.locator('.sidebar nav .nav-item');
+      assert.equal(await buttons.count(), 12);
+      for (const [index, id] of ['home','spheres','quests','goals','plan','monthly','tree','achievements','shop','city','statistics','profile'].entries()) {
+        const button = buttons.nth(index);
+        const box = await button.boundingBox();
+        assert.ok(box.y >= 0 && box.y + box.height <= height && box.height >= 24, `${id} must fit the sidebar`);
+        await button.click();
+        await page.locator(`main.screen-${id}`).waitFor();
+        assert.equal(await button.getAttribute('aria-current'), 'page');
+      }
+      await page.locator('.sidebar .brand').click();
+      await page.locator('main.screen-home').waitFor();
+      await page.screenshot({ path: `work/logo-menu-${suffix}.png`, fullPage: true });
+      await page.locator('.sidebar').screenshot({ path: `work/logo-sidebar-${suffix}.png` });
     } else {
-      await artwork(page, '.mobile-city-footer .brand-logo');
-      await page.locator('.mobile-city-footer').screenshot({ path: `work/logo-menu-${width}.png` });
+      await cityArtwork(page, '.mobile-footer-city-art', 1374, 1145);
+      const image = await page.locator('.mobile-footer-city-art').boundingBox();
+      assert.ok(Math.abs(image.width / image.height - 1374 / 1145) < .01, 'Footer city must remain uncropped and proportional');
+      assert.equal(await page.locator('.mobile-city-footer .play-wordmark').count(), 1);
+      assert.equal(await page.locator('.mobile-nav button').count(), 7);
+      await page.locator('.mobile-nav').getByRole('button', { name:'Цели', exact:true }).click();
+      await page.locator('main.screen-goals').waitFor();
+      await page.locator('.mobile-nav').getByRole('button', { name:'Главная', exact:true }).click();
+      await page.locator('main.screen-home').waitFor();
+      await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+      const footer = await page.locator('.mobile-city-footer').boundingBox();
+      const nav = await page.locator('.mobile-nav').boundingBox();
+      assert.ok(footer.y + footer.height <= nav.y, 'Fixed navigation must not cover the footer wordmark');
+      await page.locator('.mobile-city-footer').screenshot({ path: `work/logo-menu-${suffix}.png` });
+      await page.screenshot({ path:`work/logo-footer-screen-${suffix}.png` });
     }
+    assert.equal(await page.evaluate(() => {
+      const state = JSON.parse(localStorage.getItem('play-your-life-v1'));
+      return JSON.stringify({ goals:state.goals, quests:state.quests, xp:state.xp, coins:state.coins });
+    }), progress, 'Navigation artwork must not alter game progress');
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     await page.goto(home + '#city');
     await page.reload();
     await page.getByRole('button', { name: 'Продолжить игру на этом устройстве' }).click();
     await page.locator('.app-shell').waitFor();
     assert.deepEqual(errors, []);
-    console.log(`${width}px: login, registration, reset, icons, manifest, guest and hash-route reload OK`);
+    console.log(`${width}×${height}: login, icons, sidebar/footer, live navigation, unchanged progress and route reload OK`);
     await page.close();
   }
 } finally {

@@ -4,10 +4,8 @@ import { sphereCount } from './sphereAnalytics';
 import SpheresOverview from './components/SpheresOverview';
 import HomeDashboard from './components/HomeDashboard';
 import DashboardHeader from './components/DashboardHeader';
-import PlayBrand from './components/PlayBrand';
+import MobileCityFooter from './components/MobileCityFooter';
 import SidebarReference from './components/SidebarReference';
-import { cityAssets } from './sphereAssets';
-const citySidebarImage = cityAssets.preview;
 import { CityAppearanceContext } from './cityAppearanceContext';
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, Dispatch, SetStateAction, ReactNode } from 'react';
@@ -881,7 +879,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 </div>
               </>
             )}
-            <div className="mobile-city-footer"><img src={citySidebarImage} alt="Твой город жизни" /><PlayBrand /></div>
+            <MobileCityFooter />
           <footer className="footer">
               PLAY YOUR LIFE <span>✦</span> Маленькие шаги делают большую жизнь.
             </footer>

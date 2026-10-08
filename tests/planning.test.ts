@@ -117,7 +117,7 @@ test('смена режима сохраняет числовой результ
   s = updateGoal(s, 'b2', 68);
   s = saveGoal(s, { ...s.goals[0], progressMode: 'tasks' });
   let g = s.goals[0];
-  assert.equal(g.current, 0);
+  assert.equal(g.current, 68);
   assert.deepEqual(g.manualProgress, { current: 68, target: 100 });
   const xp = s.xp;
   s = saveGoal(s, { ...g, progressMode: 'manual' });

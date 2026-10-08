@@ -43,6 +43,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:quests-ui
+      - run: npm run test:goals-ui
       - run: npm run build
       - run: node tests/logo-ui.mjs
       - name: Save mobile and desktop previews
@@ -53,6 +54,7 @@ jobs:
           path: |
             work/quests-*.png
             work/logo-*.png
+            work/goal-redesign/*.png
 
   live-city-ui:
     runs-on: ubuntu-latest

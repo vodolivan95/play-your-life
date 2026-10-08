@@ -4,8 +4,10 @@ import {
   dateKey,
   difficulties,
   spheres,
+  syncGoalTasks,
 } from "./game.ts";
 import type { GameState, Quest } from "./game.ts";
+import { stageAccess, goalProgressValue } from './goalWorkspace.ts';
 import { validProjectImage } from "./projectImage.ts";
 export const MAX_CUSTOM_QUEST_COINS = 100;
 export const MAX_DAILY_HABIT_COINS = 10;
@@ -197,6 +199,9 @@ export function progressQuest(
     throw new Error("Это квест другого пользователя.");
   if (q.startsAt && Date.parse(q.startsAt) > Date.now())
     throw new Error("Квест ещё не начался.");
+  const goal = state.goals.find(g => g.id === q.goalId), stage = goal?.stages?.find(s => s.id === q.stageId);
+  if (goal && stage && (stageAccess(state, goal, stage) || stage.status === 'paused')) throw new Error(stageAccess(state, goal, stage) || 'Этап приостановлен.');
+  if (value === (q.currentValue ?? 0)) return state;
   const target = q.targetValue ?? 1;
   if (
     !Number.isFinite(value) ||
@@ -216,7 +221,10 @@ export function progressQuest(
         : item,
     ),
   };
-  return value === target ? completeQuest(next, id) : next;
+  if (value === target) return completeQuest(next, id);
+  const synced = q.goalId ? syncGoalTasks(next, q.goalId) : next;
+  if (goal) synced.events = [{ id: crypto.randomUUID(), sphere: q.sphere, title: `Обновлён прогресс задачи: ${q.name} (${value} / ${target})`, xp: 0, date: new Date().toISOString(), kind: 'planning', goalId: goal.id, ...(q.stageId ? { stageId: q.stageId } : {}), sourceId: q.id, goalProgress: goalProgressValue(synced, goal) }, ...synced.events];
+  return synced;
 }
 export function recordQuestReward(
   state: GameState,

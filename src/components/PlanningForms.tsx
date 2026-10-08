@@ -24,14 +24,18 @@ export function GoalForm({
   const [start, setStart] = useState(
     initial?.startsAt
       ? localDateTime(new Date(initial.startsAt))
-      : localDateTime(),
+      : initial
+        ? ''
+        : localDateTime(),
   );
   const [end, setEnd] = useState(
     initial?.dueAt
       ? localDateTime(new Date(initial.dueAt))
-      : localDateTime(
-          new Date(durationEnd(new Date().toISOString(), 3, 'months')),
-        ),
+      : initial
+        ? ''
+        : localDateTime(
+            new Date(durationEnd(new Date().toISOString(), 3, 'months')),
+          ),
   );
   const [mode, setMode] = useState(
     initial ? (initial.progressMode ?? 'manual') : 'tasks',
@@ -50,6 +54,10 @@ export function GoalForm({
         name: String(data.get('name')).trim(),
         sphere: String(data.get('sphere')),
         description: String(data.get('description')),
+        motivation: String(data.get('motivation')),
+        achievementTitle: String(data.get('achievementTitle')),
+        rarity:
+          (String(data.get('rarity') || '') as Goal['rarity']) || undefined,
         target: mode === 'tasks' ? 100 : Number(data.get('target')),
         reward: Number(data.get('reward')),
         progressMode: mode,
@@ -81,6 +89,7 @@ export function GoalForm({
         onChange={setImage}
         onBusy={setImageBusy}
         sphere={imageSphere}
+        banner
       />
       <label>
         Название
@@ -108,7 +117,7 @@ export function GoalForm({
         </select>
       </label>
       <label>
-        Зачем мне эта цель
+        Краткое описание
         <textarea
           name="description"
           maxLength={2000}
@@ -117,12 +126,38 @@ export function GoalForm({
           placeholder="Как изменится моя жизнь, когда я её достигну?"
         />
       </label>
+      <label>
+        Почему эта цель важна для меня
+        <textarea
+          name="motivation"
+          maxLength={2000}
+          defaultValue={initial?.motivation ?? ''}
+          rows={3}
+        />
+      </label>
+      <label>
+        Название достижения
+        <input
+          name="achievementTitle"
+          maxLength={100}
+          defaultValue={initial?.achievementTitle ?? ''}
+        />
+      </label>
+      <label>
+        Редкость
+        <select name="rarity" defaultValue={initial?.rarity ?? ''}>
+          <option value="">Не задана</option>
+          <option value="common">Обычная</option>
+          <option value="rare">Редкая</option>
+          <option value="epic">Эпическая</option>
+          <option value="legendary">Легендарная</option>
+        </select>
+      </label>
       <div className="planning-dates">
         <label>
           Начало
           <input
             type="datetime-local"
-            required
             value={start}
             onChange={(e) => setStart(e.target.value)}
           />
@@ -131,7 +166,6 @@ export function GoalForm({
           Закончить до
           <input
             type="datetime-local"
-            required
             value={end}
             onChange={(e) => setEnd(e.target.value)}
           />
@@ -268,19 +302,37 @@ export function StageForm({
 }: {
   goal: Goal;
   initial?: GoalStage;
-  onSave: (stage: Omit<GoalStage, 'id'> & { id?: string }) => void;
+  onSave: (
+    stage: Omit<GoalStage, 'id'> & { id?: string },
+    position?: number,
+  ) => void;
 }) {
   const [error, setError] = useState('');
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
     try {
-      onSave({
-        id: initial?.id,
-        name: String(data.get('name')).trim(),
-        startsAt: toISO(String(data.get('start'))),
-        dueAt: toISO(String(data.get('end'))),
-      });
+      onSave(
+        {
+          ...initial,
+          id: initial?.id,
+          name: String(data.get('name')).trim(),
+          description: String(data.get('description')),
+          startsAt: toISO(String(data.get('start'))),
+          dueAt: toISO(String(data.get('end'))),
+          status: String(data.get('status')) as GoalStage['status'],
+          completionMode: String(
+            data.get('completionMode'),
+          ) as GoalStage['completionMode'],
+          completionCondition: String(data.get('condition')),
+          prerequisiteId: String(data.get('prerequisite')) || undefined,
+          achievementTitle: String(data.get('achievementTitle')),
+          rarity:
+            (String(data.get('rarity') || '') as GoalStage['rarity']) ||
+            undefined,
+        },
+        Number(data.get('position')) - 1,
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Проверь данные.');
     }
@@ -298,31 +350,134 @@ export function StageForm({
           required
           maxLength={100}
           defaultValue={initial?.name ?? ''}
-          placeholder="Например, освоить основы"
         />
       </label>
       <label>
-        Начало этапа
+        Описание этапа
+        <textarea
+          name="description"
+          maxLength={2000}
+          defaultValue={initial?.description ?? ''}
+        />
+      </label>
+      <div className="planning-dates">
+        <label>
+          Начало этапа
+          <input
+            type="datetime-local"
+            name="start"
+            defaultValue={
+              initial?.startsAt ? localDateTime(new Date(initial.startsAt)) : ''
+            }
+          />
+        </label>
+        <label>
+          Закончить этап до
+          <input
+            type="datetime-local"
+            name="end"
+            defaultValue={
+              initial?.dueAt ? localDateTime(new Date(initial.dueAt)) : ''
+            }
+          />
+        </label>
+      </div>
+      <label>
+        Порядковый номер
         <input
-          type="datetime-local"
-          name="start"
+          name="position"
+          type="number"
+          min={1}
+          max={(goal.stages?.length ?? 0) + (initial ? 0 : 1)}
           defaultValue={
-            initial?.startsAt ? localDateTime(new Date(initial.startsAt)) : ''
+            initial
+              ? (goal.stages?.findIndex((s) => s.id === initial.id) ?? 0) + 1
+              : (goal.stages?.length ?? 0) + 1
           }
+          required
         />
       </label>
       <label>
-        Закончить этап до
-        <input
-          type="datetime-local"
-          name="end"
+        Статус
+        <select
+          name="status"
           defaultValue={
-            initial?.dueAt ? localDateTime(new Date(initial.dueAt)) : ''
+            initial?.status === 'completed'
+              ? 'completed'
+              : (initial?.status ??
+                (goal.stages?.length ? 'planned' : 'active'))
           }
+        >
+          <option value="planned">Запланирован</option>
+          <option value="active">В процессе</option>
+          <option value="paused">Приостановлен</option>
+          <option value="locked">Заблокирован</option>
+          {initial?.status === 'completed' && (
+            <option value="completed">Завершён</option>
+          )}
+        </select>
+      </label>
+      <label>
+        Условия завершения
+        <select
+          name="completionMode"
+          defaultValue={initial?.completionMode ?? 'tasks'}
+        >
+          <option value="tasks">Все обязательные задачи</option>
+          <option value="manual">Ручное подтверждение результата</option>
+        </select>
+      </label>
+      <label>
+        Описание результата
+        <textarea
+          name="condition"
+          maxLength={2000}
+          defaultValue={initial?.completionCondition ?? ''}
         />
       </label>
+      <label>
+        Сначала завершить
+        <select
+          name="prerequisite"
+          defaultValue={initial?.prerequisiteId ?? ''}
+        >
+          <option value="">Без зависимости</option>
+          {goal.stages
+            ?.filter((s) => s.id !== initial?.id)
+            .map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+        </select>
+      </label>
+      <fieldset>
+        <legend>Награды</legend>
+        <p className="muted">
+          XP и Life Coins складываются из наград задач. Завершение этапа не
+          начисляет их повторно.
+        </p>
+        <label>
+          Название достижения
+          <input
+            name="achievementTitle"
+            maxLength={100}
+            defaultValue={initial?.achievementTitle ?? ''}
+          />
+        </label>
+        <label>
+          Редкость
+          <select name="rarity" defaultValue={initial?.rarity ?? ''}>
+            <option value="">Не задана</option>
+            <option value="common">Обычная</option>
+            <option value="rare">Редкая</option>
+            <option value="epic">Эпическая</option>
+            <option value="legendary">Легендарная</option>
+          </select>
+        </label>
+      </fieldset>
       <p className="score-note">
-        Можно оставить даты пустыми. Срок цели: {formatDate(goal.dueAt)}.
+        Даты можно оставить пустыми. Срок цели: {formatDate(goal.dueAt)}.
       </p>
       {error && (
         <p role="alert" className="form-error">
@@ -406,7 +561,10 @@ export function TaskForm({
     const data = new FormData(e.currentTarget);
     try {
       onSave({
+        ...initial,
         id: initial?.id,
+        required: data.get('required') === 'on',
+        weight: Number(data.get('weight')),
         name: String(data.get('name')).trim(),
         sphere: goal?.sphere ?? String(data.get('sphere')),
         difficulty: String(data.get('difficulty')),
@@ -560,6 +718,26 @@ export function TaskForm({
           Задача относится к сфере цели. Срок цели: {formatDate(goal.dueAt)}.
         </p>
       )}
+      <label className="gw-check-label">
+        <input
+          type="checkbox"
+          name="required"
+          defaultChecked={initial?.required !== false}
+        />
+        Обязательная задача
+      </label>
+      <label>
+        Вес в прогрессе
+        <input
+          name="weight"
+          type="number"
+          min="0.1"
+          max="1000"
+          step="0.1"
+          defaultValue={initial?.weight ?? 1}
+          required
+        />
+      </label>
       {error && (
         <p role="alert" className="form-error">
           {error}

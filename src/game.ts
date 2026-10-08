@@ -1,3 +1,4 @@
+import { goalProgressValue, stageMetrics, stageAccess } from './goalWorkspace.ts';
 import { SPHERE_PROGRESSION_MODEL, MAX_SPHERE_LEVEL, sphereProgress } from './sphereProgress.ts';
 import { validateState } from './stateValidation.ts';
 import { questCoins, recordQuestReward } from './personalQuests.ts';
@@ -121,6 +122,8 @@ export type Quest = {
   difficulty: string;
   goalId?: string;
   stageId?: string;
+  required?: boolean;
+  weight?: number;
   startsAt?: string;
   dueAt?: string;
   estimateMinutes?: number;
@@ -131,6 +134,16 @@ export type Quest = {
 export type GoalStage = {
   id: string;
   name: string;
+  description?: string;
+  notes?: string;
+  status?: 'active' | 'planned' | 'paused' | 'locked' | 'completed';
+  prerequisiteId?: string;
+  completionMode?: 'tasks' | 'manual';
+  completionCondition?: string;
+  createdAt?: string;
+  completedAt?: string;
+  achievementTitle?: string;
+  rarity?: 'common' | 'rare' | 'epic' | 'legendary';
   startsAt?: string;
   dueAt?: string;
 };
@@ -145,6 +158,9 @@ export type Goal = {
   reward: number;
   rewarded: boolean;
   description?: string;
+  motivation?: string;
+  achievementTitle?: string;
+  rarity?: 'common' | 'rare' | 'epic' | 'legendary';
   startsAt?: string;
   dueAt?: string;
   progressMode?: 'manual' | 'tasks';
@@ -159,12 +175,15 @@ export type SphereState = {
 };
 export type Event = {
   sourceId?: string;
+  goalId?: string;
+  stageId?: string;
+  goalProgress?: number;
   id: string;
   sphere: string;
   title: string;
   xp: number;
   date: string;
-  kind?: 'quest' | 'habit' | 'score' | 'goal' | 'streak';
+  kind?: 'quest' | 'habit' | 'score' | 'goal' | 'streak' | 'planning';
   scoreBefore?: number;
   scoreAfter?: number;
 };
@@ -308,6 +327,7 @@ export function migrateState(
   return {
     ...state,
     sphereProgressionModel: SPHERE_PROGRESSION_MODEL,
+    goals: state.goals.map(g => g.progressMode === 'tasks' && state.quests.some(q => q.goalId === g.id && q.required !== false) ? { ...g, current: goalProgressValue(state, g), target: 100 } : g),
     monthlyTracking: state.monthlyTracking ?? {
       since: new Date().toISOString(),
       scores: Object.fromEntries(
@@ -438,7 +458,7 @@ export function award(
   sphere: string,
   xp: number,
   title: string,
-  details: Pick<Event, 'kind' | 'scoreBefore' | 'scoreAfter' | 'sourceId'> = {},
+  details: Pick<Event, 'kind' | 'scoreBefore' | 'scoreAfter' | 'sourceId' | 'goalId' | 'stageId' | 'goalProgress'> = {},
 ): GameState {
   return {
     ...state,
@@ -463,6 +483,9 @@ export function award(
 export function completeQuest(state: GameState, id: string): GameState {
   const quest = state.quests.find((q) => q.id === id);
   if (!quest || quest.done || quest.rewardClaimed) return state;
+  const parentGoal = state.goals.find((g) => g.id === quest.goalId);
+  const parentStage = parentGoal?.stages?.find((s) => s.id === quest.stageId);
+  if (parentGoal && parentStage && (stageAccess(state, parentGoal, parentStage) || parentStage.status === 'paused')) return state;
   if (quest.sourceType === 'USER_CREATED' && quest.startsAt && new Date(quest.startsAt) > new Date()) return state;
   const coins = questCoins(quest);
   const xp = quest.sourceType === 'USER_CREATED' ? difficulties[quest.difficulty as keyof typeof difficulties] : quest.xp;
@@ -470,6 +493,8 @@ export function completeQuest(state: GameState, id: string): GameState {
   let next = award(state, quest.sphere, xp, quest.name, {
     kind: 'quest',
     sourceId: quest.id,
+    ...(quest.goalId ? { goalId: quest.goalId } : {}),
+    ...(quest.stageId ? { stageId: quest.stageId } : {}),
   });
   next = {
     ...next,
@@ -494,7 +519,11 @@ export function completeQuest(state: GameState, id: string): GameState {
     });
     next.streakClaims = [...next.streakClaims, claim];
   }
-  if (quest.goalId) next = syncGoalTasks(next, quest.goalId, true);
+  if (quest.goalId) {
+    next = syncGoalTasks(next, quest.goalId, true);
+    const goal = next.goals.find((g) => g.id === quest.goalId);
+    if (goal) next.events = next.events.map((e) => e.kind === 'quest' && e.sourceId === quest.id ? { ...e, goalProgress: goalProgressValue(next, goal) } : e);
+  }
   return next;
 }
 export function syncGoalTasks(
@@ -503,23 +532,34 @@ export function syncGoalTasks(
   reward = false,
 ): GameState {
   const goal = state.goals.find((g) => g.id === goalId);
-  if (!goal || goal.progressMode !== 'tasks') return state;
+  if (!goal) return state;
   const tasks = state.quests.filter((q) => q.goalId === goalId);
-  const done = tasks.filter((q) => q.done).length;
-  const current = tasks.length ? (done / tasks.length) * 100 : 0;
-  let next = {
+  const required = tasks.filter((q) => q.required !== false);
+  const current = goalProgressValue(state, goal);
+  const timestamp = new Date().toISOString();
+  const completedStages = (goal.stages ?? []).filter((stage) =>
+    stage.status !== 'completed' && stage.completionMode !== 'manual' && stageMetrics(state, goal, stage).complete,
+  );
+  let next: GameState = {
     ...state,
-    goals: state.goals.map((g) =>
-      g.id === goalId ? { ...g, current, target: 100 } : g,
-    ),
+    goals: state.goals.map((g) => g.id === goalId ? {
+      ...g,
+      ...(g.progressMode === 'tasks' ? { current, target: 100 } : {}),
+      ...(g.stages ? { stages: g.stages.map((stage) => completedStages.some((s) => s.id === stage.id)
+        ? { ...stage, status: 'completed' as const, completedAt: stage.completedAt ?? timestamp } : stage.status === 'completed' && stage.completionMode !== 'manual' && !stageMetrics(state, goal, stage).complete ? (() => { const { completedAt, ...rest } = stage; void completedAt; return { ...rest, status: 'planned' as const }; })() : stage) } : {}),
+    } : g),
   };
-  if (reward && tasks.length > 0 && done === tasks.length && !goal.rewarded) {
-    next = award(next, goal.sphere, goal.reward, `Цель: ${goal.name}`, {
-      kind: 'goal',
-    });
-    next.goals = next.goals.map((g) =>
-      g.id === goalId ? { ...g, rewarded: true } : g,
-    );
+  if (reward) {
+    for (const stage of completedStages) next.events = [{
+      id: crypto.randomUUID(), sphere: goal.sphere, title: `Завершён этап: ${stage.name}`,
+      xp: 0, date: timestamp, kind: 'planning', goalId, stageId: stage.id, goalProgress: current,
+    }, ...next.events];
+    if (goal.progressMode === 'tasks' && required.length > 0 && required.every((q) => q.done) && !goal.rewarded) {
+      next = award(next, goal.sphere, goal.reward, `Цель: ${goal.name}`, {
+        kind: 'goal', sourceId: goal.id, goalId, goalProgress: 100,
+      });
+      next.goals = next.goals.map((g) => g.id === goalId ? { ...g, rewarded: true } : g);
+    }
   }
   return next;
 }
@@ -561,16 +601,18 @@ export function updateGoal(
   if (!goal || goal.progressMode === 'tasks' || !Number.isFinite(current))
     return state;
   current = Math.max(0, Math.min(goal.target, current));
+  if (current === goal.current) return state;
   const done = current >= goal.target;
   const next =
     done && !goal.rewarded
       ? award(state, goal.sphere, goal.reward, `Цель: ${goal.name}`, {
-          kind: 'goal',
+          kind: 'goal', sourceId: goal.id, goalId: goal.id, goalProgress: 100,
         })
       : { ...state };
   next.goals = next.goals.map((g) =>
     g.id === id ? { ...g, current, rewarded: g.rewarded || done } : g,
   );
+  if (!(done && !goal.rewarded)) next.events = [{ id: crypto.randomUUID(), sphere: goal.sphere, title: `Изменён результат цели: ${current} / ${goal.target}`, xp: 0, date: new Date().toISOString(), kind: 'planning', goalId: goal.id, goalProgress: current / goal.target * 100 }, ...next.events];
   return next;
 }
 let storageProblem = '';

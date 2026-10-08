@@ -589,10 +589,52 @@ try {
     await workspace
       .getByRole('img', { name: 'Общий прогресс цели: 68%' })
       .waitFor();
+    await page.evaluate(() => {
+      const state = JSON.parse(localStorage.getItem('play-your-life-v1'));
+      state.xp = 1000000;
+      for (const sphere of Object.values(state.spheres)) sphere.xp = 1000000;
+      localStorage.setItem('play-your-life-v1', JSON.stringify(state));
+      location.hash = '';
+    });
+    await page.reload();
+    await page
+      .getByRole('button', { name: 'Продолжить игру на этом устройстве' })
+      .click();
+    await page
+      .locator('.home-player')
+      .getByText('LEVEL 100', { exact: true })
+      .waitFor();
+    assert.equal(
+      await page
+        .getByRole('progressbar', { name: 'Максимальный уровень 100' })
+        .getAttribute('aria-valuenow'),
+      '100',
+    );
+    assert.equal(
+      await page
+        .locator('.home-spheres')
+        .getByText('LVL 100 / 100', { exact: true })
+        .count(),
+      9,
+    );
+    assert.equal(
+      await page
+        .locator('.dashboard-metric')
+        .filter({ hasText: 'Уровень' })
+        .locator('strong')
+        .innerText(),
+      '100',
+    );
+    assert.equal(
+      await page.evaluate(
+        () => JSON.parse(localStorage.getItem('play-your-life-v1')).xp,
+      ),
+      1000000,
+    );
     assert.equal(errors.length, 0, errors.join('\n'));
     await context.close();
     console.log(
-      `Цели и этапы ${width}px: URL, задачи, календарь, вкладки, создание/изменение/копирование/удаление, 68%, награды и перезагрузка — OK`,
+      `Цели и этапы ${width}px: URL, задачи, календарь, вкладки, создание/изменение/копирование/удаление, 68%, награды, перезагрузка и предел 100 — OK`,
     );
   }
 } finally {

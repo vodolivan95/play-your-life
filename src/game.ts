@@ -244,13 +244,16 @@ export const defaultProfile: PlayerProfile = {
   mode: 'demo',
   onboardingComplete: false,
 };
+export const MAX_PLAYER_LEVEL = 100;
 export function playerProgress(state: GameState) {
   const personal = state.profile.mode === 'personal';
-  const level = personal
+  const earnedLevel = personal
     ? 1 + Math.floor(state.xp / 200)
     : 12 + Math.floor(Math.max(0, state.xp - 2450) / 550);
+  const level = Math.min(MAX_PLAYER_LEVEL, earnedLevel);
+  const maxed = level === MAX_PLAYER_LEVEL;
   const nextXP = personal ? level * 200 : 3000 + (level - 12) * 550;
-  const progress = personal ? (state.xp % 200) / 2 : (state.xp / nextXP) * 100;
+  const progress = maxed ? 100 : personal ? (state.xp % 200) / 2 : (state.xp / nextXP) * 100;
   const title =
     level < 4
       ? 'Новичок'
@@ -261,7 +264,7 @@ export function playerProgress(state: GameState) {
           : level < 15
             ? 'Стратег'
             : 'Мастер';
-  return { level, nextXP, progress, title };
+  return { level, nextXP, progress, title, maxed };
 }
 export function personalState(
   profile: Pick<PlayerProfile, 'name' | 'avatar'>,

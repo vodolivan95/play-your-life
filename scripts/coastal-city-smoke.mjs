@@ -22,7 +22,8 @@ try {
   await page.goto('http://localhost:4173/?room-demo=sport');
   const map = page.locator('.coastal-map');
   await map.waitFor();
-  await page.waitForFunction(() => { const image = document.querySelector('.coastal-map > img'); return image?.complete && image.naturalWidth === 1005; });
+  await page.waitForFunction(() => { const image = document.querySelector('.coastal-map > img'); return image?.complete && image.naturalWidth > 0; });
+  assert.deepEqual(await map.locator(':scope > img').evaluate(image => [image.naturalWidth, image.naturalHeight]), [1111, 1415], 'Размер текущей обложки прибрежного города');
   assert.equal(await page.locator('.coastal-building').count(), 9);
   assert.equal(await page.locator('.city3d-scene canvas').count(), 0, 'Внешний город заменён картой');
   await page.screenshot({ path: 'room-preview/coastal-desktop.png', fullPage: true });

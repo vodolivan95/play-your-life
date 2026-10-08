@@ -209,6 +209,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   const {
     level: currentLevel,
     progress: levelProgress,
+    maxed: playerMaxed,
     title: levelTitle,
   } = playerProgress(state);
   function newQuest() {
@@ -598,7 +599,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                     </small>
                     <Progress
                       value={levelProgress}
-                      label="XP до следующего уровня"
+                      label={playerMaxed ? 'Максимальный уровень 100' : 'XP до следующего уровня'}
                     />
                   </div>
                   <button

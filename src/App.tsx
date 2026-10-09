@@ -30,6 +30,7 @@ import LifePlanner from './components/LifePlanner';
 import { GoalForm } from './components/PlanningForms';
 import { saveGoal } from './planning';
 import useTickTick from './useTickTick';
+import TickTickConnection from './components/TickTickConnection';
 import { TickTickContext } from './tickTickContext';
 import {
   achievements,
@@ -105,18 +106,18 @@ function Progress({
 function sphereLevel(xp: number) {
   return sphereProgress(xp).level;
 }
-export default function App({ state: suppliedState, onChange, userId, accountTools }: {
-  state?: GameState; onChange?: Dispatch<SetStateAction<GameState>>; userId?: string; accountTools?: ReactNode;
+export default function App({ state: suppliedState, onChange, userId, accountTools, tickTickToken }: {
+  state?: GameState; onChange?: Dispatch<SetStateAction<GameState>>; userId?: string; accountTools?: ReactNode; tickTickToken?: () => Promise<string>;
 } = {}) {
   const [localState, setLocalState] = useState(() => suppliedState ?? loadState());
   const state = suppliedState ?? localState;
   const setState = onChange ?? setLocalState;
-  const tickTick = useTickTick(state, setState, userId);
+  const tickTick = useTickTick(state, setState, userId, tickTickToken);
   const [page, setPage] = useState(() =>
     readGoalRoute() || location.hash === '#goals' ? 'goals' : location.hash === '#city'
       ? 'city'
-      : location.hash.startsWith('#ticktick=')
-        ? 'plan'
+      : location.hash.startsWith('#ticktick=') || location.hash === '#profile'
+        ? 'profile'
         : 'home',
   );
   const [goalOrigin, setGoalOrigin] = useState<string | null>(null);
@@ -135,7 +136,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
     const changed = () => {
       const route = readGoalRoute(); setGoalLocation(route);
       if (route || location.hash === '#goals') { setPage('goals'); setFocusedGoalId(route?.goalId ?? null); }
-      else { setFocusedGoalId(null); setPage(location.hash === '#city' ? 'city' : location.hash.startsWith('#ticktick=') ? 'plan' : 'home'); }
+      else { setFocusedGoalId(null); setPage(location.hash === '#city' ? 'city' : location.hash.startsWith('#ticktick=') || location.hash === '#profile' ? 'profile' : 'home'); }
     };
     window.addEventListener('hashchange', changed); window.addEventListener('popstate', changed);
     return () => { window.removeEventListener('hashchange', changed); window.removeEventListener('popstate', changed); };
@@ -187,7 +188,8 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
     window.location.hash = id ? goalRoute(id) : 'goals';
   }
   function navigate(id: string) {
-    if (readGoalRoute() || location.hash === '#goals') window.history.pushState(null, '', location.pathname + location.search + (id === 'city' ? '#city' : ''));
+    if (id === 'profile') window.history.pushState(null, '', location.pathname + location.search + '#profile');
+    else if (readGoalRoute() || location.hash === '#goals' || location.hash === '#profile' || location.hash.startsWith('#ticktick=')) window.history.pushState(null, '', location.pathname + location.search + (id === 'city' ? '#city' : ''));
     setGoalLocation(null);
     setPage(id);
     setSelected(null);
@@ -390,7 +392,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 }
               />
             )}
-            {page === 'home' && <HomeDashboard state={state} onChange={setState} onSphere={(id) => { setSelected(id); setSphereTab('projects'); setPage('spheres'); }} onQuests={() => navigate('quests')} onGoal={() => navigate('goals')} onShop={() => navigate('shop')} onProfile={() => navigate('profile')} onIntegration={() => navigate('plan')} onCreate={newQuest} onStart={() => setModal('start')} renderQuest={q => <QuestRow key={q.id} quest={q} />} />}
+            {page === 'home' && <HomeDashboard state={state} onChange={setState} onSphere={(id) => { setSelected(id); setSphereTab('projects'); setPage('spheres'); }} onQuests={() => navigate('quests')} onGoal={() => navigate('goals')} onShop={() => navigate('shop')} onProfile={() => navigate('profile')} onIntegration={() => navigate('profile')} onCreate={newQuest} onStart={() => setModal('start')} renderQuest={q => <QuestRow key={q.id} quest={q} />} />}
             {page === 'spheres' && !sphere && <SpheresOverview state={state} onSelect={(id) => { setSelected(id); setSphereTab('projects'); }} renderCard={(id) => <SphereCard key={id} id={id} overview />} onAddRecommendation={(idea) => { setState(current => current.goals.some(g => g.sphere === idea.sphereId && g.name === idea.title && g.current < g.target) ? current : saveGoal(current, { name: idea.title, description: idea.description, sphere: idea.sphereId, target: 100, reward: 100, progressMode: 'tasks' })); notify('Проект добавлен в план. Открой его и добавь этапы и задачи.'); }} />}
             {page === 'spheres' && sphere && <SphereDistricts state={state} selected={selected} onSelect={(id) => { setSelected(id); setSphereTab('projects'); }} />}
             {sphere && (
@@ -644,6 +646,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                     <Icon name="arrow" size={17} />
                   </button>
                 </section>
+                <section className="panel profile-ticktick"><TickTickConnection demo={state.profile.mode === 'demo'} /></section>
                 <DataBackup
                   state={state}
                   connected={!!tickTick.connection}

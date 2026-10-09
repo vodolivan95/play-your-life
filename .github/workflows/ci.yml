@@ -44,6 +44,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:quests-ui
       - run: npm run test:goals-ui
+      - name: Verify account TickTick settings with isolated mock services
+        run: node tests/ticktick-ui.mjs
       - run: npm run build
       - run: node tests/logo-ui.mjs
       - name: Save mobile and desktop previews
@@ -55,6 +57,7 @@ jobs:
             work/quests-*.png
             work/logo-*.png
             work/goal-redesign/*.png
+            work/ticktick/*.png
 
   live-city-ui:
     runs-on: ubuntu-latest

@@ -19,6 +19,7 @@ export default function TickTickTransfer({
   const canSync =
     state.profile.mode !== 'demo' &&
     !!manager?.connection &&
+    manager.connected && !manager.dirty &&
     concreteTasks.every(
       (task) =>
         manager.connection?.sphereLists?.[task.sphere] ||

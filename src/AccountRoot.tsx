@@ -404,6 +404,7 @@ function CloudGame({ user }: { user: User }) {
     <App
       state={snapshot.state!}
       userId={user.uid}
+      tickTickToken={() => user.getIdToken()}
       accountTools={bar}
       onChange={(next) => {
         const state = engine.current.state;

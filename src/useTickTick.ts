@@ -1,222 +1,156 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { GameState } from './game';
-import {
-  applyTickTickResult,
-  bridgeRequest,
-  connectionStorageKey,
-  newConnection,
-  hasTickTickTargets,
-  matchSphereLists,
-  syncTickTick,
-} from './ticktick';
+import { applyTickTickResult, bridgeRequest, connectionStorageKey, newConnection, hasTickTickTargets, matchSphereLists, syncTickTick } from './ticktick';
 import type { TickTickConnection } from './ticktick';
+import { emptyTickTickSettings, validateTickTickSettings } from './ticktickSettings';
+import type { TickTickSettings } from './ticktickSettings';
 import type { TickTickManager } from './tickTickContext';
+
 function readConnection(storageKey: string): TickTickConnection | null {
   try {
-    const data = JSON.parse(
-      localStorage.getItem(storageKey) ?? 'null',
-    );
-    if (
-      data &&
-      typeof data.url === 'string' &&
-      /^[a-f0-9]{64}$/.test(data.key) &&
-      data.links &&
-      Array.isArray(data.dismissed)
-    )
+    const data = JSON.parse(localStorage.getItem(storageKey) ?? 'null');
+    if (data && typeof data.url === 'string' && /^[a-f0-9]{64}$/.test(data.key) && data.links && Array.isArray(data.dismissed)) {
+      newConnection(data.url); // Validate stored origins before forwarding any credential.
       return data;
-  } catch {
-    /* A new connection can be configured if storage is unavailable. */
-  }
+    }
+  } catch { /* Invalid or unavailable storage never grants access. */ }
   return null;
 }
-export default function useTickTick(
-  state: GameState,
-  onChange: Dispatch<SetStateAction<GameState>>,
-  userId?: string,
-): TickTickManager {
+function settings(c: TickTickConnection): TickTickSettings {
+  return { sphereLists: c.sphereLists ?? {}, auto: c.auto, deleteRemote: c.deleteRemote, links: c.links, dismissed: c.dismissed, lastSync: c.lastSync, revision: c.revision ?? 0 };
+}
+export default function useTickTick(state: GameState, onChange: Dispatch<SetStateAction<GameState>>, userId?: string, getToken?: () => Promise<string>): TickTickManager {
   const storageKey = userId ? `${connectionStorageKey}:${userId}` : connectionStorageKey;
-  const [connection, setConnection] = useState(() => readConnection(storageKey));
+  const serverUrl = import.meta.env.VITE_TICKTICK_BRIDGE_URL?.trim() ?? '';
+  const signedIn = Boolean(userId && getToken);
+  const [connection, setConnection] = useState<TickTickConnection | null>(() => {
+    const stored = readConnection(storageKey);
+    if (stored) return stored;
+    if (signedIn && serverUrl) {
+      try { return { ...newConnection(serverUrl), ...emptyTickTickSettings(), auth: 'firebase' }; }
+      catch { /* An invalid deployment setting is shown as unconfigured. */ }
+    }
+    return null;
+  });
   const [status, setStatus] = useState('');
   const [busy, setBusy] = useState(false);
+  const [connected, setConnected] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const working = useRef(false);
-  const latest = useRef({ state, connection });
-  useEffect(() => {
-    latest.current = { state, connection };
-  }, [state, connection]);
+  const latest = useRef({ state, connection, connected, dirty });
+  useEffect(() => { latest.current = { state, connection, connected, dirty }; }, [state, connection, connected, dirty]);
   useEffect(() => {
     try {
-      if (connection)
-        localStorage.setItem(storageKey, JSON.stringify(connection));
+      if (connection) localStorage.setItem(storageKey, JSON.stringify(connection));
       else localStorage.removeItem(storageKey);
-    } catch {
-      queueMicrotask(() => setStatus('Браузер не сохраняет подключение.'));
-    }
+    } catch { queueMicrotask(() => setStatus('Браузер не сохраняет настройки подключения.')); }
   }, [connection, storageKey]);
+  const request = <T,>(c: TickTickConnection, path: string, method = 'GET', data?: unknown) => bridgeRequest<T>(c, path, method, data, getToken);
   async function configure(url: string) {
-    const c =
-      connection?.url === url.replace(/\/$/, '')
-        ? connection
-        : newConnection(url);
-    localStorage.setItem(storageKey, JSON.stringify(c));
-    setConnection(c);
-    const result = await bridgeRequest<{ url: string }>(
-      c,
-      '/authorize',
-      'POST',
-    );
-    const target = new URL(result.url);
-    if (
-      target.origin !== 'https://ticktick.com' ||
-      target.pathname !== '/oauth/authorize'
-    )
-      throw new Error('Сервер вернул некорректную ссылку TickTick.');
-    window.location.assign(target.toString());
+    if (!signedIn) throw new Error('Войдите в аккаунт PLAY YOUR LIFE, чтобы подключить личный TickTick.');
+    if (working.current) return;
+    working.current = true; setBusy(true);
+    try {
+      const c: TickTickConnection = { ...newConnection(url.trim()), ...emptyTickTickSettings(), auth: 'firebase' };
+      localStorage.setItem(storageKey, JSON.stringify(c));
+      setConnection(c); setConnected(false); setDirty(false);
+      const result = await request<{ url: string }>(c, '/authorize', 'POST');
+      const target = new URL(result.url);
+      if (target.origin !== 'https://ticktick.com' || target.pathname !== '/oauth/authorize') throw new Error('Сервер вернул некорректную ссылку TickTick.');
+      window.location.assign(target.toString());
+    } finally { working.current = false; setBusy(false); }
   }
   async function refresh() {
-    if (!connection) return;
-    setBusy(true);
+    const c = latest.current.connection;
+    if (!c || working.current) return;
+    working.current = true; setBusy(true);
     try {
-      const result = await bridgeRequest<
-        { id: string; name: string; kind?: string }[]
-      >(connection, '/api/project');
-      if (!Array.isArray(result))
-        throw new Error('Не удалось прочитать списки TickTick.');
-      const taskLists = result.filter((p) => p.kind !== 'NOTE');
-      setProjects(taskLists);
-      setConnection((current) =>
-        current
-          ? {
-              ...current,
-              sphereLists: matchSphereLists(taskLists, current.sphereLists),
-            }
-          : current,
-      );
-      setStatus(
-        'Аккаунт подключён. Совпадающие списки сопоставлены; проверь выбор для каждой сферы.',
-      );
+      const check = await request<{ connected: boolean }>(c, '/status');
+      const cloud = c.auth === 'firebase' ? validateTickTickSettings(await request(c, '/settings')) : settings(c);
+      if (!check.connected) {
+        setConnected(false); setProjects([]); setConnection({ ...c, ...cloud }); setDirty(false);
+        setStatus('Аккаунт TickTick не подключён или доступ истёк. Нажмите «Подключить TickTick».');
+        return;
+      }
+      const result = await request<{ id: string; name: string; kind?: string }[]>(c, '/api/project');
+      if (!Array.isArray(result) || result.some(p => typeof p.id !== 'string' || typeof p.name !== 'string')) throw new Error('Не удалось прочитать списки TickTick.');
+      setProjects(result.filter(p => p.kind !== 'NOTE')); setConnected(true); setDirty(false);
+      setConnection({ ...c, ...cloud });
+      setStatus('Доступ к TickTick подтверждён. Выберите списки для своих сфер и сохраните настройки.');
     } catch (error) {
-      setStatus(
-        error instanceof Error ? error.message : 'Не удалось подключиться.',
-      );
-    } finally {
-      setBusy(false);
-    }
+      setConnected(false); setProjects([]);
+      setStatus(error instanceof Error ? error.message : 'Не удалось проверить подключение.');
+    } finally { working.current = false; setBusy(false); }
   }
-  async function sync(taskIds?: readonly string[]) {
-    const { state: s, connection: c } = latest.current;
-    if (
-      working.current ||
-      !c ||
-      !hasTickTickTargets(c) ||
-      s.profile.mode === 'demo'
-    )
-      return;
-    working.current = true;
-    setBusy(true);
+  async function save() {
+    const { connection: c, connected: ready } = latest.current;
+    if (!c || !ready || working.current) return;
+    working.current = true; setBusy(true);
     try {
-      const result = await syncTickTick(s, c, undefined, taskIds);
-      const applied = applyTickTickResult(latest.current.state, result);
-      onChange(applied.state);
-      setConnection((current) =>
-        current
-          ? {
-              ...current,
-              links: applied.connection.links,
-              dismissed: applied.connection.dismissed,
-              lastSync: applied.connection.lastSync,
-            }
-          : current,
-      );
-      setStatus(
-        applied.warnings.length
-          ? applied.warnings.join('\n')
-          : 'Подзадачи целей синхронизированы.',
-      );
+      const next = c.auth === 'firebase' ? validateTickTickSettings(await request(c, '/settings', 'PUT', settings(c))) : settings(c);
+      setConnection({ ...c, ...next }); setDirty(false);
+      setStatus(c.auth === 'firebase' ? 'Настройки сохранены в вашем аккаунте. Они доступны на других устройствах.' : 'Настройки сохранены на этом устройстве.');
     } catch (error) {
-      setStatus(
-        error instanceof Error ? error.message : 'Не удалось синхронизировать.',
-      );
-    } finally {
-      working.current = false;
-      setBusy(false);
-    }
+      setStatus(error instanceof Error ? error.message : 'Не удалось сохранить настройки.');
+    } finally { working.current = false; setBusy(false); }
+  }
+  async function sync(taskIds?: readonly string[], automatic = false) {
+    const current = latest.current;
+    if (working.current || !current.connection || !current.connected || current.dirty || current.state.profile.mode === 'demo') return;
+    if (!navigator.onLine) { setStatus('Нет сети. Изменения задач сохранены в игре; обмен продолжится после подключения.'); return; }
+    working.current = true; setBusy(true);
+    try {
+      let c = current.connection;
+      if (c.auth === 'firebase') c = { ...c, ...validateTickTickSettings(await request(c, '/settings')) };
+      setConnection(c);
+      if ((automatic && !c.auto) || !hasTickTickTargets(c)) return;
+      const result = await syncTickTick(latest.current.state, c, (path, method, data) => request(c, path, method, data), taskIds);
+      const applied = applyTickTickResult(latest.current.state, result);
+      const next = c.auth === 'firebase' ? validateTickTickSettings(await request(c, '/settings', 'PUT', settings(applied.connection))) : settings(applied.connection);
+      // Preserve edits made while requests were in flight.
+      onChange(state => applyTickTickResult(state, result).state);
+      setConnection({ ...c, ...next });
+      setStatus(applied.warnings.length ? applied.warnings.join('\n') : 'Связанные задачи целей синхронизированы.');
+    } catch (error) {
+      if (error instanceof Error && error.message.endsWith('(401)')) setConnected(false);
+      setStatus(error instanceof Error ? error.message : 'Не удалось синхронизировать.');
+    } finally { working.current = false; setBusy(false); }
   }
   async function disconnect() {
-    if (!connection) return;
-    if (working.current) throw new Error('Дождись окончания синхронизации.');
-    await bridgeRequest(connection, '/disconnect', 'POST');
-    setConnection(null);
-    setProjects([]);
-    setStatus('Подключение отключено. Задачи в обоих приложениях сохранены.');
+    const c = latest.current.connection;
+    if (!c) return;
+    if (working.current) throw new Error('Дождитесь окончания обмена.');
+    working.current = true; setBusy(true);
+    try {
+      await request(c, '/disconnect', 'POST');
+      setConnection(null); setProjects([]); setConnected(false); setDirty(false);
+      setStatus('TickTick отключён. Задачи и прогресс в обоих приложениях сохранены.');
+    } finally { working.current = false; setBusy(false); }
   }
-  // Poll remote changes and debounce local changes while this application is open.
+  const mappingKey = JSON.stringify(connection?.sphereLists ?? {});
   useEffect(() => {
-    if (
-      !connection?.auto ||
-      !hasTickTickTargets(connection) ||
-      state.profile.mode === 'demo'
-    )
-      return;
-    const timer = setTimeout(() => {
-      void sync();
-    }, 1800);
-    return () => clearTimeout(timer); // Ref supplies the latest state without restarting on status updates.
+    if (!connection?.auto || !connected || dirty || state.profile.mode === 'demo') return;
+    const timer = setTimeout(() => void sync(undefined, true), 1800);
+    return () => clearTimeout(timer);
+    // Latest state and connection are supplied by the ref.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    state.quests,
-    state.goals,
-    connection?.auto,
-    connection?.projectId,
-    connection?.sphereLists,
-  ]);
+  }, [state.quests, state.goals, connection?.auto, mappingKey, connected, dirty]);
   useEffect(() => {
-    const timer = setInterval(() => {
-      if (
-        document.visibilityState === 'visible' &&
-        latest.current.connection?.auto
-      )
-        void sync();
-    }, 60000);
-    const visible = () => {
-      if (
-        document.visibilityState === 'visible' &&
-        latest.current.connection?.auto
-      )
-        void sync();
-    };
-    document.addEventListener('visibilitychange', visible);
-    return () => {
-      clearInterval(timer);
-      document.removeEventListener('visibilitychange', visible);
-    };
+    const poll = () => { if (document.visibilityState === 'visible' && latest.current.connection?.auto) void sync(undefined, true); };
+    const timer = setInterval(poll, 60000);
+    document.addEventListener('visibilitychange', poll); window.addEventListener('online', poll);
+    const outcome = location.hash;
+    if (outcome.startsWith('#ticktick=')) history.replaceState(null, '', location.pathname + location.search + '#profile');
+    if (outcome === '#ticktick=cancelled' || outcome === '#ticktick=failed') queueMicrotask(() => setStatus(outcome.endsWith('cancelled') ? 'Подключение TickTick отменено.' : 'TickTick не подтвердил подключение. Попробуйте снова.'));
+    else if (latest.current.connection) void refresh();
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', poll); window.removeEventListener('online', poll); };
+    // Each App instance is keyed by the authenticated Firebase UID.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  useEffect(() => {
-    if (!location.hash.startsWith('#ticktick=')) return;
-    const connected = location.hash === '#ticktick=connected';
-    history.replaceState(null, '', location.pathname + location.search);
-    queueMicrotask(() => {
-      setStatus(
-        connected
-          ? 'Аккаунт подключён. Нажми «Проверить подключение» и сопоставь сферы со списками.'
-          : 'Подключение отменено.',
-      );
-    });
-  }, []);
-  return {
-    connection,
-    status,
-    busy,
-    projects,
-    configure,
-    refresh,
-    sync,
-    disconnect,
-    update: (patch) => {
-      setConnection((c) => (c ? { ...c, ...patch } : c));
-    },
+  return { connection, status, busy, projects, connected, signedIn, dirty, configure, refresh, sync, save, disconnect,
+    update: patch => { if (!working.current) { setConnection(c => c ? { ...c, ...patch } : c); setDirty(true); } },
+    suggest: () => { const c = latest.current.connection; if (c && !working.current) { setConnection({ ...c, sphereLists: matchSphereLists(projects, c.sphereLists) }); setDirty(true); } },
   };
 }
-

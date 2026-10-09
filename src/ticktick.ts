@@ -1,6 +1,8 @@
 import { completeQuest, spheres } from './game.ts';
 import type { GameState, Quest } from './game.ts';
 import { isGoalTask, saveTask } from './planning.ts';
+import type { TickTickLink } from './ticktickSettings.ts';
+export type { TickTickLink } from './ticktickSettings.ts';
 export type RemoteTask = {
   id: string;
   projectId: string;
@@ -11,15 +13,9 @@ export type RemoteTask = {
   priority?: number;
   status?: number;
 };
-export type TickTickLink = {
-  remoteId: string;
-  local: string;
-  remote: string;
-  done?: boolean;
-  goalId?: string;
-  projectId?: string;
-};
 export type TickTickConnection = {
+  auth?: 'firebase';
+  revision?: number;
   url: string;
   key: string;
   projectId: string; // Legacy single-list setting; retained for existing links.
@@ -111,11 +107,15 @@ export async function bridgeRequest<T>(
   path: string,
   method = 'GET',
   body?: unknown,
+  getToken?: () => Promise<string>,
 ): Promise<T> {
+  const credential = connection.auth === 'firebase'
+    ? await (getToken ? getToken() : Promise.reject(new Error('Войдите в аккаунт PLAY YOUR LIFE.')))
+    : connection.key;
   const response = await fetch(`${connection.url}${path}`, {
     method,
     headers: {
-      Authorization: `Bearer ${connection.key}`,
+      Authorization: `Bearer ${credential}`,
       'Content-Type': 'application/json',
     },
     body: body === undefined ? undefined : JSON.stringify(body),

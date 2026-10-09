@@ -4,6 +4,7 @@ compatibility_date = "2026-10-03"
 
 [vars]
 APP_URL = "https://vodolivan95.github.io/play-your-life/"
+FIREBASE_PROJECT_ID = "play-your-life-872b1"
 
 [[durable_objects.bindings]]
 name = "ACCOUNTS"

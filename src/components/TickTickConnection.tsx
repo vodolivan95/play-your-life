@@ -1,214 +1,71 @@
 import { useContext, useState } from 'react';
 import { TickTickContext } from '../tickTickContext';
 import { spheres } from '../game';
-import {
-  hasTickTickTargets,
-  matchSphereLists,
-  tickTickListNames,
-} from '../ticktick';
+import { hasTickTickTargets } from '../ticktick';
 export default function TickTickConnection({ demo }: { demo: boolean }) {
   const manager = useContext(TickTickContext);
-  const [url, setUrl] = useState(
-    () =>
-      manager?.connection?.url ??
-      import.meta.env.VITE_TICKTICK_BRIDGE_URL ??
-      '',
-  );
+  const sharedUrl = import.meta.env.VITE_TICKTICK_BRIDGE_URL?.trim() ?? '';
+  const [url, setUrl] = useState(() => manager?.connection?.url ?? sharedUrl);
   const [error, setError] = useState('');
   if (!manager) return null;
-  async function action(fn: () => Promise<void>) {
-    try {
-      setError('');
-      await fn();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Проверь подключение.');
-    }
-  }
   const c = manager.connection;
-  return (
-    <section className="ticktick-account">
-      <div className="eyebrow">ТВОЙ АККАУНТ. ОБЩИЙ ПЛАН.</div>
-      <h3>Синхронизация TickTick</h3>
-      <p className="muted">
-        Новые подзадачи целей отправляются в список TickTick своей сферы:
-        здоровье — в «Здоровье», английский — в выбранный список английского.
-        Цели, проекты и этапы остаются в PLAY YOUR LIFE. Выполнение подзадачи в
-        TickTick обновляет её прогресс здесь.
-      </p>
-      {demo ? (
-        <p className="score-note">
-          Начни личную игру, чтобы подключить свои задачи. Демо не отправляется
-          в аккаунт.
-        </p>
-      ) : (
-        <>
-          <label>
-            Адрес сервера подключения
-            <input
-              type="url"
-              placeholder="https://play-your-life-ticktick.…workers.dev"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-            />
-          </label>
-          <p className="score-note">
-            Для подключения нужен настроенный сервер. Пароль TickTick вводится
-            только на сайте TickTick.
-          </p>
-          <div className="account-buttons">
-            <button
-              className="primary-button"
-              disabled={manager.busy || !url}
-              onClick={() => action(() => manager.configure(url))}
-            >
-              Подключить аккаунт
-            </button>
-            {c && (
-              <button
-                className="secondary-button"
-                disabled={manager.busy}
-                onClick={() => action(manager.refresh)}
-              >
-                Проверить подключение
-              </button>
-            )}
-          </div>
-          {c && (
-            <>
-              <div className="sphere-list-mappings">
-                <h4>Сфера жизни → список TickTick</h4>
-                <p className="muted">
-                  Выбери, куда отправлять конкретные подзадачи каждой сферы.
-                </p>
-                <button
-                  className="text-button"
-                  disabled={manager.busy || !manager.projects.length}
-                  onClick={() =>
-                    manager.update({
-                      sphereLists: matchSphereLists(
-                        manager.projects,
-                        c.sphereLists,
-                      ),
-                    })
-                  }
-                >
-                  Сопоставить по названиям
-                </button>
-                {spheres.map((sphere) => {
-                  const projectId = c.sphereLists?.[sphere.id] ?? '';
-                  return (
-                    <label className="sphere-list-mapping" key={sphere.id}>
-                      <span>
-                        {sphere.icon} {sphere.name}
-                      </span>
-                      <select
-                        aria-label={`Список TickTick: ${sphere.name}`}
-                        value={projectId}
-                        disabled={manager.busy || !manager.projects.length}
-                        onChange={(e) =>
-                          manager.update({
-                            sphereLists: {
-                              ...c.sphereLists,
-                              [sphere.id]: e.target.value,
-                            },
-                          })
-                        }
-                      >
-                        <option value="">
-                          Не подключено · {tickTickListNames[sphere.id]}
-                        </option>
-                        {projectId &&
-                          !manager.projects.some((p) => p.id === projectId) && (
-                            <option value={projectId}>
-                              Сохранённый список (проверь доступ)
-                            </option>
-                          )}
-                        {manager.projects.map((project) => (
-                          <option key={project.id} value={project.id}>
-                            {project.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  );
-                })}
-                <p className="score-note">
-                  Список «Работа» пока не связан со сферой. Без сопоставления
-                  новые задачи сферы остаются здесь. Уже отправленные задачи
-                  сохраняют свой список и связь; смена сопоставления применяется
-                  к новым задачам.
-                </p>
-              </div>
-              <label className="include-shared">
-                <input
-                  type="checkbox"
-                  checked={c.auto}
-                  onChange={(e) => manager.update({ auto: e.target.checked })}
-                />
-                Обновлять автоматически, пока приложение открыто
-              </label>
-              <label className="include-shared">
-                <input
-                  type="checkbox"
-                  checked={c.deleteRemote}
-                  onChange={(e) => {
-                    if (
-                      e.target.checked &&
-                      !window.confirm(
-                        'Удалённые здесь связанные задачи также будут удаляться из своих списков TickTick. Включить?',
-                      )
-                    )
-                      return;
-                    manager.update({ deleteRemote: e.target.checked });
-                  }}
-                />
-                Удалять в TickTick задачи, удалённые здесь
-              </label>
-              <p className="score-note">
-                Передаются только задачи, привязанные к целям. Самостоятельные
-                квесты и посторонние задачи TickTick не участвуют в обмене.
-                Проекты и крупные цели в TickTick не создаются. При
-                одновременном изменении текста сохраняется вариант плана;
-                выполненное действие остаётся выполненным.
-              </p>
-              <div className="account-buttons">
-                <button
-                  className="secondary-button"
-                  disabled={manager.busy || !hasTickTickTargets(c)}
-                  onClick={() => action(manager.sync)}
-                >
-                  {manager.busy ? 'Обновляю…' : 'Синхронизировать сейчас'}
-                </button>
-                <button
-                  className="text-button"
-                  disabled={manager.busy}
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        'Отключить синхронизацию? Задачи сохранятся в обоих приложениях.',
-                      )
-                    )
-                      void action(manager.disconnect);
-                  }}
-                >
-                  Отключить
-                </button>
-              </div>
-              {c.lastSync && (
-                <small>
-                  Последнее обновление:{' '}
-                  {new Date(c.lastSync).toLocaleString('ru-RU')}
-                </small>
-              )}
-            </>
-          )}
-        </>
-      )}
-      {(error || manager.status) && (
-        <p className="transfer-message" role="status">
-          {error || manager.status}
-        </p>
-      )}
-    </section>
-  );
+  const ready = manager.connected;
+  const selected = Object.values(c?.sphereLists ?? {}).filter(Boolean).length;
+  async function action(fn: () => Promise<void>) {
+    try { setError(''); await fn(); }
+    catch (e) { setError(e instanceof Error ? e.message : 'Проверьте подключение.'); }
+  }
+  return <section className="ticktick-account" aria-label="Настройки TickTick">
+    <div className="ticktick-heading"><div><div className="eyebrow">ИНТЕГРАЦИИ АККАУНТА</div><h3>Мой TickTick</h3></div><span className={`ticktick-badge ${ready ? 'is-connected' : ''}`}>{manager.busy ? 'Проверяем…' : ready ? 'Подключён' : 'Не подключён'}</span></div>
+    <p className="muted">Подключите свой аккаунт и выберите, какие списки TickTick соответствуют вашим сферам жизни.</p>
+    {demo || (!manager.signedIn && !c) ? <p className="score-note">Войдите или зарегистрируйтесь в PLAY YOUR LIFE, чтобы настроить личную синхронизацию. Демо и игра на устройстве не передаются в TickTick.</p> : <>
+      {!sharedUrl && <div className="ticktick-setup-note"><strong>Подключение сайта ещё не настроено</strong><p>Владелец сайта должен один раз опубликовать сервер подключения. После настройки пользователи смогут подключать свои аккаунты этой кнопкой.</p><a href="https://github.com/vodolivan95/play-your-life/blob/main/docs/TICKTICK-SETUP.md" target="_blank" rel="noreferrer">Инструкция по настройке →</a></div>}
+      {(!sharedUrl || (c && c.url !== sharedUrl)) && <details className="ticktick-server-settings"><summary>Дополнительные настройки сервера</summary><label>Адрес сервера подключения<input type="url" placeholder="https://play-your-life-ticktick.…workers.dev" value={url} disabled={manager.busy} onChange={e => setUrl(e.target.value)} /></label><p className="score-note">Только публичный адрес сервера. Пароль вводится на сайте TickTick; ключи приложения здесь не нужны.</p></details>}
+      <div className="account-buttons">
+        <button className="primary-button" disabled={manager.busy || !url || !manager.signedIn} onClick={() => {
+          if (ready && !window.confirm('Повторный вход может подключить другой TickTick. Сопоставление списков потребуется настроить заново; задачи сохранятся. Продолжить?')) return;
+          void action(() => manager.configure(url));
+        }}>{ready ? 'Переподключить TickTick' : 'Подключить TickTick'}</button>
+        {c && <button className="secondary-button" disabled={manager.busy} onClick={() => {
+          if (manager.dirty && !window.confirm('Обновить настройки из аккаунта? Несохранённый выбор списков на этом устройстве будет заменён.')) return;
+          void action(manager.refresh);
+        }}>Обновить подключение</button>}
+      </div>
+      {!ready && <p className="score-note">После разрешения доступа на сайте TickTick вы вернётесь сюда. Подключение подтверждается загрузкой ваших списков, затем можно настроить обмен.</p>}
+      {c && ready && <>
+        {c.auth !== 'firebase' && <p className="score-note">Это прежнее подключение на устройстве. Войдите в PLAY YOUR LIFE и переподключите TickTick для сохранения настроек в аккаунте.</p>}
+        <div className="sphere-list-mappings">
+          <div className="ticktick-mapping-heading"><h4>Сфера жизни → мой список TickTick</h4><span>{selected} из {spheres.length}</span></div>
+          <p className="muted">Названия могут отличаться: например, «Спорт» → «Мои тренировки». Сфера без выбранного списка не отправляет новые задачи.</p>
+          <button className="text-button" disabled={manager.busy || !manager.projects.length} onClick={manager.suggest}>Предложить совпадения по названиям</button>
+          {!manager.projects.length && <p className="score-note">Нет доступных списков задач. Создайте список в TickTick и обновите подключение. Списки заметок не подходят для обмена задачами.</p>}
+          {spheres.map(sphere => {
+            const id = c.sphereLists?.[sphere.id] ?? '';
+            const missing = Boolean(id && !manager.projects.some(p => p.id === id));
+            return <label className="sphere-list-mapping" key={sphere.id}><span>{sphere.icon} {sphere.name}</span><select aria-label={`Список TickTick: ${sphere.name}`} value={id} disabled={manager.busy} onChange={e => manager.update({ sphereLists: { ...c.sphereLists, [sphere.id]: e.target.value } })}>
+              <option value="">Не синхронизировать</option>
+              {missing && <option value={id}>Сохранённый список недоступен</option>}
+              {manager.projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>{missing && <small>Выберите доступный список или отключите эту сферу.</small>}</label>;
+          })}
+        </div>
+        <label className="include-shared"><input type="checkbox" checked={c.auto} disabled={manager.busy} onChange={e => manager.update({ auto: e.target.checked })} />Обновлять автоматически, пока приложение открыто</label>
+        <label className="include-shared"><input type="checkbox" checked={c.deleteRemote} disabled={manager.busy} onChange={e => {
+          if (e.target.checked && !window.confirm('Удалённые здесь связанные задачи также будут удаляться в TickTick. Включить?')) return;
+          manager.update({ deleteRemote: e.target.checked });
+        }} />Удалять в TickTick связанные задачи, удалённые здесь</label>
+        <p className="score-note">Передаются конкретные задачи ваших целей. Уже связанные задачи сохраняют свой список: новый выбор применяется к новым задачам. Посторонние задачи TickTick, самостоятельные квесты и привычки не импортируются. Цели и этапы остаются в PLAY YOUR LIFE.</p>
+        {manager.dirty && <p className="ticktick-unsaved" role="status">Есть несохранённые настройки. Обмен приостановлен до сохранения.</p>}
+        <div className="account-buttons">
+          <button className="primary-button" disabled={manager.busy || !manager.dirty || spheres.some(s => c.sphereLists?.[s.id] && !manager.projects.some(p => p.id === c.sphereLists?.[s.id]))} onClick={() => void action(manager.save)}>Сохранить настройки</button>
+          <button className="secondary-button" disabled={manager.busy || manager.dirty || !hasTickTickTargets(c)} onClick={() => void action(() => manager.sync())}>Синхронизировать сейчас</button>
+        </div>
+        {c.lastSync && <small>Последняя попытка обмена: {new Date(c.lastSync).toLocaleString('ru-RU')}</small>}
+      </>}
+      {c && <button className="text-button" disabled={manager.busy} onClick={() => {
+        if (window.confirm('Отключить TickTick для этого подключения? Задачи и прогресс сохранятся.')) void action(manager.disconnect);
+      }}>Отключить TickTick</button>}
+    </>}
+    {(error || manager.status) && <p className="transfer-message" role="status">{error || manager.status}</p>}
+  </section>;
 }

@@ -1,4 +1,6 @@
 /** OAuth bridge for TickTick Open API v1. Provider tokens stay on the server. */
+import { firebaseIdentity } from './firebaseIdentity.ts';
+import { emptyTickTickSettings, validateTickTickSettings } from '../../src/ticktickSettings.ts';
 export interface Storage {
   get<T>(key: string): Promise<T | undefined>;
   put<T>(key: string, value: T): Promise<void>;
@@ -11,6 +13,7 @@ export interface Env {
   TICKTICK_CLIENT_ID: string;
   TICKTICK_CLIENT_SECRET: string;
   APP_URL: string;
+  FIREBASE_PROJECT_ID?: string;
   ACCOUNTS: {
     idFromName(name: string): { toString(): string };
     idFromString(id: string): { toString(): string };
@@ -29,9 +32,9 @@ export class BridgeError extends Error {
 function json(data: unknown, status = 200) {
   return Response.json(data, { status });
 }
-async function body(request: Request): Promise<Record<string, unknown>> {
+async function body(request: Request, limit = 65000): Promise<Record<string, unknown>> {
   const text = await request.text();
-  if (text.length > 65000)
+  if (text.length > limit)
     throw new BridgeError('Слишком большой запрос.', 413);
   try {
     const value = JSON.parse(text);
@@ -201,24 +204,49 @@ export class TickTickAccount {
       const code = url.searchParams.get('code');
       if (!code || url.searchParams.get('error'))
         return Response.redirect(`${this.env.APP_URL}#ticktick=cancelled`, 302);
-      const token = await this.exchange(
+      let token: Token;
+      try { token = await this.exchange(
         new URLSearchParams({
           code,
           grant_type: 'authorization_code',
           scope: 'tasks:read tasks:write',
           redirect_uri: pending.callback,
         }),
-      );
+      ); } catch {
+        return Response.redirect(`${this.env.APP_URL}#ticktick=failed`, 302);
+      }
       await this.storage.put('token', token);
+      // Another TickTick login may be a different account. Never retain its task IDs.
+      const settings = await this.storage.get<ReturnType<typeof emptyTickTickSettings>>('settings');
+      await this.storage.put('settings', emptyTickTickSettings((settings?.revision ?? 0) + 1));
+      await this.storage.put('epoch', (await this.storage.get<number>('epoch') ?? 0) + 1);
       return Response.redirect(`${this.env.APP_URL}#ticktick=connected`, 302);
     }
     if (url.pathname === '/disconnect' && request.method === 'POST') {
       await this.storage.delete('token');
       await this.storage.delete('pending');
+      const settings = await this.storage.get<ReturnType<typeof emptyTickTickSettings>>('settings');
+      await this.storage.put('settings', emptyTickTickSettings((settings?.revision ?? 0) + 1));
+      await this.storage.put('epoch', (await this.storage.get<number>('epoch') ?? 0) + 1);
       return json({ connected: false });
     }
     if (url.pathname === '/status' && request.method === 'GET') {
-      return json({ connected: Boolean(await this.storage.get('token')) });
+      const token = await this.storage.get<Token>('token');
+      return json({ connected: Boolean(token && (token.expiresAt > Date.now() + 60000 || token.refresh_token)) });
+    }
+    if (url.pathname === '/settings' && request.method === 'GET') {
+      return json(await this.storage.get('settings') ?? emptyTickTickSettings());
+    }
+    if (url.pathname === '/settings' && request.method === 'PUT') {
+      if (!await this.storage.get('token')) throw new BridgeError('Сначала подключи аккаунт TickTick.', 401);
+      let settings;
+      try { settings = validateTickTickSettings(await body(request, 900000)); }
+      catch { throw new BridgeError('Некорректные настройки TickTick.', 400); }
+      const current = await this.storage.get<ReturnType<typeof emptyTickTickSettings>>('settings') ?? emptyTickTickSettings();
+      if (settings.revision !== current.revision) throw new BridgeError('Настройки изменены на другом устройстве. Обнови подключение перед сохранением.', 409);
+      const next = { ...settings, revision: current.revision + 1 };
+      await this.storage.put('settings', next);
+      return json(next);
     }
     if (url.pathname === '/create' && request.method === 'POST') {
       const data = await body(request);
@@ -233,7 +261,8 @@ export class TickTickAccount {
         typeof data.content !== 'string'
       )
         throw new BridgeError('Проверь задачу.', 400);
-      const key = `task:${project}:${localId}`;
+      const epoch = await this.storage.get<number>('epoch');
+      const key = epoch ? `task:${epoch}:${project}:${localId}` : `task:${project}:${localId}`;
       const previous = await this.storage.get<{
         id?: string;
         pending?: boolean;
@@ -305,16 +334,12 @@ export class TickTickAccount {
 }
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    let headers: Record<string, string> = { 'Cache-Control': 'no-store' };
     try {
-      if (
-        !env.APP_URL ||
-        !env.TICKTICK_CLIENT_ID ||
-        !env.TICKTICK_CLIENT_SECRET
-      )
-        return json({ error: 'Сервер TickTick ещё не настроен.' }, 503);
       const url = new URL(request.url);
+      if (!env.APP_URL) throw new BridgeError('Сервер TickTick ещё не настроен.', 503);
       const origin = new URL(env.APP_URL).origin;
-      if (url.pathname === '/callback') {
+      if (url.pathname === '/callback' && request.method === 'GET') {
         const id = url.searchParams.get('state')?.split('.')[0];
         if (!id || !/^[a-f0-9]{64}$/.test(id))
           return json({ error: 'Некорректная ссылка подключения.' }, 400);
@@ -327,19 +352,31 @@ export default {
           { error: 'Этот сайт не имеет доступа к подключению.' },
           403,
         );
-      const headers = {
+      headers = {
         'Access-Control-Allow-Origin': origin,
-        'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Authorization, Content-Type',
         Vary: 'Origin',
         'Cache-Control': 'no-store',
       };
       if (request.method === 'OPTIONS')
         return new Response(null, { status: 204, headers });
+      if (!env.TICKTICK_CLIENT_ID || !env.TICKTICK_CLIENT_SECRET)
+        throw new BridgeError('Сервер TickTick ещё не настроен.', 503);
       const key = request.headers.get('Authorization')?.replace(/^Bearer /, '');
-      if (!key || !/^[a-f0-9]{64}$/.test(key))
-        return json({ error: 'Подключение не найдено.' }, 401);
-      const id = env.ACCOUNTS.idFromName(await digest(key));
+      if (!key) throw new BridgeError('Войдите в аккаунт PLAY YOUR LIFE.', 401);
+      let name: string;
+      if (/^[a-f0-9]{64}$/.test(key)) {
+        // Compatibility with existing local connections; never shared with Firebase accounts.
+        name = await digest(key);
+      } else {
+        if (!env.FIREBASE_PROJECT_ID) throw new BridgeError('Авторизация сервера ещё не настроена.', 503);
+        let uid: string;
+        try { uid = await firebaseIdentity(key, env.FIREBASE_PROJECT_ID); }
+        catch { throw new BridgeError('Войдите в аккаунт PLAY YOUR LIFE заново.', 401); }
+        name = `firebase:${env.FIREBASE_PROJECT_ID}:${uid}`;
+      }
+      const id = env.ACCOUNTS.idFromName(name);
       const forwarded = new Request(request);
       forwarded.headers.set('X-Account-Id', id.toString());
       const response = await env.ACCOUNTS.get(id).fetch(forwarded);
@@ -347,8 +384,9 @@ export default {
         status: response.status,
         headers: { ...Object.fromEntries(response.headers), ...headers },
       });
-    } catch {
-      return json({ error: 'Сервер подключения временно недоступен.' }, 500);
+    } catch (error) {
+      const response = json({ error: error instanceof BridgeError ? error.message : 'Сервер подключения временно недоступен.' }, error instanceof BridgeError ? error.status : 500);
+      return new Response(response.body, { status: response.status, headers: { ...Object.fromEntries(response.headers), ...headers } });
     }
   },
 };

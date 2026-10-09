@@ -118,7 +118,7 @@ export default function DataBackup({
       {reading && <p role="status">Читаю резервную копию…</p>}
       {connected && (
         <p className="backup-note">
-          Перед восстановлением отключи TickTick в плане жизни, чтобы
+          Перед восстановлением отключи TickTick в профиле или плане жизни, чтобы
           импортированный план не отправился автоматически.
         </p>
       )}

@@ -22,6 +22,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Check deployment configuration without exposing secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TICKTICK_CLIENT_ID: ${{ secrets.TICKTICK_CLIENT_ID }}
+          TICKTICK_CLIENT_SECRET: ${{ secrets.TICKTICK_CLIENT_SECRET }}
+        run: |
+          for required in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID TICKTICK_CLIENT_ID TICKTICK_CLIENT_SECRET; do
+            if [ -z "${!required}" ]; then
+              echo "::error::Добавьте секрет $required в Settings → Secrets and variables → Actions. См. docs/TICKTICK-SETUP.md."
+              exit 1
+            fi
+          done
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -32,6 +45,7 @@ jobs:
           npm run check
           node --experimental-strip-types --test tests/*.test.ts
       - name: Deploy OAuth server
+        # Provider secrets are passed only to the server, never to the Vite build.
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}

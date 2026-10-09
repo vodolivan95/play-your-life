@@ -649,11 +649,11 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 <section className="panel profile-ticktick"><TickTickConnection demo={state.profile.mode === 'demo'} /></section>
                 <DataBackup
                   state={state}
-                  connected={!!tickTick.connection}
+                  connected={tickTick.restoreBlocked}
                   userId={userId}
                   onNotify={notify}
                   onRestore={(next) => {
-                    if (tickTick.connection)
+                    if (tickTick.restoreBlocked)
                       throw new Error('Сначала отключи TickTick');
                     if (userId && next.profile.mode !== 'personal') throw new Error('В аккаунт можно восстановить только личную игру.');
                     const storageKey = userId ? `play-your-life-account:${userId}:manual-backup` : stateStorageKey;

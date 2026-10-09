@@ -20,6 +20,9 @@ function readConnection(storageKey: string): TickTickConnection | null {
 function settings(c: TickTickConnection): TickTickSettings {
   return { sphereLists: c.sphereLists ?? {}, auto: c.auto, deleteRemote: c.deleteRemote, links: c.links, dismissed: c.dismissed, lastSync: c.lastSync, revision: c.revision ?? 0 };
 }
+function wasActivated(c: TickTickConnection | null) {
+  return Boolean(c && (c.activated || c.auth !== 'firebase' || Object.keys(c.links).length));
+}
 export default function useTickTick(state: GameState, onChange: Dispatch<SetStateAction<GameState>>, userId?: string, getToken?: () => Promise<string>): TickTickManager {
   const storageKey = userId ? `${connectionStorageKey}:${userId}` : connectionStorageKey;
   const serverUrl = import.meta.env.VITE_TICKTICK_BRIDGE_URL?.trim() ?? '';
@@ -53,7 +56,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     if (working.current) return;
     working.current = true; setBusy(true);
     try {
-      const c: TickTickConnection = { ...newConnection(url.trim()), ...emptyTickTickSettings(), auth: 'firebase' };
+      const c: TickTickConnection = { ...newConnection(url.trim()), ...emptyTickTickSettings(), auth: 'firebase', activated: latest.current.connected || wasActivated(latest.current.connection) };
       localStorage.setItem(storageKey, JSON.stringify(c));
       setConnection(c); setConnected(false); setDirty(false);
       const result = await request<{ url: string }>(c, '/authorize', 'POST');
@@ -77,7 +80,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
       const result = await request<{ id: string; name: string; kind?: string }[]>(c, '/api/project');
       if (!Array.isArray(result) || result.some(p => typeof p.id !== 'string' || typeof p.name !== 'string')) throw new Error('Не удалось прочитать списки TickTick.');
       setProjects(result.filter(p => p.kind !== 'NOTE')); setConnected(true); setDirty(false);
-      setConnection({ ...c, ...cloud });
+      setConnection({ ...c, ...cloud, activated: true });
       setStatus('Доступ к TickTick подтверждён. Выберите списки для своих сфер и сохраните настройки.');
     } catch (error) {
       setConnected(false); setProjects([]);
@@ -138,7 +141,12 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.quests, state.goals, connection?.auto, mappingKey, connected, dirty]);
   useEffect(() => {
-    const poll = () => { if (document.visibilityState === 'visible' && latest.current.connection?.auto) void sync(undefined, true); };
+    const poll = () => {
+      const current = latest.current;
+      if (document.visibilityState !== 'visible' || !current.connection || current.dirty) return;
+      if (!current.connected) void refresh();
+      else if (current.connection.auto) void sync(undefined, true);
+    };
     const timer = setInterval(poll, 60000);
     document.addEventListener('visibilitychange', poll); window.addEventListener('online', poll);
     const outcome = location.hash;
@@ -149,7 +157,8 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     // Each App instance is keyed by the authenticated Firebase UID.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  return { connection, status, busy, projects, connected, signedIn, dirty, configure, refresh, sync, save, disconnect,
+  const restoreBlocked = connected || wasActivated(connection);
+  return { connection, status, busy, projects, connected, signedIn, dirty, restoreBlocked, configure, refresh, sync, save, disconnect,
     update: patch => { if (!working.current) { setConnection(c => c ? { ...c, ...patch } : c); setDirty(true); } },
     suggest: () => { const c = latest.current.connection; if (c && !working.current) { setConnection({ ...c, sphereLists: matchSphereLists(projects, c.sphereLists) }); setDirty(true); } },
   };

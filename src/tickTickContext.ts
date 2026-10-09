@@ -7,6 +7,7 @@ export type TickTickManager = {
   connected: boolean;
   signedIn: boolean;
   dirty: boolean;
+  restoreBlocked: boolean;
   projects: { id: string; name: string }[];
   configure: (url: string) => Promise<void>;
   update: (patch: Partial<TickTickConnection>) => void;

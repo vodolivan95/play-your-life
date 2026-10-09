@@ -12,14 +12,15 @@ test('Firebase-подключения изолированы по провере
   const kid = crypto.randomUUID();
   const jwk = { ...await crypto.subtle.exportKey('jwk', pair.publicKey), kid };
   const base64 = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
-  const jwt = async (uid: string, patch: Record<string, unknown> = {}, algorithm = 'RS256') => {
+  const jwt = async (uid: string, patch: Record<string, unknown> = {}, algorithm = 'RS256', signingKid = kid) => {
     const now = Math.floor(Date.now() / 1000);
-    const data = `${base64({ alg: algorithm, kid })}.${base64({ sub: uid, aud: 'test-firebase', iss: 'https://securetoken.google.com/test-firebase', iat: now, auth_time: now, exp: now + 3600, ...patch })}`;
+    const data = `${base64({ alg: algorithm, kid: signingKid })}.${base64({ sub: uid, aud: 'test-firebase', iss: 'https://securetoken.google.com/test-firebase', iat: now, auth_time: now, exp: now + 3600, ...patch })}`;
     return `${data}.${Buffer.from(await crypto.subtle.sign('RSASSA-PKCS1-v1_5', pair.privateKey, new TextEncoder().encode(data))).toString('base64url')}`;
   };
+  let keyReads = 0;
   globalThis.fetch = async (input, init) => {
     const url = String(input);
-    if (url.startsWith('https://www.googleapis.com/service_accounts/')) return Response.json({ keys: [jwk] });
+    if (url.startsWith('https://www.googleapis.com/service_accounts/')) { keyReads++; return Response.json({ keys: [jwk] }); }
     if (url === 'https://ticktick.com/oauth/token') {
       const code = new URLSearchParams(String(init?.body)).get('code');
       return Response.json({ access_token: `provider-${code}`, expires_in: 3600 });
@@ -61,6 +62,8 @@ test('Firebase-подключения изолированы по провере
     assert.equal(denied.headers.get('Access-Control-Allow-Origin'), 'https://app.example');
   }
   assert.equal(identities.size, 0, 'invalid credentials cannot open any account');
+  for (let i = 0; i < 15; i++) assert.equal((await call(await jwt('user-a', {}, 'RS256', crypto.randomUUID()), '/status')).status, 401);
+  assert.equal(keyReads, 1, 'unknown kids cannot force a Google request for every invalid login');
   const authorize = await call(tokenA, '/authorize', 'POST');
   const target = new URL(((await authorize.json()) as { url: string }).url);
   const callback = await worker.fetch(new Request(`https://bridge.example/callback?state=${target.searchParams.get('state')}&code=user-a`), env);

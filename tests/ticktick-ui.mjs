@@ -107,10 +107,15 @@ try {
     const ctx=await context(width); const page=await ctx.newPage();
     activePage=page;
     const errors=[]; page.on('pageerror',e=>{errors.push(e.message);pageErrors.push(e.message);});
+    await page.clock.install();
     await page.goto(harness(uid)+'#profile');
     await panel(page).getByText('Аккаунт TickTick не подключён', {exact:false}).waitFor();
     assert.equal(await panel(page).locator('.ticktick-badge').innerText(),'Не подключён');
     assert.equal(await page.getByRole('button',{name:'Восстановить из файла'}).isDisabled(),false,'unconfigured TickTick cannot block game restores');
+    const idleCalls=calls.filter(c=>c.uid===uid).length;
+    await page.clock.runFor(60010);
+    assert.equal(calls.filter(c=>c.uid===uid).length,idleCalls,'users without TickTick do not poll the bridge every minute');
+    await page.clock.resume();
     await panel(page).getByRole('button',{name:'Подключить TickTick',exact:true}).click();
     await page.waitForURL(harness(uid)+'#profile');
     await panel(page).getByText('Доступ к TickTick подтверждён.',{exact:false}).waitFor();
@@ -189,6 +194,15 @@ try {
   await guest.goto(harness('guest')+'#profile');
   await panel(guest).getByText('Войдите или зарегистрируйтесь',{exact:false}).waitFor();
   assert.equal(calls.length,before); assert.equal(await panel(guest).locator('select').count(),0); await guestCtx.close();
+  const migrationCtx=await context(390); const migrationUid='legacy-account';
+  await migrationCtx.addInitScript(({bridge,uid})=>localStorage.setItem('play-your-life-ticktick-v1:'+uid,JSON.stringify({url:bridge,key:'b'.repeat(64),auth:'firebase',projectId:'',revision:2,sphereLists:{english:'english'},auto:true,deleteRemote:false,links:{},dismissed:[]})),{bridge,uid:migrationUid});
+  account(migrationUid).unavailable=true;
+  const migrated=await migrationCtx.newPage();
+  await migrated.goto(harness(migrationUid)+'#profile');
+  await panel(migrated).locator('.transfer-message').waitFor();
+  assert.equal(await migrated.getByRole('button',{name:'Восстановить из файла'}).isDisabled(),true,'previously configured accounts stay protected even with no linked tasks');
+  assert.equal(await migrated.evaluate(uid=>JSON.parse(localStorage.getItem('play-your-life-ticktick-v1:'+uid)).activated,migrationUid),true);
+  await migrationCtx.close();
   console.log('TickTick UI passed: profile, OAuth return, nine mappings, account/device isolation, conflicts, offline, reload, one-time XP, disconnect. Mock services only.');
 } catch (error) {
   console.error('Fixture requests:', JSON.stringify(calls));

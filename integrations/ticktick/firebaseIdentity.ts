@@ -1,6 +1,6 @@
 // Verify Firebase login using Google's public signing keys; no admin credential is required.
 type SigningKey = JsonWebKey & { kid: string };
-let cached: { keys: SigningKey[]; expires: number } | undefined;
+let cached: { keys: SigningKey[]; expires: number; fetched: number } | undefined;
 const keyUrl = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 function bytes(value: string) {
   const decoded = atob(value.replace(/-/g, '+').replace(/_/g, '/'));
@@ -18,13 +18,15 @@ export async function firebaseIdentity(token: string, project: string): Promise<
     if (header.alg !== 'RS256' || typeof header.kid !== 'string') return invalid();
     if (claims.aud !== project || claims.iss !== `https://securetoken.google.com/${project}` || typeof claims.sub !== 'string' || !claims.sub.length || claims.sub.length > 128) return invalid();
     if (typeof claims.exp !== 'number' || claims.exp <= now || typeof claims.iat !== 'number' || claims.iat > now + 60 || claims.iat >= claims.exp || typeof claims.auth_time !== 'number' || claims.auth_time > now + 60) return invalid();
-    if (!cached || cached.expires <= Date.now() || !cached.keys.some(k => k.kid === header.kid)) {
+    // Permit key rotation, but unknown attacker-selected kids cannot trigger a fetch per request.
+    const unknownKey = cached && !cached.keys.some(k => k.kid === header.kid);
+    if (!cached || cached.expires <= Date.now() || (unknownKey && Date.now() - cached.fetched >= 60000)) {
       const response = await fetch(keyUrl, { signal: AbortSignal.timeout(10000) });
       if (!response.ok) throw new Error();
       const data = await response.json() as { keys: SigningKey[] };
       if (!Array.isArray(data.keys)) throw new Error();
       const age = Number(response.headers.get('cache-control')?.match(/max-age=(\d+)/)?.[1] ?? 3600);
-      cached = { keys: data.keys, expires: Date.now() + Math.min(3600, age) * 1000 };
+      cached = { keys: data.keys, expires: Date.now() + Math.min(3600, age) * 1000, fetched: Date.now() };
     }
     const jwk = cached.keys.find(k => k.kid === header.kid && k.kty === 'RSA');
     if (!jwk) return invalid();

@@ -12,6 +12,11 @@ function readConnection(storageKey: string): TickTickConnection | null {
     const data = JSON.parse(localStorage.getItem(storageKey) ?? 'null');
     if (data && typeof data.url === 'string' && /^[a-f0-9]{64}$/.test(data.key) && data.links && Array.isArray(data.dismissed)) {
       newConnection(data.url); // Validate stored origins before forwarding any credential.
+      // The first account release did not store the activation flag. Its saved revision
+      // or mappings prove prior setup even when no task has been linked yet.
+      if (data.auth === 'firebase' && data.activated === undefined) {
+        data.activated = Boolean(data.revision > 0 || Object.values(data.sphereLists ?? {}).some(Boolean) || Object.keys(data.links).length || data.lastSync);
+      }
       return data;
     }
   } catch { /* Invalid or unavailable storage never grants access. */ }
@@ -19,6 +24,9 @@ function readConnection(storageKey: string): TickTickConnection | null {
 }
 function settings(c: TickTickConnection): TickTickSettings {
   return { sphereLists: c.sphereLists ?? {}, auto: c.auto, deleteRemote: c.deleteRemote, links: c.links, dismissed: c.dismissed, lastSync: c.lastSync, revision: c.revision ?? 0 };
+}
+function wasActivated(c: TickTickConnection | null) {
+  return Boolean(c && (c.activated || c.auth !== 'firebase' || Object.keys(c.links).length));
 }
 export default function useTickTick(state: GameState, onChange: Dispatch<SetStateAction<GameState>>, userId?: string, getToken?: () => Promise<string>): TickTickManager {
   const storageKey = userId ? `${connectionStorageKey}:${userId}` : connectionStorageKey;
@@ -28,7 +36,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     const stored = readConnection(storageKey);
     if (stored) return stored;
     if (signedIn && serverUrl) {
-      try { return { ...newConnection(serverUrl), ...emptyTickTickSettings(), auth: 'firebase' }; }
+      try { return { ...newConnection(serverUrl), ...emptyTickTickSettings(), auth: 'firebase', activated: false }; }
       catch { /* An invalid deployment setting is shown as unconfigured. */ }
     }
     return null;
@@ -39,6 +47,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
   const [dirty, setDirty] = useState(false);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const working = useRef(false);
+  const recoveryPending = useRef(false);
   const latest = useRef({ state, connection, connected, dirty });
   useEffect(() => { latest.current = { state, connection, connected, dirty }; }, [state, connection, connected, dirty]);
   useEffect(() => {
@@ -53,7 +62,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     if (working.current) return;
     working.current = true; setBusy(true);
     try {
-      const c: TickTickConnection = { ...newConnection(url.trim()), ...emptyTickTickSettings(), auth: 'firebase' };
+      const c: TickTickConnection = { ...newConnection(url.trim()), ...emptyTickTickSettings(), auth: 'firebase', activated: latest.current.connected || wasActivated(latest.current.connection) };
       localStorage.setItem(storageKey, JSON.stringify(c));
       setConnection(c); setConnected(false); setDirty(false);
       const result = await request<{ url: string }>(c, '/authorize', 'POST');
@@ -68,6 +77,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     working.current = true; setBusy(true);
     try {
       const check = await request<{ connected: boolean }>(c, '/status');
+      recoveryPending.current = false;
       const cloud = c.auth === 'firebase' ? validateTickTickSettings(await request(c, '/settings')) : settings(c);
       if (!check.connected) {
         setConnected(false); setProjects([]); setConnection({ ...c, ...cloud }); setDirty(false);
@@ -77,10 +87,11 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
       const result = await request<{ id: string; name: string; kind?: string }[]>(c, '/api/project');
       if (!Array.isArray(result) || result.some(p => typeof p.id !== 'string' || typeof p.name !== 'string')) throw new Error('Не удалось прочитать списки TickTick.');
       setProjects(result.filter(p => p.kind !== 'NOTE')); setConnected(true); setDirty(false);
-      setConnection({ ...c, ...cloud });
+      setConnection({ ...c, ...cloud, activated: true });
       setStatus('Доступ к TickTick подтверждён. Выберите списки для своих сфер и сохраните настройки.');
     } catch (error) {
       setConnected(false); setProjects([]);
+      recoveryPending.current = error instanceof TypeError || (error instanceof Error && (error.name === 'TimeoutError' || error.message.includes('network-request-failed') || /\(50[024]\)$/.test(error.message)));
       setStatus(error instanceof Error ? error.message : 'Не удалось проверить подключение.');
     } finally { working.current = false; setBusy(false); }
   }
@@ -138,7 +149,12 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.quests, state.goals, connection?.auto, mappingKey, connected, dirty]);
   useEffect(() => {
-    const poll = () => { if (document.visibilityState === 'visible' && latest.current.connection?.auto) void sync(undefined, true); };
+    const poll = () => {
+      const current = latest.current;
+      if (document.visibilityState !== 'visible' || !current.connection || current.dirty) return;
+      if (!current.connected && recoveryPending.current) void refresh();
+      else if (current.connection.auto) void sync(undefined, true);
+    };
     const timer = setInterval(poll, 60000);
     document.addEventListener('visibilitychange', poll); window.addEventListener('online', poll);
     const outcome = location.hash;
@@ -149,7 +165,8 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     // Each App instance is keyed by the authenticated Firebase UID.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  return { connection, status, busy, projects, connected, signedIn, dirty, configure, refresh, sync, save, disconnect,
+  const restoreBlocked = connected || wasActivated(connection);
+  return { connection, status, busy, projects, connected, signedIn, dirty, restoreBlocked, configure, refresh, sync, save, disconnect,
     update: patch => { if (!working.current) { setConnection(c => c ? { ...c, ...patch } : c); setDirty(true); } },
     suggest: () => { const c = latest.current.connection; if (c && !working.current) { setConnection({ ...c, sphereLists: matchSphereLists(projects, c.sphereLists) }); setDirty(true); } },
   };

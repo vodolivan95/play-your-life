@@ -57,6 +57,7 @@ async function context(width) {
     if (method === 'OPTIONS') { await route.fulfill({ status:204, headers:{'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Headers':'Authorization, Content-Type','Access-Control-Allow-Methods':'GET, POST, PUT, OPTIONS'} }); return; }
     assert.ok(uid && uid !== 'guest');
     const a = account(uid); const data = r.postDataJSON();
+    if (a.unavailable) { await route.abort('internetdisconnected'); return; }
     calls.push({uid,path,method});
     let status = 200, result;
     if(path === '/status') result = {connected:a.connected};
@@ -106,12 +107,19 @@ try {
     const ctx=await context(width); const page=await ctx.newPage();
     activePage=page;
     const errors=[]; page.on('pageerror',e=>{errors.push(e.message);pageErrors.push(e.message);});
+    await page.clock.install();
     await page.goto(harness(uid)+'#profile');
     await panel(page).getByText('Аккаунт TickTick не подключён', {exact:false}).waitFor();
     assert.equal(await panel(page).locator('.ticktick-badge').innerText(),'Не подключён');
+    assert.equal(await page.getByRole('button',{name:'Восстановить из файла'}).isDisabled(),false,'unconfigured TickTick cannot block game restores');
+    const idleCalls=calls.filter(c=>c.uid===uid).length;
+    await page.clock.runFor(60010);
+    assert.equal(calls.filter(c=>c.uid===uid).length,idleCalls,'users without TickTick do not poll the bridge every minute');
+    await page.clock.resume();
     await panel(page).getByRole('button',{name:'Подключить TickTick',exact:true}).click();
     await page.waitForURL(harness(uid)+'#profile');
     await panel(page).getByText('Доступ к TickTick подтверждён.',{exact:false}).waitFor();
+    assert.equal(await page.getByRole('button',{name:'Восстановить из файла'}).isDisabled(),true,'confirmed connections protect restored plans from automatic export');
     assert.equal(await panel(page).locator('select').count(),9);
     assert.equal(await panel(page).getByLabel('Обновлять автоматически, пока приложение открыто').isChecked(),false);
     assert.equal(await panel(page).getByLabel('Список TickTick: Английский').locator('option').filter({hasText:'Заметки'}).count(),0);
@@ -156,6 +164,17 @@ try {
     await panel(page).getByRole('button',{name:'Синхронизировать сейчас'}).click();
     await panel(page).getByText('Связанные задачи целей синхронизированы.',{exact:true}).waitFor();
     assert.equal((await stateOf(page,uid)).xp,20); assert.equal(account(uid).creates,1);
+    // The application itself loads from localhost while its integration server is offline.
+    account(uid).unavailable=true;
+    await page.reload();
+    await panel(page).locator('.transfer-message').waitFor();
+    assert.equal(await panel(page).locator('.ticktick-badge').innerText(),'Не подключён');
+    assert.equal(await page.getByRole('button',{name:'Восстановить из файла'}).isDisabled(),true,'known active connections remain protected while offline');
+    account(uid).unavailable=false;
+    await page.evaluate(()=>window.dispatchEvent(new Event('online')));
+    await panel(page).getByText('Доступ к TickTick подтверждён.',{exact:false}).waitFor();
+    assert.equal(await panel(page).getByLabel('Обновлять автоматически, пока приложение открыто').isChecked(),true);
+    assert.equal((await stateOf(page,uid)).xp,20);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
     assert.equal(await page.evaluate(()=>JSON.stringify(localStorage).includes('fixture-login-')),false);
     await panel(page).scrollIntoViewIfNeeded(); await page.screenshot({path:`${dir}/profile-${width}.png`,fullPage:true});
@@ -166,6 +185,7 @@ try {
     const before=await stateOf(page,uid); page.once('dialog',d=>d.accept());
     await panel(page).getByRole('button',{name:'Отключить TickTick'}).click();
     await panel(page).getByText('TickTick отключён. Задачи и прогресс',{exact:false}).waitFor();
+    assert.equal(await page.getByRole('button',{name:'Восстановить из файла'}).isDisabled(),false);
     assert.deepEqual(await stateOf(page,uid),before); assert.equal(account(uid).tasks.size,1);
     assert.deepEqual(errors,[]);
     await ctx.close(); await nextCtx.close(); await strangerCtx.close();
@@ -174,6 +194,15 @@ try {
   await guest.goto(harness('guest')+'#profile');
   await panel(guest).getByText('Войдите или зарегистрируйтесь',{exact:false}).waitFor();
   assert.equal(calls.length,before); assert.equal(await panel(guest).locator('select').count(),0); await guestCtx.close();
+  const migrationCtx=await context(390); const migrationUid='legacy-account';
+  await migrationCtx.addInitScript(({bridge,uid})=>localStorage.setItem('play-your-life-ticktick-v1:'+uid,JSON.stringify({url:bridge,key:'b'.repeat(64),auth:'firebase',projectId:'',revision:2,sphereLists:{english:'english'},auto:true,deleteRemote:false,links:{},dismissed:[]})),{bridge,uid:migrationUid});
+  account(migrationUid).unavailable=true;
+  const migrated=await migrationCtx.newPage();
+  await migrated.goto(harness(migrationUid)+'#profile');
+  await panel(migrated).locator('.transfer-message').waitFor();
+  assert.equal(await migrated.getByRole('button',{name:'Восстановить из файла'}).isDisabled(),true,'previously configured accounts stay protected even with no linked tasks');
+  assert.equal(await migrated.evaluate(uid=>JSON.parse(localStorage.getItem('play-your-life-ticktick-v1:'+uid)).activated,migrationUid),true);
+  await migrationCtx.close();
   console.log('TickTick UI passed: profile, OAuth return, nine mappings, account/device isolation, conflicts, offline, reload, one-time XP, disconnect. Mock services only.');
 } catch (error) {
   console.error('Fixture requests:', JSON.stringify(calls));

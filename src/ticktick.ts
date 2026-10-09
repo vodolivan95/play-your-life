@@ -16,6 +16,7 @@ export type RemoteTask = {
 export type TickTickConnection = {
   auth?: 'firebase';
   revision?: number;
+  activated?: boolean; // Previously verified access; protects restores while offline.
   url: string;
   key: string;
   projectId: string; // Legacy single-list setting; retained for existing links.

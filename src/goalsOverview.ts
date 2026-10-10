@@ -94,3 +94,19 @@ export function sortGoals(
     return copy.sort((a, b) => (Date.parse(b.created) || 0) - (Date.parse(a.created) || 0));
   return copy.sort((a, b) => due(a) - due(b));
 }
+
+/** Open tasks of the goal, nearest deadline first, undated ones last. */
+export function goalUpcomingTasks(
+  state: Pick<GameState, 'quests'>,
+  goal: Goal,
+  limit = 4,
+) {
+  const due = (q: { dueAt?: string }) => {
+    const time = q.dueAt ? Date.parse(q.dueAt) : Number.NaN;
+    return Number.isNaN(time) ? Number.POSITIVE_INFINITY : time;
+  };
+  return state.quests
+    .filter((q) => q.goalId === goal.id && !q.done)
+    .sort((a, b) => (due(a) === due(b) ? 0 : due(a) < due(b) ? -1 : 1))
+    .slice(0, limit);
+}

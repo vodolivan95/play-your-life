@@ -93,7 +93,9 @@ test('навык: проверки яруса, уровней, цены и од�
 });
 
 test('очки: вложение, нехватка очков, откат и зависимости', () => {
-  let { s, first, second } = withTree();
+  const tree = withTree();
+  const first = tree.first;
+  let { s, second } = tree;
   assert.equal(nodeStatus(s, 'english', first), 'available');
   assert.equal(nodeStatus(s, 'english', second), 'locked');
   assert.throws(() => raiseSkill(s, 'english', second.id), /закрыт/);
@@ -146,7 +148,9 @@ test('ярус закрыт, пока не хватает уровня сфер�
 });
 
 test('удаление навыка снимает условия у зависимых, цикл запрещён', () => {
-  let { s, first, second } = withTree();
+  const tree = withTree();
+  const { first, second } = tree;
+  let s = tree.s;
   assert.throws(
     () => saveNode(s, 'english', { ...node(first.branchId, 'Произношение', 1), id: first.id, requiresId: second.id }),
     /по кругу/,

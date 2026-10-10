@@ -265,6 +265,7 @@ export function validateState(value: unknown): asserts value is SavedState {
       !['character', '🧑🏻‍🚀', '👩🏻‍🚀', '🦊', '🐼', '🦁', '🦉'].includes(
         value.profile.avatar as string,
       ) ||
+      !validProjectImage(value.profile.photo) ||
       !['demo', 'personal'].includes(value.profile.mode as string) ||
       (value.profile.onboardingComplete !== undefined &&
         typeof value.profile.onboardingComplete !== 'boolean'))

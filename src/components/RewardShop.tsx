@@ -80,7 +80,7 @@ export default function RewardShop({
                   >
                     {i.kind === 'frame' ? (
                       <span className="shop-frame-preview">
-                        <Avatar value={state.profile.avatar} frame={i.id} />
+                        <Avatar value={state.profile.avatar} photo={state.profile.photo} frame={i.id} />
                       </span>
                     ) : (
                       <span aria-hidden="true">{i.icon}</span>

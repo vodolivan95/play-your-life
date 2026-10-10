@@ -68,6 +68,7 @@ SPORT — первый настоящий 3D Room Engine на Three.js, React Th
 - `.devcontainer/devcontainer.json` — настройки окружения PLAY YOUR LIFE.
 - `.github/workflows/ci.yml` — автоматические проверки.
 - [docs/SETUP.md](docs/SETUP.md) — инструкция по работе с телефона.
+- [docs/AI-WORKFLOW.md](docs/AI-WORKFLOW.md) — совместная работа ChatGPT, Codex и Claude.
 
 Для локальной проверки используйте `npm run check`.
 Результаты автоматических проверок доступны во вкладке **Actions** репозитория.

@@ -191,3 +191,55 @@
   .home-today, .home-streak { min-height:0; }
 }
 @media(max-width:760px) { .home-sphere-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .home-sphere > .sphere-building { height:92px; } .home-sphere strong { font-size:12px; } .home-dashboard > .home-player { gap:14px; } .home-player-stats { gap:16px; width:100%; justify-content:space-between; } }
+
+/* Главная: тёмная и светлая тема (data-theme на .home-dashboard), по утверждённому макету. */
+.home-theme { display:inline-flex; gap:4px; padding:3px; border-radius:12px; background:#dfe9fb; }
+.home-theme button { border:0; border-radius:9px; padding:6px 12px; background:transparent; color:#4a6288; font-size:11px; font-weight:800; }
+.home-theme button.selected { background:#fff; color:#17316b; box-shadow:0 2px 8px #3c73aa30; }
+.home-dashboard[data-theme='dark'] { padding:18px; border-radius:26px; background:radial-gradient(ellipse at 50% 0%,#17295a 0%,#08102a 58%,#050a1a 100%); color:#fff; }
+.home-dashboard[data-theme='dark'] .home-theme { background:#ffffff1a; }
+.home-dashboard[data-theme='dark'] .home-theme button { color:#b7c6e6; }
+.home-dashboard[data-theme='dark'] .home-theme button.selected { background:#ffffff2e; color:#fff; box-shadow:none; }
+.home-dashboard[data-theme='dark'] .home-panel { background:#0f1830b8; border-color:#96b9ff29; box-shadow:0 10px 34px #00000040; color:#fff; backdrop-filter:blur(8px); }
+.home-dashboard[data-theme='dark'] h2, .home-dashboard[data-theme='dark'] h3, .home-dashboard[data-theme='dark'] strong { color:#fff; }
+.home-dashboard[data-theme='dark'] .home-panel p, .home-dashboard[data-theme='dark'] .home-panel small, .home-dashboard[data-theme='dark'] .home-empty { color:#9fb2db; }
+.home-dashboard[data-theme='dark'] .home-section-title > button, .home-dashboard[data-theme='dark'] .home-all-tasks { color:#ffe08a; }
+.home-dashboard[data-theme='dark'] .home-section-title > small, .home-dashboard[data-theme='dark'] .home-section-title > span { color:#9fb2db; }
+.home-dashboard[data-theme='dark'] .home-section-title h2 > span { background:#f5c4511f; color:#ffe08a; }
+.home-dashboard[data-theme='dark'] .home-player-identity { color:#fff; }
+.home-dashboard[data-theme='dark'] .home-player-identity small { color:#ffe08a; }
+.home-dashboard[data-theme='dark'] .home-player-identity p, .home-dashboard[data-theme='dark'] .home-player-identity b, .home-dashboard[data-theme='dark'] .home-player-stats small { color:#b7c6e6; }
+.home-dashboard[data-theme='dark'] .home-player-stats b { color:#fff; }
+.home-dashboard[data-theme='dark'] .home-avatar { border-color:#f5c451; background:#16264d; box-shadow:0 0 18px #f5c45155; }
+.home-dashboard[data-theme='dark'] .home-progress { background:#ffffff24; }
+.home-dashboard[data-theme='dark'] .home-progress > span { background:linear-gradient(90deg,#f5c451,#ffe08a); }
+.home-dashboard[data-theme='dark'] .home-sphere { background:#0c1630; border-color:#96b9ff29; }
+.home-dashboard[data-theme='dark'] .home-sphere strong { color:#fff; }
+.home-dashboard[data-theme='dark'] .home-sphere small { color:#9fb2db; }
+.home-dashboard[data-theme='dark'] .home-sphere-meter { background:#ffffff1f; }
+.home-dashboard[data-theme='dark'] .home-today .quest-row { background:#ffffff0f; border:1.5px solid #96b9ff29; color:#fff; box-shadow:none; }
+.home-dashboard[data-theme='dark'] .home-today .quest-row.completed { background:#16a34a26; border-color:#4cd08a66; }
+.home-dashboard[data-theme='dark'] .home-today .quest-info strong { color:#fff; }
+.home-dashboard[data-theme='dark'] .home-today .quest-info small, .home-dashboard[data-theme='dark'] .home-today .quest-info small span { color:#9fb2db; }
+.home-dashboard[data-theme='dark'] .home-today .xp-tag { background:#f5c4511f; color:#ffe08a; }
+.home-dashboard[data-theme='dark'] .home-ticktick-status { color:#9fb2db; border-color:#96b9ff29; }
+.home-dashboard[data-theme='dark'] .home-ticktick-status button { color:#ffe08a; }
+.home-dashboard[data-theme='dark'] .home-habit-symbol { background:#f5c4511f; color:#ffe08a; }
+.home-dashboard[data-theme='dark'] .home-goal-line strong, .home-dashboard[data-theme='dark'] .home-reward-detail strong { color:#fff; }
+.home-dashboard[data-theme='dark'] .home-goal-line small, .home-dashboard[data-theme='dark'] .home-reward-detail b { color:#ffe08a; }
+.home-dashboard[data-theme='dark'] .home-schedule > button { color:#e6eefc; }
+.home-dashboard[data-theme='dark'] .home-schedule time { color:#9fb2db; }
+.home-dashboard[data-theme='dark'] .home-reward select { background:#0c1630; color:#fff; border-color:#96b9ff40; }
+.home-dashboard[data-theme='dark'] .home-reward label { color:#9fb2db; }
+.home-dashboard[data-theme='dark'] .home-streak { background:linear-gradient(160deg,#f5c45126 0%,#0f1830b8 55%); border:1.5px solid #f5c45159; box-shadow:0 10px 34px #00000040, 0 0 30px #f5c4511f; }
+.home-dashboard[data-theme='dark'] .home-streak .home-section-title > strong { color:#ffe08a; }
+.home-dashboard[data-theme='dark'] .home-week span { background:#ffffff0f; border-color:#96b9ff40; color:#2a1e04; }
+.home-dashboard[data-theme='dark'] .home-week .completed { background:linear-gradient(135deg,#ffe08a,#f0a81c); border-color:#ffe08a; box-shadow:0 0 14px #f5c45177; }
+.home-dashboard[data-theme='dark'] .home-week .today { border-color:#ffe08a; }
+.home-dashboard[data-theme='dark'] .home-week small { color:#9fb2db; }
+.home-dashboard[data-theme='dark'] .home-streak-note { background:#f5c4511f; border:1px solid #f5c45159; color:#ffe9b0; border-radius:14px; padding:12px 14px; }
+.home-dashboard[data-theme='dark'] .home-streak-rewards div { background:#ffffff0f; border-color:#96b9ff29; color:#c9d6f2; }
+.home-dashboard[data-theme='dark'] .home-streak-rewards div b { color:#ffe08a; }
+.home-dashboard[data-theme='dark'] .home-streak-rewards h3 { color:#9fb2db; }
+/* На телефоне тёмный фон не добавляет полей: иначе содержимое шире экрана на 320 px. */
+@media(max-width:760px) { .home-dashboard[data-theme='dark'] { padding:0; border-radius:0; background:none; } .home-dashboard[data-theme='dark'] .home-panel { backdrop-filter:none; } }

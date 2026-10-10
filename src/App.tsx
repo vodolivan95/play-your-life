@@ -104,9 +104,6 @@ function Progress({
     </div>
   );
 }
-function sphereLevel(xp: number) {
-  return sphereProgress(xp).level;
-}
 export default function App({ state: suppliedState, onChange, userId, accountTools, tickTickToken }: {
   state?: GameState; onChange?: Dispatch<SetStateAction<GameState>>; userId?: string; accountTools?: ReactNode; tickTickToken?: () => Promise<string>;
 } = {}) {
@@ -143,7 +140,6 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
     return () => { window.removeEventListener('hashchange', changed); window.removeEventListener('popstate', changed); };
   }, []);
   const [achievementFilter, setAchievementFilter] = useState('all');
-  const [treeView, setTreeView] = useState('map');
   const [sphereTab, setSphereTab] = useState('projects');
   const [questSphere, setQuestSphere] = useState('english');
   const [questTemplate, setQuestTemplate] = useState<Partial<Quest> | null>(null);
@@ -715,64 +711,15 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
               />
             )}
             {page === 'tree' && (
-              <>
-                <div className="tabs">
-                  <button
-                    className={treeView === 'map' ? 'selected' : ''}
-                    onClick={() => setTreeView('map')}
-                  >
-                    Карта
-                  </button>
-                  <button
-                    className={treeView === 'skills' ? 'selected' : ''}
-                    onClick={() => setTreeView('skills')}
-                  >
-                    Навыки
-                  </button>
-                </div>
-                {treeView === 'map' && (
-                  <section className="panel life-tree">
-                    <div className="tree-root">
-                      <span>
-                        <GameArt kind="crown" />
-                      </span>
-                      <strong>Личная эффективность</strong>
-                      <small>LEVEL {currentLevel}</small>
-                    </div>
-                    <div className="tree-map-branches">
-                      {[
-                        spheres.filter((_, i) => i % 3 === 0),
-                        spheres.filter((_, i) => i % 3 === 1),
-                        spheres.filter((_, i) => i % 3 === 2),
-                      ].map((group, i) => (
-                        <div className="tree-map-branch" key={i}>
-                          {group.map((sp) => (
-                            <button
-                              className="tree-map-node"
-                              key={sp.id}
-                              onClick={() => {
-                                setSelected(sp.id);
-                                setPage('spheres');
-                              }}
-                            >
-                              <span>
-                                <GameArt kind={sp.id} />
-                              </span>
-                              <strong>{sp.name}</strong>
-                              <small>
-                                LVL {sphereLevel(state.spheres[sp.id].xp)} / {MAX_SPHERE_LEVEL}
-                              </small>
-                            </button>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                )}
-                {treeView === 'skills' && (
-                  <SkillTree state={state} onChange={setState} notify={notify} />
-                )}
-              </>
+              <SkillTree
+                state={state}
+                onChange={setState}
+                notify={notify}
+                onOpenSphere={(id) => {
+                  setSelected(id);
+                  setPage('spheres');
+                }}
+              />
             )}
             {page === 'achievements' && (
               <>

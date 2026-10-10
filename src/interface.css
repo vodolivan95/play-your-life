@@ -804,97 +804,6 @@ h3 {
 .compact-statistics .xp-chart {
   height: 145px;
 }
-.life-tree {
-  margin-top: 18px;
-  padding: 24px;
-}
-.tree-root {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  margin: auto auto 35px;
-  position: relative;
-}
-.tree-root > span,
-.tree-map-node > span {
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  font-size: 32px;
-  background: linear-gradient(160deg, #f2fbff, #c3e9ff);
-  box-shadow:
-    0 3px 8px #029ee321,
-    inset 0 0 0 3px #fff;
-}
-.tree-root strong {
-  font-size: 12px;
-}
-.tree-root small {
-  font-size: 9px;
-  color: #376384;
-}
-.tree-root:after {
-  content: '';
-  width: 1px;
-  height: 35px;
-  background: #c8dce9;
-  position: absolute;
-  bottom: -35px;
-}
-.tree-map-branches {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  position: relative;
-}
-.tree-map-branches:before {
-  content: '';
-  position: absolute;
-  height: 1px;
-  background: #c8dce9;
-  top: 0;
-  left: 16.66%;
-  right: 16.66%;
-}
-.tree-map-branch {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.tree-map-node {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: transparent;
-  padding: 25px 4px 0;
-  position: relative;
-  width: 100%;
-  color: #38556b;
-}
-.tree-map-node:before {
-  content: '';
-  position: absolute;
-  top: 0;
-  height: 25px;
-  width: 1px;
-  background: #c8dce9;
-}
-.tree-map-node strong {
-  font-size: 11px;
-  margin-top: 8px;
-}
-.tree-map-node small {
-  font-size: 9px;
-  margin-top: 4px;
-  color: #4b6179;
-}
-.tree-map-node:hover > span {
-  box-shadow:
-    0 4px 15px #009deb45,
-    inset 0 0 0 3px white;
-}
 .achievement-tabs {
   margin-bottom: 18px;
   width: fit-content;
@@ -1504,21 +1413,6 @@ form textarea {
     .xp-bar-column:nth-child(5n + 1)
     > small {
     display: block;
-  }
-  .life-tree {
-    padding: 20px 12px;
-  }
-  .tree-map-node > span {
-    width: 48px;
-    height: 48px;
-    font-size: 29px;
-  }
-  .tree-map-node strong {
-    font-size: 10px;
-    text-align: center;
-  }
-  .tree-map-node small {
-    font-size: 8px;
   }
   .achievement-grid {
     grid-template-columns: 1fr;
@@ -2144,21 +2038,6 @@ body {
 .achievement p {
   line-height: 1.45;
 }
-.life-tree {
-  padding: 20px 12px;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-.tree-map-node > span,
-.tree-root > span {
-  padding: 8px;
-  width: 50px;
-  height: 50px;
-}
-.tree-map-node > span {
-  background: #eef8ff;
-}
 .profile-menu {
   border: 0;
   background: transparent;
@@ -2454,9 +2333,6 @@ body {
   .sphere-development .development-row .game-art {
     width: 22px;
     height: 22px;
-  }
-  .life-tree {
-    margin-top: 12px;
   }
   .quest-creation-dialog {
     position: fixed;

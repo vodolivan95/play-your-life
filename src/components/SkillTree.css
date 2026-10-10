@@ -725,3 +725,23 @@
     grid-template-columns: 64px repeat(var(--skt-cols), minmax(124px, 1fr));
   }
 }
+
+.skt-board-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.skt .skt-link-btn {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  color: var(--skt-gold-text);
+  font-size: 13px;
+  font-weight: 800;
+}
+.skt-theme button,
+.skt-mode button {
+  min-height: 44px;
+}

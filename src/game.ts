@@ -223,6 +223,10 @@ export type GameState = {
   hasCompletedGoal?: boolean;
   monthlyTracking?: { since: string; scores: Record<string, number> };
   monthlyReflections?: Record<string, MonthReflection>;
+  /** Только в облачном документе: подписи архивных месяцев (см. cloudSplit.ts). */
+  historyIndex?: Record<string, string>;
+  /** Только в облачном документе: обложки, вынесенные в отдельные документы. */
+  imageRefs?: Record<string, string>;
 };
 export const avatars = [
   { icon: '🧑🏻‍🚀', name: 'Космонавт' },
@@ -254,7 +258,10 @@ export function playerProgress(state: GameState) {
   const level = Math.min(MAX_PLAYER_LEVEL, earnedLevel);
   const maxed = level === MAX_PLAYER_LEVEL;
   const nextXP = personal ? level * 200 : 3000 + (level - 12) * 550;
-  const progress = maxed ? 100 : personal ? (state.xp % 200) / 2 : (state.xp / nextXP) * 100;
+  const levelStart = personal ? (level - 1) * 200 : 2450 + (level - 12) * 550;
+  const progress = maxed
+    ? 100
+    : Math.min(100, Math.max(0, ((state.xp - levelStart) / (nextXP - levelStart)) * 100));
   const title =
     level < 4
       ? 'Новичок'
@@ -668,14 +675,18 @@ export function questsForToday(state: GameState, now = new Date()): Quest[] {
   return state.quests
     .filter((q) => {
       if (q.done) {
+        const questEvent = (e: Event) => e.kind === 'quest' || e.kind === undefined;
         const completedAt =
           q.completedAt ??
-          state.events.find(
-            (e) =>
-              (e.kind === 'quest' || e.kind === undefined) &&
-              e.title === q.name &&
-              e.sphere === q.sphere,
-          )?.date;
+          (state.events.find((e) => questEvent(e) && e.sourceId === q.id) ??
+            // Старые сохранения без sourceId: поиск по названию.
+            state.events.find(
+              (e) =>
+                questEvent(e) &&
+                e.sourceId === undefined &&
+                e.title === q.name &&
+                e.sphere === q.sphere,
+            ))?.date;
         return !!completedAt && dateKey(new Date(completedAt)) === today;
       }
       const start = q.startsAt ?? q.dueAt;
@@ -691,6 +702,13 @@ export function questsForToday(state: GameState, now = new Date()): Quest[] {
         b.dueAt ?? b.startsAt ?? '9999',
       );
     });
+}
+/**
+ * Достижение, уже полученное в прежних версиях действием «Life Score → 9», сохраняется.
+ * Самооценка 9 при первом запуске (без такого события) достижение не открывает.
+ */
+function earnedPersonalStandard(s: GameState) {
+  return s.events.some((e) => e.kind === 'score' && e.scoreAfter === 9);
 }
 export const achievements = [
   {
@@ -734,14 +752,16 @@ export const achievements = [
   },
   {
     progress: (s: GameState) =>
-      Math.min(
-        1,
-        Math.max(0, ...Object.values(s.spheres).map((sp) => sp.highScore === 9 ? MAX_SPHERE_LEVEL : sphereProgress(sp.xp).level)) / MAX_SPHERE_LEVEL,
-      ),
+      earnedPersonalStandard(s)
+        ? 1
+        : Math.min(
+            1,
+            Math.max(0, ...Object.values(s.spheres).map((sp) => sphereProgress(sp.xp).level)) / MAX_SPHERE_LEVEL,
+          ),
     name: 'Личный стандарт',
     icon: '💎',
     description: `Достигни ${MAX_SPHERE_LEVEL} уровня сферы` ,
     unlocked: (s: GameState) =>
-      Object.values(s.spheres).some((v) => v.highScore === 9 || sphereProgress(v.xp).maxed),
+      earnedPersonalStandard(s) || Object.values(s.spheres).some((v) => sphereProgress(v.xp).maxed),
   },
 ];

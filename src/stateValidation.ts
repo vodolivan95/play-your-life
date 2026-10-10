@@ -6,6 +6,7 @@ import { shopItems } from './shop.ts';
 import { validProjectImage } from './projectImage.ts';
 import { validSkillTrees } from './skillTree.ts';
 import type { GameState } from './game.ts';
+import { imageDocPattern, imageRefPattern, monthPattern } from './cloudSplit.ts';
 
 type SavedState = Omit<GameState, 'profile' | 'mainGoalId'> &
   Partial<Pick<GameState, 'profile' | 'mainGoalId'>>;
@@ -79,6 +80,29 @@ export function validateState(value: unknown): asserts value is SavedState {
     return fail();
   if (value.city !== undefined && !validCity(value.city)) return fail();
   if (value.skillTrees !== undefined && !validSkillTrees(value.skillTrees))
+    return fail();
+  if (
+    value.historyIndex !== undefined &&
+    (!record(value.historyIndex) ||
+      !Object.entries(value.historyIndex).every(
+        ([month, signature]) =>
+          monthPattern.test(month) &&
+          typeof signature === 'string' &&
+          /^\d{1,7}-[0-9a-f]{8}$/.test(signature),
+      ))
+  )
+    return fail();
+  if (
+    value.imageRefs !== undefined &&
+    (!record(value.imageRefs) ||
+      !Object.entries(value.imageRefs).every(
+        ([key, id]) =>
+          imageRefPattern.test(key) &&
+          typeof id === 'string' &&
+          imageDocPattern.test(id) &&
+          id.startsWith(key.slice(0, key.indexOf(':')) + '-' + key.slice(key.indexOf(':') + 1) + '-'),
+      ))
+  )
     return fail();
   if (value.shop !== undefined) {
     const shop = value.shop;

@@ -1113,94 +1113,6 @@ main {
   border-radius: 8px;
   color: #315bb5;
 }
-.tree-intro {
-  text-align: center;
-  padding: 15px 0 30px;
-}
-.tree-intro > span {
-  font-size: 55px;
-}
-.tree-intro h2 {
-  margin-top: 14px;
-}
-.tree-intro p {
-  font-size: 12px;
-  color: #506079;
-  margin-top: 8px;
-}
-.skill-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-.branch-title {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  width: 100%;
-  background: transparent;
-  color: inherit;
-  text-align: left;
-  padding: 0;
-}
-.branch-title > span:first-child {
-  font-size: 22px;
-}
-.branch-title h3 {
-  font-size: 12px;
-  flex: 1;
-}
-.skill-nodes {
-  margin-top: 22px;
-  padding-left: 8px;
-}
-.skill-node {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  position: relative;
-  padding: 13px 0;
-}
-.skill-node:not(:last-child):after {
-  content: '';
-  position: absolute;
-  left: 16px;
-  top: 45px;
-  height: 25px;
-  width: 2px;
-  background: #e4ecfa;
-}
-.skill-node > span {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: #edf3ff;
-  border: 2px solid #c9dcff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--blue);
-  font-size: 14px;
-  z-index: 1;
-}
-.skill-node strong {
-  font-size: 11px;
-}
-.skill-node small {
-  display: block;
-  font-size: 9px;
-  margin-top: 4px;
-  color: #505f77;
-}
-.skill-node.locked > span {
-  background: #f5f7fa;
-  border-color: #e9edf3;
-  font-size: 12px;
-  filter: grayscale(1);
-}
-.skill-node.locked strong {
-  color: #515f77;
-}
 .achievement {
   text-align: center;
   position: relative;
@@ -1469,9 +1381,6 @@ dialog::backdrop {
     font-size: 10px;
   }
   .sphere-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .skill-grid {
     grid-template-columns: repeat(2, 1fr);
   }
   .stats-grid {
@@ -1789,42 +1698,6 @@ dialog::backdrop {
   }
   .goals-grid {
     grid-template-columns: 1fr;
-  }
-  .skill-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-  .skill-branch {
-    padding: 18px 13px;
-  }
-  .branch-title {
-    flex-wrap: wrap;
-    gap: 7px;
-  }
-  .branch-title h3 {
-    font-size: 11px;
-  }
-  .branch-title .level-chip {
-    font-size: 7px;
-  }
-  .skill-nodes {
-    padding-left: 1px;
-  }
-  .skill-node {
-    gap: 9px;
-  }
-  .skill-node strong {
-    font-size: 10px;
-  }
-  .skill-node > span {
-    width: 29px;
-    height: 29px;
-    flex-shrink: 0;
-  }
-  .skill-node:not(:last-child):after {
-    left: 14px;
-    top: 41px;
-    height: 28px;
   }
   .achievement-grid {
     gap: 12px;

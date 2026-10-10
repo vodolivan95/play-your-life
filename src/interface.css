@@ -895,16 +895,6 @@ h3 {
     0 4px 15px #009deb45,
     inset 0 0 0 3px white;
 }
-.skill-grid {
-  gap: 14px;
-}
-.skill-node {
-  background: #f5faff;
-}
-.skill-node.open > span {
-  background: #e3f6ff;
-  color: #156493;
-}
 .achievement-tabs {
   margin-bottom: 18px;
   width: fit-content;

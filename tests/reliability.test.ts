@@ -150,6 +150,8 @@ test('достижения серии и личного стандарта со�
   const rhythm = achievements.find((a) => a.name === 'В ритме')!;
   assert.equal(rhythm.unlocked(state), true);
   assert.equal(rhythm.progress(state), 1);
+  // Оценку подняли до 9 действием, затем снизили: достижение остаётся.
+  state.events = [{ id: 'score-9', sphere: 'health', title: 'Life Score: 8 → 9', xp: 20, date: '2020-01-02T12:00:00Z', kind: 'score', scoreBefore: 8, scoreAfter: 9 }];
   state.spheres.health.highScore = 9;
   state.spheres.health.score = 4;
   assert.equal(

@@ -1,5 +1,5 @@
 import { sphereProgress, MAX_SPHERE_LEVEL } from '../sphereProgress';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { GameState, Quest } from '../game';
 import { achievements, playerProgress, spheres, streak, dateKey as localDate, questsForToday } from '../game';
@@ -9,11 +9,13 @@ import { shopItems, selectRewardTarget } from '../shop';
 import Avatar from './Avatar';
 import GameArt from './GameArt';
 import CityBuildingArt from './CityBuildingArt';
+import { MAX_MONTHLY_FOCUS, monthlyFocusGoals, toggleMonthlyFocus } from '../monthlyFocus';
 import hero from '../assets/home-mountains.webp';
 import './HomeDashboard.css';
 function Bar({ value, label }: { value: number; label: string }) { return <div className="home-progress" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(Math.min(100, Math.max(0, value)))}><span style={{ width: `${Math.min(100, Math.max(0, value))}%` }} /></div>; }
 export default function HomeDashboard({ state, onChange, onSphere, onQuests, onGoal, onShop, onProfile, onIntegration, onCreate, onStart, renderQuest }: { state: GameState; onChange: (state: GameState) => void; onSphere: (id: string | null) => void; onQuests: () => void; onGoal: () => void; onShop: () => void; onProfile: () => void; onIntegration: () => void; onCreate: () => void; onStart: () => void; renderQuest: (quest: Quest) => ReactNode }) {
   const tickTick = useContext(TickTickContext);
+  const [picking, setPicking] = useState(false);
   const now = new Date();
   const tasks = questsForToday(state, now);
   const player = playerProgress(state);
@@ -23,9 +25,17 @@ export default function HomeDashboard({ state, onChange, onSphere, onQuests, onG
   const reward = rewards.find(i => i.id === state.shop?.rewardTargetId);
   const hour = Number(new Intl.DateTimeFormat('ru-RU', { hour: 'numeric', hourCycle: 'h23', timeZone: 'Europe/Moscow' }).format(now));
   const greeting = hour < 6 ? 'Доброй ночи' : hour < 12 ? 'Доброе утро' : hour < 18 ? 'Добрый день' : 'Добрый вечер';
+  const focusGoals = monthlyFocusGoals(state, now);
+  const pickable = state.goals.filter(g => !g.rewarded || focusGoals.some(f => f.id === g.id));
+  const percentOf = (g: { current: number; target: number }) => Math.min(100, Math.round(g.current / Math.max(1, g.target) * 100));
   const monday = new Date(now); monday.setDate(now.getDate() - (now.getDay() + 6) % 7);
   return <div className="home-dashboard">
-    <section className="home-welcome" style={{ backgroundImage: `linear-gradient(90deg, #f0f7ffcc, #f0f7ff33 65%, transparent), url(${hero})` }}><h1>{greeting}, {state.profile.name}!</h1><p>Сегодня ещё один шаг к лучшей версии себя.</p><blockquote>Большие изменения начинаются<br />с маленьких ежедневных действий.</blockquote><button onClick={onQuests}><span>▶</span><div><strong>Продолжить путь</strong><small>{tasks.filter(q => !q.done).length ? `Сегодня тебя ждут квесты: ${tasks.filter(q => !q.done).length}` : 'Выбери свой первый шаг на сегодня'}</small></div></button>{state.profile.mode === 'demo' && <button className="home-demo-start" onClick={onStart}>Демо · Начать свою игру →</button>}</section>
+    <section className="home-welcome" style={{ backgroundImage: `url(${hero})` }}><div className="home-welcome-main"><small className="home-greeting">{greeting}, <b>{state.profile.name}</b></small><h1>Твой путь<br />продолжается</h1><p>{tasks.filter(q => !q.done).length ? `Выполни задания дня (осталось ${tasks.filter(q => !q.done).length}) и сохрани серию.` : 'Выбери свой первый шаг на сегодня.'}</p><button className="home-continue" onClick={onQuests}><span>▶</span><div><strong>Продолжить путь</strong><small>{tasks.filter(q => !q.done).length ? `Сегодня тебя ждут квесты: ${tasks.filter(q => !q.done).length}` : 'Открыть задачи'}</small></div></button></div>{state.profile.mode === 'demo' && <button className="home-demo-start" onClick={onStart}>Демо · Начать свою игру →</button>}
+      <aside className="home-focus" aria-label="Главные квесты месяца"><div className="home-focus-head"><h2>Главные квесты месяца</h2><span>{focusGoals.length} из {MAX_MONTHLY_FOCUS}</span></div>
+        {!picking && focusGoals.map((g, i) => <button key={g.id} className="home-focus-item" onClick={onGoal}><b>{i + 1}</b><span><strong>{g.name}</strong><Bar value={percentOf(g)} label={`Прогресс: ${g.name}`} /></span><em>{percentOf(g)}%</em></button>)}
+        {!picking && !focusGoals.length && <p>Выбери до трёх целей, которые станут главными квестами этого месяца.</p>}
+        {picking && <div className="home-focus-pick">{pickable.map(g => { const chosen = focusGoals.some(f => f.id === g.id); return <label key={g.id}><input type="checkbox" checked={chosen} disabled={!chosen && focusGoals.length >= MAX_MONTHLY_FOCUS} onChange={() => onChange(toggleMonthlyFocus(state, g.id, now))} /><span>{g.name}</span></label>; })}{!pickable.length && <p>Сначала создай цель, потом выбери её главным квестом.</p>}</div>}
+        <div className="home-focus-foot"><small>Выбери до {MAX_MONTHLY_FOCUS} квестов на месяц</small><button onClick={() => setPicking(v => !v)}>{picking ? 'Готово' : 'Изменить выбор'}</button></div></aside></section>
     <section className="home-player home-panel"><button className="home-player-identity" onClick={onProfile}><span className="home-avatar"><Avatar value={state.profile.avatar} frame={state.shop?.equippedFrame} /></span><span><small>LEVEL {player.level}</small><h2>{player.title}</h2><p>{state.profile.name}</p><Bar value={player.progress} label={player.maxed ? "Максимальный уровень 100" : "XP до следующего уровня"} /><b>{player.maxed ? `${state.xp} XP всего · Максимальный уровень` : <>{state.profile.mode === 'personal' ? state.xp % 200 : state.xp} / {state.profile.mode === 'personal' ? 200 : player.nextXP} XP</>}</b></span></button><div className="home-player-stats"><span><GameArt kind="coin" /><b>{state.coins}</b><small>Life Coins</small></span><span><GameArt kind="fire" /><b>{streak(state.activeDates)}</b><small>Серия дней</small></span><span><GameArt kind="trophy" /><b>{achievements.filter(a => a.unlocked(state)).length}</b><small>Достижения</small></span></div></section>
     <div className="home-dashboard-main">
       <section className="home-panel home-spheres"><div className="home-section-title"><h2>Сферы жизни</h2><button onClick={() => onSphere(null)}>Все сферы →</button></div><div className="home-sphere-grid">{spheres.map(s => <button key={s.id} onClick={() => onSphere(s.id)} className="home-sphere"><CityBuildingArt id={s.id} /><div><GameArt kind={s.id} /><strong>{s.name}</strong><small>LVL {sphereProgress(state.spheres[s.id].xp).level} / {MAX_SPHERE_LEVEL}</small><small>{sphereProgress(state.spheres[s.id].xp).maxed ? "Максимум" : sphereProgress(state.spheres[s.id].xp).currentXP + " / " + sphereProgress(state.spheres[s.id].xp).requiredXP + " XP"}</small></div><div className="home-sphere-meter"><span style={{ width: `${sphereProgress(state.spheres[s.id].xp).progress}%`, background: s.color }} /></div></button>)}</div></section>

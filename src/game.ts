@@ -206,6 +206,7 @@ export type GameState = {
   cityPurchases?: import('./city').CityPurchase[];
   sphereProgressionModel?: typeof SPHERE_PROGRESSION_MODEL;
   skillTrees?: import('./skillTree').SkillTrees;
+  monthlyFocus?: import('./monthlyFocus').MonthlyFocus;
   city?: import('./city').CityState;
   shop?: import('./shop').ShopState;
   version: 1;

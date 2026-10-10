@@ -7,7 +7,7 @@ import { URL } from 'node:url';
 const browser = await chromium.launch({ executablePath: process.env.LIFEGAME_CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
 try {
   const page = await browser.newPage();
-  for (const name of ['sidebar-coastal-city', 'mobile-footer-city']) {
+  for (const name of ['mobile-footer-city']) {
     const source = await readFile(new URL(`../src/assets/masters/${name}.png`, import.meta.url));
     const result = await page.evaluate(async image => {
       const photo = new Image();

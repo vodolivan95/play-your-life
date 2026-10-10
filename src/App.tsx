@@ -5,7 +5,9 @@ import SpheresOverview from './components/SpheresOverview';
 import HomeDashboard from './components/HomeDashboard';
 import DashboardHeader from './components/DashboardHeader';
 import MobileCityFooter from './components/MobileCityFooter';
-import SidebarReference from './components/SidebarReference';
+import AppSidebar from './components/AppSidebar';
+import MobileNav from './components/MobileNav';
+import { navigation } from './navigation';
 import { CityAppearanceContext } from './cityAppearanceContext';
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, Dispatch, SetStateAction, ReactNode } from 'react';
@@ -51,29 +53,6 @@ import QuestBoard from './components/QuestBoard';
 import QuestWizard from './components/QuestWizard';
 import { saveCustomQuest, saveHabit } from './personalQuests';
 
-const navigation = [
-  { id: 'home', label: 'Главная', icon: 'home' },
-  { id: 'spheres', label: 'Сферы жизни', icon: 'spheres' },
-  { id: 'quests', label: 'Квесты', icon: 'quests' },
-  { id: 'goals', label: 'Цели', icon: 'goals' },
-  { id: 'plan', label: 'План жизни', icon: 'plan' },
-  { id: 'monthly', label: 'Итоги месяца', icon: 'calendar' },
-  { id: 'tree', label: 'Skill Tree', icon: 'tree' },
-  { id: 'achievements', label: 'Достижения', icon: 'trophy' },
-  { id: 'shop', label: 'Магазин', icon: 'shop' },
-  { id: 'city', label: 'Город', icon: 'city' },
-  { id: 'statistics', label: 'Статистика', icon: 'statistics' },
-  { id: 'profile', label: 'Профиль', icon: 'profile' },
-];
-const mobileIds = [
-  'home',
-  'goals',
-  'quests',
-  'shop',
-  'city',
-  'statistics',
-  'profile',
-];
 function Progress({
   value,
   color,
@@ -290,37 +269,9 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
     <TickTickContext.Provider value={tickTick}>
       <CityAppearanceContext.Provider value={state.city}>
       <div
-        className={`app-shell app-page-${page} ${modal === 'quest' ? 'quest-dialog-open' : ''}`}
+        className={`app-shell pyl-shell app-page-${page} ${modal === 'quest' ? 'quest-dialog-open' : ''}`}
       >
-        <aside className="sidebar">
-          <a
-            className="brand"
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              navigate('home');
-            }}
-          >
-            <SidebarReference part="logo" />
-          </a>
-          <nav>
-            {navigation.map((item) => (
-              <button
-                key={item.id}
-                className={page === item.id ? 'nav-item active' : 'nav-item'}
-                aria-current={page === item.id ? 'page' : undefined}
-                onClick={() => navigate(item.id)}
-              >
-                <Icon name={item.icon} />
-                <span>{item.label}</span>
-                {item.id === 'quests' && (
-                  <span className="nav-count">{active.length}</span>
-                )}
-              </button>
-            ))}
-          </nav>
-          <div className="sidebar-city"><SidebarReference part="city" /></div>
-        </aside>
+        <AppSidebar page={page} state={state} questCount={active.length} onNavigate={navigate} />
         <div className="main-wrap">
           <header className="topbar"><DashboardHeader state={state} onProfile={() => navigate('profile')} onQuests={() => navigate('quests')} /></header>
           <main
@@ -796,41 +747,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
             </footer>
           </main>
         </div>
-        <nav className="mobile-nav">
-          {mobileIds
-            .map((id) => navigation.find((n) => n.id === id)!)
-            .map((n) => (
-              <button
-                key={n.id}
-                className={
-                  page === n.id ||
-                  (page === 'spheres' && n.id === 'home') ||
-                  (['plan', 'monthly', 'tree', 'achievements'].includes(page) &&
-                    n.id === 'profile')
-                    ? 'active'
-                    : ''
-                }
-                aria-current={
-                  page === n.id ||
-                  (page === 'spheres' && n.id === 'home') ||
-                  (['plan', 'monthly', 'tree', 'achievements'].includes(page) &&
-                    n.id === 'profile')
-                    ? 'page'
-                    : undefined
-                }
-                onClick={() => navigate(n.id)}
-              >
-                <Icon name={n.icon} size={20} />
-                <span>
-                  {n.id === 'plan'
-                    ? 'План'
-                    : n.id === 'monthly'
-                      ? 'Итоги'
-                      : n.label}
-                </span>
-              </button>
-            ))}
-        </nav>
+        <MobileNav page={page} state={state} questCount={active.length} onNavigate={navigate} />
         <dialog
           aria-label={
             modal === 'quest'

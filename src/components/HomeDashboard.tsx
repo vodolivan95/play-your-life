@@ -11,14 +11,13 @@ import GameArt from './GameArt';
 import CityBuildingArt from './CityBuildingArt';
 import { MAX_MONTHLY_FOCUS, monthlyFocusGoals, toggleMonthlyFocus } from '../monthlyFocus';
 import hero from '../assets/home-mountains.webp';
+import { useMenuTheme } from '../menuTheme';
 import './HomeDashboard.css';
-const themeKey = 'play-your-life-home-theme';
 function Bar({ value, label }: { value: number; label: string }) { return <div className="home-progress" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(Math.min(100, Math.max(0, value)))}><span style={{ width: `${Math.min(100, Math.max(0, value))}%` }} /></div>; }
 export default function HomeDashboard({ state, onChange, onSphere, onQuests, onGoal, onShop, onProfile, onIntegration, onCreate, onStart, renderQuest }: { state: GameState; onChange: (state: GameState) => void; onSphere: (id: string | null) => void; onQuests: () => void; onGoal: () => void; onShop: () => void; onProfile: () => void; onIntegration: () => void; onCreate: () => void; onStart: () => void; renderQuest: (quest: Quest) => ReactNode }) {
   const tickTick = useContext(TickTickContext);
   const [picking, setPicking] = useState(false);
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => { try { return localStorage.getItem(themeKey) === 'light' ? 'light' : 'dark'; } catch { return 'dark'; } });
-  const chooseTheme = (next: 'dark' | 'light') => { setTheme(next); try { localStorage.setItem(themeKey, next); } catch { /* тема не сохранится, это не страшно */ } };
+  const [theme, chooseTheme] = useMenuTheme();
   const now = new Date();
   const tasks = questsForToday(state, now);
   const player = playerProgress(state);

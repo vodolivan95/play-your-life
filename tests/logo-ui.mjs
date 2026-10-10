@@ -96,9 +96,15 @@ try {
       return JSON.stringify({ goals:state.goals, quests:state.quests, xp:state.xp, coins:state.coins });
     });
     if (width > 760) {
-      await cityArtwork(page, '.sidebar-city-art', 850, 1851);
-      assert.equal(await page.locator('.sidebar .play-wordmark').count(), 2);
-      const buttons = page.locator('.sidebar nav .nav-item');
+      if (height >= 880) {
+        await cityArtwork(page, '.pyl-city-art', 1536, 1024);
+        assert.equal(await page.locator('.pyl-city-card').isVisible(), true);
+      } else {
+        assert.equal(await page.locator('.pyl-city-card').isVisible(), false);
+      }
+      assert.equal(await page.locator('.sidebar .play-wordmark').count(), 1);
+      assert.equal(await page.locator('.sidebar .pyl-player').count(), 1);
+      const buttons = page.locator('.sidebar .pyl-menu-nav .pyl-nav-item');
       assert.equal(await buttons.count(), 12);
       for (const [index, id] of ['home','spheres','quests','goals','plan','monthly','tree','achievements','shop','city','statistics','profile'].entries()) {
         const button = buttons.nth(index);
@@ -108,7 +114,7 @@ try {
         await page.locator(`main.screen-${id}`).waitFor();
         assert.equal(await button.getAttribute('aria-current'), 'page');
       }
-      await page.locator('.sidebar .brand').click();
+      await page.locator('.sidebar .pyl-brand').click();
       await page.locator('main.screen-home').waitFor();
       await page.screenshot({ path: `work/logo-menu-${suffix}.png`, fullPage: true });
       await page.locator('.sidebar').screenshot({ path: `work/logo-sidebar-${suffix}.png` });
@@ -117,14 +123,19 @@ try {
       const image = await page.locator('.mobile-footer-city-art').boundingBox();
       assert.ok(Math.abs(image.width / image.height - 1374 / 1145) < .01, 'Footer city must remain uncropped and proportional');
       assert.equal(await page.locator('.mobile-city-footer .play-wordmark').count(), 1);
-      assert.equal(await page.locator('.mobile-nav button').count(), 7);
-      await page.locator('.mobile-nav').getByRole('button', { name:'Цели', exact:true }).click();
+      assert.equal(await page.locator('.pyl-tabbar .pyl-tab').count(), 5);
+      await page.locator('.pyl-tabbar').getByRole('button', { name:'Цели', exact:true }).click();
       await page.locator('main.screen-goals').waitFor();
-      await page.locator('.mobile-nav').getByRole('button', { name:'Главная', exact:true }).click();
+      await page.locator('.pyl-tabbar').getByRole('button', { name:'Ещё', exact:true }).click();
+      assert.equal(await page.locator('.pyl-more .pyl-more-item').count(), 8);
+      await page.locator('.pyl-more').getByRole('button', { name:'Статистика', exact:true }).click();
+      await page.locator('main.screen-statistics').waitFor();
+      assert.equal(await page.locator('.pyl-more').count(), 0);
+      await page.locator('.pyl-tabbar').getByRole('button', { name:'Главная', exact:true }).click();
       await page.locator('main.screen-home').waitFor();
       await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
       const footer = await page.locator('.mobile-city-footer').boundingBox();
-      const nav = await page.locator('.mobile-nav').boundingBox();
+      const nav = await page.locator('.pyl-tabbar').boundingBox();
       assert.ok(footer.y + footer.height <= nav.y, 'Fixed navigation must not cover the footer wordmark');
       await page.locator('.mobile-city-footer').screenshot({ path: `work/logo-menu-${suffix}.png` });
       await page.screenshot({ path:`work/logo-footer-screen-${suffix}.png` });
@@ -142,6 +153,9 @@ try {
     console.log(`${width}×${height}: login, icons, sidebar/footer, live navigation, unchanged progress and route reload OK`);
     await page.close();
   }
+} catch (error) {
+  console.log('::error::' + String(error?.message ?? error).slice(0, 1200).replace(/\n/g, '%0A'));
+  throw error;
 } finally {
   await browser?.close();
   server.kill();

@@ -70,7 +70,7 @@ try {
       .getByRole("button", { name: "Продолжить игру на этом устройстве" })
       .click();
     await page
-      .locator(mobile ? ".mobile-nav" : ".sidebar")
+      .locator(mobile ? ".pyl-tabbar" : ".sidebar")
       .getByRole("button", { name: /^Квесты/ })
       .click();
     assert.equal(await page.locator(".pyl-quest-spheres>button").count(), 9);
@@ -166,7 +166,7 @@ try {
       .getByRole("button", { name: "Продолжить игру на этом устройстве" })
       .click();
     await page
-      .locator(mobile ? ".mobile-nav" : ".sidebar")
+      .locator(mobile ? ".pyl-tabbar" : ".sidebar")
       .getByRole("button", { name: /^Квесты/ })
       .click();
     const state = await page.evaluate(() =>
@@ -193,6 +193,9 @@ try {
     );
     await context.close();
   }
+} catch (error) {
+  console.log('::error::' + String(error?.message ?? error).slice(0, 1200).replace(/\n/g, '%0A'));
+  throw error;
 } finally {
   await browser?.close();
   server.kill();

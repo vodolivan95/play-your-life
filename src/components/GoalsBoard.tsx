@@ -20,12 +20,13 @@ import Icon from './Icon';
 import GameArt from './GameArt';
 import ProjectArt from './ProjectArt';
 import GoalWorkspace from './GoalWorkspace';
-import { goalProgressValue } from '../goalWorkspace';
+import { goalProgressValue, stageMetrics } from '../goalWorkspace';
 import {
   deadlineLabel,
   goalDaysLeft,
   goalNextStep,
   goalSortNames,
+  goalUpcomingTasks,
   goalsSummary,
   isGoalDone,
   pluralDays,
@@ -38,6 +39,19 @@ type Editor =
   | { kind: 'stage'; stage?: GoalStage }
   | { kind: 'task'; task?: Quest; stageId?: string }
   | { kind: 'transfer'; task?: Quest };
+function TileIcon({ kind }: { kind: 'target' | 'trend' | 'calendar' | 'star' }) {
+  const paths = {
+    target: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.2" /></>,
+    trend: <><path d="M4 17l5-5 4 4 7-8" /><path d="M15 8h5v5" /></>,
+    calendar: <><rect x="4" y="5" width="16" height="15" rx="3" /><path d="M4 10h16M9 3v4M15 3v4" /></>,
+    star: <path d="M12 3l2.7 5.6 6.1.8-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1L3.2 9.4l6.1-.8z" />,
+  };
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {paths[kind]}
+    </svg>
+  );
+}
 export default function GoalsBoard({
   state,
   onChange,
@@ -64,6 +78,7 @@ export default function GoalsBoard({
   const [goalFilter, setGoalFilter] = useState('active');
   const [sphereFilter, setSphereFilter] = useState('all');
   const [sort, setSort] = useState<GoalSort>('due');
+  const [previewId, setPreviewId] = useState<string | null>(null);
   const [editor, setEditor] = useState<Editor | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -89,6 +104,7 @@ export default function GoalsBoard({
     ),
     sort,
   );
+  const preview = visibleGoals.find((g) => g.id === previewId) ?? visibleGoals[0];
   const usedSpheres = spheres.filter((sp) =>
     state.goals.some((g) => g.sphere === sp.id),
   );
@@ -121,26 +137,38 @@ export default function GoalsBoard({
         <>
           <div className="gl-summary">
             <div className="gl-tile">
-              <b>{summary.active}</b>
-              <span>Активные цели</span>
+              <i className="gl-ico is-blue"><TileIcon kind="target" /></i>
+              <div>
+                <b>{summary.active}</b>
+                <span>Активные цели</span>
+              </div>
             </div>
             <div className="gl-tile">
-              <b>{summary.averageProgress}%</b>
-              <span>Средний прогресс</span>
+              <i className="gl-ico is-green"><TileIcon kind="trend" /></i>
+              <div>
+                <b>{summary.averageProgress}%</b>
+                <span>Средний прогресс</span>
+              </div>
             </div>
             <div className="gl-tile">
-              <b>
-                {summary.nearestDays === undefined
-                  ? '—'
-                  : summary.nearestDays === 0
-                    ? 'Сегодня'
-                    : pluralDays(summary.nearestDays)}
-              </b>
-              <span>До ближайшего срока</span>
+              <i className="gl-ico is-orange"><TileIcon kind="calendar" /></i>
+              <div>
+                <b>
+                  {summary.nearestDays === undefined
+                    ? 'Нет сроков'
+                    : summary.nearestDays === 0
+                      ? 'Сегодня'
+                      : pluralDays(summary.nearestDays)}
+                </b>
+                <span>До ближайшего срока</span>
+              </div>
             </div>
             <div className="gl-tile">
-              <b>+{summary.pendingReward} XP</b>
-              <span>Награды впереди</span>
+              <i className="gl-ico is-gold"><TileIcon kind="star" /></i>
+              <div>
+                <b>+{summary.pendingReward} XP</b>
+                <span>Награды впереди</span>
+              </div>
             </div>
           </div>
           <div className="gl-filters">
@@ -159,7 +187,7 @@ export default function GoalsBoard({
                 </button>
               ))}
             </div>
-            {usedSpheres.length > 1 && (
+            {usedSpheres.length > 0 && (
               <div className="gl-chips" role="group" aria-label="Сфера цели">
                 {[{ id: 'all', name: 'Все сферы' }, ...usedSpheres].map((sp) => (
                   <button
@@ -190,6 +218,7 @@ export default function GoalsBoard({
         </>
       )}
       {!goal ? (
+        <div className="gl-layout">
         <div className="gl-list">
           {visibleGoals.map((g) => {
             const sphere = spheres.find((s) => s.id === g.sphere)!;
@@ -199,8 +228,9 @@ export default function GoalsBoard({
             const isMain = mainGoal?.id === g.id;
             return (
               <section
-                className={`gl-card ${isMain ? 'is-main' : ''}`}
+                className={`gl-card ${isMain ? 'is-main' : ''} ${preview?.id === g.id ? 'is-selected' : ''}`}
                 key={g.id}
+                onClick={() => setPreviewId(g.id)}
                 style={{ '--gl-color': sphere.color } as CSSProperties}
               >
                 <div className="gl-head">
@@ -244,7 +274,9 @@ export default function GoalsBoard({
                           })
                         : 'Без срока'}
                     </b>
-                    <span>{deadlineLabel(g)}</span>
+                    {(g.dueAt || isGoalDone(g)) && (
+                      <span>{deadlineLabel(g)}</span>
+                    )}
                   </div>
                 </div>
                 <div className="gl-progress">
@@ -344,6 +376,79 @@ export default function GoalsBoard({
               <p>Поставь цель, выбери срок и добавь первый реальный шаг.</p>
             </div>
           )}
+        </div>
+        {preview && (
+          <aside className="gl-side" aria-label="Кратко о выбранной цели">
+            <div className="gl-side-kicker">Выбранная цель</div>
+            <h2>{preview.name}</h2>
+            <p className="gl-side-meta">
+              {spheres.find((sp) => sp.id === preview.sphere)?.name} ·{' '}
+              {deadlineLabel(preview)}
+            </p>
+            <div className="gl-progress-label">
+              <span>Прогресс</span>
+              <b>{progress(preview)}%</b>
+            </div>
+            <div
+              className="gl-bar"
+              style={
+                {
+                  '--gl-color': spheres.find((sp) => sp.id === preview.sphere)?.color,
+                } as CSSProperties
+              }
+            >
+              <span style={{ width: `${progress(preview)}%` }} />
+            </div>
+            <h3>Этапы</h3>
+            {preview.stages?.length ? (
+              <ul className="gl-stage-list">
+                {preview.stages.slice(0, 6).map((stage) => {
+                  const m = stageMetrics(state, preview, stage);
+                  return (
+                    <li key={stage.id} className={m.complete ? 'is-done' : ''}>
+                      <span className="gl-dot" aria-hidden="true" />
+                      <span className="gl-stage-name">{stage.name}</span>
+                      <b>{m.complete ? 'готово' : `${Math.round(m.progress)}%`}</b>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="gl-side-empty">Этапов пока нет.</p>
+            )}
+            <h3>Ближайшие задачи</h3>
+            {goalUpcomingTasks(state, preview).length ? (
+              <ul className="gl-task-list">
+                {goalUpcomingTasks(state, preview).map((task) => (
+                  <li key={task.id}>
+                    <span>{task.name}</span>
+                    {task.dueAt && (
+                      <small>
+                        {new Date(task.dueAt).toLocaleDateString('ru-RU', {
+                          day: 'numeric',
+                          month: 'short',
+                        })}
+                      </small>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="gl-side-empty">Открытых задач нет.</p>
+            )}
+            <div className="gl-side-reward">
+              🏆 Награда за цель: <b>{preview.reward} XP</b>
+              {preview.rewarded ? ' · получена' : ''}
+            </div>
+            <button
+              className="primary-button gl-plan"
+              onClick={() => onSelect(preview.id)}
+            >
+              Открыть план цели
+              <Icon name="arrow" size={16} />
+            </button>
+          </aside>
+        )}
         </div>
       ) : (
         <GoalWorkspace ownerId={ownerId} key={`${goal.id}:${stageId ?? 'goal'}`} state={state} goal={goal} stageId={stageId} onChange={onChange}

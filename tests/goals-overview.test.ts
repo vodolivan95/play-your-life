@@ -6,6 +6,7 @@ import {
   deadlineLabel,
   goalDaysLeft,
   goalNextStep,
+  goalUpcomingTasks,
   goalsSummary,
   pluralDays,
   sortGoals,
@@ -94,4 +95,24 @@ test('следующий шаг берётся из настоящих зада�
   const next = goalNextStep(s, s.goals.find((g) => g.id === goal.id)!, now);
   assert.equal(next?.kind, 'task');
   assert.equal(next?.text, 'Сделать первый шаг');
+});
+
+test('ближайшие задачи: по сроку, без срока в конце, без выполненных', () => {
+  let s = fixture();
+  const goal = s.goals.find((g) => g.name === 'Дальняя')!;
+  const add = (name: string, dueAt?: string) => {
+    s = saveTask(s, { name, difficulty: 'Micro', sphere: 'health', goalId: goal.id, dueAt });
+  };
+  add('Без срока');
+  add('Поздно', inDays(9));
+  add('Рано', inDays(2));
+  const names = (n = 4) =>
+    goalUpcomingTasks(s, goal, n).map((q) => q.name);
+  assert.deepEqual(names(), ['Рано', 'Поздно', 'Без срока']);
+  assert.deepEqual(names(1), ['Рано']);
+  s = {
+    ...s,
+    quests: s.quests.map((q) => (q.name === 'Рано' ? { ...q, done: true } : q)),
+  };
+  assert.deepEqual(names(), ['Поздно', 'Без срока']);
 });

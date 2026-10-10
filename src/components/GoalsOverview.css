@@ -236,3 +236,165 @@
     flex: 1;
   }
 }
+
+/* Иконки в плитках сводки */
+.gl-tile {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+.gl-tile > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.gl-ico {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gl-ico.is-blue {
+  background: #dcebfc;
+  color: #1272d6;
+}
+.gl-ico.is-green {
+  background: #ddf4e6;
+  color: #14804a;
+}
+.gl-ico.is-orange {
+  background: #ffe9d6;
+  color: #b94a00;
+}
+.gl-ico.is-gold {
+  background: #fff1c7;
+  color: #8a6100;
+}
+
+/* Список слева и краткая панель выбранной цели справа */
+.gl-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+}
+.gl-layout > .gl-list {
+  flex: 1 1 520px;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+.gl-card {
+  cursor: pointer;
+}
+.gl-card.is-selected {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gl-color, #1272d6) 35%, transparent),
+    0 10px 24px rgba(30, 70, 130, 0.12);
+}
+.gl-side {
+  flex: 1 1 360px;
+  min-width: 0;
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(30, 70, 130, 0.07);
+}
+.gl-side-kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #52627d;
+}
+.gl-side h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.gl-side h3 {
+  margin: 10px 0 0;
+  font-size: 14px;
+}
+.gl-side-meta {
+  margin: 0;
+  font-size: 13px;
+  color: #52627d;
+}
+.gl-side-empty {
+  margin: 0;
+  font-size: 13px;
+  color: #52627d;
+}
+.gl-stage-list,
+.gl-task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gl-stage-list li,
+.gl-task-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: #f1f7fe;
+  font-size: 13px;
+}
+.gl-stage-name,
+.gl-task-list li span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #0f1b33;
+  font-weight: 600;
+}
+.gl-stage-list b {
+  font-size: 12px;
+  color: #3b4c68;
+}
+.gl-task-list small {
+  color: #52627d;
+  font-size: 12px;
+}
+.gl-dot {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 7px;
+  border: 2px solid #9aa8bf;
+  box-sizing: border-box;
+}
+.gl-stage-list li.is-done .gl-dot {
+  background: #14804a;
+  border-color: #14804a;
+}
+.gl-side-reward {
+  margin-top: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fff1c7;
+  color: #6b4a00;
+  font-size: 13px;
+}
+@media (max-width: 1000px) {
+  .gl-side {
+    display: none;
+  }
+  .gl-card {
+    cursor: default;
+  }
+}

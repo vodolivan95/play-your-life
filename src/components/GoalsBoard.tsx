@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
+import type { CSSProperties, Dispatch, SetStateAction } from 'react';
 import {
   spheres,
   updateGoal,
@@ -21,6 +21,18 @@ import GameArt from './GameArt';
 import ProjectArt from './ProjectArt';
 import GoalWorkspace from './GoalWorkspace';
 import { goalProgressValue } from '../goalWorkspace';
+import {
+  deadlineLabel,
+  goalDaysLeft,
+  goalNextStep,
+  goalSortNames,
+  goalsSummary,
+  isGoalDone,
+  pluralDays,
+  sortGoals,
+} from '../goalsOverview';
+import type { GoalSort } from '../goalsOverview';
+import './GoalsOverview.css';
 type Editor =
   | { kind: 'goal' }
   | { kind: 'stage'; stage?: GoalStage }
@@ -50,6 +62,8 @@ export default function GoalsBoard({
   onSphere: (id: string) => void;
 }) {
   const [goalFilter, setGoalFilter] = useState('active');
+  const [sphereFilter, setSphereFilter] = useState('all');
+  const [sort, setSort] = useState<GoalSort>('due');
   const [editor, setEditor] = useState<Editor | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -65,11 +79,20 @@ export default function GoalsBoard({
   function main(id: string) {
     onChange((s) => ({ ...s, mainGoalId: id })); onNotify('Главная цель выбрана');
   }
-  const visibleGoals = state.goals.filter(
-    (g) =>
-      goalFilter === 'all' ||
-      (goalFilter === 'done' ? g.current >= g.target : g.current < g.target),
+  const visibleGoals = sortGoals(
+    state,
+    state.goals.filter(
+      (g) =>
+        (sphereFilter === 'all' || g.sphere === sphereFilter) &&
+        (goalFilter === 'all' ||
+          (goalFilter === 'done' ? isGoalDone(g) : !isGoalDone(g))),
+    ),
+    sort,
   );
+  const usedSpheres = spheres.filter((sp) =>
+    state.goals.some((g) => g.sphere === sp.id),
+  );
+  const summary = goalsSummary(state, state.goals);
   const progress = (g: Goal) => Math.round(goalProgressValue(state, g));
   return (
     <>
@@ -95,30 +118,93 @@ export default function GoalsBoard({
       </div>
       {selectedId && !goal && <div className="panel"><h2>Цель не найдена</h2><p>Проверьте ссылку или выберите цель из своей игры.</p><button className="text-button" onClick={() => onSelect(null)}>Все цели →</button></div>}
       {!goal && (
-        <div className="tabs goal-tabs">
-          {[
-            ['active', 'Активные'],
-            ['done', 'Достигнутые'],
-            ['all', 'Все'],
-          ].map(([id, name]) => (
-            <button
-              key={id}
-              className={goalFilter === id ? 'selected' : ''}
-              onClick={() => setGoalFilter(id)}
-            >
-              {name}
-            </button>
-          ))}
-        </div>
+        <>
+          <div className="gl-summary">
+            <div className="gl-tile">
+              <b>{summary.active}</b>
+              <span>Активные цели</span>
+            </div>
+            <div className="gl-tile">
+              <b>{summary.averageProgress}%</b>
+              <span>Средний прогресс</span>
+            </div>
+            <div className="gl-tile">
+              <b>
+                {summary.nearestDays === undefined
+                  ? '—'
+                  : summary.nearestDays === 0
+                    ? 'Сегодня'
+                    : pluralDays(summary.nearestDays)}
+              </b>
+              <span>До ближайшего срока</span>
+            </div>
+            <div className="gl-tile">
+              <b>+{summary.pendingReward} XP</b>
+              <span>Награды впереди</span>
+            </div>
+          </div>
+          <div className="gl-filters">
+            <div className="tabs goal-tabs">
+              {[
+                ['active', 'Активные'],
+                ['done', 'Достигнутые'],
+                ['all', 'Все'],
+              ].map(([id, name]) => (
+                <button
+                  key={id}
+                  className={goalFilter === id ? 'selected' : ''}
+                  onClick={() => setGoalFilter(id)}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+            {usedSpheres.length > 1 && (
+              <div className="gl-chips" role="group" aria-label="Сфера цели">
+                {[{ id: 'all', name: 'Все сферы' }, ...usedSpheres].map((sp) => (
+                  <button
+                    key={sp.id}
+                    className={sphereFilter === sp.id ? 'selected' : ''}
+                    aria-pressed={sphereFilter === sp.id}
+                    onClick={() => setSphereFilter(sp.id)}
+                  >
+                    {sp.name}
+                  </button>
+                ))}
+              </div>
+            )}
+            <label className="gl-sort">
+              <span>Порядок</span>
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as GoalSort)}
+              >
+                {(Object.keys(goalSortNames) as GoalSort[]).map((id) => (
+                  <option key={id} value={id}>
+                    {goalSortNames[id]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </>
       )}
       {!goal ? (
-        <div className="goals-grid">
+        <div className="gl-list">
           {visibleGoals.map((g) => {
             const sphere = spheres.find((s) => s.id === g.sphere)!;
+            const days = goalDaysLeft(g);
+            const late = !isGoalDone(g) && days !== undefined && days < 0;
+            const next = goalNextStep(state, g);
+            const isMain = mainGoal?.id === g.id;
             return (
-              <section className="panel goal-card" key={g.id}>
-                <div className="section-heading">
-                  <span className="sphere-icon">
+              <section
+                className={`gl-card ${isMain ? 'is-main' : ''}`}
+                key={g.id}
+                style={{ '--gl-color': sphere.color } as CSSProperties}
+              >
+                <div className="gl-head">
+                  <span className="sphere-icon gl-icon">
                     {g.image ? (
                       <ProjectArt
                         name={g.name}
@@ -131,45 +217,81 @@ export default function GoalsBoard({
                       />
                     )}
                   </span>
-                  <span
-                    className={`mini-pill ${goalStatus(g) === 'Срок прошёл' ? 'overdue-pill' : ''}`}
-                  >
-                    {goalStatus(g)}
-                  </span>
+                  <div className="gl-title">
+                    <h2>
+                      <button
+                        className="goal-title-link"
+                        onClick={() => onSelect(g.id)}
+                      >
+                        {g.name}
+                      </button>
+                    </h2>
+                    <div className="gl-tags">
+                      <span className="gl-tag">{sphere.name}</span>
+                      <span className={`gl-tag ${late ? 'is-late' : ''}`}>
+                        {goalStatus(g)}
+                      </span>
+                      {isMain && <span className="gl-tag is-main">★ Главная</span>}
+                    </div>
+                  </div>
+                  <div className={`gl-deadline ${late ? 'is-late' : ''}`}>
+                    <small>Срок</small>
+                    <b>
+                      {g.dueAt
+                        ? new Date(g.dueAt).toLocaleDateString('ru-RU', {
+                            day: 'numeric',
+                            month: 'long',
+                          })
+                        : 'Без срока'}
+                    </b>
+                    <span>{deadlineLabel(g)}</span>
+                  </div>
                 </div>
-                <small className="muted">
-                  {sphere.name} · {durationLabel(g.startsAt, g.dueAt)}
-                </small>
-                <h2>
-                  <button
-                    className="goal-title-link"
-                    onClick={() => onSelect(g.id)}
+                <div className="gl-progress">
+                  <div className="gl-progress-label">
+                    <span>
+                      {g.progressMode === 'tasks'
+                        ? `${state.quests.filter((q) => q.goalId === g.id && q.done).length} из ${state.quests.filter((q) => q.goalId === g.id).length} задач`
+                        : `${g.current} из ${g.target}`}
+                    </span>
+                    <b>{progress(g)}%</b>
+                  </div>
+                  <div
+                    className="gl-bar"
+                    role="progressbar"
+                    aria-label={`Прогресс цели «${g.name}»`}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={progress(g)}
                   >
-                    {g.name}
-                  </button>
-                </h2>
-
-                <div className="goal-progress-label">
-                  <span>
-                    {g.progressMode === 'tasks'
-                      ? `${state.quests.filter((q) => q.goalId === g.id && q.done).length} / ${state.quests.filter((q) => q.goalId === g.id).length} задач`
-                      : `${g.current} / ${g.target}`}
-                  </span>
-                  <b>{progress(g)}%</b>
+                    <span style={{ width: `${progress(g)}%` }} />
+                  </div>
                 </div>
-                <div className="progress">
-                  <span style={{ width: `${progress(g)}%` }} />
+                <div className="gl-foot">
+                  <p className="gl-next">
+                    {next ? (
+                      <>
+                        {next.kind === 'task' ? 'Следующий шаг' : 'Текущий этап'}:{' '}
+                        <b>{next.text}</b>
+                      </>
+                    ) : isGoalDone(g) ? (
+                      'Цель достигнута'
+                    ) : (
+                      'Добавьте первый шаг в плане цели'
+                    )}
+                  </p>
+                  <span className="gl-reward">
+                    🏆 {g.reward} XP{g.rewarded ? ' · получены' : ''}
+                  </span>
                 </div>
                 <details className="goal-controls">
                   <summary>Прогресс и сроки</summary>{' '}
                   <button
                     className="text-button main-goal-button"
-                    aria-pressed={mainGoal?.id === g.id}
+                    aria-pressed={isMain}
                     onClick={() => main(g.id)}
                   >
-                    {mainGoal?.id === g.id
-                      ? '★ Главная цель'
-                      : '☆ Сделать главной'}
+                    {isMain ? '★ Главная цель' : '☆ Сделать главной'}
                   </button>
                   {g.progressMode !== 'tasks' && (
                     <label className="goal-input">
@@ -195,14 +317,14 @@ export default function GoalsBoard({
                     </label>
                   )}
                   <div className="goal-dates-summary">
-                    <small>Срок: {formatDate(g.dueAt)}</small>
-                    <span>
-                      🏆 {g.reward} XP {g.rewarded ? '· Получены' : ''}
-                    </span>
+                    <small>
+                      Срок: {formatDate(g.dueAt)} ·{' '}
+                      {durationLabel(g.startsAt, g.dueAt)}
+                    </small>
                   </div>
                 </details>
                 <button
-                  className="primary-button goal-plan-button"
+                  className="primary-button gl-plan"
                   onClick={() => onSelect(g.id)}
                 >
                   План цели

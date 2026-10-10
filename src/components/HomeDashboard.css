@@ -147,3 +147,47 @@
 .home-focus-foot small { color:#b7c6e6; font-size:11px; }
 .home-dashboard .home-focus-foot button { border:1.5px solid #f5c451a6; border-radius:12px; background:transparent; color:#ffe08a; font-size:12px; font-weight:800; padding:8px 12px; }
 @media(max-width:760px) { .home-welcome { padding:22px 16px; min-height:0; } .home-welcome::before { background:#0a1636d9; } }
+
+/* Главная 0.10.0: раскладка по макету — игрок, задания и серия, миры, остальное. */
+.home-dashboard { grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr); gap:18px; align-items:start; }
+.home-dashboard-main, .home-dashboard-side { display:contents; }
+.home-dashboard > .home-welcome { grid-column:1/-1; }
+.home-dashboard > .home-player { grid-column:1/-1; flex-direction:row; align-items:center; gap:24px; flex-wrap:wrap; }
+.home-player-identity { flex:1 1 320px; width:auto; }
+.home-player-stats { flex:0 1 auto; margin:0; border:0; padding:0; gap:28px; }
+.home-dashboard .home-today { grid-column:1; grid-row:3; align-self:stretch; }
+.home-dashboard .home-streak { grid-column:2; grid-row:3; align-self:stretch; }
+.home-dashboard .home-spheres { grid-column:1/-1; grid-row:4; }
+.home-dashboard .home-main-goal { grid-column:1; grid-row:5; }
+.home-dashboard .home-reward { grid-column:2; grid-row:5; }
+.home-dashboard .home-schedule { grid-column:1; grid-row:6; }
+.home-dashboard .home-habits { grid-column:2; grid-row:6; }
+.home-sphere-grid { grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:14px; }
+.home-sphere { border-radius:16px; box-shadow:0 6px 20px #3c73aa14; transition:transform .15s, box-shadow .15s; }
+.home-sphere:hover { transform:translateY(-3px); box-shadow:0 12px 28px #3c73aa26; }
+.home-sphere > .sphere-building { height:112px; }
+.home-sphere > div:not(.home-sphere-meter) { grid-template-columns:34px minmax(0,1fr); gap:3px 9px; padding:11px 12px 6px; }
+.home-sphere .game-art { width:34px; height:34px; }
+.home-sphere strong { font-size:14px; }
+.home-sphere small { font-size:11px; }
+.home-sphere-meter { height:7px; margin:6px 12px 12px; }
+.home-dashboard .home-streak { background:linear-gradient(160deg,#e4eeff 0%,#f3f7ff 48%,#fff 100%); border:1.5px solid #ffffffe6; box-shadow:0 10px 34px #466ec82e, inset 0 1px 0 #fff; }
+.home-streak .home-section-title > strong { font-size:18px; color:#2f6bea; }
+.home-week { gap:8px; }
+.home-week span { width:36px; height:36px; font-size:14px; border:1px solid #ffffffbf; background:#ffffff8c; color:#fff; box-shadow:0 4px 14px #466ec824, inset 0 1px 0 #fff; backdrop-filter:blur(8px); }
+.home-week .completed { background:linear-gradient(145deg,#82b4ffe6,#2f6beac7); border-color:#ffffffbf; box-shadow:inset 0 1px 0 #ffffffd9, 0 6px 16px #2f6bea59; }
+.home-week .today { border:2px solid #4c8dff; }
+.home-week small { font-size:11px; }
+.home-dashboard p.home-streak-note { margin:14px 0; padding:11px 13px; border-radius:14px; background:#ffffff94; border:1px solid #fff; color:#3b4a75; font-size:12px; }
+.home-streak-rewards { display:flex; flex-direction:column; gap:8px; }
+.home-dashboard .home-streak-rewards h3 { margin:0 0 2px; font-size:11px; letter-spacing:1.2px; text-transform:uppercase; color:#5b6b94; }
+.home-streak-rewards > div { display:flex; justify-content:space-between; align-items:center; padding:10px 13px; border-radius:14px; background:#ffffff8c; border:1px solid #fff; box-shadow:0 4px 14px #466ec824, inset 0 1px 0 #fff; font-size:13px; color:#3b4a75; }
+.home-streak-rewards b { color:#2f6bea; }
+.home-streak-rewards .is-reached { background:linear-gradient(145deg,#cfe2ff,#e8f1ff); }
+.home-today, .home-streak { min-height:380px; }
+@media(max-width:900px) {
+  .home-dashboard { grid-template-columns:minmax(0,1fr); }
+  .home-dashboard .home-today, .home-dashboard .home-streak, .home-dashboard .home-spheres, .home-dashboard .home-main-goal, .home-dashboard .home-reward, .home-dashboard .home-schedule, .home-dashboard .home-habits { grid-column:1; grid-row:auto; }
+  .home-today, .home-streak { min-height:0; }
+}
+@media(max-width:760px) { .home-sphere-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .home-sphere > .sphere-building { height:92px; } .home-sphere strong { font-size:12px; } .home-dashboard > .home-player { gap:14px; } .home-player-stats { gap:16px; width:100%; justify-content:space-between; } }

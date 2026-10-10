@@ -1,6 +1,6 @@
 # Дерево навыков
 
-Вкладка «Навыки» на странице Skill Tree. Код: `src/skillTree.ts` (данные и правила), `src/components/SkillTree.tsx` и `SkillTree.css` (экран).
+Страница Skill Tree (прежние «Карта» и «Навыки» удалены). Код: `src/skillTree.ts` (данные и правила), `src/components/SkillTree.tsx` и `SkillTree.css` (экран).
 
 ## Данные
 

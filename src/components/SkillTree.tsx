@@ -220,10 +220,12 @@ export default function SkillTree({
   state,
   onChange,
   notify,
+  onOpenSphere,
 }: {
   state: GameState;
   onChange: Dispatch<SetStateAction<GameState>>;
   notify: (message: string) => void;
+  onOpenSphere?: (sphere: string) => void;
 }) {
   const [theme, setTheme] = useState(readTheme);
   const [sphere, setSphere] = useState('english');
@@ -351,9 +353,16 @@ export default function SkillTree({
                 </small>
               </div>
             </div>
+            <div className="skt-board-tools">
+              {onOpenSphere && (
+                <button type="button" className="skt-link-btn" onClick={() => onOpenSphere(sphere)}>
+                  Страница сферы →
+                </button>
+              )}
             <div className="skt-mode" role="group" aria-label="Режим">
               <button type="button" className={!planning ? 'selected' : ''} onClick={() => { setMode('play'); setSelection(null); }}>Прокачка</button>
               <button type="button" className={planning ? 'selected' : ''} onClick={() => { setMode('plan'); setSelection(null); }}>Планирование</button>
+            </div>
             </div>
           </div>
 

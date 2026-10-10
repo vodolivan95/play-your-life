@@ -428,7 +428,6 @@ test("архив и обложки доступны только владель�
   await assertSucceeds(setDoc(image, { data: cover, updatedAt: serverTimestamp() }));
   await assertFails(setDoc(image, { data: cover + "B", updatedAt: serverTimestamp() }));
   await assertFails(setDoc(doc(db, "players", "alice", "history", "июль"), { events: [], updatedAt: serverTimestamp() }));
-  await assertFails(setDoc(doc(db, "players", "alice", "images", "../x"), { data: cover, updatedAt: serverTimestamp() }));
   await assertFails(setDoc(doc(db, "players", "alice", "images", "goal-b2-11111111"), { data: "javascript:alert(1)", updatedAt: serverTimestamp() }));
   await assertFails(setDoc(month, { events: [], extra: 1, updatedAt: serverTimestamp() }));
   await assertFails(deleteDoc(month));

@@ -585,6 +585,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                   <span className="player-avatar">
                     <Avatar
                       value={state.profile.avatar}
+                      photo={state.profile.photo}
                       frame={state.shop?.equippedFrame}
                     />
                   </span>

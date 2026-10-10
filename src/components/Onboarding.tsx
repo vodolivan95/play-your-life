@@ -5,6 +5,7 @@ import { avatars, personalState, spheres } from '../game';
 import type { GameState, PlayerProfile } from '../game';
 import Icon from './Icon';
 import Avatar from './Avatar';
+import { readProjectImage } from '../projectImage';
 
 export function AvatarPicker({
   value,
@@ -50,10 +51,24 @@ export function ProfileEditor({
 }) {
   const [name, setName] = useState(profile.name);
   const [avatar, setAvatar] = useState(profile.avatar);
+  const [photo, setPhoto] = useState<string | undefined>(profile.photo);
+  const [photoError, setPhotoError] = useState('');
+  async function choosePhoto(file: File | undefined) {
+    if (!file) return;
+    setPhotoError('');
+    try {
+      setPhoto(await readProjectImage(file));
+    } catch (e) {
+      setPhotoError(e instanceof Error ? e.message : 'Не удалось загрузить фото.');
+    }
+  }
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!name.trim()) return;
-    onSave({ ...profile, name: name.trim(), avatar });
+    const next: PlayerProfile = { ...profile, name: name.trim(), avatar };
+    if (photo) next.photo = photo;
+    else delete next.photo;
+    onSave(next);
   }
   return (
     <form onSubmit={submit}>
@@ -75,7 +90,33 @@ export function ProfileEditor({
           placeholder="Твоё имя"
         />
       </label>
-      <div className="field-label">Выбери аватар</div>
+      <div className="field-label">Своё фото</div>
+      <div className="photo-upload">
+        <span className="photo-upload-preview">
+          <Avatar value={avatar} photo={photo} />
+        </span>
+        <div>
+          <label className="secondary-button photo-upload-button">
+            {photo ? 'Выбрать другое фото' : 'Загрузить фото с телефона'}
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => {
+                void choosePhoto(e.target.files?.[0]);
+                e.target.value = '';
+              }}
+            />
+          </label>
+          {photo && (
+            <button type="button" className="text-button" onClick={() => setPhoto(undefined)}>
+              Убрать фото
+            </button>
+          )}
+          {photoError && <p className="form-error" role="alert">{photoError}</p>}
+        </div>
+      </div>
+      <div className="field-label">Или выбери аватар</div>
       <AvatarPicker value={avatar} onChange={setAvatar} />
       <button
         type="submit"

@@ -237,6 +237,8 @@ export const avatars = [
 export type PlayerProfile = {
   name: string;
   avatar: string;
+  /** Своё фото: маленький квадратный JPEG (data URL), см. projectImage.ts. */
+  photo?: string;
   mode: 'demo' | 'personal';
   onboardingComplete: boolean;
 };

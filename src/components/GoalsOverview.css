@@ -398,3 +398,32 @@
     cursor: default;
   }
 }
+
+/* Телефон: компактная сводка и крупные зоны нажатия */
+@media (max-width: 600px) {
+  .gl-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .gl-tile {
+    gap: 10px;
+    padding: 12px;
+  }
+  .gl-ico {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+  }
+  .gl-ico svg {
+    width: 18px;
+    height: 18px;
+  }
+  .gl-tile b {
+    font-size: 17px;
+    white-space: nowrap;
+  }
+  .gl-tile span {
+    font-size: 11px;
+    line-height: 1.25;
+  }
+}

@@ -113,6 +113,10 @@
   overflow-x: auto;
   padding: 4px 2px 8px;
 }
+.skt-spheres {
+  scrollbar-width: thin;
+  scrollbar-color: var(--skt-line) transparent;
+}
 .skt-spheres button {
   flex: 1 0 104px;
   min-height: 112px;
@@ -290,7 +294,7 @@
 .skt-link {
   position: absolute;
   left: 50%;
-  bottom: -12px;
+  bottom: -18px;
   width: 4px;
   height: 36px;
   margin-left: -2px;

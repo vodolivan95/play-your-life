@@ -193,6 +193,9 @@ try {
     );
     await context.close();
   }
+} catch (error) {
+  console.log('::error::' + String(error?.message ?? error).slice(0, 1200).replace(/\n/g, '%0A'));
+  throw error;
 } finally {
   await browser?.close();
   server.kill();

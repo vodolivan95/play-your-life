@@ -149,6 +149,8 @@
 /* ---------- Нижняя панель телефона ---------- */
 .pyl-tabbar, .pyl-more, .pyl-more-backdrop { display: none; }
 @media (max-width: 760px) {
+  .app-shell.pyl-shell .sidebar.pyl-menu { display: none; }
+  .app-shell.pyl-shell .main-wrap { margin-left: 0; }
   .app-shell.pyl-shell .main-wrap > main { padding-bottom: 124px; }
   .pyl-tabbar { position: fixed; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); max-width: 560px; margin: 0 auto; height: 74px; box-sizing: border-box; padding: 0 8px 8px; border-radius: 28px; display: flex; align-items: flex-end; justify-content: space-between; background: var(--m-glass); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); border: 1.5px solid var(--m-line); box-shadow: 0 14px 40px var(--m-shadow); z-index: 40; }
   .pyl-tabbar .pyl-tab { flex: 1 1 0; min-width: 0; min-height: 52px; padding: 0; border: 0; background: transparent; color: var(--m-muted); font: inherit; font-size: 11px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; cursor: pointer; }

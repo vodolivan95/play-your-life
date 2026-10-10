@@ -205,6 +205,7 @@ export type GameState = {
   rooms?: Partial<Record<import('./roomEngine').RoomId, import('./roomEngine').RoomData>>;
   cityPurchases?: import('./city').CityPurchase[];
   sphereProgressionModel?: typeof SPHERE_PROGRESSION_MODEL;
+  skillTrees?: import('./skillTree').SkillTrees;
   city?: import('./city').CityState;
   shop?: import('./shop').ShopState;
   version: 1;

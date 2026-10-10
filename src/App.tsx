@@ -26,6 +26,7 @@ import RewardShop from './components/RewardShop';
 import Onboarding, { ProfileEditor } from './components/Onboarding';
 import MonthlyReview from './components/MonthlyReview';
 import GoalsBoard from './components/GoalsBoard';
+import SkillTree from './components/SkillTree';
 import LifePlanner from './components/LifePlanner';
 import { GoalForm } from './components/PlanningForms';
 import { saveGoal } from './planning';
@@ -768,50 +769,9 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                     </div>
                   </section>
                 )}
-                <div className="tree-intro" hidden={treeView !== 'skills'}>
-                  <span>🌳</span>
-                  <h2>Всё начинается с тебя</h2>
-                  <p>9 веток. Бесконечно много возможностей.</p>
-                </div>
-                <div className="skill-grid" hidden={treeView !== 'skills'}>
-                  {spheres.map((s) => {
-                    const lvl = sphereLevel(state.spheres[s.id].xp);
-                    return (
-                      <section className="panel skill-branch" key={s.id}>
-                        <button
-                          className="branch-title"
-                          onClick={() => {
-                            setSelected(s.id);
-                            setPage('spheres');
-                          }}
-                        >
-                          <span>{s.icon}</span>
-                          <h3>{s.name}</h3>
-                          <span className="level-chip">LVL {lvl} / {MAX_SPHERE_LEVEL}</span>
-                        </button>
-                        <div className="skill-nodes">
-                          {[
-                            'Первые шаги',
-                            'Привычка',
-                            'Уверенность',
-                            'Мастерство',
-                          ].map((name, i) => (
-                            <div
-                              className={`skill-node ${lvl >= (i + 1) * 2 - 1 ? 'open' : 'locked'}`}
-                              key={name}
-                            >
-                              <span>{lvl >= (i + 1) * 2 - 1 ? '✓' : '🔒'}</span>
-                              <div>
-                                <strong>{name}</strong>
-                                <small>Уровень {i * 2 + 1}</small>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </section>
-                    );
-                  })}
-                </div>
+                {treeView === 'skills' && (
+                  <SkillTree state={state} onChange={setState} notify={notify} />
+                )}
               </>
             )}
             {page === 'achievements' && (

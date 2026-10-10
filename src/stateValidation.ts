@@ -4,6 +4,7 @@ import { validCity, cityPrices, cityRooms } from './city.ts';
 import { validRooms } from './roomEngine.ts';
 import { shopItems } from './shop.ts';
 import { validProjectImage } from './projectImage.ts';
+import { validSkillTrees } from './skillTree.ts';
 import type { GameState } from './game.ts';
 
 type SavedState = Omit<GameState, 'profile' | 'mainGoalId'> &
@@ -77,6 +78,8 @@ export function validateState(value: unknown): asserts value is SavedState {
   )
     return fail();
   if (value.city !== undefined && !validCity(value.city)) return fail();
+  if (value.skillTrees !== undefined && !validSkillTrees(value.skillTrees))
+    return fail();
   if (value.shop !== undefined) {
     const shop = value.shop;
     if (

@@ -1,0 +1,723 @@
+/* Дерево навыков. Тему задаёт data-theme на .skt, остальное приложение не затрагивается. */
+.skt {
+  --skt-bg: radial-gradient(ellipse at 50% 0%, #14234a 0%, #070d1e 62%);
+  --skt-card: linear-gradient(180deg, #0f1a38, #0a1229);
+  --skt-card-border: #1d2a4d;
+  --skt-surface: #0f1830;
+  --skt-input: #0a1229;
+  --skt-text: #ffffff;
+  --skt-text-2: #b7c6e6;
+  --skt-text-3: #8fa2c9;
+  --skt-text-4: #7487ae;
+  --skt-muted: #5b6a8c;
+  --skt-line: #222d4b;
+  --skt-gold: #e8c26a;
+  --skt-gold-text: #e8c26a;
+  --skt-blue: #528cf3;
+  --skt-selected: #1b2c57;
+  --skt-lock-bg: #0c1328;
+  --skt-lock-border: #27324f;
+  --skt-avail-bg: #121e3f;
+  --skt-avail-border: #8ca8da;
+  --skt-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  --skt-ok: #4cd08a;
+  --skt-bad: #f08a9a;
+  color: var(--skt-text);
+  background: var(--skt-bg);
+  border-radius: 28px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  font-family: inherit;
+}
+.skt[data-theme='light'] {
+  --skt-bg: #f1f7fe;
+  --skt-card: #ffffff;
+  --skt-card-border: #dce6f3;
+  --skt-surface: #ffffff;
+  --skt-input: #f1f7fe;
+  --skt-text: #0f1b33;
+  --skt-text-2: #3b4c68;
+  --skt-text-3: #52627d;
+  --skt-text-4: #6b7b96;
+  --skt-muted: #8a97ae;
+  --skt-line: #d5deec;
+  --skt-gold-text: #a87a10;
+  --skt-selected: #eaf2ff;
+  --skt-lock-bg: #e9eff8;
+  --skt-lock-border: #c4cfe2;
+  --skt-avail-bg: #ffffff;
+  --skt-avail-border: #5e86c9;
+  --skt-shadow: 0 2px 10px rgba(30, 70, 130, 0.12);
+  --skt-ok: #14804a;
+  --skt-bad: #b3263e;
+}
+.skt button {
+  font-family: inherit;
+  cursor: pointer;
+}
+.skt h2,
+.skt h3,
+.skt p {
+  margin: 0;
+}
+.skt-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+.skt-head h2 {
+  font-size: 28px;
+  font-weight: 800;
+}
+.skt-head p {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--skt-text-3);
+}
+
+/* Переключатели: тема и режим */
+.skt-theme,
+.skt-mode {
+  display: flex;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--skt-input);
+  border: 1.5px solid var(--skt-card-border);
+}
+.skt-theme button,
+.skt-mode button {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--skt-text-3);
+  font-size: 13px;
+  font-weight: 700;
+}
+.skt-theme button.selected,
+.skt-mode button.selected {
+  background: linear-gradient(135deg, #f3d888, #c99a30);
+  color: #2a1e04;
+  font-weight: 800;
+}
+
+/* Сферы */
+.skt-spheres {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 2px 8px;
+}
+.skt-spheres button {
+  flex: 1 0 104px;
+  min-height: 112px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 12px 8px 10px;
+  border-radius: 18px;
+  border: 1.5px solid var(--skt-card-border);
+  background: var(--skt-surface);
+  color: var(--skt-text-2);
+}
+.skt-spheres button strong {
+  font-size: 13px;
+  text-align: center;
+  line-height: 1.2;
+}
+.skt-spheres button small {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--skt-text-4);
+}
+.skt-spheres button.selected {
+  border-color: var(--skt-gold);
+  background: var(--skt-selected);
+  color: var(--skt-text);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--skt-color) 40%, transparent);
+}
+.skt-spheres button.selected small {
+  color: var(--skt-gold-text);
+}
+.skt-sphere-icon {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2px solid var(--skt-color, var(--skt-blue));
+  overflow: hidden;
+  background: #fff;
+  display: block;
+}
+.skt-icon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+/* Доска и панель */
+.skt-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+}
+.skt-board {
+  flex: 1 1 640px;
+  min-width: 0;
+  padding: 22px;
+  border-radius: 24px;
+  background: var(--skt-card);
+  border: 1.5px solid var(--skt-card-border);
+  box-shadow: var(--skt-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.skt-board-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+.skt-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.skt-title h3 {
+  font-size: 22px;
+  font-weight: 800;
+}
+.skt-title small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--skt-text-3);
+}
+.skt-empty {
+  padding: 28px 16px;
+  text-align: center;
+  border-radius: 18px;
+  border: 1.5px dashed var(--skt-line);
+  color: var(--skt-text-3);
+}
+.skt-empty strong {
+  color: var(--skt-text);
+  font-size: 16px;
+}
+.skt-empty p {
+  margin-top: 6px;
+  font-size: 13px;
+}
+.skt-scroll {
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+.skt-grid {
+  display: grid;
+  grid-template-columns: 84px repeat(var(--skt-cols), minmax(132px, 1fr));
+  min-width: min-content;
+  column-gap: 8px;
+}
+.skt-tier-col,
+.skt-branch {
+  display: flex;
+  flex-direction: column;
+}
+.skt-corner,
+.skt-branch-head {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.skt-branch-head strong,
+.skt-branch-head input {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--skt-gold-text);
+  text-align: center;
+}
+.skt-branch-head input {
+  width: 100%;
+  max-width: 170px;
+  min-height: 40px;
+  border-radius: 12px;
+  border: 1.5px solid var(--skt-card-border);
+  background: var(--skt-input);
+}
+.skt-tier,
+.skt-cell {
+  height: 150px;
+}
+.skt-tier {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+.skt-tier b {
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--skt-text-4);
+}
+.skt-tier small {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--skt-muted);
+}
+.skt-tier small.open {
+  color: var(--skt-gold-text);
+}
+.skt-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.skt-link {
+  position: absolute;
+  left: 50%;
+  bottom: -12px;
+  width: 4px;
+  height: 36px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--skt-line);
+  z-index: 0;
+}
+.skt-link.lit {
+  background: linear-gradient(var(--skt-blue), var(--skt-gold));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--skt-blue) 55%, transparent);
+}
+.skt-gap {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--skt-line);
+}
+
+/* Навык */
+.skt-node,
+.skt-add {
+  position: relative;
+  z-index: 1;
+  width: 128px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--skt-text);
+  padding: 0;
+}
+.skt-node strong {
+  font-size: 12px;
+  line-height: 1.2;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.skt-node small,
+.skt-add small {
+  font-size: 11px;
+  color: var(--skt-text-4);
+}
+.skt-diamond {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin: 6px 0 4px;
+  transform: rotate(45deg);
+  border-radius: 10px;
+  border: 3px solid var(--skt-lock-border);
+  background: var(--skt-lock-bg);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.skt-diamond.big {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  margin: 8px;
+  border-color: #8db8ff;
+  background: linear-gradient(135deg, #2a58b8, #12296a);
+}
+.skt-diamond-icon {
+  width: 42px;
+  height: 42px;
+  transform: rotate(-45deg);
+  display: block;
+  position: relative;
+}
+.skt-diamond.big .skt-diamond-icon {
+  width: 34px;
+  height: 34px;
+}
+.skt-lock {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+.skt-node.is-locked .skt-icon {
+  opacity: 0.28;
+  filter: grayscale(1);
+}
+.skt-node.is-locked strong {
+  color: var(--skt-muted);
+}
+.skt-node.is-available .skt-diamond {
+  background: var(--skt-avail-bg);
+  border-color: var(--skt-avail-border);
+}
+.skt-node.is-learning .skt-diamond {
+  background: linear-gradient(135deg, #2a58b8, #12296a);
+  border-color: #8db8ff;
+  box-shadow: 0 0 22px rgba(82, 140, 243, 0.55);
+}
+.skt-node.is-max .skt-diamond {
+  background: linear-gradient(135deg, #fbe3a0, #b98a24);
+  border-color: #ffefc0;
+  box-shadow: 0 0 26px rgba(232, 194, 106, 0.65);
+}
+.skt-node.is-selected .skt-diamond,
+.skt-add.is-selected .skt-diamond {
+  outline: 3px solid var(--skt-gold);
+  outline-offset: 5px;
+}
+.skt-node:focus-visible .skt-diamond,
+.skt-add:focus-visible .skt-diamond,
+.skt button:focus-visible {
+  outline: 3px solid var(--skt-gold);
+  outline-offset: 3px;
+}
+.skt-pips {
+  display: flex;
+  gap: 5px;
+  min-height: 8px;
+}
+.skt-pips i {
+  width: 7px;
+  height: 7px;
+  transform: rotate(45deg);
+  background: var(--skt-line);
+}
+.skt-pips i.on {
+  background: #8db8ff;
+}
+.skt-node.is-max .skt-pips i.on {
+  background: var(--skt-gold);
+}
+.skt-add .skt-diamond {
+  border-style: dashed;
+  border-color: #3a4c80;
+  background: transparent;
+}
+.skt-add .skt-diamond b {
+  transform: rotate(-45deg);
+  font-size: 28px;
+  font-weight: 300;
+  color: #8db8ff;
+  line-height: 1;
+}
+.skt[data-theme='light'] .skt-add .skt-diamond {
+  border-color: #9db4dc;
+}
+.skt-branch-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+.skt-branch-foot button,
+.skt-templates button {
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1.5px solid var(--skt-card-border);
+  background: transparent;
+  color: var(--skt-text-2);
+  font-size: 12px;
+  font-weight: 700;
+}
+.skt .skt-danger {
+  border-color: color-mix(in srgb, var(--skt-bad) 50%, transparent);
+  color: var(--skt-bad);
+  background: transparent;
+}
+
+/* Новая ветка и шаблоны */
+.skt-new-branch {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--skt-card-border);
+}
+.skt-new-branch form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.skt-new-branch input {
+  flex: 1 1 220px;
+}
+.skt-templates {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.skt-templates span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--skt-text-3);
+}
+
+/* Поля */
+.skt input,
+.skt select {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1.5px solid var(--skt-card-border);
+  background: var(--skt-input);
+  color: var(--skt-text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  box-sizing: border-box;
+  min-width: 0;
+}
+.skt .skt-primary {
+  min-height: 46px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f3d888, #c99a30);
+  color: #2a1e04;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* Правая панель */
+.skt-panel {
+  flex: 1 1 340px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  border-radius: 24px;
+  background: var(--skt-card);
+  border: 1.5px solid color-mix(in srgb, var(--skt-gold) 45%, transparent);
+  box-shadow: var(--skt-shadow);
+}
+.skt-panel h3 {
+  font-size: 22px;
+  font-weight: 800;
+}
+.skt-hint strong {
+  font-size: 16px;
+}
+.skt-hint p,
+.skt-note {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--skt-text-3);
+}
+.skt-note {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--skt-selected);
+}
+.skt-note.warn {
+  color: var(--skt-bad);
+}
+.skt-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.skt-detail-head small {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--skt-gold-text);
+}
+.skt-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: var(--skt-input);
+  border: 1.5px solid var(--skt-card-border);
+}
+.skt-stepper button {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid var(--skt-gold);
+  background: transparent;
+  color: var(--skt-gold-text);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+}
+.skt-stepper button.plus {
+  border: 0;
+  background: linear-gradient(135deg, #f3d888, #c99a30);
+  color: #2a1e04;
+}
+.skt-stepper button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.skt-stepper div {
+  text-align: center;
+}
+.skt-stepper b {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+}
+.skt-stepper b span {
+  font-size: 18px;
+  color: var(--skt-text-4);
+}
+.skt-stepper small {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--skt-text-3);
+}
+.skt-facts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.skt-facts li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--skt-input);
+  font-size: 13px;
+  color: var(--skt-text-2);
+}
+.skt-facts b.ok {
+  color: var(--skt-ok);
+}
+.skt-facts b.bad {
+  color: var(--skt-bad);
+}
+.skt-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.skt-form label,
+.skt-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.skt-form label > span,
+.skt-field > span {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--skt-text-3);
+}
+.skt-row {
+  display: flex;
+  gap: 10px;
+}
+.skt-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.skt-icons button {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--skt-card-border);
+  overflow: hidden;
+  background: #fff;
+}
+.skt-icons button.selected {
+  border-color: var(--skt-gold);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--skt-gold) 60%, transparent);
+}
+.skt-actions {
+  display: flex;
+  gap: 10px;
+}
+.skt-actions .skt-primary {
+  flex: 1;
+}
+.skt-actions .skt-danger {
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 14px;
+  border: 1.5px solid;
+  font-weight: 700;
+}
+
+@media (max-width: 700px) {
+  .skt {
+    padding: 14px;
+    border-radius: 20px;
+  }
+  .skt-head h2 {
+    font-size: 24px;
+  }
+  .skt-board,
+  .skt-panel {
+    padding: 14px;
+    border-radius: 18px;
+  }
+  .skt-row {
+    flex-direction: column;
+  }
+  .skt-theme button,
+  .skt-mode button {
+    padding: 0 12px;
+  }
+  .skt-grid {
+    grid-template-columns: 64px repeat(var(--skt-cols), minmax(124px, 1fr));
+  }
+}

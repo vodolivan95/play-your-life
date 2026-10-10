@@ -398,3 +398,24 @@
     cursor: default;
   }
 }
+
+/* Телефон: компактная сводка и крупные зоны нажатия */
+@media (max-width: 600px) {
+  .gl-title .goal-title-link {
+    min-height: 44px;
+    padding: 8px 0;
+    display: inline-flex;
+    align-items: center;
+  }
+  .gl-title h2 {
+    margin-bottom: 0;
+  }
+  .gl-card .goal-controls summary {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .gl-card .main-goal-button {
+    min-height: 44px;
+  }
+}

@@ -242,4 +242,4 @@
 .home-dashboard[data-theme='dark'] .home-streak-rewards div b { color:#ffe08a; }
 .home-dashboard[data-theme='dark'] .home-streak-rewards h3 { color:#9fb2db; }
 /* На телефоне тёмный фон не добавляет полей: иначе содержимое шире экрана на 320 px. */
-@media(max-width:760px) { .home-dashboard[data-theme='dark'] { padding:0; border-radius:0; background:none; } .home-dashboard[data-theme='dark'] .home-panel { backdrop-filter:none; } }
+@media(max-width:760px) { .home-dashboard[data-theme='dark'] { padding:12px 0 18px; border-radius:0; background:#08102a; box-shadow:0 0 0 100vmax #08102a; clip-path:inset(0 -100vmax); } .home-dashboard[data-theme='dark'] .home-panel { backdrop-filter:none; background:linear-gradient(180deg,#14203f,#0f1830); } .home-dashboard[data-theme='dark'] .home-streak { background:linear-gradient(160deg,#3a3320 0%,#0f1830 60%); } }

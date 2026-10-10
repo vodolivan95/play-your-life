@@ -1,0 +1,238 @@
+/* Список целей: сводка, фильтры и карточки. Цвет сферы приходит из --gl-color. */
+.gl-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.gl-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(30, 70, 130, 0.07);
+}
+.gl-tile b {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #0f1b33;
+}
+.gl-tile span {
+  font-size: 12px;
+  color: #52627d;
+}
+.gl-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-bottom: 16px;
+}
+.gl-filters .goal-tabs {
+  margin: 0;
+}
+.gl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.gl-chips button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1.5px solid transparent;
+  border-radius: 18px;
+  background: #fff;
+  color: #3b4c68;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.gl-chips button.selected {
+  border-color: #0f1b33;
+  color: #0f1b33;
+  font-weight: 700;
+}
+.gl-sort {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #52627d;
+}
+.gl-sort select {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: #fff;
+  color: #3b4c68;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+.gl-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
+  gap: 14px;
+  align-items: start;
+}
+.gl-list > .empty {
+  grid-column: 1 / -1;
+}
+.gl-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(30, 70, 130, 0.07);
+  border: 2px solid transparent;
+}
+.gl-card.is-main {
+  border-color: var(--gl-color, #1272d6);
+}
+.gl-head {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+.gl-icon {
+  width: 52px;
+  height: 52px;
+}
+.gl-title h2 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.gl-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.gl-tag {
+  padding: 2px 9px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gl-color, #1272d6) 18%, #fff);
+  color: #1f2d4a;
+  font-size: 11px;
+  font-weight: 700;
+}
+.gl-tag.is-main {
+  background: #fff1c7;
+  color: #6b4a00;
+}
+.gl-tag.is-late {
+  background: #ffe3e3;
+  color: #9b1c1c;
+}
+.gl-deadline {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  text-align: right;
+  font-size: 12px;
+  color: #52627d;
+}
+.gl-deadline b {
+  font-size: 14px;
+  color: #0f1b33;
+}
+.gl-deadline span {
+  font-weight: 700;
+  color: #3b4c68;
+}
+.gl-deadline.is-late span {
+  color: #9b1c1c;
+}
+.gl-progress-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #3b4c68;
+}
+.gl-progress-label b {
+  color: #0f1b33;
+}
+.gl-bar {
+  height: 10px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--gl-color, #1272d6) 16%, #eef3fa);
+  overflow: hidden;
+}
+.gl-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+  background: var(--gl-color, #1272d6);
+}
+.gl-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e3eaf4;
+}
+.gl-next {
+  margin: 0;
+  font-size: 13px;
+  color: #3b4c68;
+  overflow-wrap: anywhere;
+}
+.gl-next b {
+  color: #0f1b33;
+}
+.gl-reward {
+  padding: 3px 10px;
+  border-radius: 10px;
+  background: #fff1c7;
+  color: #6b4a00;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.gl-card .goal-controls {
+  margin: 0;
+}
+.gl-plan {
+  width: 100%;
+  min-height: 44px;
+  background: #e9f6ff;
+  box-shadow: none;
+  color: #236589;
+  justify-content: center;
+}
+@media (max-width: 600px) {
+  .gl-head {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+  .gl-icon {
+    width: 44px;
+    height: 44px;
+  }
+  .gl-deadline {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 8px;
+    text-align: left;
+  }
+  .gl-sort {
+    margin-left: 0;
+    width: 100%;
+  }
+  .gl-sort select {
+    flex: 1;
+  }
+}

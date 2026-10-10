@@ -157,6 +157,8 @@
   .pyl-tabbar .pyl-tab[aria-current='page'] { color: var(--m-accent-soft); font-weight: 800; }
   .pyl-tab-icon { position: relative; width: 44px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
   .pyl-tabbar .pyl-tab[aria-current='page'] .pyl-tab-icon { background: var(--m-pill); }
+  .pyl-tab-art { display: block; width: 28px; height: 28px; filter: drop-shadow(0 2px 3px rgba(20, 40, 90, .3)); }
+  .pyl-tab-orb img { display: block; width: 40px; height: 40px; filter: drop-shadow(0 2px 3px rgba(20, 40, 90, .35)); }
   .pyl-tab-badge { position: absolute; right: 2px; top: -2px; min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; border-radius: 9px; background: #ef7188; color: #fff; border: 2px solid var(--m-solid); display: grid; place-items: center; font-size: 11px; font-weight: 800; line-height: 1; }
   .pyl-tabbar .pyl-tab-center { margin-top: -30px; color: var(--m-accent-soft); font-weight: 800; }
   .pyl-tab-orb { width: 62px; height: 62px; box-sizing: border-box; border-radius: 50%; background: var(--m-accent-grad); border: 4px solid var(--m-solid); color: var(--m-accent-text); box-shadow: 0 0 0 2px rgba(245, 196, 81, .45), 0 10px 26px rgba(240, 168, 28, .45); display: flex; align-items: center; justify-content: center; }

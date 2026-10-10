@@ -4,7 +4,6 @@ import { navigation } from '../navigation';
 import { menuIconSrc } from '../menuIcons';
 import type { MenuIconId } from '../menuIcons';
 import { useMenuTheme } from '../menuTheme';
-import Icon from './Icon';
 import PlayerCard from './PlayerCard';
 import ThemeSwitch from './ThemeSwitch';
 import './AppMenu.css';
@@ -32,7 +31,7 @@ export default function MobileNav({ page, state, questCount, onNavigate }: { pag
     onNavigate(id);
   };
   const moreActive = open || (moreIds as string[]).includes(page);
-  const tab = (id: string, label: string, icon: string, badge?: number) => (
+  const tab = (id: MenuIconId, label: string, badge?: number) => (
     <button
       key={id}
       type="button"
@@ -42,7 +41,7 @@ export default function MobileNav({ page, state, questCount, onNavigate }: { pag
       onClick={() => go(id)}
     >
       <span className="pyl-tab-icon">
-        <Icon name={icon} size={22} />
+        <img className="pyl-tab-art" src={menuIconSrc(id)} alt="" width={28} height={28} />
         {badge !== undefined && badge > 0 && <span className="pyl-tab-badge">{badge}</span>}
       </span>
       {label}
@@ -70,18 +69,18 @@ export default function MobileNav({ page, state, questCount, onNavigate }: { pag
         </section>
       )}
       <nav className="pyl-tabbar" data-theme={theme} aria-label="Разделы">
-        {tab('home', 'Главная', 'home')}
-        {tab('quests', 'Квесты', 'quests', questCount)}
+        {tab('home', 'Главная')}
+        {tab('quests', 'Квесты', questCount)}
         <button
           type="button"
           className="pyl-tab pyl-tab-center"
           aria-current={!open && page === 'goals' ? 'page' : undefined}
           onClick={() => go('goals')}
         >
-          <span className="pyl-tab-orb"><Icon name="goals" size={28} /></span>
+          <span className="pyl-tab-orb"><img src={menuIconSrc('goals')} alt="" width={40} height={40} /></span>
           Цели
         </button>
-        {tab('city', 'Город', 'city')}
+        {tab('city', 'Город')}
         <button
           type="button"
           className="pyl-tab"

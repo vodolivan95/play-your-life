@@ -87,7 +87,7 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
       <div className="coastal-zoom" aria-label="Масштаб карты">
         <button aria-label="Уменьшить карту" disabled={zoom===1} onClick={()=>setZoom(Math.max(1,zoom-.5))}>−</button>
         <button onClick={()=>setZoom(1)}>Весь остров</button>
-        <button aria-label="Увеличить карту" disabled={zoom===2.5} onClick={()=>setZoom(Math.min(2.5,zoom+.5))}>+</button>
+        <button aria-label="Увеличить карту" disabled={zoom>=3} onClick={()=>setZoom(Math.min(3,zoom+.5))}>+</button>
       </div>
     </div>
     {dev&&<details className="city-dev-tools">
@@ -116,7 +116,7 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
       </div>
       <p role="status">{message||`${draft.length} точек · SAVE сохраняет только маршруты; прогресс игры не изменяется.`}</p>
     </details>}
-    <p className="coastal-hint" id="coastal-hint">{editing?'Нажимай на карту, чтобы добавить точки маршрута.':'Нажми на здание, чтобы войти. Подпись района или список — карточка района. Масштаб — двумя пальцами, колёсиком или кнопками.'}</p>
+    <p className="coastal-hint" id="coastal-hint">{editing?'Нажимай на карту, чтобы добавить точки маршрута.':'Нажми на здание, чтобы войти. Подпись района или список — карточка района. Приближай колёсиком мыши или двойным щелчком к курсору, листай перетаскиванием; на телефоне — двумя пальцами.'}</p>
     <div className="coastal-frame">
     <div ref={scroll} className="coastal-scroll" aria-label="Прибрежная карта" aria-describedby="coastal-hint">
       <div className="coastal-stage" style={wide?{width:`${zoom*100}%`}:undefined}>
@@ -152,20 +152,20 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
         <span className="dot" aria-hidden="true"/><span className="name">{card.name}<span className="bar"><span style={{width:`${card.progress}%`}}/></span></span><b>{card.level}</b>
       </button>)}
     </nav>}
+    {!wide&&<div className="coastal-chips" aria-label="Районы острова">
+      {cards.map(card=><button key={card.id} aria-pressed={picked===card.id} onClick={()=>setPicked(picked===card.id?null:card.id)} style={{'--pin':card.color} as CSSProperties}>
+        <span className="dot" aria-hidden="true"/>{card.name} · {card.level}
+      </button>)}
+    </div>}
     {current&&<aside className="coastal-panel" aria-label={`Район ${current.name}`} style={{'--pin':current.color} as CSSProperties}>
       <button className="close" aria-label="Закрыть карточку района" onClick={()=>setPicked(null)}>×</button>
       <span className="tag">{current.rank}</span>
       <h3>{current.name}</h3>
       <p>Уровень района {current.level} · здание {buildingState(state,current.id).tier} ур.</p>
       <div className="stats"><span><small>Задачи сегодня</small><b>{current.tasksToday}</b></span><span><small>XP за неделю</small><b>{current.weekXP}</b></span><span><small>Серия</small><b>{current.streak} дн.</b></span></div>
-      <div className="progress"><span><small>До следующего уровня</small><b>{current.maxed?'максимум':`${current.currentXP} / ${current.requiredXP} XP`}</b></span><i><i style={{width:`${current.progress}%`}}/></i></div>
+      <div className="coastal-progress"><span><small>До следующего уровня</small><b>{current.maxed?'максимум':`${current.currentXP} / ${current.requiredXP} XP`}</b></span><i><i style={{width:`${current.progress}%`}}/></i></div>
       <button className="enter" onClick={()=>onOpen(current.id)}>Войти внутрь</button>
     </aside>}
     </div>
-    {!wide&&<div className="coastal-chips" aria-label="Районы острова">
-      {cards.map(card=><button key={card.id} aria-pressed={picked===card.id} onClick={()=>setPicked(picked===card.id?null:card.id)} style={{'--pin':card.color} as CSSProperties}>
-        <span className="dot" aria-hidden="true"/>{card.name} · {card.level}
-      </button>)}
-    </div>}
   </div>;
 }

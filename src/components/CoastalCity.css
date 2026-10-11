@@ -74,7 +74,8 @@
 .coastal-pin:focus-visible, .coastal-districts button:focus-visible, .coastal-chips button:focus-visible, .coastal-panel button:focus-visible { outline:2px solid #ffc94a; outline-offset:2px; }
 
 @media (min-width:1000px) {
-  .coastal-scroll { width:min(100%, calc(80vh * 1.6)); width:min(100%, calc(80svh * 1.6)); max-height:none; aspect-ratio:1440 / 900; background:#0a3a5c; border-color:#96b9ff33; }
+  .coastal-scroll { width:100%; max-height:none; aspect-ratio:1440 / 900; background:#0a3a5c; border:0; border-radius:20px; scrollbar-width:none; }
+  .coastal-scroll::-webkit-scrollbar { display:none; }
   .coastal-stage { aspect-ratio:1440 / 900; overflow:hidden; }
   .coastal-scene { display:block; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; user-select:none; pointer-events:none; }
   .coastal-stage > .coastal-map { position:absolute; }

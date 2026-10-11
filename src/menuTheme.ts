@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 
 export type MenuTheme = 'dark' | 'light';
 
-/** Тот же ключ, что и у главной: тема главной и меню — одна общая настройка. */
+/** Одна общая тема всего приложения: меню, главная, все страницы и окна. */
 const themeKey = 'play-your-life-home-theme';
 const listeners = new Set<() => void>();
 
@@ -16,8 +16,17 @@ function read(): MenuTheme {
 
 let current: MenuTheme = read();
 
+/** Тема ставится на <html>: по ней стили всех страниц выбирают светлые или тёмные цвета. */
+function apply(theme: MenuTheme) {
+  if (typeof document === 'undefined') return;
+  document.documentElement.dataset.theme = theme;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#070d20' : '#edf8ff');
+}
+apply(current);
+
 export function setMenuTheme(next: MenuTheme) {
   current = next;
+  apply(next);
   try {
     localStorage.setItem(themeKey, next);
   } catch {

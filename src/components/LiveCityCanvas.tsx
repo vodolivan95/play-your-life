@@ -12,7 +12,7 @@ import type { CityTime, DebugFlags } from '../cityLive/render';
 
 type Props = {
   routes: CityRoute[]; paused:boolean; speed:number; quality:Quality; time:CityTime;
-  weather:string; debug:DebugFlags; draft:Point[]; editing:boolean; onPoint:(p:Point)=>void;
+  weather:string; debug:DebugFlags; draft:Point[]; editing:boolean; onPoint:(p:Point)=>void; scene?:boolean;
 };
 export default function LiveCityCanvas(props:Props) {
   const [loadError,setLoadError]=useState(false);
@@ -53,7 +53,7 @@ export default function LiveCityCanvas(props:Props) {
       const signature=JSON.stringify([settings.time,settings.weather,settings.debug,settings.draft,node.width]);
       if (!paused||signature!==lastSignature) {
         if (paused) Object.assign(renderer,timeLighting(settings.time,sim.elapsed));
-        const renderStart=performance.now();renderer.draw(sim,{...settings,low:quality.level!=='high',reduced,background,sprites,boats,globe,clean});renderMs=renderMs*.9+(performance.now()-renderStart)*.1;lastSignature=signature;
+        const renderStart=performance.now();renderer.draw(sim,{...settings,low:quality.level!=='high',reduced,background,sprites,boats,globe,clean,scene:settings.scene});renderMs=renderMs*.9+(performance.now()-renderStart)*.1;lastSignature=signature;
       }
       if (now-lastStats>1000) {
         lastStats=now;

@@ -8,7 +8,7 @@ export type CityTime = 'day'|'sunset'|'night'|'sunrise'|'auto';
 export type DebugFlags = { road:boolean;water:boolean;pedestrian:boolean;hitboxes:boolean;spawn:boolean;intersections:boolean;fps:boolean };
 export type RenderOptions = {
   time: CityTime; weather:string; low:boolean; reduced?:boolean; debug:DebugFlags;
-  draft:Point[]; background:HTMLImageElement; sprites:HTMLImageElement; boats:HTMLImageElement; globe:HTMLImageElement; clean:HTMLImageElement;
+  draft:Point[]; background:HTMLImageElement; sprites:HTMLImageElement; boats:HTMLImageElement; globe:HTMLImageElement; clean:HTMLImageElement; scene?:boolean;
 };
 const polygon = (ctx: CanvasRenderingContext2D, points: number[][]) => {
   ctx.moveTo(points[0][0],points[0][1]); for (const [x,y] of points.slice(1)) ctx.lineTo(x,y); ctx.closePath();
@@ -43,7 +43,8 @@ export class CityRenderer {
     this.cleanupLayer(opts.clean,false);
     this.waterLayer(t,opts);
     this.waterTrafficLayer(sim,opts);
-    this.bridgeLayer(opts.background);
+    // В сцене-картинке мосты нарисованы самой картинкой: фрагменты старой карты не накладываются.
+    if(!opts.scene) this.bridgeLayer(opts.background);
     this.cleanupLayer(opts.clean,true);
     this.nightLightingLayer(t,opts);
     this.roadTrafficLayer(sim,opts);

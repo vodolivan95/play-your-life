@@ -416,3 +416,62 @@ test('SDK сохраняет цель, этапы, заметки, прогре�
   assert.equal(loaded.revision, completed.revision);
   await assertFails(getDoc(doc(env.authenticatedContext('bob').firestore(), 'players', 'alice')));
 });
+
+// Разделённое сохранение (Issue #34): архив событий и обложки в подколлекциях.
+const cover = "data:image/jpeg;base64," + "A".repeat(2000);
+test("архив и обложки доступны только владельцу, обложку нельзя подменить", async () => {
+  const db = env.authenticatedContext("alice").firestore();
+  const month = doc(db, "players", "alice", "history", "2026-07");
+  const image = doc(db, "players", "alice", "images", "goal-b2-0a1b2c3d");
+  await assertSucceeds(setDoc(month, { events: [], updatedAt: serverTimestamp() }));
+  await assertSucceeds(setDoc(image, { data: cover, updatedAt: serverTimestamp() }));
+  await assertSucceeds(setDoc(image, { data: cover, updatedAt: serverTimestamp() }));
+  await assertFails(setDoc(image, { data: cover + "B", updatedAt: serverTimestamp() }));
+  await assertFails(setDoc(doc(db, "players", "alice", "history", "июль"), { events: [], updatedAt: serverTimestamp() }));
+  await assertFails(setDoc(doc(db, "players", "alice", "images", "goal-b2-11111111"), { data: "javascript:alert(1)", updatedAt: serverTimestamp() }));
+  await assertFails(setDoc(month, { events: [], extra: 1, updatedAt: serverTimestamp() }));
+  await assertFails(deleteDoc(month));
+  await assertFails(getDocs(collection(db, "players", "alice", "images")));
+  const bob = env.authenticatedContext("bob").firestore();
+  await assertFails(getDoc(doc(bob, "players", "alice", "history", "2026-07")));
+  await assertFails(getDoc(doc(bob, "players", "alice", "images", "goal-b2-0a1b2c3d")));
+  await assertFails(setDoc(doc(bob, "players", "alice", "history", "2026-08"), { events: [], updatedAt: serverTimestamp() }));
+  await assertFails(deleteDoc(doc(bob, "players", "alice", "images", "goal-b2-0a1b2c3d")));
+  await assertSucceeds(deleteDoc(image));
+});
+
+test("SDK переносит старую историю и обложки в подколлекции и собирает игру обратно", async () => {
+  const db = env.authenticatedContext("alice").firestore();
+  const driver = firebaseSave(db, "alice");
+  const fresh = await driver.create(newAccountGame("Алиса"));
+  const old = new Date(Date.now() - 120 * 86400000).toISOString();
+  const state = {
+    ...fresh.state,
+    goals: [{ id: "g1", name: "Цель с обложкой", sphere: "sport", current: 0, target: 10, created: "2026-10-01", reward: 100, rewarded: false, image: cover }],
+    events: [
+      { id: "recent", sphere: "sport", title: "Недавнее", xp: 0, date: new Date().toISOString(), kind: "planning" },
+      { id: "archived", sphere: "sport", title: "Старое", xp: 0, date: old, kind: "planning" },
+    ],
+  };
+  const saved = await driver.save(state, fresh.revision);
+  assert.ok(saved);
+  const main = (await getDoc(doc(db, "players", "alice"))).data();
+  assert.deepEqual(main.state.events.map((e) => e.id), ["recent"]);
+  assert.equal(Object.keys(main.state.historyIndex).length, 1);
+  assert.equal(main.state.goals[0].image, undefined);
+  assert.deepEqual(Object.keys(main.state.imageRefs), ["goal:g1"]);
+  const loaded = await firebaseSave(db, "alice").load();
+  assert.deepEqual(loaded.state.events.map((e) => e.id), ["recent", "archived"]);
+  assert.equal(loaded.state.goals[0].image, cover);
+  assert.equal(loaded.state.historyIndex, undefined);
+  // Удалённая обложка убирается из облака после сохранения.
+  const removed = {
+    ...loaded.state,
+    goals: loaded.state.goals.map((g) => ({ ...g, image: undefined })),
+  };
+  await driver.save(removed, loaded.revision);
+  const again = await firebaseSave(db, "alice").load();
+  assert.equal(again.state.goals[0].image, undefined);
+  assert.equal((await getDoc(doc(db, "players", "alice", "images", main.state.imageRefs["goal:g1"]))).exists(), false);
+  assert.equal(again.state.events.length, 2);
+});

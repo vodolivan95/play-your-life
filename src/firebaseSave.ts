@@ -1,10 +1,22 @@
 import {
+  deleteDoc,
   doc,
   getDocFromServer,
   runTransaction,
   serverTimestamp,
+  setDoc,
 } from "firebase/firestore";
 import type { Firestore } from "firebase/firestore";
+import {
+  assembleFromCloud,
+  cloudWrites,
+  isCloudForm,
+  monthSignature,
+  splitForCloud,
+  unusedImages,
+} from "./cloudSplit.ts";
+import type { CloudSplit } from "./cloudSplit.ts";
+import type { Event } from "./game.ts";
 import { restoreBackup } from "./backup.ts";
 import type { GameState } from "./game.ts";
 import {
@@ -24,33 +36,115 @@ function decode(data: Record<string, unknown>): SaveRow {
     throw new Error("Некорректный тип игры.");
   return { state, revision: Number(data.revision) };
 }
-function clean(state: GameState) {
+/** Готовит основной документ: полная игра делится, облачная форма проходит как есть. */
+function clean(state: GameState, now = new Date()) {
   if (state.profile.mode !== "personal")
     throw new Error("В аккаунте сохраняется только личная игра.");
   validateState(state);
-  const result = JSON.parse(JSON.stringify(state));
+  const stored = splitForCloud(state, now).stored;
+  validateState(stored);
+  const result = JSON.parse(JSON.stringify(stored));
   if (new TextEncoder().encode(JSON.stringify(result)).length > 800000)
     throw new Error("Сохранение слишком большое. Скачайте резервную копию.");
   return result;
 }
 export function firebaseSave(database: Firestore, userId: string): SaveDriver {
   const ref = doc(database, "players", userId);
+  const historyRef = (month: string) =>
+    doc(database, "players", userId, "history", month);
+  const imageRef = (id: string) => doc(database, "players", userId, "images", id);
+  // Архивные месяцы и обложки не меняются без смены подписи, поэтому их можно не перечитывать.
+  const monthCache = new Map<string, Event[]>();
+  const imageCache = new Map<string, string>();
+  /** Собирает полную игру из основного документа, архива и обложек. */
+  async function assemble(row: SaveRow): Promise<SaveRow> {
+    const stored = row.state;
+    if (!isCloudForm(stored)) return row;
+    const history: Record<string, Event[]> = {};
+    const images: Record<string, string> = {};
+    await Promise.all([
+      ...Object.entries(stored.historyIndex ?? {}).map(async ([month, signature]) => {
+        const cached = monthCache.get(month);
+        if (cached && monthSignature(cached) === signature) {
+          history[month] = cached;
+          return;
+        }
+        const snapshot = await getDocFromServer(historyRef(month));
+        const events = snapshot.exists() ? snapshot.data().events : undefined;
+        if (Array.isArray(events)) {
+          history[month] = events as Event[];
+          monthCache.set(month, events as Event[]);
+        }
+      }),
+      ...Object.values(stored.imageRefs ?? {}).map(async (id) => {
+        const cached = imageCache.get(id);
+        if (cached) {
+          images[id] = cached;
+          return;
+        }
+        const snapshot = await getDocFromServer(imageRef(id));
+        const data = snapshot.exists() ? snapshot.data().data : undefined;
+        if (typeof data === "string") {
+          images[id] = data;
+          imageCache.set(id, data);
+        }
+      }),
+    ]);
+    // Полная игра проходит ту же проверку, что резервная копия.
+    const full = restoreBackup(JSON.stringify(assembleFromCloud(stored, history, images)));
+    return { state: full, revision: row.revision };
+  }
+  /** Записывает архив и обложки до основного документа, который на них ссылается. */
+  async function upload(parts: CloudSplit[], previous: GameState | null) {
+    const writes: Promise<unknown>[] = [];
+    const months = new Set<string>(), images = new Set<string>();
+    for (const part of parts) {
+      const changed = cloudWrites(part, previous);
+      for (const month of changed.months) {
+        if (months.has(month)) continue;
+        months.add(month);
+        const events = JSON.parse(JSON.stringify(part.history[month])) as Event[];
+        writes.push(
+          setDoc(historyRef(month), { events, updatedAt: serverTimestamp() }).then(
+            () => monthCache.set(month, events),
+          ),
+        );
+      }
+      for (const id of changed.images) {
+        if (images.has(id)) continue;
+        images.add(id);
+        const data = part.images[id];
+        writes.push(
+          setDoc(imageRef(id), { data, updatedAt: serverTimestamp() }).then(
+            () => imageCache.set(id, data),
+          ),
+        );
+      }
+    }
+    await Promise.all(writes);
+  }
   return {
     async load() {
       const snapshot = await getDocFromServer(ref);
-      return snapshot.exists() ? decode(snapshot.data()) : null;
+      return snapshot.exists() ? assemble(decode(snapshot.data())) : null;
     },
     async create(state) {
-      return runTransaction(database, async (transaction) => {
+      const now = new Date();
+      const part = splitForCloud(state, now);
+      const existing = await getDocFromServer(ref);
+      if (existing.exists()) return assemble(decode(existing.data()));
+      await upload([part], null);
+      const row = await runTransaction(database, async (transaction) => {
         const snapshot = await transaction.get(ref);
         if (snapshot.exists()) return decode(snapshot.data());
         transaction.set(ref, {
-          state: clean(state),
+          state: clean(state, now),
           revision: 1,
           updatedAt: serverTimestamp(),
         });
         return { state, revision: 1 };
       });
+      return row.state === state ? row : assemble(row);
     },
     async save(state, revision) {
       state = {
@@ -72,7 +166,8 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
           userId: t.userId === "local" || !t.userId ? userId : t.userId,
         })),
       };
-      clean(state);
+      const now = new Date();
+      clean(state, now);
       for (const q of state.quests)
         if (q.ownerId && q.ownerId !== userId)
           throw new Error("Квест принадлежит другому пользователю.");
@@ -83,6 +178,18 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
       if (!initial.exists() || initial.data().revision !== revision)
         return null;
       const before = decode(initial.data()).state;
+      // Архив и обложки текущей игры (и прежней полной формы при первой миграции)
+      // записываются до любого коммита, который может на них сослаться.
+      const finalPart = splitForCloud(state, now);
+      await upload(
+        isCloudForm(before) ? [finalPart] : [finalPart, splitForCloud(before, now)],
+        isCloudForm(before) ? before : null,
+      );
+      const uploadedImages = [
+        ...Object.values(before.imageRefs ?? {}),
+        ...Object.keys(finalPart.images),
+        ...(isCloudForm(before) ? [] : Object.keys(splitForCloud(before, now).images)),
+      ];
       let records: EconomyRecords = initial.data().economyRecords ?? {};
       let currentRevision = revision;
       let lastCommittedState: GameState | null = null;
@@ -170,7 +277,7 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
           if (!snapshot.exists() || snapshot.data().revision !== expected)
             return null;
           transaction.update(ref, {
-            state: clean(savedState),
+            state: clean(savedState, now),
             rewardProofs,
             economyRecords: nextRecords,
             recordChanges: changes,
@@ -242,11 +349,21 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
         changes = recordChanges(records, wanted);
       }
       // Also save non-economic changes (planning, rooms, profile) when no record changed.
+      const storedForm = (value: GameState | null) =>
+        value && JSON.stringify(splitForCloud(value, now).stored);
       if (
-        JSON.stringify(lastCommittedState) !== JSON.stringify(state) &&
+        storedForm(lastCommittedState) !== storedForm(state) &&
         !(await commit(records, state))
       )
         return null;
+      // Обложки, которые больше не нужны, удаляются после успешного сохранения.
+      await Promise.all(
+        unusedImages(uploadedImages, finalPart.stored).map((id) =>
+          deleteDoc(imageRef(id))
+            .then(() => imageCache.delete(id))
+            .catch(() => undefined),
+        ),
+      );
       return { state, revision: currentRevision };
     },
   };

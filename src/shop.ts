@@ -2,6 +2,15 @@ import type { GameState } from './game.ts';
 
 export const shopItems = [
   {
+    id: 'icecream',
+    name: 'Любимое мороженое',
+    description: 'Маленькая сладкая радость за хороший день',
+    icon: '🍦',
+    price: 80,
+    color: '#ffeef3',
+    kind: 'reward',
+  },
+  {
     id: 'coffee',
     name: 'Кофе в любимом месте',
     description: 'Пауза для себя и любимый напиток',
@@ -44,6 +53,15 @@ export const shopItems = [
     icon: '🍣',
     price: 450,
     color: '#fff4dc',
+    kind: 'reward',
+  },
+  {
+    id: 'thermae',
+    name: 'Поход в термы',
+    description: 'Сауна, тёплые бассейны и полный отдых',
+    icon: '♨️',
+    price: 600,
+    color: '#fff1e2',
     kind: 'reward',
   },
   {

@@ -39,7 +39,9 @@ for m in g['meshes']:
     nor = acc(p['attributes']['NORMAL']) @ R.T
     uv = acc(p['attributes']['TEXCOORD_0'])
     idx = acc(p['indices']).reshape(-1, 3)
-    t = tex(g['materials'][p['material']]['pbrMetallicRoughness']['baseColorTexture']['index'])
+    pbr = g['materials'][p['material']]['pbrMetallicRoughness']
+    factor = np.array(pbr.get('baseColorFactor', [1, 1, 1, 1])[:3], np.float32)
+    t = tex(pbr['baseColorTexture']['index']) * factor if 'baseColorTexture' in pbr else np.ones((2, 2, 3), np.float32) * factor
     th, tw = t.shape[:2]
     sx = pos[:, 0] * scale + W / 2; sy2 = -pos[:, 1] * scale + H / 2; sz = pos[:, 2]
     for a, b_, c in idx:

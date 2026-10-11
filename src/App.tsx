@@ -8,7 +8,7 @@ import MobileNav from './components/MobileNav';
 import { navigation } from './navigation';
 import { CityAppearanceContext } from './cityAppearanceContext';
 import { useEffect, useRef, useState } from 'react';
-import type { CSSProperties, Dispatch, SetStateAction, ReactNode } from 'react';
+import type { Dispatch, SetStateAction, ReactNode } from 'react';
 import Icon from './components/Icon';
 import LifeCity from './components/LifeCity';
 import GameArt from './components/GameArt';
@@ -16,7 +16,8 @@ import Avatar from './components/Avatar';
 import DataBackup from './components/DataBackup';
 import { stateStorageKey, recoveryStorageKey } from './backup';
 import { SphereProjects } from './components/SphereCity';
-import { SphereHero, SphereOverview, SphereQuickView, SphereSkills } from './components/SphereHub';
+import { SphereOverview, SphereQuickView, SphereScene, SphereSkills } from './components/SphereHub';
+import type { SphereTab } from './components/SphereHub';
 import Statistics from './components/Statistics';
 import RewardShop from './components/RewardShop';
 import Onboarding, { ProfileEditor } from './components/Onboarding';
@@ -328,34 +329,15 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
             {page === 'spheres' && !sphere && <SpheresOverview state={state} onSelect={(id) => { setSelected(id); setSphereTab('overview'); window.scrollTo({ top: 0 }); }} onQuick={setQuickSphere} onQuest={(id) => { setQuestTemplate(null); setQuestSphere(id); setModal('quest'); }} onQuests={() => navigate('quests')} renderQuest={(q) => <QuestRow key={q.id} quest={q} />} onAddRecommendation={(idea) => { setState(current => current.goals.some(g => g.sphere === idea.sphereId && g.name === idea.title && g.current < g.target) ? current : saveGoal(current, { name: idea.title, description: idea.description, sphere: idea.sphereId, target: 100, reward: 100, progressMode: 'tasks' })); notify('Проект добавлен в план. Открой его и добавь этапы и задачи.'); }} />}
             {sphere && (
               <>
-                <SphereHero
+                <SphereScene
                   state={state}
                   id={sphere.id}
+                  tab={sphereTab as SphereTab}
+                  onTab={setSphereTab}
                   onBack={() => setSelected(null)}
                   onQuest={newQuest}
-                  onProject={() => setModal('goal')}
                   onCity={() => navigate('city')}
                 />
-                <div className="tabs sphere-tabs sph-tabs" role="tablist" aria-label="Разделы сферы" style={{ '--sph-tab': sphere.color } as CSSProperties}>
-                  {[
-                    ['overview', 'Обзор'],
-                    ['projects', `Проекты · ${state.goals.filter((g) => g.sphere === sphere.id && g.current < g.target).length}`],
-                    ['quests', `Задачи · ${active.filter((q) => q.sphere === sphere.id).length}`],
-                    ['skills', 'Навыки'],
-                    ['history', 'История'],
-                    ['statistics', 'Статистика'],
-                  ].map(([id, name]) => (
-                    <button
-                      key={id}
-                      role="tab"
-                      aria-selected={sphereTab === id}
-                      className={sphereTab === id ? 'selected' : ''}
-                      onClick={() => setSphereTab(id)}
-                    >
-                      {name}
-                    </button>
-                  ))}
-                </div>
                 {sphereTab === 'overview' && (
                   <SphereOverview
                     state={state}
@@ -363,9 +345,10 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                     renderQuest={(q) => <QuestRow key={q.id} quest={q} />}
                     onOpenGoal={(goal) => { navigate('goals'); openGoal(goal.id); setGoalOrigin(sphere.id); }}
                     onProjects={() => setSphereTab('projects')}
-                    onNewProject={() => setSphereTab('projects')}
+                    onNewProject={() => setModal('goal')}
+                    onQuest={newQuest}
                     onTree={() => navigate('tree')}
-                    onHistory={() => setSphereTab('history')}
+                    onStatistics={() => setSphereTab('statistics')}
                   />
                 )}
                 {sphereTab === 'skills' && <SphereSkills state={state} id={sphere.id} onTree={() => navigate('tree')} />}

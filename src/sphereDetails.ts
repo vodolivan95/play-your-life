@@ -126,3 +126,85 @@ export function sphereDetail(state: GameState, id: string, now = new Date()) {
     history: [...state.events.filter((e) => e.sphere === id)].sort((a, b) => b.date.localeCompare(a.date)),
   };
 }
+
+/** Пороги званий района: с какого уровня даётся звание. */
+export const rankSteps: { level: number; rank: string }[] = [
+  { level: 3, rank: 'Ученик' },
+  { level: 10, rank: 'Практик' },
+  { level: 25, rank: 'Мастер' },
+  { level: 50, rank: 'Эксперт' },
+  { level: 100, rank: 'Легенда района' },
+];
+
+export type PathNode = { level: number; title: string; note: string; current?: boolean };
+
+/** «Путь района»: текущий уровень, следующий уровень и ближайшие звания (только то, что уже есть в игре). */
+export function districtPath(totalXP: number, limit = 5): PathNode[] {
+  const p = sphereProgress(totalXP);
+  const nodes: PathNode[] = [{ level: p.level, title: 'Сейчас', note: sphereRank(p.level), current: true }];
+  if (p.maxed) return nodes;
+  const next = p.level + 1;
+  const nextRank = rankSteps.find((s) => s.level === next);
+  nodes.push({ level: next, title: nextRank ? `Звание «${nextRank.rank}»` : 'Новый уровень', note: `через ${p.remainingXP} XP` });
+  for (const step of rankSteps) {
+    if (nodes.length >= limit) break;
+    if (step.level <= next) continue;
+    const xp = step.level * (p.requiredXP || 1) - p.totalXP;
+    nodes.push({ level: step.level, title: `Звание «${step.rank}»`, note: `ещё ${xp} XP` });
+  }
+  return nodes;
+}
+
+/** Самая длинная серия дней подряд с действиями в сфере. */
+export function bestStreak(events: Event[]) {
+  const days = [...new Set(events.map((e) => dateKey(new Date(e.date))))].sort();
+  let best = 0, run = 0, prev: number | null = null;
+  for (const key of days) {
+    const [y, m, d] = key.split('-').map(Number);
+    const time = new Date(y, m - 1, d).getTime();
+    run = prev !== null && Math.round((time - prev) / DAY) === 1 ? run + 1 : 1;
+    best = Math.max(best, run);
+    prev = time;
+  }
+  return best;
+}
+
+export type DistrictAchievement = { id: string; title: string; note: string; done: boolean; progress: number };
+
+/** Статистика, рекорды и достижения открытой сферы. Достижения только показываются — XP за них не начисляется. */
+export function districtStats(state: GameState, id: string, now = new Date()) {
+  const events = sphereEvents(state, id);
+  const weeks = weeklyXP(events, now);
+  const weekStartTime = weekStart(now).getTime();
+  const thisWeek = weeks[weeks.length - 1].xp, lastWeek = weeks[weeks.length - 2].xp;
+  const tasks = events.filter((e) => e.kind === 'quest' || e.kind === 'habit');
+  const tasksWeek = tasks.filter((e) => new Date(e.date).getTime() >= weekStartTime).length;
+  const streak = sphereStreak(events, now), best = Math.max(streak, bestStreak(events));
+  const order = [...sphereCards(state, now)].sort((a, b) => b.totalXP - a.totalXP);
+  const place = order.findIndex((c) => c.id === id) + 1;
+  const weekdays = [0, 0, 0, 0, 0, 0, 0];
+  const byDay = new Map<string, number>();
+  const byWeek = new Map<number, number>();
+  for (const e of events) {
+    const date = new Date(e.date);
+    weekdays[(date.getDay() + 6) % 7] += e.xp;
+    const key = dateKey(date);
+    byDay.set(key, (byDay.get(key) ?? 0) + e.xp);
+    const w = weekStart(date).getTime();
+    byWeek.set(w, (byWeek.get(w) ?? 0) + e.xp);
+  }
+  const bestDay = [...byDay].reduce<{ key: string; xp: number } | null>((top, [key, xp]) => (!top || xp > top.xp ? { key, xp } : top), null);
+  const bestWeek = [...byWeek].reduce<{ start: number; xp: number } | null>((top, [start, xp]) => (!top || xp > top.xp ? { start, xp } : top), null);
+  const projectsDone = state.goals.filter((g) => g.sphere === id && g.current >= g.target).length;
+  const achievements: DistrictAchievement[] = [
+    { id: 'first', title: 'Первый шаг', note: 'первое действие района', done: events.length > 0, progress: Math.min(1, events.length) },
+    { id: 'week', title: 'Неделя огня', note: '7 дней подряд', done: best >= 7, progress: Math.min(1, best / 7) },
+    { id: 'project', title: 'Проект закрыт', note: 'первый проект района', done: projectsDone > 0, progress: projectsDone > 0 ? 1 : 0 },
+    { id: 'two-weeks', title: 'Две недели огня', note: '14 дней подряд', done: best >= 14, progress: Math.min(1, best / 14) },
+  ];
+  return {
+    weeks, thisWeek, lastWeek, tasksTotal: tasks.length, tasksWeek, streak, best,
+    place: place || order.length, placeOf: order.length,
+    weekdays, bestDay, bestWeek, projectsDone, achievements,
+  };
+}

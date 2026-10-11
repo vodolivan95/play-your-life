@@ -311,3 +311,188 @@ dialog.shop-confirm::backdrop {
   background: #18244a;
   color: #e6ecfa;
 }
+
+/* Фон витрины — по теме сайта: светлый или тёмный */
+.shop-art {
+  background: radial-gradient(ellipse at 50% 40%, #ffffff 0%, #eef3fd 60%, #e2eafa 100%);
+}
+:root[data-theme='dark'] .shop-art {
+  background: radial-gradient(ellipse at 50% 40%, #22386f 0%, #121c3a 65%, #0c1430 100%);
+}
+:root[data-theme='dark'] .shop-art > span:not(.shop-frame-preview) {
+  filter: drop-shadow(0 12px 12px #00000055);
+}
+.shop-confirm .shop-model-stage {
+  background: radial-gradient(ellipse at 50% 40%, #ffffff 0%, #eef3fd 60%, #dfe8fa 100%);
+}
+.shop-art-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.shop-kind {
+  align-self: flex-start;
+  margin: 0 4px 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #3a4f86;
+  background: #eaf0ff;
+}
+.shop-kind.is-custom {
+  color: #8a5400;
+  background: #fff1cf;
+}
+:root[data-theme='dark'] .shop-kind {
+  color: #d3dcfa;
+  background: #1c2750;
+}
+:root[data-theme='dark'] .shop-kind.is-custom {
+  color: #ffd86a;
+  background: #3a2e12;
+}
+.shop-card-create {
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 240px;
+  text-align: center;
+  border: 2px dashed #b9c8ef;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+.shop-card-create strong {
+  font-size: 17px;
+}
+.shop-card-create > span:last-child {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #536278;
+  max-width: 220px;
+}
+.shop-create-plus {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  font-size: 30px;
+  color: #fff;
+  background: #3267ed;
+}
+.shop-card-create:hover,
+.shop-card-create:focus-visible {
+  border-color: #3267ed;
+}
+:root[data-theme='dark'] .shop-card-create {
+  border-color: #33467a;
+  background: transparent;
+}
+:root[data-theme='dark'] .shop-card-create > span:last-child {
+  color: #9fb1db;
+}
+.owned-reward-photo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+.shop-confirm-photo {
+  display: block;
+  width: 160px;
+  height: 160px;
+  margin: 0 auto;
+  border-radius: 24px;
+  object-fit: cover;
+}
+.custom-reward-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+.custom-reward-form h2 {
+  text-align: center;
+}
+.custom-reward-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 14px;
+}
+.custom-reward-form label small {
+  font-weight: 500;
+  opacity: 0.7;
+}
+.custom-reward-form input,
+.custom-reward-form textarea {
+  font: inherit;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #d9e2f5;
+}
+.custom-reward-image {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.custom-reward-image > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.custom-reward-form button {
+  margin: 0;
+}
+.custom-reward-preview {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 88px;
+  height: 88px;
+  border-radius: 20px;
+  overflow: hidden;
+  font-size: 40px;
+  background: #eef3fd;
+}
+.custom-reward-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+:root[data-theme='dark'] .custom-reward-preview {
+  background: #18244a;
+}
+.custom-reward-note {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.8;
+}
+.custom-reward-error {
+  margin: 0;
+  color: #c2334d;
+  font-weight: 700;
+}
+:root[data-theme='dark'] .custom-reward-error {
+  color: #ff8fa3;
+}
+.custom-reward-delete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.text-button.danger {
+  color: #c2334d;
+}

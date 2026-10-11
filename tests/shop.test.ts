@@ -92,3 +92,55 @@ test('цель накопления принимает только наград
     assert.throws(() => restoreBackup(JSON.stringify(copy)));
   }
 });
+
+import { saveCustomReward, removeCustomReward, shopCatalog, findShopItem, MAX_CUSTOM_REWARDS } from '../src/shop.ts';
+const photo = 'data:image/jpeg;base64,' + 'A'.repeat(400);
+test('своя награда: картинка, цена, покупка, использование и резервная копия', () => {
+  let state = saveCustomReward({ ...initialState(), coins: 500 }, { name: '  Поход в кино с друзьями ', price: 220, image: photo, description: 'IMAX' });
+  const reward = state.shop!.customRewards![0];
+  assert.equal(reward.name, 'Поход в кино с друзьями');
+  assert.match(reward.id, /^custom-/);
+  assert.ok(shopCatalog(state).some((i) => i.id === reward.id && i.custom && i.image === photo));
+  state = buyItem(state, reward.id);
+  assert.equal(state.coins, 280);
+  state = redeemPurchase(state, state.shop!.purchases[0].id);
+  assert.ok(state.shop!.purchases[0].usedAt);
+  assert.deepEqual(restoreBackup(backupText(state)), state);
+  state = selectRewardTarget(state, reward.id);
+  assert.equal(state.shop!.rewardTargetId, reward.id);
+  const edited = saveCustomReward(state, { id: reward.id, name: 'Кино', price: 300 });
+  assert.equal(edited.shop!.customRewards![0].price, 300);
+  assert.equal(edited.shop!.customRewards![0].image, undefined);
+  assert.equal(edited.shop!.purchases[0].price, 220, 'прежняя покупка не меняется');
+});
+test('своя награда: проверки цены, названия и лимита', () => {
+  const s = initialState();
+  assert.throws(() => saveCustomReward(s, { name: '', price: 10 }), /Название/);
+  assert.throws(() => saveCustomReward(s, { name: 'Х', price: 0 }), /Цена/);
+  assert.throws(() => saveCustomReward(s, { name: 'Х', price: 1.5 }), /Цена/);
+  assert.throws(() => saveCustomReward(s, { name: 'Х', price: 10, image: 'javascript:alert(1)' }), /картинка/);
+  let many = s;
+  for (let i = 0; i < MAX_CUSTOM_REWARDS; i++) many = saveCustomReward(many, { name: `Награда ${i}`, price: 10 });
+  assert.throws(() => saveCustomReward(many, { name: 'Лишняя', price: 10 }), /до 24/);
+});
+test('купленную свою награду убирают из витрины, но покупка остаётся', () => {
+  let state = saveCustomReward({ ...initialState(), coins: 100 }, { name: 'Торт', price: 50 });
+  const id = state.shop!.customRewards![0].id;
+  const fresh = removeCustomReward(state, id);
+  assert.equal(fresh.shop!.customRewards!.length, 0, 'некупленная удаляется');
+  state = selectRewardTarget(buyItem(state, id), id);
+  state = removeCustomReward(state, id);
+  assert.equal(state.shop!.customRewards![0].archived, true);
+  assert.equal(state.shop!.rewardTargetId, undefined);
+  assert.ok(!shopCatalog(state).some((i) => i.id === id));
+  assert.equal(findShopItem(state, id)?.name, 'Торт');
+  assert.throws(() => buyItem(state, id), /недоступна/);
+  assert.deepEqual(restoreBackup(backupText(state)), state);
+});
+test('сохранение с поддельной своей наградой отклоняется', () => {
+  const state = saveCustomReward(initialState(), { name: 'Торт', price: 50 });
+  const bad = { ...state, shop: { ...state.shop!, customRewards: [{ ...state.shop!.customRewards![0], price: -5 }] } };
+  assert.throws(() => restoreBackup(backupText(bad as typeof state)));
+  const orphan = { ...state, shop: { ...state.shop!, purchases: [{ id: 'p', itemId: 'custom-unknown-0000', price: 1, date: new Date().toISOString() }] } };
+  assert.throws(() => restoreBackup(backupText(orphan as typeof state)));
+});

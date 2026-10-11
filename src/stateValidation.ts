@@ -2,7 +2,7 @@ import { validPersonalState, validQuestExtension } from './questValidation.ts';
 import { SPHERE_PROGRESSION_MODEL } from './sphereProgress.ts';
 import { validCity, cityPrices, cityRooms } from './city.ts';
 import { validRooms } from './roomEngine.ts';
-import { shopItems } from './shop.ts';
+import { shopItems, customRewardIdPattern, MAX_CUSTOM_REWARDS, MAX_CUSTOM_REWARD_PRICE } from './shop.ts';
 import { validProjectImage } from './projectImage.ts';
 import { validSkillTrees } from './skillTree.ts';
 import { validMonthlyFocus } from './monthlyFocus.ts';
@@ -85,14 +85,38 @@ export function validateState(value: unknown): asserts value is SavedState {
     return fail();
   if (value.shop !== undefined) {
     const shop = value.shop;
+    if (!record(shop)) return fail();
     if (
-      !record(shop) ||
+      shop.customRewards !== undefined &&
+      (!list(
+        shop.customRewards,
+        (r) =>
+          text(r.id) &&
+          customRewardIdPattern.test(r.id as string) &&
+          text(r.name) &&
+          !!(r.name as string).trim() &&
+          (r.name as string).length <= 60 &&
+          (r.description === undefined || (text(r.description) && (r.description as string).length <= 200)) &&
+          Number.isSafeInteger(r.price) &&
+          (r.price as number) >= 1 &&
+          (r.price as number) <= MAX_CUSTOM_REWARD_PRICE &&
+          validProjectImage(r.image) &&
+          date(r.createdAt) &&
+          (r.archived === undefined || typeof r.archived === 'boolean'),
+      ) ||
+        (shop.customRewards as Record<string, unknown>[]).filter((r) => !r.archived).length > MAX_CUSTOM_REWARDS)
+    )
+      return fail();
+    const customIds = new Set(
+      ((shop.customRewards ?? []) as Record<string, unknown>[]).map((r) => r.id),
+    );
+    if (
       !list(
         shop.purchases,
         (p) =>
           text(p.id) &&
           !!p.id &&
-          shopItems.some((i) => i.id === p.itemId) &&
+          (shopItems.some((i) => i.id === p.itemId) || customIds.has(p.itemId)) &&
           number(p.price) &&
           date(p.date) &&
           optionalDate(p.usedAt),
@@ -103,7 +127,8 @@ export function validateState(value: unknown): asserts value is SavedState {
       shop.rewardTargetId !== undefined &&
       !shopItems.some(
         (i) => i.kind === 'reward' && i.id === shop.rewardTargetId,
-      )
+      ) &&
+      !customIds.has(shop.rewardTargetId)
     )
       return fail();
     const purchases = shop.purchases as Record<string, unknown>[];

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import spritesUrl from '../assets/city-traffic.svg';
+import spritesUrl from '../assets/city-cars.webp';
+import boatsUrl from '../assets/city-boats.webp';
 import globeUrl from '../assets/city-globe.webp';
 import { cityAssets } from '../sphereAssets';
 import { CitySimulation, QualityManager } from '../cityLive/simulation';
@@ -26,8 +27,8 @@ export default function LiveCityCanvas(props:Props) {
     const sim=new CitySimulation(routes),quality=new QualityManager(mode,window.innerWidth<=760);
     sim.initialize(quality.budget);
     const renderer=new CityRenderer(ctx);
-    const background=new Image(),sprites=new Image(),globe=new Image(),clean=new Image();
-    background.src=cityAssets.background;sprites.src=spritesUrl;globe.src=globeUrl;clean.src=cityAssets.cleanSurfaces;
+    const background=new Image(),sprites=new Image(),boats=new Image(),globe=new Image(),clean=new Image();
+    background.src=cityAssets.background;sprites.src=spritesUrl;boats.src=boatsUrl;globe.src=globeUrl;clean.src=cityAssets.cleanSurfaces;
     let frame=0,previous=0,lastStats=0,visible=true,disposed=false,ready=false,lastSignature='',renderMs=0,simulationMs=0;
     const resize=()=>{
       const width=Math.max(1,node.getBoundingClientRect().width);
@@ -52,7 +53,7 @@ export default function LiveCityCanvas(props:Props) {
       const signature=JSON.stringify([settings.time,settings.weather,settings.debug,settings.draft,node.width]);
       if (!paused||signature!==lastSignature) {
         if (paused) Object.assign(renderer,timeLighting(settings.time,sim.elapsed));
-        const renderStart=performance.now();renderer.draw(sim,{...settings,low:quality.level!=='high',reduced,background,sprites,globe,clean});renderMs=renderMs*.9+(performance.now()-renderStart)*.1;lastSignature=signature;
+        const renderStart=performance.now();renderer.draw(sim,{...settings,low:quality.level!=='high',reduced,background,sprites,boats,globe,clean});renderMs=renderMs*.9+(performance.now()-renderStart)*.1;lastSignature=signature;
       }
       if (now-lastStats>1000) {
         lastStats=now;
@@ -67,7 +68,7 @@ export default function LiveCityCanvas(props:Props) {
     const resume=()=>{ if (!frame&&!disposed&&ready&&!document.hidden&&visible) {previous=0;frame=requestAnimationFrame(tick);} };
     const intersection=new IntersectionObserver(entries=>{visible=entries[0]?.isIntersecting??false;if (!visible) {cancelAnimationFrame(frame);frame=0;}else resume();});
     intersection.observe(node);document.addEventListener('visibilitychange',resume);
-    Promise.all([background.decode(),sprites.decode(),globe.decode().catch(()=>undefined),clean.decode().catch(()=>undefined)]).then(()=>{ready=true;resize();resume();}).catch(()=>{node.dataset.error='city-assets-unavailable';if(!disposed)setLoadError(true);});
+    Promise.all([background.decode(),sprites.decode(),boats.decode(),globe.decode().catch(()=>undefined),clean.decode().catch(()=>undefined)]).then(()=>{ready=true;resize();resume();}).catch(()=>{node.dataset.error='city-assets-unavailable';if(!disposed)setLoadError(true);});
     return ()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();intersection.disconnect();document.removeEventListener('visibilitychange',resume);};
   },[routes,mode]);
   return <>

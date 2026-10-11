@@ -3,7 +3,7 @@ import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 const server=spawn(process.execPath,['node_modules/vite/bin/vite.js','--host','127.0.0.1','--port','5176','--strictPort'],{stdio:'ignore'});
-for(let i=0;i<60;i++){try{if((await fetch('http://127.0.0.1:5176')).ok)break;}catch{}await new Promise(r=>setTimeout(r,250));}
+for(let i=0;i<60;i++){try{if((await fetch('http://127.0.0.1:5176')).ok)break;}catch{/* ждём Vite */}await new Promise(r=>setTimeout(r,250));}
 await mkdir('work/city',{recursive:true});
 const browser=await chromium.launch({args:['--no-sandbox']});
 try{

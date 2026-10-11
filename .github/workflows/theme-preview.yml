@@ -18,7 +18,7 @@ jobs:
       - name: Theme UI
         run: |
           set +e
-          npm run build > theme.log 2>&1 && node scripts/city-preview.mjs >> theme.log 2>&1 && npm run test:live-city >> theme.log 2>&1; code=$?
+          npm run build > theme.log 2>&1 && node tests/city-preview.mjs >> theme.log 2>&1 && npm run test:live-city >> theme.log 2>&1; code=$?
           tail -c 3000 theme.log | tr '\n' ' ' | sed 's/^/::error::/'; echo
           mkdir -p out && cp -r work/city work/live-city out/ 2>/dev/null; cp theme.log out/
           cd out && git init -q && git checkout -q -b theme-previews && git add -A && git -c user.name=ci -c user.email=ci@example.com commit -qm "previews ${GITHUB_SHA}" && git push -f "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" theme-previews

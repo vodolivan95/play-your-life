@@ -122,7 +122,7 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
       <div className="coastal-stage" style={wide?{width:`${zoom*100}%`}:undefined}>
       {wide&&<img className="coastal-scene" src={sceneUrl} alt="" aria-hidden="true" draggable={false}/>}
       <div className="coastal-map" data-time={preferences.time} data-weather={preferences.weather} data-paused={paused} data-editing={editing}
-        style={{...(wide?island:{width:`${zoom*100}%`}),'--city-rate':speed} as CSSProperties}>
+        style={{...(wide?island:{width:`${zoom*100}%`}),'--city-rate':speed} as unknown as CSSProperties}>
         <img src={cityAssets.background} width="1005" height="1280" alt="Прибрежный город на островах: девять зданий сфер жизни, мосты, водопады и пляж" draggable={false}/>
         <LiveCityCanvas routes={routes} paused={paused} speed={speed} quality={preferences.quality} time={preferences.time} weather={preferences.weather}
           debug={debug} draft={draft} editing={editing} onPoint={point=>setDraft([...draft,point])}/>

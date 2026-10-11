@@ -220,3 +220,10 @@
 button.radar-label { text-align: left; cursor: pointer; font: inherit; color: inherit; transition: transform .15s, box-shadow .15s; }
 button.radar-label:hover { box-shadow: 0 0 0 2px var(--sphere-color), 0 6px 18px #0000002e; }
 button.radar-label:focus-visible { outline: 3px solid #ffc94a; outline-offset: 2px; }
+
+/* Открытая сфера: заголовок страницы заменяет обложка района. */
+.app-shell main.screen-sphere-detail > .page-heading { display: none; }
+@media (max-width: 760px) {
+  .sph-hero-body { margin-top: -28px; }
+  .sph-hero-photo { height: 170px; }
+}

@@ -224,7 +224,8 @@ try {
     await tabs.getByRole('button', { name: 'Обзор', exact: true }).click();
     await workspace.locator('.gw-sphere').click();
     await page
-      .getByText('Английский · Твой район развития', { exact: true })
+      .locator('.sph-hero')
+      .getByRole('heading', { name: 'Английский', exact: true })
       .waitFor();
     await page.evaluate((id) => {
       location.hash = `/goals/${id}`;

@@ -78,7 +78,9 @@
   .coastal-stage { aspect-ratio:1440 / 900; overflow:hidden; }
   .coastal-scene { display:block; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; user-select:none; pointer-events:none; }
   .coastal-stage > .coastal-map { position:absolute; }
-  .coastal-stage > .coastal-map > img { -webkit-mask-image:linear-gradient(90deg,transparent,#000 2.5%,#000 97.5%,transparent); mask-image:linear-gradient(90deg,transparent,#000 2.5%,#000 97.5%,transparent); }
+  /* Цельная картинка-сцена уже содержит остров: карта остаётся слоем координат для транспорта, животных и входов. */
+  .coastal-stage > .coastal-map > img { opacity:0; }
+  .city-people { position:absolute; inset:0; z-index:2; pointer-events:none; overflow:hidden; }
   .coastal-pin { position:absolute; z-index:3; transform:translateX(-50%); display:flex; align-items:center; gap:6px; height:30px; padding:0 10px 0 6px; border-radius:999px; border:2px solid var(--pin); background:var(--glass); color:#fff; font-family:inherit; font-size:12px; font-weight:800; line-height:1; white-space:nowrap; box-shadow:0 6px 16px #00000070; cursor:pointer; }
   .coastal-pin small { font-size:10px; color:#ffffffb3; font-weight:800; }
   .coastal-pin i { font-style:normal; width:18px; height:18px; border-radius:50%; display:grid; place-items:center; background:#ffc94a; color:#2a1a00; font-size:10px; }
@@ -101,3 +103,9 @@
 .coastal-scroll { cursor:grab; }
 .coastal-scroll[data-dragging=true] { cursor:grabbing; }
 .coastal-scroll[data-dragging=true] .coastal-building { pointer-events:none; }
+
+.city-person { position:absolute; aspect-ratio:1; transform:translate(-50%,-96%); background-size:800% 800%; background-repeat:no-repeat; filter:drop-shadow(0 1px 1px #0006);
+  animation-name:city-person-walk, city-person-step; animation-timing-function:linear, steps(8); animation-iteration-count:infinite; }
+@keyframes city-person-walk { 0% { left:var(--x1); top:var(--y1); opacity:0; } 8%, 92% { opacity:1; } 100% { left:var(--x2); top:var(--y2); opacity:0; } }
+@media (prefers-reduced-motion:reduce) { .city-person { animation:none; left:var(--x1); top:var(--y1); } }
+@keyframes city-person-step { from { background-position-x:0%; } to { background-position-x:114.2857%; } }

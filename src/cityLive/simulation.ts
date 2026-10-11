@@ -1,4 +1,5 @@
 import { defaultRoutes, MAP_HEIGHT, MAP_WIDTH, pixels, roadGraph, validRoutes } from './paths.ts';
+import { boatFallback, boatsByRoute, boatTypes, CAR_TYPES } from './vehicles.ts';
 import type { CityRoute, Point } from './paths.ts';
 
 export type Sample = Point & { distance: number; angle: number };
@@ -44,7 +45,7 @@ export type Agent = {
   id: number; kind: CityRoute['kind']; path: LanePath; distance: number; position: Sample;
   currentSpeed: number; targetSpeed: number; acceleration: number; deceleration: number;
   safeDistance: number; safeRadius: number; vehicleAhead: number | null;
-  sprite: number; state: 'WALK'|'IDLE'|'LOOK'|'SIT'; wait: number; age: number; retireAt?:number;
+  sprite: number; state: 'WALK'|'IDLE'|'LOOK'|'SIT'; wait: number; age: number; retireAt?:number; stuck?: number;
 };
 export class IntersectionController {
   reservations = new Map<string,number>();
@@ -108,15 +109,15 @@ export class CitySimulation {
   spawn(path: LanePath, distance=0): boolean {
     if (this.agents.filter(a=>a.path===path).length>=path.route.capacity) return false;
     const position=path.at(distance), kind=path.route.kind;
-    const waterSprite=path.route.id==='ocean-yachts'?0:path.route.id==='ocean-speedboats'?1:path.route.id==='west-sail'?2:3;
-    const sprite=kind==='water' ? waterSprite : Math.floor(this.random()*5);
-    const radius=kind==='water' ? [21,15,23,24][sprite] : kind==='road' ? 7 : 1.6;
+    const fleet=boatsByRoute[path.route.id]??boatFallback;
+    const sprite=kind==='water' ? fleet[Math.floor(this.random()*fleet.length)] : kind==='road' ? Math.floor(this.random()*CAR_TYPES) : Math.floor(this.random()*5);
+    const radius=kind==='water' ? boatTypes[sprite].radius : kind==='road' ? 6 : 1.6;
     if (this.agents.some(a=>a.kind===kind&&Math.hypot(position.x-a.position.x,position.y-a.position.y)<radius+a.safeRadius+24)) return false;
     const agent=this.pool.pop() ?? {} as Agent;
     Object.assign(agent,{ id:this.nextId++,kind,path,distance,position,currentSpeed:0,
       targetSpeed:path.route.speed*(.86+this.random()*.15),acceleration:kind==='road'?6:kind==='water'?2:4,
       deceleration:kind==='road'?15:kind==='water'?5:8,safeDistance:kind==='water'?70:kind==='road'?27:9,
-      safeRadius:radius,vehicleAhead:null,sprite,state:'WALK',wait:0,age:0 });
+      safeRadius:radius,vehicleAhead:null,sprite,state:'WALK',wait:0,age:0,stuck:0 });
     delete agent.retireAt;
     this.agents.push(agent); return true;
   }
@@ -190,6 +191,11 @@ export class CitySimulation {
         Math.hypot(next.x-other.position.x,next.y-other.position.y)<agent.safeRadius+other.safeRadius+1);
       if (blocked) { agent.currentSpeed=0;this.collisionStops++; }
       else { agent.distance=agent.path.route.closed ? distance%agent.path.length : distance;agent.position=next; }
+      // Пробка на перекрёстке не должна стоять вечно: застрявшая машина плавно уезжает со сцены.
+      if (agent.kind==='road'&&!agent.path.route.training) {
+        agent.stuck=agent.currentSpeed<.5 ? (agent.stuck??0)+dt : 0;
+        if (agent.stuck>9&&agent.retireAt===undefined) agent.retireAt=agent.age+2;
+      }
     }
     for (let i=this.agents.length-1;i>=0;i--) {
       const a=this.agents[i];

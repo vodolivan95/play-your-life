@@ -2,12 +2,13 @@ import { bridgeMasks, fountains, lightPoints, MAP_HEIGHT, MAP_WIDTH, palms, pixe
 import type { Point } from './paths.ts';
 import type { Agent, CitySimulation } from './simulation.ts';
 import { boatCleanupMasks, carCleanupMasks } from './cleanSurfaces.ts';
+import { BOAT_ANCHOR, BOAT_CELL, boatTypes, CAR_CELL, CAR_DRAW, directionFrame } from './vehicles.ts';
 
 export type CityTime = 'day'|'sunset'|'night'|'sunrise'|'auto';
 export type DebugFlags = { road:boolean;water:boolean;pedestrian:boolean;hitboxes:boolean;spawn:boolean;intersections:boolean;fps:boolean };
 export type RenderOptions = {
   time: CityTime; weather:string; low:boolean; reduced?:boolean; debug:DebugFlags;
-  draft:Point[]; background:HTMLImageElement; sprites:HTMLImageElement; globe:HTMLImageElement; clean:HTMLImageElement;
+  draft:Point[]; background:HTMLImageElement; sprites:HTMLImageElement; boats:HTMLImageElement; globe:HTMLImageElement; clean:HTMLImageElement;
 };
 const polygon = (ctx: CanvasRenderingContext2D, points: number[][]) => {
   ctx.moveTo(points[0][0],points[0][1]); for (const [x,y] of points.slice(1)) ctx.lineTo(x,y); ctx.closePath();
@@ -101,23 +102,29 @@ export class CityRenderer {
   private sprite(agent:Agent,image:HTMLImageElement,t:number) {
     const ctx=this.ctx,p=agent.position;
     const boat=agent.kind==='water';
-    const size=boat ? [48,35,52,55][agent.sprite] : [18,19,18,17,20][agent.sprite];
-    const rock=boat&&agent.sprite===2 ? Math.sin(t*.65+agent.id)*.022 : 0;
-    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle+rock);
+    const frame=directionFrame(p.angle);
     let alpha=Math.min(1,agent.age/2);
     if(agent.retireAt!==undefined)alpha*=Math.max(0,(agent.retireAt-agent.age)/2);
     if (!agent.path.route.closed) alpha*=Math.min(1,(agent.path.length-agent.distance)/18,agent.distance/18+.1);
-    ctx.globalAlpha=alpha;
-    ctx.drawImage(image,agent.sprite*64,boat?64:0,64,64,-size/2,-size/2,size,size);
+    ctx.save();ctx.globalAlpha=alpha;
+    if (boat) {
+      // Судно покачивается на волне вверх-вниз; картинка уже повёрнута по курсу.
+      const type=boatTypes[agent.sprite]??boatTypes[0],size=type.draw,bob=Math.sin(t*1.3+agent.id)*.6;
+      ctx.drawImage(image,frame*BOAT_CELL,agent.sprite*BOAT_CELL,BOAT_CELL,BOAT_CELL,p.x-size/2,p.y-size*BOAT_ANCHOR+bob,size,size);
+    } else {
+      ctx.drawImage(image,frame*CAR_CELL,agent.sprite*CAR_CELL,CAR_CELL,CAR_CELL,p.x-CAR_DRAW/2,p.y-CAR_DRAW/2,CAR_DRAW,CAR_DRAW);
+    }
     const lamp=this.night+(boat?0:.55*(this.lastWeather==='rain'||this.lastWeather==='thunderstorm'?1:0));
     if (lamp>.02) {
       ctx.globalAlpha=alpha*Math.min(1,lamp);
+      ctx.translate(p.x,p.y);ctx.rotate(p.angle);
       if (!boat) {
-        const gradient=ctx.createLinearGradient(size*.24,0,size*1.8,0);gradient.addColorStop(0,'#fff5c07a');gradient.addColorStop(1,'#fff5c000');
-        ctx.fillStyle=gradient;ctx.beginPath();ctx.moveTo(size*.27,-2);ctx.lineTo(size*1.8,-6);ctx.lineTo(size*1.8,6);ctx.lineTo(size*.27,2);ctx.fill();
+        const gradient=ctx.createLinearGradient(6,0,30,0);gradient.addColorStop(0,'#fff5c07a');gradient.addColorStop(1,'#fff5c000');
+        ctx.fillStyle=gradient;ctx.beginPath();ctx.moveTo(7,-2.5);ctx.lineTo(30,-7);ctx.lineTo(30,7);ctx.lineTo(7,2.5);ctx.fill();
+        ctx.fillStyle='#ff6356';ctx.fillRect(-8,-2.5,1.3,1.3);ctx.fillRect(-8,1.5,1.3,1.3);
+      } else {
+        ctx.fillStyle='#79edaf';ctx.fillRect(6,-1,2,1.6);ctx.fillStyle='#ff6356';ctx.fillRect(-7,-1,1.6,1.6);
       }
-      ctx.fillStyle=boat?'#79edaf':'#fff7ce';ctx.fillRect(size*.22,-size*.09,2,1.3);ctx.fillRect(size*.22,size*.09,2,1.3);
-      ctx.fillStyle='#ff6356';ctx.fillRect(-size*.3,-size*.09,1.3,1.3);ctx.fillRect(-size*.3,size*.09,1.3,1.3);
     }
     ctx.restore();
   }
@@ -125,24 +132,24 @@ export class CityRenderer {
   private waterTrafficLayer(sim:CitySimulation,opts:RenderOptions) {
     const ctx=this.ctx,t=sim.elapsed;
     ctx.save();ctx.beginPath();for (const region of waterRegions) polygon(ctx,region);ctx.clip();
-    for (const a of sim.agents.filter(a=>a.kind==='water')) {
+    for (const a of sim.agents.filter(a=>a.kind==='water').sort((x,y)=>x.position.y-y.position.y)) {
       const p=a.position;
       if (a.currentSpeed>1) {
         ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);ctx.lineWidth=.9;
         for (let i=0;i<6;i++) {
-          const phase=(t*.6+i/6+a.id*.3)%1,len=(a.sprite===1?42:26)*phase+8,width=2+phase*8;
+          const phase=(t*.6+i/6+a.id*.3)%1,len=(a.sprite===1?60:a.sprite>=2&&a.sprite<=5?34:24)*phase+8,width=2+phase*8;
           ctx.strokeStyle=`rgba(241,255,255,${(1-phase)*.27*Math.min(1,a.currentSpeed/5)})`;
           ctx.beginPath();ctx.moveTo(-len,-width);ctx.quadraticCurveTo(-len*.6,-width*.8,-8,-2);ctx.moveTo(-len,width);ctx.quadraticCurveTo(-len*.6,width*.8,-8,2);ctx.stroke();
         }
         ctx.restore();
       }
-      this.sprite(a,opts.sprites,t);
+      this.sprite(a,opts.boats,t);
     }
     ctx.restore();
   }
   private roadTrafficLayer(sim:CitySimulation,opts:RenderOptions) {
     this.lastWeather=opts.weather;
-    for (const agent of sim.agents) if (agent.kind==='road') this.sprite(agent,opts.sprites,sim.elapsed);
+    for (const agent of sim.agents.filter(a=>a.kind==='road').sort((x,y)=>x.position.y-y.position.y)) this.sprite(agent,opts.sprites,sim.elapsed);
   }
   private pedestrianLayer(sim:CitySimulation,opts:RenderOptions) {
     const ctx=this.ctx;

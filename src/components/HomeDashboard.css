@@ -86,6 +86,7 @@
 .home-weather small { font-size:9px; color:#7492af; }
 .home-weather strong { font-size:10px; line-height:1.5; }
 .home-weather a { font-size:8px; color:#7898b5; text-decoration:none; }
+.home-weather-temp { font-size:15px; font-weight:800; margin-right:2px; }
 .dashboard-metric { display:flex; align-items:center; gap:7px; background:#fff; padding:9px 12px; border-radius:12px; }
 .dashboard-metric > span { font-size:23px; }
 .dashboard-metric strong, .dashboard-metric small { display:block; }

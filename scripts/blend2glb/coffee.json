@@ -1,0 +1,4 @@
+{"texDir":"<папка textures из архива>","texSize":1024,"objects":{
+ "plate":{"baseColor":"plate.png","roughness":0.28},
+ "cup":{"baseColor":"cup.png","roughness":0.25},
+ "coffee":{"baseColor":"Coffee.png","normal":"coffee.Normal.png","roughnessTex":"coffee.Roughness.png"}}}

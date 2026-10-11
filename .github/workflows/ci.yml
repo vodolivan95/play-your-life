@@ -43,7 +43,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:quests-ui
-      - run: npm run test:goals-ui
+      - run: npm run test:goals-ui > goals.log 2>&1 || { echo "::error::$(tail -c 3500 goals.log | tr "\n" "|")"; exit 1; }
       - run: npm run test:theme-ui
       - run: npm run test:spheres-ui
       - name: Verify account TickTick settings with isolated mock services

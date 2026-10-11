@@ -1,0 +1,2 @@
+AssertionError [ERR_ASSERTION]: Все девять входов доступны пальцем
+    at file:///home/runner/work/play-your-life/play-your-life/scripts/coastal-city-smoke.mjs:60:10

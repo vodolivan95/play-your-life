@@ -27,7 +27,12 @@ class Scene:
             R, t = transform
             pos = pos @ R.T + t
             nor = nor @ R.T
-        self.meshes.append((pos, nor, np.asarray(uv, np.float32), np.asarray(idx, np.uint32), mat))
+        # Порядок обхода треугольников согласуем с нормалями: иначе three.js отсекает лицевые грани.
+        tri = np.asarray(idx, np.int64).reshape(-1, 3)
+        geo = np.cross(pos[tri[:, 1]] - pos[tri[:, 0]], pos[tri[:, 2]] - pos[tri[:, 0]])
+        flip = np.einsum('ij,ij->i', geo, nor[tri].sum(1)) < 0
+        tri[flip] = tri[flip][:, [0, 2, 1]]
+        self.meshes.append((pos, nor, np.asarray(uv, np.float32), tri.reshape(-1).astype(np.uint32), mat))
 
 
 def rot(axis, deg):
@@ -107,15 +112,16 @@ def bumpy_sphere(R, seg=48, rings=32, amp=0.06, seed=1):
             p = j * (seg + 1) + i; q = p + seg + 1
             idx += [p, q, p + 1, p + 1, q, q + 1]
     pos = np.array(pos, np.float32)
-    # пересчитать нормали по деформированной поверхности
-    nor = np.zeros_like(pos)
+    # Нормали по деформированной поверхности; на вырожденных полюсах — радиальные.
     idx_a = np.array(idx).reshape(-1, 3)
     fn = np.cross(pos[idx_a[:, 1]] - pos[idx_a[:, 0]], pos[idx_a[:, 2]] - pos[idx_a[:, 0]])
+    radial = pos / (np.linalg.norm(pos, axis=1, keepdims=True) + 1e-9)
+    fn *= np.sign(np.einsum('ij,ij->i', fn, radial[idx_a].sum(1)))[:, None]
+    nor = np.zeros_like(pos)
     for c in range(3):
         np.add.at(nor, idx_a[:, c], fn)
-    nor /= np.linalg.norm(nor, axis=1, keepdims=True) + 1e-9
-    if np.mean(np.sum(nor * pos, axis=1)) < 0:
-        nor = -nor
+    length = np.linalg.norm(nor, axis=1, keepdims=True)
+    nor = np.where(length > 1e-7, nor / (length + 1e-12), radial)
     return pos, nor, uv, idx
 
 

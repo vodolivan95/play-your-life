@@ -11,22 +11,28 @@ class ModelBoundary extends Component<{ children: ReactNode; fallback: ReactNode
   render() { return this.state.failed ? this.props.fallback : this.props.children; }
 }
 
-const FLOOR = -0.55;
+const SIZE = 1.45;
 
 function Model({ url, onReady }: { url: string; onReady: () => void }) {
   const { scene } = useGLTF(url);
-  const copy = useMemo(() => {
+  const { copy, floor } = useMemo(() => {
     const clone = scene.clone(true);
     const bounds = new Box3().setFromObject(clone);
     const size = bounds.getSize(new Vector3()), center = bounds.getCenter(new Vector3());
-    const fit = 1.6 / Math.max(size.x, size.y, size.z, 0.001);
+    const fit = SIZE / Math.max(size.x, size.y, size.z, 0.001);
+    // Центр модели — в начале координат: камера и вращение всегда вокруг середины предмета.
     clone.scale.setScalar(fit);
-    clone.position.set(-center.x * fit, FLOOR - bounds.min.y * fit, -center.z * fit);
+    clone.position.set(-center.x * fit, -center.y * fit, -center.z * fit);
     clone.traverse((node) => { if (node instanceof Mesh) node.castShadow = true; });
-    return clone;
+    return { copy: clone, floor: -size.y * fit / 2 };
   }, [scene]);
   useEffect(onReady, [onReady]);
-  return <primitive object={copy} dispose={null} />;
+  return (
+    <>
+      <primitive object={copy} dispose={null} />
+      <ContactShadows position={[0, floor - 0.01, 0]} opacity={0.5} scale={3.2} blur={2.4} far={1.4} resolution={256} frames={1} />
+    </>
+  );
 }
 
 type Controls = ComponentRef<typeof OrbitControls>;
@@ -63,20 +69,20 @@ export default function ShopModelViewer({ url, label, fallback, interactive = fa
         <ModelBoundary fallback={<span className="shop-model-fallback" aria-hidden="true">{fallback}</span>}>
           <Canvas
             dpr={[1, interactive ? 2 : 1.5]}
-            camera={{ position: [0, 0.75, 2.9], fov: 34 }}
+            camera={{ position: [0, 0.8, 3.1], fov: 34 }}
             frameloop={!visible ? 'never' : spin || interactive ? 'always' : 'demand'}
             gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
           >
-            <ambientLight intensity={0.45} />
-            <directionalLight position={[2.5, 4, 3]} intensity={1.7} />
+            <ambientLight intensity={0.9} />
+            <hemisphereLight args={['#ffffff', '#8aa0d0', 0.6]} />
+            <directionalLight position={[2.5, 4, 3]} intensity={2} />
             <directionalLight position={[-3, 2, -2]} intensity={0.5} color="#9db8ff" />
             <Environment resolution={64} frames={1}>
-              <Lightformer color="#ffffff" intensity={1.4} position={[0, 4, 2]} rotation={[-Math.PI / 3, 0, 0]} scale={[6, 3, 1]} />
+              <Lightformer color="#ffffff" intensity={2} position={[0, 4, 2]} rotation={[-Math.PI / 3, 0, 0]} scale={[6, 3, 1]} />
               <Lightformer color="#bcd0ff" intensity={0.8} position={[-4, 1, 0]} rotation={[0, Math.PI / 2, 0]} scale={[4, 3, 1]} />
             </Environment>
             <Suspense fallback={null}>
               <Model url={url} onReady={markReady} />
-              <ContactShadows position={[0, FLOOR, 0]} opacity={0.5} scale={3.2} blur={2.4} far={1.4} resolution={256} frames={1} />
             </Suspense>
             <OrbitControls
               ref={controls}

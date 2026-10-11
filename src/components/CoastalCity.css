@@ -11,8 +11,9 @@
 .coastal-map > img { display:block; width:100%; height:auto; user-select:none; transition:filter 1s; }
 .coastal-map[data-paused=true] * { animation-play-state:paused; }
 .coastal-building { position:absolute; background:transparent; border:0; padding:0; border-radius:22%; cursor:pointer; -webkit-tap-highlight-color:transparent; }
-.coastal-building:hover, .coastal-building:focus-visible { background:#b8f8ff18; outline:3px solid #ecffff; outline-offset:-3px; box-shadow:0 0 22px #36dfff; z-index:1; }
-.coastal-building > span { position:absolute; left:50%; bottom:5%; transform:translateX(-50%); max-width:95%; width:max-content; padding:7px 10px; border-radius:12px; background:#fffffff2; color:#1c466a; font-size:clamp(9px,1.3vw,14px); font-weight:800; opacity:0; pointer-events:none; }
+.coastal-building:hover, .coastal-building:focus-visible { z-index:1; }
+.coastal-building:focus-visible { outline:2px solid #ffc94a; outline-offset:-2px; }
+.coastal-building > span { position:absolute; left:50%; bottom:5%; transform:translateX(-50%); max-width:95%; width:max-content; padding:6px 12px; border-radius:999px; background:#0b1428e6; border:1px solid #ffc94a99; color:#fff; font-size:clamp(9px,1.3vw,14px); font-weight:800; box-shadow:0 6px 16px #00000066; opacity:0; transition:opacity .15s; pointer-events:none; }
 .coastal-building:hover > span, .coastal-building:focus-visible > span { opacity:1; }
 @media(max-width:700px) { .coastal-scroll { border-radius:16px; } .coastal-controls label { flex:1 1 calc(50% - 10px); min-width:0; } .coastal-controls select { min-width:0; width:100%; max-width:190px; } .coastal-zoom { margin-left:0; width:100%; } .coastal-hint { font-size:11px; line-height:1.5; } }
 @media(prefers-reduced-motion:reduce) { .coastal-map *, .coastal-map > img { animation:none!important; transition:none; } }
@@ -23,7 +24,7 @@
 .city-load-error button { min-height:44px; border:1px solid #d7e5f4; border-radius:8px; background:#eef8ff; color:inherit; cursor:pointer; }
 .live-city-fps { position:absolute; top:8px; left:8px; z-index:4; pointer-events:none; background:#122e46e8; color:#e9ffff; font:10px monospace; border-radius:7px; padding:7px; }
 .coastal-map[data-editing=true] .coastal-building { pointer-events:none; }
-.coastal-building:active { background:#adf6ff33; box-shadow:0 0 20px #36dfff; }
+.coastal-building:active > span { opacity:1; }
 .city-dev-tools { padding:12px; margin-bottom:12px; border:1px solid #d5e8f4; border-radius:12px; background:#f5faff; color:#355874; font-size:12px; }
 .city-dev-tools summary { cursor:pointer; min-height:32px; font-weight:700; }
 .city-dev-tools p { line-height:1.5; }

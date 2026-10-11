@@ -22,6 +22,10 @@ const animals: Animal[] = [
   { sprite: parrot10, from: [1040, 860], to: [520, 300], size: 3.4, walk: 14, step: .5, fly: true },
   { sprite: stork8, from: [1050, 120], to: [-60, 230], size: 4.4, walk: 24, step: .65, fly: true },
   { sprite: stork2, from: [-60, 560], to: [560, 1180], size: 4.2, walk: 20, step: .65, fly: true },
+  { sprite: parrot0, from: [-60, 700], to: [1060, 520], size: 3, walk: 19, step: .5, fly: true },
+  { sprite: parrot10, from: [1060, 1100], to: [-60, 640], size: 3, walk: 21, step: .5, fly: true },
+  { sprite: stork8, from: [1060, 420], to: [-60, 900], size: 4, walk: 23, step: .65, fly: true },
+  { sprite: stork2, from: [200, -60], to: [900, 1300], size: 3.8, walk: 25, step: .65, fly: true },
 ];
 const percent = ([x, y]: [number, number]) => [`${(x / 1005) * 100}%`, `${(y / 1280) * 100}%`];
 

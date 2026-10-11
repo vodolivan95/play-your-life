@@ -75,4 +75,6 @@ ASSETS = Path(__file__).resolve().parent.parent / 'src' / 'assets' / 'brand'
 ASSETS.mkdir(parents=True, exist_ok=True)
 for size in (128, 256):
   sq.resize((size, size), Image.LANCZOS).save(ASSETS / f'emblem-{size}.png', optimize=True)
-print('Эмблема меню: src/assets/brand/emblem-128.png, emblem-256.png')
+# Мастер 1024 px для значков вкладки и приложения (scripts/build-app-icons.py).
+sq.resize((1024, 1024), Image.LANCZOS).save(ROOT / 'emblem-master.png', optimize=True)
+print('Эмблема меню: src/assets/brand/emblem-128.png, emblem-256.png; мастер: public/brand/emblem-master.png')

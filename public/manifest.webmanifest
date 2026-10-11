@@ -11,19 +11,19 @@
   "background_color": "#edf8ff",
   "icons": [
     {
-      "src": "brand/your-life-e00d2571783f/icon-192.png",
+      "src": "brand/emblem-69ef7f6b767c/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "brand/your-life-e00d2571783f/icon-512.png",
+      "src": "brand/emblem-69ef7f6b767c/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "brand/your-life-e00d2571783f/icon-maskable-512.png",
+      "src": "brand/emblem-69ef7f6b767c/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

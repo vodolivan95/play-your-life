@@ -1,8 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { GameState } from '../game';
 import { buyItem, shopItems, redeemPurchase } from '../shop';
+import { shopModelFile } from '../shopModels';
 import Avatar from './Avatar';
 import './RewardShop.css';
+
+const ShopModelViewer = lazy(() => import('./shop3d/ShopModelViewer'));
+const modelUrl = (id: string) => {
+  const file = shopModelFile(id);
+  return file ? `${import.meta.env.BASE_URL}models/shop/${file}` : null;
+};
 
 export default function RewardShop({
   state,
@@ -82,6 +89,15 @@ export default function RewardShop({
                       <span className="shop-frame-preview">
                         <Avatar value={state.profile.avatar} photo={state.profile.photo} frame={i.id} />
                       </span>
+                    ) : modelUrl(i.id) ? (
+                      <>
+                        <Suspense fallback={<span aria-hidden="true">{i.icon}</span>}>
+                          <ShopModelViewer url={modelUrl(i.id)!} label={`3D-модель: ${i.name}`} fallback={i.icon} />
+                        </Suspense>
+                        <button type="button" className="shop-3d-open" onClick={() => setSelected(i.id)} aria-label={`Рассмотреть «${i.name}» в 3D`}>
+                          3D
+                        </button>
+                      </>
                     ) : (
                       <span aria-hidden="true">{i.icon}</span>
                     )}
@@ -166,9 +182,15 @@ export default function RewardShop({
           aria-labelledby="shop-confirm-title"
           onCancel={() => setSelected(null)}
         >
-          <span className="shop-confirm-icon" aria-hidden="true">
-            {item.icon}
-          </span>
+          {modelUrl(item.id) ? (
+            <Suspense fallback={<span className="shop-confirm-icon" aria-hidden="true">{item.icon}</span>}>
+              <ShopModelViewer url={modelUrl(item.id)!} label={`3D-модель: ${item.name}. Поверни мышью, пальцем или кнопками ниже.`} fallback={item.icon} interactive />
+            </Suspense>
+          ) : (
+            <span className="shop-confirm-icon" aria-hidden="true">
+              {item.icon}
+            </span>
+          )}
           <h2 id="shop-confirm-title">{item.name}</h2>
           <p>
             Потратить {item.price} монет? После покупки останется{' '}

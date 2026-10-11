@@ -1,8 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { GameState } from '../game';
-import { buyItem, shopItems, redeemPurchase } from '../shop';
+import { buyItem, findShopItem, redeemPurchase, shopCatalog } from '../shop';
+import type { ShopItem } from '../shop';
+import { shopModelFile } from '../shopModels';
 import Avatar from './Avatar';
+import CustomRewardForm from './CustomRewardForm';
 import './RewardShop.css';
+
+const ShopModelViewer = lazy(() => import('./shop3d/ShopModelViewer'));
+const modelUrl = (id: string) => {
+  const file = shopModelFile(id);
+  return file ? `${import.meta.env.BASE_URL}models/shop/${file}` : null;
+};
 
 export default function RewardShop({
   state,
@@ -15,12 +24,15 @@ export default function RewardShop({
 }) {
   const [tab, setTab] = useState('reward');
   const [selected, setSelected] = useState<string | null>(null);
+  const [editing, setEditing] = useState<string | 'new' | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (selected) dialog.current?.showModal();
   }, [selected]);
   const purchases = state.shop?.purchases ?? [];
-  const item = shopItems.find((i) => i.id === selected);
+  const item = selected ? findShopItem(state, selected) : undefined;
+  const kindLabel = (i: ShopItem) => i.custom ? 'Своя награда' : i.kind === 'frame' ? 'Рамка аватара' : 'Награда в жизни';
+  const art = (i: ShopItem) => i.image ? <img className="shop-art-photo" src={i.image} alt="" /> : <span aria-hidden="true">{i.icon}</span>;
   function buy() {
     if (!item) return;
     try {
@@ -65,27 +77,44 @@ export default function RewardShop({
       </div>
       {tab !== 'owned' ? (
         <div className="shop-grid">
-          {shopItems
+          {tab === 'reward' && (
+            <button type="button" className="shop-card shop-card-create" onClick={() => setEditing('new')}>
+              <span className="shop-create-plus" aria-hidden="true">＋</span>
+              <strong>Своя награда</strong>
+              <span>Придумай награду, добавь картинку и назначь цену в монетах</span>
+            </button>
+          )}
+          {shopCatalog(state)
             .filter((i) => i.kind === tab)
             .map((i) => {
               const owned =
                 i.kind === 'frame' && purchases.some((p) => p.itemId === i.id);
               return (
                 <article className="shop-card" key={i.id}>
-                  <div
-                    className="shop-art"
-                    style={{
-                      background: `linear-gradient(145deg, ${i.color}, #fff)`,
-                    }}
-                  >
+                  <div className="shop-art">
                     {i.kind === 'frame' ? (
                       <span className="shop-frame-preview">
                         <Avatar value={state.profile.avatar} photo={state.profile.photo} frame={i.id} />
                       </span>
+                    ) : modelUrl(i.id) ? (
+                      <>
+                        <Suspense fallback={<span aria-hidden="true">{i.icon}</span>}>
+                          <ShopModelViewer url={modelUrl(i.id)!} label={`3D-модель: ${i.name}`} fallback={i.icon} />
+                        </Suspense>
+                        <button type="button" className="shop-3d-open" onClick={() => setSelected(i.id)} aria-label={`Рассмотреть «${i.name}» в 3D`}>
+                          3D
+                        </button>
+                      </>
                     ) : (
-                      <span aria-hidden="true">{i.icon}</span>
+                      art(i)
+                    )}
+                    {i.custom && (
+                      <button type="button" className="shop-3d-open" onClick={() => setEditing(i.id)} aria-label={`Изменить награду «${i.name}»`}>
+                        Изменить
+                      </button>
                     )}
                   </div>
+                  <span className={`shop-kind${i.custom ? ' is-custom' : ''}`}>{kindLabel(i)}</span>
                   <h2>{i.name}</h2>
                   <p>{i.description}</p>
                   <button
@@ -110,10 +139,11 @@ export default function RewardShop({
             .slice()
             .reverse()
             .map((p) => {
-              const i = shopItems.find((i) => i.id === p.itemId)!;
+              const i = findShopItem(state, p.itemId);
+              if (!i) return null;
               return (
                 <article className="panel owned-reward" key={p.id}>
-                  <span aria-hidden="true">{i.icon}</span>
+                  {i.image ? <img className="owned-reward-photo" src={i.image} alt="" /> : <span aria-hidden="true">{i.icon}</span>}
                   <div>
                     <h3>{i.name}</h3>
                     <small>
@@ -166,9 +196,17 @@ export default function RewardShop({
           aria-labelledby="shop-confirm-title"
           onCancel={() => setSelected(null)}
         >
-          <span className="shop-confirm-icon" aria-hidden="true">
-            {item.icon}
-          </span>
+          {modelUrl(item.id) ? (
+            <Suspense fallback={<span className="shop-confirm-icon" aria-hidden="true">{item.icon}</span>}>
+              <ShopModelViewer url={modelUrl(item.id)!} label={`3D-модель: ${item.name}. Поверни мышью, пальцем или кнопками ниже.`} fallback={item.icon} interactive />
+            </Suspense>
+          ) : item.image ? (
+            <img className="shop-confirm-photo" src={item.image} alt="" />
+          ) : (
+            <span className="shop-confirm-icon" aria-hidden="true">
+              {item.icon}
+            </span>
+          )}
           <h2 id="shop-confirm-title">{item.name}</h2>
           <p>
             Потратить {item.price} монет? После покупки останется{' '}
@@ -189,6 +227,15 @@ export default function RewardShop({
             Отмена
           </button>
         </dialog>
+      )}
+      {editing && (
+        <CustomRewardForm
+          reward={editing === 'new' ? undefined : state.shop?.customRewards?.find((r) => r.id === editing)}
+          state={state}
+          onChange={onChange}
+          notify={notify}
+          onClose={() => setEditing(null)}
+        />
       )}
     </div>
   );

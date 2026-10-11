@@ -1,6 +1,6 @@
 # Логотип YOUR LIFE на прозрачном фоне для интерфейса (светлая и тёмная тема).
 # Белый фон вокруг рисунка становится прозрачным, мягкое свечение облаков сохраняется.
-# В тёмном варианте надписи YOUR LIFE и «Твоя жизнь. Твоя игра.» осветлены.
+# Для тёмной темы отдельный логотип: scripts/build-logo-dark.py.
 # Запуск: python3 scripts/build-logo-transparent.py (нужны Pillow и numpy).
 from PIL import Image, ImageFilter, ImageDraw
 import numpy as np
@@ -49,7 +49,7 @@ for c,tg in ((0,110),(1,170),(2,255)):
 for c,tg in ((0,236),(1,242),(2,255)):
   dd[...,c][t]=dd[...,c][t]*0.15+tg*0.85
 dark = Image.fromarray(np.clip(dd, 0, 255).astype(np.uint8), 'RGBA')
-for name, src in (('clear', clear), ('dark', dark)):
+for name, src in (('clear', clear),):
   for size in (96, 256):
     src.resize((size, size), Image.LANCZOS).save(OUT / f'logo-{size}-{name}.png', optimize=True)
-print('Логотип на прозрачном фоне: logo-96/256-clear.png и -dark.png')
+print('Логотип на прозрачном фоне: logo-96-clear.png, logo-256-clear.png')

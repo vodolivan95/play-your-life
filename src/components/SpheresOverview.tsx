@@ -1,15 +1,11 @@
 import { MAX_SPHERE_LEVEL } from '../sphereProgress';
-import { useState, useId } from "react";
+import { useId } from "react";
 import type { CSSProperties, ReactNode } from "react";
-import type { GameState } from "../game";
-import {
-  sphereMetrics,
-  filteredSpheres,
-  demoSphereRecommendation,
-  sphereCount,
-} from "../sphereAnalytics";
-import type { SphereFilter, SphereRecommendation } from "../sphereAnalytics";
-import { SphereBuilding, SphereDistricts } from "./SphereCity";
+import type { GameState, Quest } from "../game";
+import { sphereMetrics, demoSphereRecommendation } from "../sphereAnalytics";
+import type { SphereRecommendation } from "../sphereAnalytics";
+import { SphereBuilding } from "./SphereCity";
+import { SphereCards, SphereWeekPanels } from "./SphereHub";
 import GameArt from "./GameArt";
 import Icon from "./Icon";
 import "./SpheresOverview.css";
@@ -38,7 +34,7 @@ function Meter({
     </div>
   );
 }
-function Radar({ state }: { state: GameState }) {
+function Radar({ state, onQuick }: { state: GameState; onQuick: (id: string) => void }) {
   const rows = sphereMetrics(state).rows;
   const fillId = useId().replace(/:/g, "");
   const point = (index: number, score: number) => {
@@ -111,9 +107,12 @@ function Radar({ state }: { state: GameState }) {
       {rows.map((r, i) => {
         const angle = (i * 2 * Math.PI) / rows.length - Math.PI / 2;
         return (
-          <div
+          <button
+            type="button"
             key={r.id}
             className="radar-label"
+            onClick={() => onQuick(r.id)}
+            aria-label={`${r.name}: LVL ${r.level}. Открыть окно сферы`}
             style={
               {
                 left: `${50 + Math.cos(angle) * 37}%`,
@@ -129,7 +128,7 @@ function Radar({ state }: { state: GameState }) {
               <strong>{r.name}</strong>
               <small>LVL {r.level} / {MAX_SPHERE_LEVEL}</small>
             </div>
-          </div>
+          </button>
         );
       })}
     </div>
@@ -138,20 +137,23 @@ function Radar({ state }: { state: GameState }) {
 export default function SpheresOverview({
   state,
   onSelect,
-  renderCard,
+  onQuick,
+  onQuest,
+  onQuests,
+  renderQuest,
   onAddRecommendation,
   recommendation,
 }: {
   state: GameState;
   onSelect: (id: string) => void;
-  renderCard: (id: string) => ReactNode;
+  onQuick: (id: string) => void;
+  onQuest: (id: string) => void;
+  onQuests: () => void;
+  renderQuest: (quest: Quest) => ReactNode;
   onAddRecommendation: (idea: SphereRecommendation) => void;
   recommendation?: SphereRecommendation;
 }) {
-  const [filter, setFilter] = useState<SphereFilter>("all");
-  const [view, setView] = useState<"cards" | "list" | "analytics">("cards");
-  const metrics = sphereMetrics(state),
-    rows = filteredSpheres(state, filter);
+  const metrics = sphereMetrics(state);
   const idea =
     recommendation?.sphereId === metrics.weakest.id
       ? recommendation
@@ -190,7 +192,7 @@ export default function SpheresOverview({
             <span><i />Текущий уровень</span><span><i />Максимум шкалы: {MAX_SPHERE_LEVEL}</span>
           </div>
           <div className="radar-and-insights">
-            <Radar state={state} />
+            <Radar state={state} onQuick={onQuick} />
             <div className="balance-insights">
               <div className="insight-strong"><i className="insight-symbol" aria-hidden="true">↗</i><span className="insight-bars" aria-hidden="true"><i/><i/><i/></span>
                 <small>
@@ -264,121 +266,8 @@ export default function SpheresOverview({
           </button>
         </article>
       </section>
-      <section className="my-spheres" aria-label="Мои сферы">
-        <div className="spheres-controls">
-          <h2>Мои сферы</h2>
-          <div className="tabs sphere-filters" aria-label="Фильтр сфер">
-            {(
-              [
-                ["all", "Все сферы"],
-                ["active", "Активные"],
-                ["working", "В работе"],
-                ["completed", "Завершённые"],
-              ] as const
-            ).map(([id, label]) => (
-              <button
-                key={id}
-                className={filter === id ? "selected" : ""}
-                aria-pressed={filter === id}
-                onClick={() => setFilter(id)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="tabs sphere-views" aria-label="Представление сфер">
-            {(
-              [
-                ["cards", "Карточки"],
-                ["list", "Список"],
-                ["analytics", "Аналитика"],
-              ] as const
-            ).map(([id, label]) => (
-              <button
-                key={id}
-                className={view === id ? "selected" : ""}
-                aria-pressed={view === id}
-                onClick={() => setView(id)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <SphereDistricts
-          state={state}
-          selected={null}
-          onSelect={onSelect}
-          sphereIds={rows.map((r) => r.id)}
-          showHeading={false}
-        />
-        {rows.length === 0 && (
-          <p className="sphere-empty" role="status">
-            {filter === "completed"
-              ? "Пока нет сфер с завершёнными проектами или задачами."
-              : filter === "working"
-                ? "Пока нет сфер с открытыми проектами или задачами."
-                : "Пока нет активных сфер. Открой «Все сферы» и выбери первый шаг."}
-          </p>
-        )}
-      </section>
-      {rows.length > 0 && (
-        <section
-          className={`sphere-results sphere-results-${view}`}
-          aria-label={
-            view === "cards"
-              ? "Карточки сфер"
-              : view === "list"
-                ? "Список сфер"
-                : "Аналитика по сферам"
-          }
-        >
-          <h2>
-            {view === "analytics" ? "Показатели сфер" : "Проекты по сферам"}
-          </h2>
-          {view === "cards" ? (
-            <div className="sphere-grid all-spheres">
-              {rows.map((row) => renderCard(row.id))}
-            </div>
-          ) : (
-            <div className="sphere-list">
-              {rows.map((row) => (
-                <button
-                  key={row.id}
-                  className="sphere-list-row"
-                  onClick={() => onSelect(row.id)}
-                  style={{ "--sphere-color": row.color } as CSSProperties}
-                >
-                  <SphereBuilding id={row.id} />
-                  <span className="list-icon">
-                    <GameArt kind={row.id} />
-                  </span>
-                  <strong>{row.name}</strong>
-                  <div className="list-score">
-                    <b>LVL {row.level} / {MAX_SPHERE_LEVEL}</b><small>{row.maxed ? "Максимальный уровень" : `${row.currentXP} / ${row.requiredXP} XP`}</small>
-                    <Meter
-                      value={row.maxed ? MAX_SPHERE_LEVEL : row.progress / 100 * MAX_SPHERE_LEVEL}
-                      color={row.color}
-                      label={`XP: ${row.name}`}
-                    />
-                  </div>
-                  <span className="list-counts">
-                    {sphereCount(row.projects, "projects")} ·{" "}
-                    {sphereCount(row.tasks, "tasks")}
-                    {view === "analytics" && (
-                      <small>
-                        {number(row.level - metrics.average)} к среднему ·{" "}
-                        {state.spheres[row.id].xp} XP
-                      </small>
-                    )}
-                  </span>
-                  <Icon name="arrow" size={16} />
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
+      <SphereCards state={state} onOpen={onSelect} onQuick={onQuick} onQuest={onQuest} />
+      <SphereWeekPanels state={state} renderQuest={renderQuest} onQuests={onQuests} />
     </div>
   );
 }

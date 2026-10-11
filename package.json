@@ -19,7 +19,8 @@
     "test:quests-ui": "node tests/quests-ui.mjs",
     "test:live-city": "node tests/live-city-ui.mjs",
     "test:goals-ui": "node tests/goals-ui.mjs",
-    "test:theme-ui": "node tests/theme-ui.mjs"
+    "test:theme-ui": "node tests/theme-ui.mjs",
+    "test:spheres-ui": "node tests/spheres-ui.mjs"
   },
   "dependencies": {
     "firebase": "12.19.0",

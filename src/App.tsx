@@ -1,6 +1,4 @@
 import { readGoalRoute, goalRoute } from './goalRoutes';
-import { sphereProgress, MAX_SPHERE_LEVEL } from './sphereProgress';
-import { sphereCount } from './sphereAnalytics';
 import SpheresOverview from './components/SpheresOverview';
 import HomeDashboard from './components/HomeDashboard';
 import DashboardHeader from './components/DashboardHeader';
@@ -15,14 +13,10 @@ import Icon from './components/Icon';
 import LifeCity from './components/LifeCity';
 import GameArt from './components/GameArt';
 import Avatar from './components/Avatar';
-import ProjectArt from './components/ProjectArt';
 import DataBackup from './components/DataBackup';
 import { stateStorageKey, recoveryStorageKey } from './backup';
-import {
-  SphereBuilding,
-  SphereDistricts,
-  SphereProjects,
-} from './components/SphereCity';
+import { SphereProjects } from './components/SphereCity';
+import { SphereHero, SphereOverview, SphereQuickView, SphereSkills } from './components/SphereHub';
 import Statistics from './components/Statistics';
 import RewardShop from './components/RewardShop';
 import Onboarding, { ProfileEditor } from './components/Onboarding';
@@ -119,7 +113,8 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
     return () => { window.removeEventListener('hashchange', changed); window.removeEventListener('popstate', changed); };
   }, []);
   const [achievementFilter, setAchievementFilter] = useState('all');
-  const [sphereTab, setSphereTab] = useState('projects');
+  const [sphereTab, setSphereTab] = useState('overview');
+  const [quickSphere, setQuickSphere] = useState<string | null>(null);
   const [questSphere, setQuestSphere] = useState('english');
   const [questTemplate, setQuestTemplate] = useState<Partial<Quest> | null>(null);
   const [toast, setToast] = useState('');
@@ -169,7 +164,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
     setGoalLocation(null);
     setPage(id);
     setSelected(null);
-    setSphereTab('projects');
+    setSphereTab('overview');
     setFocusedGoalId(null);
     setGoalOrigin(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -254,17 +249,6 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
       </div>
     );
   }
-  function SphereCard({ id }: { id: string; overview?: boolean }) {
-    const info = spheres.find(s => s.id === id)!;
-    const p = sphereProgress(state.spheres[id].xp);
-    return <button className="sphere-card" onClick={() => { setSelected(id); setSphereTab('projects'); setPage('spheres'); }} style={{ '--sphere-color': info.color } as CSSProperties}>
-      <SphereBuilding id={id}/><div className="sphere-top"><span className="sphere-icon"><GameArt kind={id}/></span><span className="level-chip">LVL {p.level} / {MAX_SPHERE_LEVEL}</span></div><h3>{info.name}</h3>
-      <div className="overview-life-score"><b>LVL {p.level} / {MAX_SPHERE_LEVEL}</b></div>
-      <div className="sphere-xp"><span>{p.maxed ? 'Максимальный уровень' : p.currentXP + ' / ' + p.requiredXP + ' XP'}</span><Icon name="arrow" size={15}/></div>
-      <Progress value={p.progress} color={info.color} label={ 'XP: ' + info.name }/>
-      <div className="overview-project-counts">{sphereCount(state.goals.filter(g => g.sphere === id).length,'projects')} <span>|</span> {sphereCount(state.quests.filter(q => q.sphere === id).length,'tasks')}</div>
-    </button>;
-  }
   return (
     <TickTickContext.Provider value={tickTick}>
       <CityAppearanceContext.Provider value={state.city}>
@@ -340,40 +324,31 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 }
               />
             )}
-            {page === 'home' && <HomeDashboard state={state} onChange={setState} onSphere={(id) => { setSelected(id); setSphereTab('projects'); setPage('spheres'); }} onQuests={() => navigate('quests')} onGoal={() => navigate('goals')} onShop={() => navigate('shop')} onProfile={() => navigate('profile')} onIntegration={() => navigate('profile')} onCreate={newQuest} onStart={() => setModal('start')} renderQuest={q => <QuestRow key={q.id} quest={q} />} />}
-            {page === 'spheres' && !sphere && <SpheresOverview state={state} onSelect={(id) => { setSelected(id); setSphereTab('projects'); }} renderCard={(id) => <SphereCard key={id} id={id} overview />} onAddRecommendation={(idea) => { setState(current => current.goals.some(g => g.sphere === idea.sphereId && g.name === idea.title && g.current < g.target) ? current : saveGoal(current, { name: idea.title, description: idea.description, sphere: idea.sphereId, target: 100, reward: 100, progressMode: 'tasks' })); notify('Проект добавлен в план. Открой его и добавь этапы и задачи.'); }} />}
-            {page === 'spheres' && sphere && <SphereDistricts state={state} selected={selected} onSelect={(id) => { setSelected(id); setSphereTab('projects'); }} />}
+            {page === 'home' && <HomeDashboard state={state} onChange={setState} onSphere={(id) => { setSelected(id); setSphereTab('overview'); setPage('spheres'); }} onQuests={() => navigate('quests')} onGoal={() => navigate('goals')} onShop={() => navigate('shop')} onProfile={() => navigate('profile')} onIntegration={() => navigate('profile')} onCreate={newQuest} onStart={() => setModal('start')} renderQuest={q => <QuestRow key={q.id} quest={q} />} />}
+            {page === 'spheres' && !sphere && <SpheresOverview state={state} onSelect={(id) => { setSelected(id); setSphereTab('overview'); window.scrollTo({ top: 0 }); }} onQuick={setQuickSphere} onQuest={(id) => { setQuestTemplate(null); setQuestSphere(id); setModal('quest'); }} onQuests={() => navigate('quests')} renderQuest={(q) => <QuestRow key={q.id} quest={q} />} onAddRecommendation={(idea) => { setState(current => current.goals.some(g => g.sphere === idea.sphereId && g.name === idea.title && g.current < g.target) ? current : saveGoal(current, { name: idea.title, description: idea.description, sphere: idea.sphereId, target: 100, reward: 100, progressMode: 'tasks' })); notify('Проект добавлен в план. Открой его и добавь этапы и задачи.'); }} />}
             {sphere && (
               <>
-                <button
-                  className="text-button back-link"
-                  onClick={() => setSelected(null)}
-                >
-                  ← Все сферы
-                </button>
-                <div className={`detail-grid sphere-tab-${sphereTab}`}>
-                  <div className="district-hero-art">
-                    <SphereBuilding id={sphere.id} />
-                    <span>{sphere.name} · Твой район развития</span>
-                  </div>
-                  <section className="panel">
-                    <div className="section-heading"><h2>LVL {sphereProgress(state.spheres[sphere.id].xp).level} / {MAX_SPHERE_LEVEL}</h2><span className="xp-tag">{state.spheres[sphere.id].xp} XP всего</span></div>
-                    <Progress label={ 'XP: ' + sphere.name } value={sphereProgress(state.spheres[sphere.id].xp).progress} color={sphere.color}/>
-                    <p className="muted">{sphereProgress(state.spheres[sphere.id].xp).maxed ? 'Максимальный уровень сферы' : sphereProgress(state.spheres[sphere.id].xp).currentXP + ' / ' + sphereProgress(state.spheres[sphere.id].xp).requiredXP + ' XP · ' + sphereProgress(state.spheres[sphere.id].xp).remainingXP + ' XP до следующего уровня'}</p>
-                    <p className="score-note">Уровень растёт за реальные действия: выполняй квесты и задачи проектов этой сферы. У каждой сферы свой XP и своя история развития.</p>
-
-                  </section>
-                </div>
-                <div className="tabs sphere-tabs">
+                <SphereHero
+                  state={state}
+                  id={sphere.id}
+                  onBack={() => setSelected(null)}
+                  onQuest={newQuest}
+                  onProject={() => setModal('goal')}
+                  onCity={() => navigate('city')}
+                />
+                <div className="tabs sphere-tabs sph-tabs" role="tablist" aria-label="Разделы сферы" style={{ '--sph-tab': sphere.color } as CSSProperties}>
                   {[
-                    ['projects', 'Проекты'],
-                    ['quests', 'Задачи'],
-                    ['goals', 'Цели'],
+                    ['overview', 'Обзор'],
+                    ['projects', `Проекты · ${state.goals.filter((g) => g.sphere === sphere.id && g.current < g.target).length}`],
+                    ['quests', `Задачи · ${active.filter((q) => q.sphere === sphere.id).length}`],
+                    ['skills', 'Навыки'],
                     ['history', 'История'],
                     ['statistics', 'Статистика'],
                   ].map(([id, name]) => (
                     <button
                       key={id}
+                      role="tab"
+                      aria-selected={sphereTab === id}
                       className={sphereTab === id ? 'selected' : ''}
                       onClick={() => setSphereTab(id)}
                     >
@@ -381,6 +356,19 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                     </button>
                   ))}
                 </div>
+                {sphereTab === 'overview' && (
+                  <SphereOverview
+                    state={state}
+                    id={sphere.id}
+                    renderQuest={(q) => <QuestRow key={q.id} quest={q} />}
+                    onOpenGoal={(goal) => { navigate('goals'); openGoal(goal.id); setGoalOrigin(sphere.id); }}
+                    onProjects={() => setSphereTab('projects')}
+                    onNewProject={() => setSphereTab('projects')}
+                    onTree={() => navigate('tree')}
+                    onHistory={() => setSphereTab('history')}
+                  />
+                )}
+                {sphereTab === 'skills' && <SphereSkills state={state} id={sphere.id} onTree={() => navigate('tree')} />}
                 {sphereTab === 'projects' && (
                   <SphereProjects
                     onMap={() => navigate('city')}
@@ -409,51 +397,6 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                     }}
                   />
                 )}
-                <section
-                  className="panel sphere-goals"
-                  hidden={!['goals', 'quests'].includes(sphereTab)}
-                >
-                  <h2>Активные цели</h2>
-                  {state.goals
-                    .filter((g) => g.sphere === sphere.id && !g.rewarded)
-                    .map((g) => (
-                      <button
-                        className="detail-goal"
-                        key={g.id}
-                        onClick={() => {
-                          navigate('goals');
-                          openGoal(g.id);
-                        }}
-                      >
-                        <span className="detail-goal-icon">
-                          {g.image ? (
-                            <ProjectArt
-                              name={g.name}
-                              sphere={g.sphere}
-                              image={g.image}
-                            />
-                          ) : (
-                            <GameArt kind="target" />
-                          )}
-                        </span>
-                        <h3>{g.name}</h3>
-                        <Progress
-                          value={(g.current / g.target) * 100}
-                          label={`Цель: ${g.name}`}
-                        />
-                        <p>{Math.round((g.current / g.target) * 100)}%</p>
-                      </button>
-                    ))}
-                  {!state.goals.some(
-                    (g) => g.sphere === sphere.id && !g.rewarded,
-                  ) && <p className="muted">Поставь цель для этой сферы.</p>}
-                  <button
-                    className="primary-button"
-                    onClick={() => setModal('goal')}
-                  >
-                    <Icon name="plus" size={17} /> Новая цель
-                  </button>
-                </section>
                 <section
                   className="panel section-gap"
                   hidden={sphereTab !== 'quests'}
@@ -519,7 +462,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 onOpen={(id) => {
                   setSelected(id);
                   setPage('spheres');
-                  setSphereTab('projects');
+                  setSphereTab('overview');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               />
@@ -633,7 +576,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 onChange={setState}
                 selectedId={focusedGoalId}
                 stageId={goalLocation?.goalId === focusedGoalId ? goalLocation.stageId : undefined}
-                onSphere={(id) => { navigate('spheres'); setSelected(id); setSphereTab('projects'); }}
+                onSphere={(id) => { navigate('spheres'); setSelected(id); setSphereTab('overview'); }}
                 backLabel={
                   goalOrigin
                     ? `← Проекты: ${spheres.find((s) => s.id === goalOrigin)?.name}`
@@ -847,6 +790,17 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
           </div>
         </dialog>
         {modal === 'quest' && <QuestWizard initial={{ sphere: questSphere, ...questTemplate }} onClose={closeModal} onQuest={q => { const next = saveCustomQuest(state, q, userId ?? 'local'); setState(next); notify('Новый квест готов. Вперёд!'); }} onHabit={h => setState(saveHabit(state, h, userId ?? 'local'))} />}
+        {quickSphere && (
+          <SphereQuickView
+            state={state}
+            id={quickSphere}
+            onClose={() => setQuickSphere(null)}
+            onOpen={() => { setPage('spheres'); setSelected(quickSphere); setSphereTab('overview'); setQuickSphere(null); window.scrollTo({ top: 0 }); }}
+            onQuest={() => { setQuestTemplate(null); setQuestSphere(quickSphere); setQuickSphere(null); setModal('quest'); }}
+            onCity={() => { setQuickSphere(null); navigate('city'); }}
+            onIdea={(name, description) => { setState((current) => current.goals.some((g) => g.sphere === quickSphere && g.name === name) ? current : saveGoal(current, { name, description, sphere: quickSphere, target: 100, reward: 100, progressMode: 'tasks' })); notify('Проект добавлен. Открой его, чтобы настроить этапы и задачи.'); }}
+          />
+        )}
         {toast && (
           <div className="toast" role="status">
             <span>✦</span>

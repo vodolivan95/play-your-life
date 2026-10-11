@@ -45,6 +45,7 @@ jobs:
       - run: npm run test:quests-ui
       - run: npm run test:goals-ui
       - run: npm run test:theme-ui
+      - run: npm run test:spheres-ui
       - name: Verify account TickTick settings with isolated mock services
         run: node tests/ticktick-ui.mjs
       - run: npm run build
@@ -60,6 +61,7 @@ jobs:
             work/goal-redesign/*.png
             work/ticktick/*.png
             work/theme/*.png
+            work/spheres/*.png
 
   live-city-ui:
     runs-on: ubuntu-latest

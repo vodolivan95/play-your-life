@@ -8,7 +8,7 @@ import MobileNav from './components/MobileNav';
 import { navigation } from './navigation';
 import { CityAppearanceContext } from './cityAppearanceContext';
 import { useEffect, useRef, useState } from 'react';
-import type { CSSProperties, Dispatch, SetStateAction, ReactNode } from 'react';
+import type { Dispatch, SetStateAction, ReactNode } from 'react';
 import Icon from './components/Icon';
 import LifeCity from './components/LifeCity';
 import GameArt from './components/GameArt';

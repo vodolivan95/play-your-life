@@ -1,0 +1,66 @@
+/* Тёмная тема всего приложения: ручные уточнения поверх src/theme-dark.generated.css.
+   Цвета совпадают с тёмной главной и меню. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  color: #e6ecfa;
+  background: #050a1a;
+  --muted: #9fb2db;
+  --border: #22305a;
+}
+:root[data-theme='dark'] body {
+  background: radial-gradient(ellipse at 50% 0%, #17295a 0%, #08102a 58%, #050a1a 100%) fixed;
+  color: #e6ecfa;
+}
+:root[data-theme='dark'] h1,
+:root[data-theme='dark'] h2,
+:root[data-theme='dark'] h3 {
+  color: #fff;
+}
+:root[data-theme='dark'] .topbar {
+  background: transparent;
+}
+:root[data-theme='dark'] input,
+:root[data-theme='dark'] select,
+:root[data-theme='dark'] textarea {
+  background-color: #0f1830;
+  color: #e6ecfa;
+  border-color: #2a3a66;
+}
+:root[data-theme='dark'] input::placeholder,
+:root[data-theme='dark'] textarea::placeholder {
+  color: #7f92bd;
+}
+:root[data-theme='dark'] dialog {
+  background: #0f1830;
+  color: #e6ecfa;
+}
+:root[data-theme='dark'] dialog::backdrop {
+  background: #02061399;
+}
+
+/* Верхняя панель: дата, погода, уведомления, монеты и уровень. */
+:root[data-theme='dark'] .dashboard-header {
+  color: #e6ecfa;
+}
+:root[data-theme='dark'] .dashboard-date,
+:root[data-theme='dark'] .dashboard-metric,
+:root[data-theme='dark'] .dashboard-notifications summary {
+  background: #0f1830b8;
+  border: 1px solid #96b9ff29;
+  color: #e6ecfa;
+}
+:root[data-theme='dark'] .dashboard-notifications > div {
+  background: #0f1830;
+  border-color: #96b9ff29;
+  box-shadow: 0 10px 34px #00000066;
+  color: #e6ecfa;
+}
+:root[data-theme='dark'] .dashboard-metric small,
+:root[data-theme='dark'] .home-weather small,
+:root[data-theme='dark'] .home-weather a,
+:root[data-theme='dark'] .home-weather .weather-source {
+  color: #9fb2db;
+}
+:root[data-theme='dark'] .home-weather {
+  color: #e6ecfa;
+}

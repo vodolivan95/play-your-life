@@ -30,6 +30,7 @@ import {
   sphereLevelOf,
 } from '../skillTree';
 import type { SkillNode } from '../skillTree';
+import { useMenuTheme } from '../menuTheme';
 import './SkillTree.css';
 
 // Same nine-icon sheet as SphereIcon, cropped to the round picture itself.
@@ -49,16 +50,6 @@ function SkillIcon({ id }: { id: string }) {
   );
 }
 
-const themeKey = 'play-your-life-skill-theme';
-function readTheme(): 'dark' | 'light' {
-  try {
-    const saved = localStorage.getItem(themeKey);
-    if (saved === 'light' || saved === 'dark') return saved;
-  } catch {
-    /* storage can be blocked */
-  }
-  return 'dark';
-}
 
 type Selection =
   | { kind: 'node'; id: string }
@@ -227,7 +218,7 @@ export default function SkillTree({
   notify: (message: string) => void;
   onOpenSphere?: (sphere: string) => void;
 }) {
-  const [theme, setTheme] = useState(readTheme);
+  const [theme, chooseTheme] = useMenuTheme();
   const [sphere, setSphere] = useState('english');
   const [mode, setMode] = useState<'play' | 'plan'>('play');
   const [selection, setSelection] = useState<Selection>(null);
@@ -255,14 +246,6 @@ export default function SkillTree({
     } catch (error) {
       notify(error instanceof Error ? error.message : 'Не удалось изменить дерево.');
       return false;
-    }
-  }
-  function chooseTheme(next: 'dark' | 'light') {
-    setTheme(next);
-    try {
-      localStorage.setItem(themeKey, next);
-    } catch {
-      /* the choice just is not remembered */
     }
   }
   function chooseSphere(id: string) {

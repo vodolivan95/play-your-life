@@ -51,7 +51,7 @@ try {
     await page.locator('.account-brand img').waitFor();
     assert.equal(await page.title(), 'PLAY YOUR LIFE');
     assert.equal(await page.locator('meta[name="description"]').getAttribute('content'), 'PLAY YOUR LIFE — игровая система развития жизни, целей, привычек и достижений.');
-    assert.equal(await page.locator('meta[name="theme-color"]').getAttribute('content'), '#edf8ff');
+    assert.equal(await page.locator('meta[name="theme-color"]').getAttribute('content'), '#070d20', 'По умолчанию тёмная тема');
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     const logo = await page.locator('.account-brand img').evaluate(img => ({ loaded: img.complete && img.naturalWidth === 96, fit: getComputedStyle(img).objectFit, square: img.clientWidth === img.clientHeight }));
     assert.deepEqual(logo, { loaded: true, fit: 'contain', square: true });

@@ -15,3 +15,6 @@ createRoot(document.getElementById('root')!).render(
 
 
 import './selection.css';
+import './menuTheme';
+import './theme-dark.generated.css';
+import './theme-dark.css';

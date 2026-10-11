@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import type { Goal, GameState, Quest } from '../game';
 import { MAX_SPHERE_LEVEL } from '../sphereProgress';
-import { arrangeCards, nextSteps, sphereCards, sphereDetail, statusLabels } from '../sphereDetails';
+import { arrangeCards, districtPath, districtStats, nextSteps, sphereCards, sphereDetail, statusLabels } from '../sphereDetails';
 import type { SphereCardData, SphereCardFilter, SphereSort } from '../sphereDetails';
 import { demoSphereRecommendation, sphereCount } from '../sphereAnalytics';
 import { nodeLevel, nodeStatus, skillTreeOf } from '../skillTree';
@@ -163,51 +163,102 @@ export function SphereQuickView({ state, id, onClose, onOpen, onQuest, onCity, o
   );
 }
 
-/** Обложка открытой сферы: здание, кольцо уровня, показатели и действия. */
-export function SphereHero({ state, id, onBack, onQuest, onProject, onCity }: { state: GameState; id: string; onBack: () => void; onQuest: () => void; onProject: () => void; onCity: () => void }) {
-  const d = sphereDetail(state, id);
-  const card = sphereCards(state).find((c) => c.id === id)!;
-  const r = 48, length = 2 * Math.PI * r;
+export type SphereTab = 'overview' | 'projects' | 'quests' | 'skills' | 'history' | 'statistics';
+
+/** Маленькие значки сцены района (обводка текущим цветом). */
+function Glyph({ name, size = 20 }: { name: 'grid' | 'flag' | 'check' | 'tree' | 'clock' | 'chart' | 'door' | 'plus' | 'back' | 'flame' | 'lock'; size?: number }) {
+  const paths: Record<string, ReactNode> = {
+    grid: <><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></>,
+    flag: <><path d="M5 21V4" /><path d="M5 4h11l-2 4 2 4H5" /></>,
+    check: <path d="M5 12l5 5 9-10" />,
+    tree: <><circle cx="12" cy="5" r="2.5" /><circle cx="6" cy="18" r="2.5" /><circle cx="18" cy="18" r="2.5" /><path d="M12 7.5v4M12 11.5l-5 4M12 11.5l5 4" /></>,
+    clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+    chart: <><path d="M4 20h16" /><path d="M7 16v-5M12 16V6M17 16v-8" /></>,
+    door: <path d="M4 21V5l8-2v18M12 21h8V8l-8-2" />,
+    plus: <path d="M12 5v14M5 12h14" />,
+    back: <path d="M15 5l-7 7 7 7" />,
+    flame: <path d="M12 2c1 4 5 6 5 11a5 5 0 01-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-6 1-9.5z" />,
+    lock: <><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 018 0v3" /></>,
+  };
+  const filled = name === 'flame';
   return (
-    <>
-      <nav className="sph-crumbs" aria-label="Навигация">
-        <button type="button" onClick={onBack}>← Все сферы</button>
-        <span>Сферы жизни</span><span aria-hidden="true">/</span><b>{d.info.name}</b>
-      </nav>
-      <section className="sph-hero" style={tone(d.info.color)} aria-label={`Район ${d.info.name}`}>
-        <div className="sph-hero-photo"><SphereBuilding id={id} /></div>
-        <div className="sph-hero-body">
-          <div className="sph-hero-title">
-            <span className="sph-badge big"><GameArt kind={id} /></span>
-            <div><small>ТВОЙ РАЙОН РАЗВИТИЯ</small><h1>{d.info.name}</h1></div>
-          </div>
-          <div className="sph-hero-level">
-            <svg width="112" height="112" viewBox="0 0 112 112" role="img" aria-label={`Уровень ${d.progress.level} из ${MAX_SPHERE_LEVEL}`}>
-              <circle cx="56" cy="56" r={r} className="sph-ring-track" />
-              <circle cx="56" cy="56" r={r} className="sph-ring" strokeDasharray={`${(length * d.progress.progress) / 100} ${length}`} transform="rotate(-90 56 56)" />
-              <text x="56" y="50" textAnchor="middle" className="sph-ring-label">LVL</text>
-              <text x="56" y="78" textAnchor="middle" className="sph-ring-value">{d.progress.level}</text>
-            </svg>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke={filled ? 'none' : 'currentColor'} strokeWidth={name === 'plus' || name === 'check' ? 3 : 2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {paths[name]}
+    </svg>
+  );
+}
+
+/** Шестиугольник уровня, как в RPG. */
+function LevelHex({ level, size = 84 }: { level: number; size?: number }) {
+  return (
+    <svg className="sph-hex" width={size} height={size} viewBox="0 0 112 112" role="img" aria-label={`Уровень района ${level} из ${MAX_SPHERE_LEVEL}`}>
+      <polygon points="56,4 101,30 101,82 56,108 11,82 11,30" />
+      <text x="56" y="44" textAnchor="middle" className="sph-hex-label">LVL</text>
+      <text x="56" y="80" textAnchor="middle" className="sph-hex-value">{level}</text>
+    </svg>
+  );
+}
+
+/** Полоса XP с подписью внутри. */
+function GameBar({ value, text, label, tone: kind = 'xp' }: { value: number; text: string; label: string; tone?: 'xp' | 'boss' }) {
+  const pct = Math.max(0, Math.min(100, value));
+  return (
+    <div className={`sph-gbar is-${kind}`} role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pct)}>
+      <span style={kind === 'boss' ? { marginLeft: `${100 - pct}%`, width: `${pct}%` } : { width: `${Math.max(pct ? 3 : 0, pct)}%` }} />
+      <b>{text}</b>
+    </div>
+  );
+}
+
+/** Сцена открытой сферы: здание на весь блок, ресурсы, метки на здании, уровень и док разделов. */
+export function SphereScene({ state, id, tab, onTab, onBack, onQuest, onCity }: { state: GameState; id: string; tab: SphereTab; onTab: (tab: SphereTab) => void; onBack: () => void; onQuest: () => void; onCity: () => void }) {
+  const d = sphereDetail(state, id);
+  const done = d.tasksToday.filter((q) => q.done).length;
+  const open = d.tasksToday.length - done;
+  const tabs: [SphereTab, string, Parameters<typeof Glyph>[0]['name'], number?][] = [
+    ['overview', 'Обзор', 'grid'],
+    ['projects', 'Проекты', 'flag', d.projects.length],
+    ['quests', 'Задачи', 'check', open],
+    ['skills', 'Навыки', 'tree'],
+    ['history', 'История', 'clock'],
+    ['statistics', 'Статистика', 'chart'],
+  ];
+  return (
+    <section className="sph-scene" style={tone(d.info.color)} aria-label={`Район ${d.info.name}`}>
+      <div className="sph-scene-stage">
+        <div className="sph-scene-photo"><SphereBuilding id={id} /></div>
+        <div className="sph-hud">
+          <button type="button" className="sph-hud-back" onClick={onBack} aria-label="← Все сферы"><Glyph name="back" size={16} /><span>Все сферы</span></button>
+          <span className="sph-hud-gap" />
+          <span className="sph-res is-xp"><i>XP</i>{d.progress.totalXP}<small> всего</small></span>
+          <span className="sph-res is-streak"><Glyph name="flame" size={16} />{d.streak}<small> {dayWord(d.streak)} подряд</small></span>
+          <span className="sph-res is-day"><Glyph name="check" size={14} />{done}/{d.tasksToday.length}<small> заданий дня</small></span>
+        </div>
+        <button type="button" className="sph-pin is-projects" onClick={() => onTab('projects')}><span><Glyph name="flag" size={15} />Проекты · {d.projects.length}</span></button>
+        <button type="button" className="sph-pin is-enter" onClick={onCity}><span><Glyph name="door" size={15} />Войти в здание</span></button>
+        <button type="button" className="sph-pin is-tasks" onClick={() => onTab('quests')}><span><Glyph name="check" size={15} />Задачи · {open} сегодня</span></button>
+        <div className="sph-scene-bottom">
+          <div className="sph-scene-title">
+            <LevelHex level={d.progress.level} />
             <div>
-              <div className="sph-hero-xp"><span>{d.rank}</span><span>{xpLine({ ...d.progress, level: d.progress.level })}</span></div>
-              <XPBar value={d.progress.progress} label={`XP: ${d.info.name}`} />
-              <p>Уровень растёт за реальные действия: квесты и задачи проектов этого района.</p>
+              <div className="sph-scene-name"><h1>{d.info.name}</h1><small>{d.rank.toUpperCase()}</small></div>
+              <GameBar value={d.progress.progress} label={`XP: ${d.info.name}`} text={d.progress.maxed ? 'Максимальный уровень' : `${d.progress.currentXP} / ${d.progress.requiredXP} XP до LVL ${d.progress.level + 1}`} />
             </div>
           </div>
-          <div className="sph-chips">
-            <span><b>{d.progress.totalXP} XP</b> всего</span>
-            <span><b>{d.streak} {dayWord(d.streak)}</b> подряд</span>
-            <span><b>{sphereCount(d.projects.length, 'projects')}</b> в работе</span>
-            <span className={`sph-status-chip is-${card.status}`}>{card.status === 'strong' ? 'Сильная сфера' : card.status === 'weak' ? 'Нужно внимание' : 'В пути'}</span>
-          </div>
-          <div className="sph-hero-actions">
-            <button type="button" className="sph-primary" onClick={onQuest}>+ Новое задание</button>
-            <button type="button" className="sph-secondary" onClick={onProject}>+ Новый проект</button>
-            <button type="button" className="sph-secondary" onClick={onCity}>Войти в здание</button>
-          </div>
         </div>
-      </section>
-    </>
+      </div>
+      <div className="sph-dock">
+        <div className="sph-dock-tabs" role="tablist" aria-label="Разделы сферы">
+          {tabs.map(([key, name, icon, count]) => (
+            <button key={key} type="button" role="tab" aria-label={count ? `${name} · ${count}` : name} aria-selected={tab === key} className={`sph-dock-tab${tab === key ? ' on' : ''}`} onClick={() => onTab(key)}>
+              <span className="sph-dock-icon"><Glyph name={icon} />{count ? <em>{count}</em> : null}</span>
+              <span className="sph-dock-label">{name}</span>
+            </button>
+          ))}
+        </div>
+        <button type="button" className="sph-dock-plus" onClick={onQuest}><span><Glyph name="plus" size={26} /></span><small>Новое задание</small></button>
+      </div>
+    </section>
   );
 }
 
@@ -241,66 +292,155 @@ export function SphereSkills({ state, id, onTree }: { state: GameState; id: stri
   );
 }
 
-/** Вкладка «Обзор» открытой сферы. */
-export function SphereOverview({ state, id, renderQuest, onOpenGoal, onProjects, onNewProject, onTree, onHistory }: { state: GameState; id: string; renderQuest: (quest: Quest) => ReactNode; onOpenGoal: (goal: Goal) => void; onProjects: () => void; onNewProject: () => void; onTree: () => void; onHistory: () => void }) {
-  const d = sphereDetail(state, id);
-  const focus = new Set(monthlyFocusGoals(state).map((g) => g.id));
-  const maxWeek = Math.max(1, ...d.weeks.map((w) => w.xp));
-  const done = d.tasksToday.filter((q) => q.done).length;
-  const thisWeek = d.weeks[d.weeks.length - 1].xp, lastWeek = d.weeks[d.weeks.length - 2].xp;
+const weekdayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+const shortDate = (time: number | Date) => new Date(time).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+
+/** Значок достижения: шестиугольник с символом, у закрытых — замок. */
+function Medal({ id, done }: { id: string; done: boolean }) {
+  const glyph: Record<string, Parameters<typeof Glyph>[0]['name']> = { first: 'check', week: 'flame', project: 'flag', 'two-weeks': 'flame' };
   return (
-    <div className="sph-overview" style={tone(d.info.color)}>
-      <div className="sph-col">
-        <section className="sph-panel">
-          <div className="sph-panel-head"><h2>Проекты района</h2><button type="button" className="sph-link" onClick={onProjects}>Все проекты →</button></div>
-          {d.projects.length ? (
-            <div className="sph-projects">
-              {d.projects.slice(0, 2).map((goal) => {
-                const tasks = state.quests.filter((q) => q.goalId === goal.id);
-                const next = tasks.find((q) => !q.done);
-                const pct = Math.min(100, Math.round((goal.current / goal.target) * 100));
+    <span className={`sph-medal is-${id}${done ? ' done' : ''}`} aria-hidden="true">
+      <svg viewBox="0 0 56 56"><polygon points="28,3 50,15 50,41 28,53 6,41 6,15" /></svg>
+      <Glyph name={done ? glyph[id] ?? 'check' : 'lock'} size={22} />
+    </span>
+  );
+}
+
+/** Вкладка «Обзор» открытой сферы — как в игре: путь района, босс месяца, задания дня, статистика и достижения. */
+export function SphereOverview({ state, id, renderQuest, onOpenGoal, onProjects, onNewProject, onQuest, onTree, onStatistics }: { state: GameState; id: string; renderQuest: (quest: Quest) => ReactNode; onOpenGoal: (goal: Goal) => void; onProjects: () => void; onNewProject: () => void; onQuest: () => void; onTree: () => void; onStatistics: () => void }) {
+  const d = sphereDetail(state, id);
+  const s = districtStats(state, id);
+  const path = districtPath(d.progress.totalXP);
+  const focus = monthlyFocusGoals(state).filter((g) => g.sphere === id && g.current < g.target);
+  const boss = focus[0] ?? d.projects[0] ?? null;
+  const bossTasks = boss ? state.quests.filter((q) => q.goalId === boss.id) : [];
+  const bossNext = bossTasks.find((q) => !q.done);
+  const bossPct = boss ? Math.min(100, Math.round((boss.current / boss.target) * 100)) : 0;
+  const done = d.tasksToday.filter((q) => q.done).length;
+  const maxWeek = Math.max(1, ...s.weeks.map((w) => w.xp));
+  const maxDay = Math.max(...s.weekdays);
+  const strongDay = maxDay > 0 ? weekdayNames[s.weekdays.indexOf(maxDay)] : null;
+  const diff = s.thisWeek - s.lastWeek;
+  const gained = s.achievements.filter((a) => a.done).length;
+  const pathFill = path.length > 1 ? d.progress.progress / path.length : 0;
+  return (
+    <div className="sph-game" style={tone(d.info.color)}>
+      <section className="sph-panel sph-path" aria-label="Путь района">
+        <div className="sph-panel-head"><h2>Путь района</h2><span className="sph-muted small">что откроется на следующих уровнях</span></div>
+        <ol className="sph-path-track" style={{ '--path-count': path.length, '--path-fill': `${pathFill}%` } as CSSProperties}>
+          {path.map((node) => (
+            <li key={node.level} className={node.current ? 'current' : ''}>
+              <span className="sph-path-dot">{node.level}</span>
+              <b>{node.title}</b>
+              <small>{node.note}</small>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <div className="sph-game-row">
+        <section className="sph-panel sph-boss" aria-label="Босс месяца">
+          <div className="sph-panel-head"><small className="sph-kicker">{focus.length ? 'БОСС МЕСЯЦА' : 'ГЛАВНЫЙ ПРОЕКТ'}</small>{boss ? <span className="sph-reward">Награда {boss.reward} XP</span> : null}</div>
+          {boss ? (
+            <>
+              <h3>{boss.name}</h3>
+              <GameBar tone="boss" value={100 - bossPct} label={`Сила босса: ${boss.name}`} text={`Сила босса ${100 - bossPct}% · пройдено ${bossPct}%`} />
+              <div className="sph-boss-next">
+                <span>Следующий удар: <b>{bossNext?.name ?? 'добавить первый шаг'}</b></span>
+                <button type="button" onClick={() => onOpenGoal(boss)}>В бой</button>
+              </div>
+              <div className="sph-boss-foot">
+                <button type="button" className="sph-link" onClick={onProjects}>Все проекты района →</button>
+                <button type="button" className="sph-link" onClick={onNewProject}>+ Новый проект</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <h3>Босса пока нет</h3>
+              <p className="sph-muted">Начни проект района — он станет главным боссом, а его шаги будут «ударами».</p>
+              <button type="button" className="sph-dashed" onClick={onNewProject}>+ Создать проект или выбрать идею</button>
+            </>
+          )}
+        </section>
+
+        <section className="sph-panel sph-daily" aria-label="Квесты дня">
+          <div className="sph-panel-head"><h2>Квесты дня</h2><span className="sph-muted small">{done} из {d.tasksToday.length}</span></div>
+          {d.tasksToday.length ? (
+            <>
+              <div className="sph-segments" aria-hidden="true">{d.tasksToday.map((q) => <i key={q.id} className={q.done ? 'on' : ''} />)}</div>
+              <div className="sph-quests">{d.tasksToday.map((q) => renderQuest(q))}</div>
+            </>
+          ) : (
+            <>
+              <p className="sph-muted">На сегодня заданий в этом районе нет.</p>
+              <button type="button" className="sph-dashed" onClick={onQuest}>+ Новое задание</button>
+            </>
+          )}
+        </section>
+
+        <section className="sph-panel" aria-label="Ветки навыков">
+          <div className="sph-panel-head"><h2>Ветки навыков</h2><button type="button" className="sph-link" onClick={onTree}>Skill Tree →</button></div>
+          <SkillList state={state} id={id} limit={3} />
+        </section>
+      </div>
+
+      <section className="sph-panel sph-stats-block" aria-label="Статистика района">
+        <div className="sph-panel-head"><h2>Статистика района</h2><button type="button" className="sph-link" onClick={onStatistics}>Вся статистика →</button></div>
+        <div className="sph-kpis">
+          <div className="sph-kpi is-gold"><small>XP ЗА НЕДЕЛЮ</small><b>+{s.thisWeek}</b><span className={diff > 0 ? 'up' : diff < 0 ? 'down' : ''}>{diff > 0 ? `▲ на ${diff} больше прошлой` : diff < 0 ? `▼ на ${-diff} меньше прошлой` : 'как на прошлой неделе'}</span></div>
+          <div className="sph-kpi is-green"><small>ЗАДАНИЙ ВЫПОЛНЕНО</small><b>{s.tasksTotal}</b><span>из них {s.tasksWeek} за неделю</span></div>
+          <div className="sph-kpi is-orange"><small>ЛУЧШАЯ СЕРИЯ</small><b>{s.best} {dayWord(s.best)}</b><span>{s.streak >= s.best && s.best > 0 ? 'это твой рекорд сейчас' : `сейчас ${s.streak} — до рекорда ${s.best - s.streak}`}</span></div>
+          <div className="sph-kpi is-violet"><small>МЕСТО СРЕДИ СФЕР</small><b>{s.place} из {s.placeOf}</b><span>по всему XP района</span></div>
+        </div>
+        <div className="sph-stats-row">
+          <div className="sph-glass is-green">
+            <div className="sph-panel-head"><b>XP по неделям</b><span className="sph-muted small">8 недель</span></div>
+            <div className="sph-glass-chart" role="img" aria-label={`XP по неделям: ${s.weeks.map((w) => w.xp).join(', ')}`}>
+              {s.weeks.map((w, i) => {
+                const now = i === s.weeks.length - 1;
                 return (
-                  <article key={goal.id} className="sph-project">
-                    <div className="sph-project-top">{focus.has(goal.id) ? <span className="sph-tag accent">Главный квест месяца</span> : <span className="sph-tag">В работе</span>}{goal.dueAt && <small>до {new Date(goal.dueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</small>}</div>
-                    <h3>{goal.name}</h3>
-                    <XPBar value={pct} label={`Прогресс: ${goal.name}`} />
-                    <div className="sph-project-meta"><span>{tasks.length ? `${tasks.filter((q) => q.done).length} из ${tasks.length} задач` : 'Пока нет задач'}</span><b>{pct}%</b></div>
-                    <p className="sph-next">Следующий шаг: <b>{next?.name ?? 'Добавить первый шаг'}</b></p>
-                    <div className="sph-project-foot"><span className="sph-reward">Награда: {goal.reward} XP</span><button type="button" className="sph-link" onClick={() => onOpenGoal(goal)}>Продолжить →</button></div>
-                  </article>
+                  <div key={i} className={now ? 'now' : ''}>
+                    <span className="sph-glass-bar" style={{ height: `${Math.max(w.xp ? 6 : 3, (w.xp / maxWeek) * 100)}%` }}>{now && w.xp ? <em>+{w.xp}</em> : null}</span>
+                    <small>{now ? 'Эта' : shortDate(w.start)}</small>
+                  </div>
                 );
               })}
             </div>
-          ) : <p className="sph-muted">В этом районе пока нет проектов.</p>}
-          <button type="button" className="sph-dashed" onClick={onNewProject}>+ Создать проект или выбрать идею</button>
-        </section>
-        <section className="sph-panel">
-          <div className="sph-panel-head"><h2>Задачи на сегодня</h2><span className="sph-muted small">{done} из {d.tasksToday.length} выполнено</span></div>
-          {d.tasksToday.length ? <div className="sph-quests">{d.tasksToday.map((q) => renderQuest(q))}</div> : <p className="sph-muted">На сегодня задач в этой сфере нет.</p>}
-        </section>
-      </div>
-      <div className="sph-col">
-        <section className="sph-panel">
-          <div className="sph-panel-head"><h2>XP по неделям</h2>{lastWeek > 0 && <span className={`sph-trend ${thisWeek >= lastWeek ? 'up' : 'down'}`}>{thisWeek >= lastWeek ? '+' : '−'}{Math.abs(Math.round(((thisWeek - lastWeek) / lastWeek) * 100))}% к прошлой</span>}</div>
-          <div className="sph-chart" role="img" aria-label={`XP по неделям: ${d.weeks.map((w) => w.xp).join(', ')}`}>
-            {d.weeks.map((w, i) => <div key={i} className={i === d.weeks.length - 1 ? 'now' : ''}><i style={{ height: `${Math.max(w.xp ? 6 : 2, (w.xp / maxWeek) * 100)}%` }} /><small>{i === d.weeks.length - 1 ? 'Эта' : w.start.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })}</small></div>)}
           </div>
-        </section>
-        <section className="sph-panel">
-          <div className="sph-panel-head"><h2>Навыки района</h2><button type="button" className="sph-link" onClick={onTree}>Skill Tree →</button></div>
-          <SkillList state={state} id={id} limit={3} />
-        </section>
-        <section className="sph-panel sph-next-level">
-          <span className="sph-trophy"><GameArt kind="trophy" /></span>
-          <div><small>{d.progress.maxed ? 'ВЕРШИНА' : `СЛЕДУЮЩИЙ УРОВЕНЬ — LVL ${d.progress.level + 1}`}</small><b>{d.progress.maxed ? 'Район прокачан до максимума' : `Осталось ${d.progress.remainingXP} XP`}</b><small>{d.progress.maxed ? 'Так держать!' : 'Выполняй задания и задачи проектов этого района'}</small></div>
-        </section>
-        <section className="sph-panel">
-          <div className="sph-panel-head"><h2>История</h2>{d.history.length > 4 && <button type="button" className="sph-link" onClick={onHistory}>Вся история →</button>}</div>
-          {d.history.length ? d.history.slice(0, 4).map((e) => (
-            <div key={e.id} className="sph-history"><i /><div><b>{e.title}</b><small>{new Date(e.date).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</small></div><span>+{e.xp} XP</span></div>
-          )) : <p className="sph-muted">Здесь появятся выполненные действия.</p>}
-        </section>
-      </div>
+          <div className="sph-glass is-blue">
+            <b className="sph-glass-title">Активность по дням недели</b>
+            <div className="sph-glass-days" role="img" aria-label={`XP по дням недели: ${weekdayNames.map((n, i) => `${n} ${s.weekdays[i]}`).join(', ')}`}>
+              {weekdayNames.map((name, i) => <div key={name}><span className="sph-glass-tile">{s.weekdays[i] ? `+${s.weekdays[i]}` : '—'}</span><small>{name}</small></div>)}
+            </div>
+            <small className="sph-muted small">{strongDay ? `Сильнее всего — ${strongDay}.` : 'Выполни первое задание — здесь появится твой ритм.'}</small>
+            <div className="sph-records">
+              <b>Рекорды</b>
+              <div><span>Лучший день</span><b>{s.bestDay ? `+${s.bestDay.xp} XP · ${s.bestDay.key.slice(8, 10)}.${s.bestDay.key.slice(5, 7)}` : '—'}</b></div>
+              <div><span>Лучшая неделя</span><b>{s.bestWeek ? `+${s.bestWeek.xp} XP · с ${shortDate(s.bestWeek.start)}` : '—'}</b></div>
+              <div><span>Завершено проектов</span><b>{s.projectsDone}</b></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="sph-panel sph-achievements" aria-label="Достижения района">
+        <div className="sph-panel-head"><h2>Достижения района</h2><span className="sph-muted small">{gained} из {s.achievements.length} получено</span></div>
+        <div className="sph-medals">
+          {s.achievements.map((a) => (
+            <div key={a.id} className={`sph-achievement${a.done ? ' done' : ''}`}>
+              <Medal id={a.id} done={a.done} />
+              <b>{a.title}</b>
+              {a.done ? <small>{a.note}</small> : (
+                <>
+                  <span className="sph-achievement-bar" aria-hidden="true"><i style={{ width: `${Math.round(a.progress * 100)}%` }} /></span>
+                  <small>{a.id === 'week' || a.id === 'two-weeks' ? `${s.best} / ${a.id === 'week' ? 7 : 14} дней` : a.note}</small>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
+

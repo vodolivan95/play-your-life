@@ -73,11 +73,12 @@ try {
       // Окно из карточки → «Открыть район».
       await cards.first().locator('.sph-card-photo').click();
       await quick.getByRole('button', { name: 'Открыть район' }).click();
-      await page.locator('.sph-hero').waitFor();
+      await page.locator('.sph-scene').waitFor();
+      await page.locator('.sph-game').waitFor();
       assert.equal(await page.getByRole('tab', { name: 'Обзор' }).getAttribute('aria-selected'), 'true');
       await page.waitForTimeout(600);
       await page.screenshot({ path: `work/spheres/${name}-3-sphere.png`, fullPage: true });
-      for (const [tab, file] of [[/^Проекты/, '4-projects'], ['Навыки', '5-skills']]) {
+      for (const [tab, file] of [[/^Проекты/, '4-projects'], [/^Навыки/, '5-skills'], [/^Статистика/, '6-statistics']]) {
         await page.getByRole('tab', { name: tab }).click();
         await page.waitForTimeout(400);
         await page.screenshot({ path: `work/spheres/${name}-${file}.png`, fullPage: true });

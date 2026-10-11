@@ -138,12 +138,12 @@ service cloud.firestore {
           && request.resource.data.events is list
           && request.resource.data.updatedAt == request.time;
       }
-      // Обложки целей и квестов. Id содержит отпечаток данных, поэтому содержимое не меняется.
+      // Обложки целей, квестов и картинки своих наград. Id содержит отпечаток данных, поэтому содержимое не меняется.
       match /images/{imageId} {
         allow get: if owner();
         allow list: if false;
         allow delete: if owner();
-        allow create, update: if owner() && imageId.matches('^(goal|quest)-[A-Za-z0-9_-]{1,80}-[0-9a-f]{8}$')
+        allow create, update: if owner() && imageId.matches('^(goal|quest|reward)-[A-Za-z0-9_-]{1,80}-[0-9a-f]{8}$')
           && request.resource.data.keys().hasOnly(['data','updatedAt'])
           && request.resource.data.keys().hasAll(['data','updatedAt'])
           && request.resource.data.data is string

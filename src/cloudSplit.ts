@@ -3,7 +3,7 @@
  *
  * В памяти, в локальных черновиках и в резервных копиях игра всегда полная.
  * Только при записи в Firestore старые события уходят в архив по месяцам
- * (`players/{uid}/history/{ГГГГ-ММ}`), а обложки — в отдельные документы
+ * (`players/{uid}/history/{ГГГГ-ММ}`), а обложки целей, квестов и картинки своих наград — в отдельные документы
  * (`players/{uid}/images/{id}`). В основном документе остаются указатели
  * `historyIndex` и `imageRefs`. При загрузке игра собирается обратно.
  */
@@ -17,8 +17,8 @@ export const MAX_HISTORY_MONTH_BYTES = 900_000;
 
 const entityId = /^[A-Za-z0-9_-]{1,80}$/;
 export const monthPattern = /^\d{4}-\d{2}$/;
-export const imageDocPattern = /^(goal|quest)-[A-Za-z0-9_-]{1,80}-[0-9a-f]{8}$/;
-export const imageRefPattern = /^(goal|quest):[A-Za-z0-9_-]{1,80}$/;
+export const imageDocPattern = /^(goal|quest|reward)-[A-Za-z0-9_-]{1,80}-[0-9a-f]{8}$/;
+export const imageRefPattern = /^(goal|quest|reward):[A-Za-z0-9_-]{1,80}$/;
 
 export type CloudSplit = {
   /** Основной документ: недавние события, без обложек, с указателями. */
@@ -76,7 +76,7 @@ export function splitForCloud(state: GameState, now = new Date()): CloudSplit {
   }
   const images: Record<string, string> = {};
   const imageRefs: Record<string, string> = {};
-  const extract = (kind: 'goal' | 'quest', id: string, data: string | undefined) => {
+  const extract = (kind: 'goal' | 'quest' | 'reward', id: string, data: string | undefined) => {
     // Обложку с необычным id оставляем в основном документе, как раньше.
     if (!data || !entityId.test(id)) return false;
     const docId = `${kind}-${id}-${fingerprint(data)}`;
@@ -96,8 +96,14 @@ export function splitForCloud(state: GameState, now = new Date()): CloudSplit {
     void coverImage;
     return rest;
   });
+  const customRewards = state.shop?.customRewards?.map((reward) => {
+    if (!extract('reward', reward.id, reward.image)) return reward;
+    const { image, ...rest } = reward;
+    void image;
+    return rest;
+  });
   return {
-    stored: { ...state, events: kept, goals, quests, historyIndex, imageRefs },
+    stored: { ...state, events: kept, goals, quests, ...(state.shop && customRewards ? { shop: { ...state.shop, customRewards } } : {}), historyIndex, imageRefs },
     history,
     images,
   };
@@ -144,10 +150,14 @@ export function assembleFromCloud(
     const data = image(`quest:${quest.id}`);
     return data ? { ...quest, coverImage: data } : quest;
   });
+  const customRewards = stored.shop?.customRewards?.map((reward) => {
+    const data = image(`reward:${reward.id}`);
+    return data ? { ...reward, image: data } : reward;
+  });
   const { historyIndex, imageRefs, ...full } = stored;
   void historyIndex;
   void imageRefs;
-  return { ...full, events, goals, quests };
+  return { ...full, events, goals, quests, ...(full.shop && customRewards ? { shop: { ...full.shop, customRewards } } : {}) };
 }
 
 /** Какие части облака нужно записать, чтобы основной документ на них ссылался. */

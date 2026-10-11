@@ -115,3 +115,13 @@ test('проверка отклоняет поддельные указател�
     validateState({ ...part.stored, imageRefs: { 'goal:b2': 'quest-other-00000000' } }),
   );
 });
+
+test('картинка своей награды уходит в отдельный документ и возвращается', () => {
+  const full = game();
+  full.shop = { purchases: [], customRewards: [{ id: 'custom-0123456789ab', name: 'Кино', price: 120, image, createdAt: now.toISOString() }] };
+  const part = splitForCloud(full, now);
+  assert.equal(part.stored.shop?.customRewards?.[0].image, undefined);
+  assert.ok(part.stored.imageRefs?.['reward:custom-0123456789ab']);
+  validateState(part.stored);
+  assert.deepEqual(assembleFromCloud(part.stored, part.history, part.images), full);
+});

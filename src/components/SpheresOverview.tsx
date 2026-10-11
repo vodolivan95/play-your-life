@@ -54,10 +54,11 @@ function Radar({ state }: { state: GameState }) {
       >
         <title>Уровни сфер от 0 до {MAX_SPHERE_LEVEL}</title>
         <defs><linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2cc5ff" stopOpacity=".8"/><stop offset="100%" stopColor="#008cff" stopOpacity=".65"/></linearGradient></defs>
-        {[MAX_SPHERE_LEVEL / 4, MAX_SPHERE_LEVEL / 2, MAX_SPHERE_LEVEL]
+        {[MAX_SPHERE_LEVEL / 4, MAX_SPHERE_LEVEL / 2, (MAX_SPHERE_LEVEL * 3) / 4, MAX_SPHERE_LEVEL]
           .map((value) => (
             <polygon
               key={value}
+              className={value === MAX_SPHERE_LEVEL ? "radar-web radar-web-outer" : "radar-web"}
               points={rows.map((_, i) => point(i, value)).join(" ")}
               fill={value === MAX_SPHERE_LEVEL ? "#f5fbff" : "none"}
               stroke="#d4eafd"
@@ -72,6 +73,7 @@ function Radar({ state }: { state: GameState }) {
             y1="180"
             x2={point(i, MAX_SPHERE_LEVEL).split(",")[0]}
             y2={point(i, MAX_SPHERE_LEVEL).split(",")[1]}
+            className="radar-axis"
             stroke="#d4eafd"
           />
         ))}
@@ -88,16 +90,18 @@ function Radar({ state }: { state: GameState }) {
             cx={point(i, r.level).split(",")[0]}
             cy={point(i, r.level).split(",")[1]}
             r="3"
+            className="radar-dot"
             fill="white"
             stroke="#1697ff"
           />
         ))}
-        {[0, MAX_SPHERE_LEVEL / 4, MAX_SPHERE_LEVEL / 2, MAX_SPHERE_LEVEL].map((value) => (
+        {[0, MAX_SPHERE_LEVEL / 4, MAX_SPHERE_LEVEL / 2, (MAX_SPHERE_LEVEL * 3) / 4, MAX_SPHERE_LEVEL].map((value) => (
           <text
             key={value}
             x="225"
             y={180 - (value / MAX_SPHERE_LEVEL) * 110 - 4}
             fontSize="9"
+            className="radar-tick"
             fill="#577a96"
           >
             {value}

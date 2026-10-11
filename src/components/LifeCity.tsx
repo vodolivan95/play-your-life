@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
-import { spheres } from '../game';
 import type { GameState } from '../game';
 import BuildingInterior from './BuildingInterior';
 import './LifeCity.css';
@@ -35,36 +34,6 @@ export default function LifeCity({
     );
   return (
     <section className="life-city" aria-label="Город сфер жизни">
-      <div className="city-intro">
-        <div>
-          <span className="eyebrow">ТВОЙ ГОРОД. ТВОИ ПРАВИЛА.</span>
-          <h2>Добро пожаловать на свой остров</h2>
-          <p>
-            Нажми на само здание. Внутри можно обустроить пространство и
-            улучшить его.
-          </p>
-        </div>
-        <span className="city-balance">🪙 {state.coins} монет</span>
-      </div>
-      <div className="city-toolbar">
-        <label className="city-jump">
-          Войти в здание
-          <select
-            value=""
-            onChange={(e) => {
-              if (e.target.value) setInside(e.target.value);
-            }}
-          >
-            <option value="">Выбери сферу…</option>
-            {spheres.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.icon} {s.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <span>Наведи на здание или нажми на него</span>
-      </div>
       <div className="city-simulation-controls" aria-label="Управление окружением">
         <button aria-pressed={paused} onClick={() => setPaused(!paused)}>{paused ? '▶ Продолжить' : '⏸ Пауза'}</button>
         <label>Скорость <select aria-label="Скорость города" value={speed} onChange={e => setSpeed(Number(e.target.value))}><option value={1}>1×</option><option value={2}>2×</option><option value={3}>3×</option></select></label>

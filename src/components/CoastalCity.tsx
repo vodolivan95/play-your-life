@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { spheres } from '../game';
 import type { GameState } from '../game';
@@ -11,6 +11,9 @@ import { readRoutes, routeStorageKey } from '../cityLive/simulation';
 import type { Quality } from '../cityLive/simulation';
 import type { CityTime, DebugFlags } from '../cityLive/render';
 import LiveCityCanvas from './LiveCityCanvas';
+import CityAnimals from './CityAnimals';
+import sceneUrl from '../assets/city-scene.webp';
+import { sphereCards } from '../sphereDetails';
 import './CoastalCity.css';
 import { useCityZoom } from '../cityLive/useCityZoom';
 
@@ -27,6 +30,18 @@ function readPreferences():{time:CityTime;weather:string;quality:Quality} {
       quality:['auto','high','medium','low'].includes(value.quality)?value.quality:'auto'};
   } catch {return {time:'auto',weather:'clear',quality:'auto'};}
 }
+// Положение острова в общей сцене 1440 × 900 (окружение — соседние острова, море и небо).
+const island={left:'25.035%',top:'-1.556%',width:'56.354%'};
+const wideQuery='(min-width: 1000px)';
+function useWide() {
+  const [wide,setWide]=useState(()=>typeof matchMedia==='function'&&matchMedia(wideQuery).matches);
+  useEffect(()=>{
+    if(typeof matchMedia!=='function')return;
+    const q=matchMedia(wideQuery),on=()=>setWide(q.matches);
+    q.addEventListener('change',on);return()=>q.removeEventListener('change',on);
+  },[]);
+  return wide;
+}
 const debugDefaults:DebugFlags={road:false,water:false,pedestrian:false,hitboxes:false,spawn:false,intersections:false,fps:false};
 const debugLabels:Record<keyof DebugFlags,string>={road:'Дороги',water:'Водные пути',pedestrian:'Пути NPC',hitboxes:'Hitboxes',spawn:'Входы / выходы',intersections:'Перекрёстки',fps:'FPS'};
 
@@ -34,6 +49,10 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
   state:GameState;onOpen:(id:string)=>void;paused:boolean;speed:number;
 }) {
   const {zoom,setZoom,scroll}=useCityZoom();
+  const wide=useWide();
+  const cards=useMemo(()=>sphereCards(state),[state]);
+  const [picked,setPicked]=useState<string|null>(null);
+  const current=cards.find(c=>c.id===picked)??null;
   const [preferences,setPreferences]=useState(readPreferences);
   const [routes,setRoutes]=useState(()=>{try{return readRoutes(localStorage);}catch{return defaultRoutes;}});
   const [debug,setDebug]=useState(debugDefaults);
@@ -97,13 +116,17 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
       </div>
       <p role="status">{message||`${draft.length} точек · SAVE сохраняет только маршруты; прогресс игры не изменяется.`}</p>
     </details>}
-    <p className="coastal-hint" id="coastal-hint">{editing?'Нажимай на карту, чтобы добавить точки маршрута.':'Нажми на здание, чтобы войти. Масштаб — двумя пальцами, колёсиком или кнопками. Увеличенную карту можно листать.'}</p>
+    <p className="coastal-hint" id="coastal-hint">{editing?'Нажимай на карту, чтобы добавить точки маршрута.':'Нажми на здание, чтобы войти. Подпись района или список — карточка района. Масштаб — двумя пальцами, колёсиком или кнопками.'}</p>
+    <div className="coastal-frame">
     <div ref={scroll} className="coastal-scroll" aria-label="Прибрежная карта" aria-describedby="coastal-hint">
+      <div className="coastal-stage" style={wide?{width:`${zoom*100}%`}:undefined}>
+      {wide&&<img className="coastal-scene" src={sceneUrl} alt="" aria-hidden="true" draggable={false}/>}
       <div className="coastal-map" data-time={preferences.time} data-weather={preferences.weather} data-paused={paused} data-editing={editing}
-        style={{width:`${zoom*100}%`,'--city-rate':speed} as CSSProperties}>
+        style={{...(wide?island:{width:`${zoom*100}%`}),'--city-rate':speed} as CSSProperties}>
         <img src={cityAssets.background} width="1005" height="1280" alt="Прибрежный город на островах: девять зданий сфер жизни, мосты, водопады и пляж" draggable={false}/>
         <LiveCityCanvas routes={routes} paused={paused} speed={speed} quality={preferences.quality} time={preferences.time} weather={preferences.weather}
           debug={debug} draft={draft} editing={editing} onPoint={point=>setDraft([...draft,point])}/>
+        <CityAnimals/>
         {coastalBuildings.map(building=>{
           const sphere=spheres.find(s=>s.id===building.id)!,tier=buildingState(state,building.id).tier;
           return <button key={building.id} className="coastal-building" data-building={building.id}
@@ -112,7 +135,37 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
             <span>{sphere.icon} {sphere.name}{tier>1?` · Здание ${tier} ур.`:''}</span>
           </button>;
         })}
+        {wide&&coastalBuildings.map(building=>{
+          const card=cards.find(c=>c.id===building.id);if(!card)return null;
+          return <button key={building.id} className="coastal-pin" data-pin={building.id} aria-pressed={picked===building.id}
+            aria-label={`Район ${card.name}, уровень ${card.level}`} onClick={()=>setPicked(picked===building.id?null:building.id)}
+            style={{left:`${building.x+building.width/2}%`,top:`${building.y+building.height*.12}%`,'--pin':card.color} as CSSProperties}>
+            {card.tasksToday>0&&<i aria-hidden="true">{card.tasksToday}</i>}{card.name}<small>ур. {card.level}</small>
+          </button>;
+        })}
+      </div>
       </div>
     </div>
+    {wide&&<nav className="coastal-districts" aria-label="Районы острова">
+      <header><b>Районы</b><small>ур. района</small></header>
+      {cards.map(card=><button key={card.id} aria-pressed={picked===card.id} onClick={()=>setPicked(picked===card.id?null:card.id)} style={{'--pin':card.color} as CSSProperties}>
+        <span className="dot" aria-hidden="true"/><span className="name">{card.name}<span className="bar"><span style={{width:`${card.progress}%`}}/></span></span><b>{card.level}</b>
+      </button>)}
+    </nav>}
+    {current&&<aside className="coastal-panel" aria-label={`Район ${current.name}`} style={{'--pin':current.color} as CSSProperties}>
+      <button className="close" aria-label="Закрыть карточку района" onClick={()=>setPicked(null)}>×</button>
+      <span className="tag">{current.rank}</span>
+      <h3>{current.name}</h3>
+      <p>Уровень района {current.level} · здание {buildingState(state,current.id).tier} ур.</p>
+      <div className="stats"><span><small>Задачи сегодня</small><b>{current.tasksToday}</b></span><span><small>XP за неделю</small><b>{current.weekXP}</b></span><span><small>Серия</small><b>{current.streak} дн.</b></span></div>
+      <div className="progress"><span><small>До следующего уровня</small><b>{current.maxed?'максимум':`${current.currentXP} / ${current.requiredXP} XP`}</b></span><i><i style={{width:`${current.progress}%`}}/></i></div>
+      <button className="enter" onClick={()=>onOpen(current.id)}>Войти внутрь</button>
+    </aside>}
+    </div>
+    {!wide&&<div className="coastal-chips" aria-label="Районы острова">
+      {cards.map(card=><button key={card.id} aria-pressed={picked===card.id} onClick={()=>setPicked(picked===card.id?null:card.id)} style={{'--pin':card.color} as CSSProperties}>
+        <span className="dot" aria-hidden="true"/>{card.name} · {card.level}
+      </button>)}
+    </div>}
   </div>;
 }

@@ -38,3 +38,62 @@
 .city-route-editor button { cursor:pointer; }
 .city-route-editor button:disabled { opacity:.5; }
 @media(max-width:700px) { .coastal-controls label { flex:1 1 calc(50% - 10px); } .city-route-editor label { flex-wrap:wrap; } }
+
+/* 0.16.0 — сцена острова: окружение, подписи районов, список и карточка района */
+.coastal-frame { position:relative; }
+.coastal-stage { position:relative; }
+.coastal-scene { display:none; }
+.coastal-pin, .coastal-districts, .coastal-panel { --glass:#0b1428e6; --line:#96b9ff33; font-family:inherit; }
+.city-animals { position:absolute; inset:0; pointer-events:none; z-index:1; overflow:hidden; }
+.city-animal { position:absolute; left:var(--x1); top:var(--y1); aspect-ratio:1; transform:translate(-50%,-62%); background:0 0/800% 100% no-repeat; filter:drop-shadow(0 2px 2px #0005);
+  animation-name:city-animal-walk, city-animal-step; animation-timing-function:linear, steps(8); animation-iteration-count:infinite; }
+.city-animal.is-flying { z-index:2; filter:drop-shadow(0 14px 6px #0003); }
+@keyframes city-animal-walk { 0% { left:var(--x1); top:var(--y1); opacity:0; } 6%, 94% { opacity:1; } 100% { left:var(--x2); top:var(--y2); opacity:0; } }
+@keyframes city-animal-step { to { background-position:114.2857% 0; } }
+.coastal-chips { display:flex; gap:8px; overflow-x:auto; padding:12px 2px 4px; scrollbar-width:none; }
+.coastal-chips button { flex:none; display:flex; align-items:center; gap:7px; min-height:44px; padding:0 14px; border-radius:999px; border:1px solid #96b9ff44; background:#0b1428e6; color:#fff; font-family:inherit; font-size:13px; font-weight:700; line-height:1; cursor:pointer; }
+.coastal-chips button[aria-pressed=true] { background:var(--pin); border-color:var(--pin); }
+.coastal-chips .dot, .coastal-districts .dot { width:10px; height:10px; border-radius:50%; background:var(--pin); flex:none; }
+.coastal-chips button[aria-pressed=true] .dot { background:#fff; }
+.coastal-panel { margin-top:12px; position:relative; padding:16px; border-radius:20px; background:#0b1428f2; border:1px solid var(--line); color:#e6ecfa; box-shadow:0 18px 50px #00000066; display:grid; gap:12px; }
+.coastal-panel .tag { justify-self:start; padding:4px 10px; border-radius:999px; background:var(--pin); color:#fff; font-size:12px; font-weight:800; }
+.coastal-panel h3 { margin:0; font-size:20px; color:#fff; }
+.coastal-panel p { margin:-6px 0 0; font-size:13px; color:#9fb2db; }
+.coastal-panel .stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.coastal-panel .stats span, .coastal-panel .progress > span { display:flex; flex-direction:column; gap:3px; }
+.coastal-panel .stats span { padding:10px; border-radius:12px; background:#ffffff0d; }
+.coastal-panel small { font-size:11px; color:#9fb2db; }
+.coastal-panel .stats b { font-size:16px; color:#fff; }
+.coastal-panel .progress { display:grid; gap:6px; }
+.coastal-panel .progress > span { flex-direction:row; justify-content:space-between; }
+.coastal-panel .progress b { font-size:12px; color:#fff; }
+.coastal-panel .progress > i { display:block; height:8px; border-radius:8px; background:#ffffff1a; overflow:hidden; }
+.coastal-panel .progress > i > i { display:block; height:100%; border-radius:8px; background:linear-gradient(90deg,var(--pin),#ffd56b); }
+.coastal-panel .enter { min-height:46px; border:0; border-radius:12px; background:linear-gradient(180deg,#ffd56b,#f5a623); color:#2a1a00; font-family:inherit; font-size:15px; font-weight:800; cursor:pointer; }
+.coastal-panel .close { position:absolute; right:10px; top:10px; width:36px; height:36px; border-radius:10px; border:0; background:#ffffff14; color:#fff; font-size:18px; cursor:pointer; }
+.coastal-pin:focus-visible, .coastal-districts button:focus-visible, .coastal-chips button:focus-visible, .coastal-panel button:focus-visible { outline:2px solid #ffc94a; outline-offset:2px; }
+
+@media (min-width:1000px) {
+  .coastal-scroll { width:min(100%, calc(80vh * 1.6)); width:min(100%, calc(80svh * 1.6)); max-height:none; aspect-ratio:1440 / 900; background:#0a3a5c; border-color:#96b9ff33; }
+  .coastal-stage { aspect-ratio:1440 / 900; overflow:hidden; }
+  .coastal-scene { display:block; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; user-select:none; pointer-events:none; }
+  .coastal-stage > .coastal-map { position:absolute; }
+  .coastal-stage > .coastal-map > img { -webkit-mask-image:linear-gradient(90deg,transparent,#000 2.5%,#000 97.5%,transparent); mask-image:linear-gradient(90deg,transparent,#000 2.5%,#000 97.5%,transparent); }
+  .coastal-pin { position:absolute; z-index:3; transform:translateX(-50%); display:flex; align-items:center; gap:6px; height:30px; padding:0 10px 0 6px; border-radius:999px; border:2px solid var(--pin); background:var(--glass); color:#fff; font-family:inherit; font-size:12px; font-weight:800; line-height:1; white-space:nowrap; box-shadow:0 6px 16px #00000070; cursor:pointer; }
+  .coastal-pin small { font-size:10px; color:#ffffffb3; font-weight:800; }
+  .coastal-pin i { font-style:normal; width:18px; height:18px; border-radius:50%; display:grid; place-items:center; background:#ffc94a; color:#2a1a00; font-size:10px; }
+  .coastal-pin:not(:has(i))::before { content:''; width:9px; height:9px; margin-left:2px; border-radius:50%; background:var(--pin); }
+  .coastal-pin[aria-pressed=true] { background:var(--pin); }
+  .coastal-districts { position:absolute; left:12px; top:12px; z-index:4; width:min(220px,19%); padding:10px 6px; border-radius:18px; background:var(--glass); border:1px solid var(--line); backdrop-filter:blur(10px); display:grid; gap:2px; color:#e6ecfa; }
+  .coastal-districts header { display:flex; justify-content:space-between; padding:0 8px 6px; font-size:12px; }
+  .coastal-districts header b { letter-spacing:.1em; color:#ffc94a; text-transform:uppercase; }
+  .coastal-districts header small { color:#9fb2db; }
+  .coastal-districts button { display:flex; align-items:center; gap:9px; min-height:40px; padding:4px 8px; border:0; border-radius:12px; background:transparent; color:inherit; font:inherit; text-align:left; cursor:pointer; }
+  .coastal-districts button:hover, .coastal-districts button[aria-pressed=true] { background:#ffffff14; }
+  .coastal-districts .name { flex:1; min-width:0; display:grid; gap:5px; font-size:13px; font-weight:700; color:#fff; }
+  .coastal-districts .bar { display:block; height:4px; border-radius:4px; background:#ffffff14; overflow:hidden; }
+  .coastal-districts .bar > span { display:block; height:100%; background:var(--pin); }
+  .coastal-districts b { font-size:13px; }
+  .coastal-panel { position:absolute; right:12px; bottom:12px; z-index:4; width:min(300px,24%); margin:0; backdrop-filter:blur(10px); }
+}
+@media (prefers-reduced-motion:reduce) { .city-animal { animation:none; } }

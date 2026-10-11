@@ -49,7 +49,7 @@ try {
       if (mobile) {
         await page.locator('.pyl-tabbar').getByRole('button', { name: /^Ещё/ }).click();
         await page.getByRole('button', { name: name === 'dark' ? 'Тёмная тема' : 'Светлая тема' }).click();
-        await page.getByRole('button', { name: 'Закрыть', exact: true }).first().click();
+        await page.locator('.pyl-more-backdrop').click({ position: { x: 20, y: 20 } });
       } else {
         await page.locator('.sidebar .pyl-theme').getByRole('button', { name: name === 'dark' ? 'Тёмная' : 'Светлая' }).click();
       }
@@ -66,7 +66,7 @@ try {
         await page.locator('.pyl-tabbar').getByRole('button', { name: /^Ещё/ }).click();
         await page.waitForTimeout(400);
         await page.screenshot({ path: `work/theme/mobile-${name}-more.png` });
-        await page.getByRole('button', { name: 'Закрыть', exact: true }).first().click();
+        await page.locator('.pyl-more-backdrop').click({ position: { x: 20, y: 20 } });
       }
     }
     // Выбор темы сохраняется после перезагрузки.

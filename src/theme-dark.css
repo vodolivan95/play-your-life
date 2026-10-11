@@ -37,3 +37,30 @@
 :root[data-theme='dark'] dialog::backdrop {
   background: #02061399;
 }
+
+/* Верхняя панель: дата, погода, уведомления, монеты и уровень. */
+:root[data-theme='dark'] .dashboard-header {
+  color: #e6ecfa;
+}
+:root[data-theme='dark'] .dashboard-date,
+:root[data-theme='dark'] .dashboard-metric,
+:root[data-theme='dark'] .dashboard-notifications summary {
+  background: #0f1830b8;
+  border: 1px solid #96b9ff29;
+  color: #e6ecfa;
+}
+:root[data-theme='dark'] .dashboard-notifications > div {
+  background: #0f1830;
+  border-color: #96b9ff29;
+  box-shadow: 0 10px 34px #00000066;
+  color: #e6ecfa;
+}
+:root[data-theme='dark'] .dashboard-metric small,
+:root[data-theme='dark'] .home-weather small,
+:root[data-theme='dark'] .home-weather a,
+:root[data-theme='dark'] .home-weather .weather-source {
+  color: #9fb2db;
+}
+:root[data-theme='dark'] .home-weather {
+  color: #e6ecfa;
+}

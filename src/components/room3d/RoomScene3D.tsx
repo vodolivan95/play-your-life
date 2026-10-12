@@ -58,7 +58,7 @@ export default function RoomScene3D({ objects, ghost, valid, build, time, qualit
     <Suspense fallback={null}>
       <RoomEnvironment time={time} quality={effective} />
       <RoomLighting time={time} quality={effective} />
-      <RoomDecor stats={stats} onComplete={build ? undefined : onComplete} />
+      <RoomDecor stats={stats} onComplete={build ? undefined : onComplete} reduced={reduced} />
       {objects.filter(item => item.id !== ghost?.id).map(item => <group key={item.id} position={item.position} rotation={item.rotation} scale={item.scale} onClick={event => { event.stopPropagation(); onSelect(item.id); if (!build && item.id === 'treadmill') setActive(active === 'treadmill' ? null : 'treadmill'); }}>
         {effective === 'low' && <RoomContactShadow size={objectSpec(item.id).size} />}
         <RoomItemRenderer id={item.id} active={active === item.id} reduced={reduced} />

@@ -4,8 +4,9 @@
  * поэтому идентификаторы градиентов разных иконок не пересекаются.
  */
 export type MenuIconId =
-  | 'home' | 'spheres' | 'quests' | 'goals' | 'plan' | 'monthly'
+  | 'home' | 'spheres' | 'tasks' | 'quests' | 'goals' | 'plan' | 'monthly'
   | 'tree' | 'achievements' | 'shop' | 'city' | 'statistics' | 'profile';
+import { habitsIconSvg, tasksIconSvg } from './menuIconsNew';
 type Stop = readonly [number, string, number?];
 
 const LG = (id: string, stops: Stop[], dir?: string): string => { const c = dir === 'h' ? 'x1="0" y1="0" x2="1" y2="0"' : dir === 'd' ? 'x1="0" y1="0" x2="1" y2="1"' : 'x1="0" y1="0" x2="0" y2="1"'; return `<linearGradient id="${id}" ${c}>` + stops.map(s => `<stop offset="${s[0]}" stop-color="${s[1]}" stop-opacity="${s[2] === undefined ? 1 : s[2]}"/>`).join('') + '</linearGradient>'; };
@@ -17,6 +18,7 @@ const P = (d: string, f: string): string => `<path d="${d}" fill="url(#${f})"/><
 const Rr = (x: number, y: number, w: number, h: number, r: number, f: string): string => { const a = `x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}"`; return `<rect ${a} fill="url(#${f})"/><rect ${a} fill="url(#sh)"/><rect ${a} fill="none" stroke="url(#rim)" stroke-width="1.1"/>`; };
 const Ci = (cx: number, cy: number, r: number, f: string): string => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#${f})"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#sh)"/><circle cx="${cx}" cy="${cy}" r="${r - .5}" fill="none" stroke="url(#rim)" stroke-width="1.1"/>`;
 const SVGS: Record<MenuIconId, string> = {
+  tasks: '',
   home:
     LG('w', [[0, '#FFFFFF'], [.55, '#E4E9F2'], [1, '#B9C3D6']]) + LG('r', [[0, '#E0766F'], [.5, '#B84A4B'], [1, '#7E2D36']]) + LG('d', [[0, '#7FB2F2'], [1, '#2F63C2']]) + LG('g', [[0, '#FFF3C2'], [1, '#F2B84B']]) +
     P('M12 29 L32 14 L52 29 V51 a4 4 0 0 1-4 4 H16 a4 4 0 0 1-4-4z', 'w') + Rr(26, 37, 12, 18, 3.4, 'd') +
@@ -87,7 +89,10 @@ const cache = new Map<MenuIconId, string>();
 export function menuIconSrc(id: MenuIconId): string {
   let src = cache.get(id);
   if (!src) {
-    src = `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs>${COMMON}</defs>${SH}${SVGS[id]}</svg>`)}`;
+    const ready = id === 'quests' ? habitsIconSvg : id === 'tasks' ? tasksIconSvg : '';
+    src = ready
+      ? `data:image/svg+xml;utf8,${encodeURIComponent(ready)}`
+      : `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs>${COMMON}</defs>${SH}${SVGS[id]}</svg>`)}`;
     cache.set(id, src);
   }
   return src;

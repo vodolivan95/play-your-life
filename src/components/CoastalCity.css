@@ -91,7 +91,6 @@
   .coastal-districts b { font-size:13px; }
   .coastal-panel { position:absolute; right:12px; bottom:12px; z-index:4; width:min(300px,24%); margin:0; backdrop-filter:blur(10px); }
 }
-@media (prefers-reduced-motion:reduce) { 
 .coastal-scroll { cursor:grab; }
 .coastal-scroll[data-dragging=true] { cursor:grabbing; }
 .coastal-scroll[data-dragging=true] .coastal-building { pointer-events:none; }

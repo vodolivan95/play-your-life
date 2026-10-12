@@ -108,7 +108,7 @@
 .pyl-city-label strong { font-size: 15px; font-weight: 800; }
 .pyl-city-label em { display: flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 14px; background: var(--m-accent-grad); color: var(--m-accent-text); font-size: 12px; font-weight: 800; font-style: normal; }
 
-.pyl-menu-foot { flex: none; padding: 8px 0 16px; }
+.pyl-menu-theme { flex: none; }
 .pyl-theme { display: flex; gap: 3px; padding: 3px; border-radius: 13px; background: var(--m-toggle); border: 1px solid var(--m-line); }
 .pyl-theme button { flex: 1 1 0; min-height: 34px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--m-nav); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .pyl-theme button.on { background: var(--m-toggle-on); color: var(--m-text); box-shadow: 0 2px 8px rgba(40, 70, 130, .18); }
@@ -118,7 +118,6 @@
 /* Низкие окна: сначала прячем карту города, затем сокращаем карточку игрока и строки меню. */
 @media (min-width: 761px) and (max-height: 879px) {
   .pyl-city-card { display: none; }
-  .pyl-menu-foot { margin-top: auto; }
   .pyl-menu .pyl-nav-item { height: 40px; }
 }
 @media (min-width: 761px) and (max-height: 779px) {
@@ -133,7 +132,6 @@
   .app-shell.pyl-shell .sidebar.pyl-menu { padding-top: 12px; gap: 6px; }
   .pyl-menu .pyl-nav-item { height: 34px; font-size: 13px; }
   .pyl-nav-icon { width: 28px; height: 28px; }
-  .pyl-menu-foot { padding: 6px 0 10px; }
   .pyl-theme button { min-height: 30px; }
 }
 @media (min-width: 761px) and (max-height: 559px) {

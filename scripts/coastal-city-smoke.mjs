@@ -30,7 +30,7 @@ try {
   const ids = ['health', 'sport', 'growth', 'finance', 'english', 'driving', 'together', 'tasks', 'hobby'];
   // Все входы находятся внутри изображения и открывают существующий экран своей сферы.
   // Здания с 3D-интерьером открывают комнату, остальные — экран подготовки.
-  const rooms = { sport: 'Спорт', growth: 'Саморазвитие', health: 'Здоровье', finance: 'Финансы' };
+  const rooms = { sport: 'Спорт', growth: 'Саморазвитие', health: 'Здоровье', finance: 'Финансы', english: 'Английский' };
   for (const id of ids.filter(id => id !== 'sport')) {
     const button = page.locator(`[data-building="${id}"]`);
     await button.scrollIntoViewIfNeeded();

@@ -5,7 +5,8 @@ export type RoomId = 'health' | 'sport' | 'growth' | 'english' | 'finance' | 'to
 export type ObjectId = 'mat' | 'dumbbells' | 'bench' | 'ball' | 'plant' | 'treadmill'
   | 'bookshelf' | 'desk' | 'armchair' | 'floorLamp' | 'globe' | 'board'
   | 'massageTable' | 'waterCooler' | 'smoothieBar' | 'firstAid' | 'aquarium' | 'cedarBarrel'
-  | 'tradingDesk' | 'safe' | 'sofa' | 'piggyBank' | 'bullStatue' | 'goldChest';
+  | 'tradingDesk' | 'safe' | 'sofa' | 'piggyBank' | 'bullStatue' | 'goldChest'
+  | 'phoneBooth' | 'teaTable' | 'studyDesk' | 'chesterfield' | 'busModel' | 'bigBen';
 export type Vec3 = [number, number, number];
 export type RoomObject = { id: ObjectId; position: Vec3; rotation: Vec3; scale: Vec3 };
 export type RoomData = { purchased: ObjectId[]; objects: RoomObject[] };
@@ -47,7 +48,16 @@ const financeCatalog: readonly ObjectSpec[] = [
   { id: 'bullStatue', name: 'Бронзовый бык', price: 280, level: 3, size: [2, 1], asset: '/models/finance/bull.glb' },
   { id: 'goldChest', name: 'Сундук с золотом', price: 350, level: 5, size: [1, 1], asset: '/models/finance/gold-chest.glb' },
 ];
-const catalogs: Partial<Record<RoomId, readonly ObjectSpec[]>> = { sport: sportCatalog, growth: growthCatalog, health: healthCatalog, finance: financeCatalog };
+// Английский — лондонский языковой клуб: карта мира с часами столиц и полка словарей по краям.
+const englishCatalog: readonly ObjectSpec[] = [
+  { id: 'phoneBooth', name: 'Телефонная будка', price: 250, level: 0, size: [1, 1], asset: '/models/english/phone-booth.glb' },
+  { id: 'teaTable', name: 'Столик для чая', price: 120, level: 0, size: [1, 1], asset: '/models/english/tea-table.glb' },
+  { id: 'studyDesk', name: 'Парта с наушниками', price: 150, level: 0, size: [2, 1], asset: '/models/english/study-desk.glb' },
+  { id: 'chesterfield', name: 'Кресло-честерфилд', price: 160, level: 0, size: [1, 1], asset: '/models/english/chesterfield.glb' },
+  { id: 'busModel', name: 'Модель даблдекера', price: 260, level: 3, size: [2, 1], asset: '/models/english/bus.glb' },
+  { id: 'bigBen', name: 'Модель Биг-Бена', price: 320, level: 5, size: [1, 1], asset: '/models/english/big-ben.glb' },
+];
+const catalogs: Partial<Record<RoomId, readonly ObjectSpec[]>> = { sport: sportCatalog, growth: growthCatalog, health: healthCatalog, finance: financeCatalog, english: englishCatalog };
 
 export const roomConfigs: Record<RoomId, RoomConfig> = Object.fromEntries(
   (['health', 'sport', 'growth', 'english', 'finance', 'together', 'driving', 'tasks', 'hobby'] as const)
@@ -62,7 +72,7 @@ export function roomData(state: GameState, id: RoomId): RoomData {
   return state.rooms?.[id] ?? { purchased: [], objects: [] };
 }
 export function objectSpec(id: ObjectId): ObjectSpec {
-  const item = [sportCatalog, growthCatalog, healthCatalog, financeCatalog].flat().find(item => item.id === id);
+  const item = [sportCatalog, growthCatalog, healthCatalog, financeCatalog, englishCatalog].flat().find(item => item.id === id);
   if (!item) throw new Error('Предмет не найден.');
   return item;
 }

@@ -57,7 +57,7 @@ test('кабинет «Саморазвития»: свой каталог, по
   const { hasRoom, roomConfigs, objectSpec } = await import('../src/roomEngine.ts');
   assert.equal(hasRoom('sport'), true);
   assert.equal(hasRoom('growth'), true);
-  assert.equal(hasRoom('english'), false);
+  assert.equal(hasRoom('driving'), false);
   assert.equal(hasRoom('unknown'), false);
   assert.deepEqual(roomConfigs.growth.catalog.map(item => item.id), ['bookshelf', 'desk', 'armchair', 'floorLamp', 'globe', 'board']);
   assert.equal(objectSpec('globe').name, 'Глобус');
@@ -111,5 +111,17 @@ test('«Финансы»: свой каталог, уровни и расста�
   const desk: RoomObject = { id: 'tradingDesk', position: [0, 0, -3.5], rotation: [0, 0, 0], scale: [1, 1, 1] };
   next = placeRoomObject(next, 'finance', desk);
   next = placeRoomObject(next, 'finance', { ...desk, id: 'piggyBank', position: [3, 0, 2] });
+  assert.equal(validRooms(next.rooms), true);
+});
+test('«Английский»: свой каталог, уровни и расстановка', async () => {
+  const { hasRoom, roomConfigs } = await import('../src/roomEngine.ts');
+  assert.equal(hasRoom('english'), true);
+  assert.deepEqual(roomConfigs.english.catalog.map(item => item.id), ['phoneBooth', 'teaTable', 'studyDesk', 'chesterfield', 'busModel', 'bigBen']);
+  const state = newAccountGame('Английский'); state.coins = 1000;
+  assert.throws(() => purchaseRoomObject(state, 'english', 'busModel'), /уровень/);
+  assert.throws(() => purchaseRoomObject(state, 'english', 'bigBen'), /уровень/);
+  let next = purchaseRoomObject(state, 'english', 'phoneBooth');
+  next = placeRoomObject(next, 'english', { id: 'phoneBooth', position: [4.5, 0, -3.5], rotation: [0, 0, 0], scale: [1, 1, 1] });
+  assert.equal(next.coins, 750);
   assert.equal(validRooms(next.rooms), true);
 });

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Html, useGLTF } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { AdditiveBlending, Box3, CanvasTexture, DoubleSide, Mesh, MeshStandardMaterial, SRGBColorSpace, Vector3 } from 'three';
+import type { MeshBasicMaterial } from 'three';
 import type { Vec3 } from '../../roomEngine';
 import { decorUrl } from './assetSlots';
 
@@ -113,6 +114,7 @@ function Hologram({ position, reduced }: { position: Vec3; reduced?: boolean }) 
   const texture = useMemo(() => { const t = new CanvasTexture(canvas); t.colorSpace = SRGBColorSpace; return t; }, [canvas]);
   useEffect(() => () => texture.dispose(), [texture]);
   const phase = useRef(0), last = useRef(-1);
+  const screen = useRef<MeshBasicMaterial>(null);
   const draw = (t: number) => {
     const ctx = canvas.getContext('2d')!;
     ctx.clearRect(0, 0, 320, 512);
@@ -144,9 +146,9 @@ function Hologram({ position, reduced }: { position: Vec3; reduced?: boolean }) 
     ctx.fillStyle = 'rgba(0,10,30,0.25)';
     for (let y = (t * 120) % 6; y < 512; y += 6) ctx.fillRect(0, y, 320, 2);
     ctx.fillStyle = 'rgba(140,220,255,0.9)'; ctx.font = 'bold 22px Manrope, sans-serif'; ctx.fillText('RUN · 12.4 KM/H', 22, 480);
-    // CanvasTexture — императивный ресурс GPU: обновляем кадр голограммы вне React.
-    // eslint-disable-next-line react-hooks/immutability
-    texture.needsUpdate = true;
+    // Текстура — ресурс GPU: новый кадр отмечается через материал, а не через значение React.
+    const map = screen.current?.map;
+    if (map) map.needsUpdate = true;
   };
   useFrame((_, dt) => {
     if (reduced && last.current >= 0) return;
@@ -157,7 +159,7 @@ function Hologram({ position, reduced }: { position: Vec3; reduced?: boolean }) 
   return <group position={position} rotation={[0, Math.PI / 2, 0]}>
     <mesh position={[0, 0, -0.04]}><boxGeometry args={[1.7, 2.7, 0.06]} /><meshStandardMaterial color="#05101c" metalness={0.7} roughness={0.25} /></mesh>
     <mesh position={[0, 0, -0.005]}><planeGeometry args={[1.6, 2.6]} /><meshBasicMaterial color="#082a4a" toneMapped={false} /></mesh>
-    <mesh position={[0, 0, 0.01]}><planeGeometry args={[1.6, 2.6]} /><meshBasicMaterial map={texture} transparent blending={AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+    <mesh position={[0, 0, 0.01]}><planeGeometry args={[1.6, 2.6]} /><meshBasicMaterial ref={screen} map={texture} transparent blending={AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
     {[-0.83, 0.83].map((x) => <mesh key={x} position={[x, 0, 0.01]}><boxGeometry args={[0.02, 2.7, 0.02]} /><meshStandardMaterial color="#9fe0ff" emissive="#3fb6ff" emissiveIntensity={4} toneMapped={false} /></mesh>)}
     <mesh position={[0, -1.6, 0.35]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.32, 32]} /><meshBasicMaterial color="#3fb6ff" transparent opacity={0.35} toneMapped={false} /></mesh>
     <mesh position={[0, -0.6, 0.35]}><coneGeometry args={[0.55, 2, 32, 1, true]} /><meshBasicMaterial color="#3fb6ff" transparent opacity={0.06} side={DoubleSide} blending={AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>

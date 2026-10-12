@@ -1,8 +1,10 @@
 import { useEffect, useMemo } from 'react';
 import { CanvasTexture, RepeatWrapping, SRGBColorSpace, MeshStandardMaterial, BoxGeometry } from 'three';
 import { Environment, Lightformer, useTexture } from '@react-three/drei';
-import type { Vec3 } from '../../roomEngine';
-import { cityAssets } from '../../sphereAssets';
+import type { RoomId, Vec3 } from '../../roomEngine';
+import { cityAssets, sphereAssets } from '../../sphereAssets';
+import { roomViews } from '../../roomViews';
+import StudyDecor from './StudyDecor';
 import type { RoomQuality, RoomTime } from './RoomScene3D';
 
 function surface(kind: 'stone' | 'wood', normal = false) {
@@ -27,22 +29,31 @@ function surface(kind: 'stone' | 'wood', normal = false) {
   texture.anisotropy = 4;
   return texture;
 }
-function Skyline({ time }: { time: RoomTime }) {
-  const texture = useTexture(cityAssets.skyline);
+/** Окна: здания, которые видны из окон комнаты по карте острова (`roomViews`). */
+function Skyline({ roomId, time }: { roomId: RoomId; time: RoomTime }) {
+  const views = useMemo(() => {
+    const v = roomViews(roomId), pick = (id: string | null) => id ? sphereAssets[id as keyof typeof sphereAssets].building : cityAssets.skyline;
+    return { back: pick(v.back.building), side: pick(v.side.building), width: 72 };
+  }, [roomId]);
+  const [back, side] = useTexture([views.back, views.side]);
   // Three textures are imperative GPU resources, not React state.
   // eslint-disable-next-line react-hooks/immutability
-  useEffect(() => { texture.colorSpace = SRGBColorSpace; texture.needsUpdate = true; }, [texture]);
-  return <group><mesh position={[0, 3.5, -27]}>
-    <planeGeometry args={[96, 48]} />
-    <meshBasicMaterial map={texture} color={time === 'night' ? '#50628c' : time === 'sunset' ? '#ecc5a2' : '#ffffff'} toneMapped={false} />
-  </mesh><mesh position={[27, 3.5, 0]} rotation={[0, -Math.PI / 2, 0]}><planeGeometry args={[96, 48]} /><meshBasicMaterial map={texture} color={time === 'night' ? '#50628c' : time === 'sunset' ? '#ecc5a2' : '#ffffff'} toneMapped={false} /></mesh></group>;
+  useEffect(() => { for (const texture of [back, side]) { texture.colorSpace = SRGBColorSpace; texture.needsUpdate = true; } }, [back, side]);
+  const tint = time === 'night' ? '#50628c' : time === 'sunset' ? '#ecc5a2' : '#ffffff';
+  const height = 48, width = views.width;
+  return <group>
+    <mesh position={[0, 3.5, -27]}><planeGeometry args={[width, height]} /><meshBasicMaterial map={back} color={tint} toneMapped={false} /></mesh>
+    <mesh position={[27, 3.5, 0]} rotation={[0, -Math.PI / 2, 0]}><planeGeometry args={[width, height]} /><meshBasicMaterial map={side} color={tint} toneMapped={false} /></mesh>
+  </group>;
 }
-export default function RoomEnvironment({ time, quality }: { time: RoomTime; quality: RoomQuality }) {
+export default function RoomEnvironment({ roomId, time, quality }: { roomId: RoomId; time: RoomTime; quality: RoomQuality }) {
+  // Кабинет «Саморазвития» — тёплый паркет вместо каменного пола спортзала.
+  const study = roomId === 'growth';
   const stone = useTexture(`${import.meta.env.BASE_URL}environments/sport-stone.jpg`);
   // Texture sampler configuration is an imperative GPU operation.
   // eslint-disable-next-line react-hooks/immutability
   useEffect(() => { stone.wrapS = stone.wrapT = RepeatWrapping; stone.repeat.set(8, 7); stone.colorSpace = SRGBColorSpace; stone.anisotropy = 4; stone.needsUpdate = true; }, [stone]);
-  const maps = useMemo(() => ({ normal: surface('stone', true), wood: surface('wood') }), []);
+  const maps = useMemo(() => { const parquet = surface('wood'); parquet.repeat.set(6, 10); return { normal: surface('stone', true), wood: surface('wood'), parquet }; }, []);
   useEffect(() => () => Object.values(maps).forEach(texture => texture.dispose()), [maps]);
   const geometry = useMemo(() => new BoxGeometry(), []);
   useEffect(() => () => geometry.dispose(), [geometry]);
@@ -58,10 +69,17 @@ export default function RoomEnvironment({ time, quality }: { time: RoomTime; qua
       <Lightformer position={[-8, 2, 0]} rotation={[0, Math.PI / 2, 0]} scale={[8, 4, 1]} intensity={1.5} color="#ffcf99" />
       <Lightformer position={[6, 2, 0]} rotation={[0, -Math.PI / 2, 0]} scale={[8, 4, 1]} intensity={1} color="#94c9e5" />
     </Environment>
-    <Skyline time={time} />
-    <mesh position={[0, -.005, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[12.4, 10.4]} /><meshStandardMaterial map={stone} normalMap={maps.normal} normalScale={[.2, .2]} roughness={.38} metalness={.08} envMapIntensity={1.3} /></mesh>
-    {Array.from({ length: 7 }, (_, i) => <group key={`grout-x-${i}`}>{block([-6.2 + (i + 1) * 1.55, -.003, 0], [.012, .002, 10.4], '#55565a', 0, .9)}</group>)}
-    {Array.from({ length: 6 }, (_, i) => <group key={`grout-z-${i}`}>{block([0, -.003, -5.2 + (i + 1) * 10.4 / 7], [12.4, .002, .012], '#55565a', 0, .9)}</group>)}
+    <Skyline roomId={roomId} time={time} />
+    {study && <StudyDecor />}
+    {study ? <>
+      <mesh position={[0, -.005, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[12.4, 10.4]} /><meshStandardMaterial map={maps.parquet} roughness={.55} metalness={0} envMapIntensity={.9} /></mesh>
+      <mesh position={[0, .004, .4]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[5.2, 3.6]} /><meshStandardMaterial color="#6d2f2a" roughness={.95} /></mesh>
+      <mesh position={[0, .005, .4]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[1.35, 1.45, 48]} /><meshStandardMaterial color="#c9a35a" roughness={.9} /></mesh>
+    </> : <>
+      <mesh position={[0, -.005, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[12.4, 10.4]} /><meshStandardMaterial map={stone} normalMap={maps.normal} normalScale={[.2, .2]} roughness={.38} metalness={.08} envMapIntensity={1.3} /></mesh>
+      {Array.from({ length: 7 }, (_, i) => <group key={`grout-x-${i}`}>{block([-6.2 + (i + 1) * 1.55, -.003, 0], [.012, .002, 10.4], '#55565a', 0, .9)}</group>)}
+      {Array.from({ length: 6 }, (_, i) => <group key={`grout-z-${i}`}>{block([0, -.003, -5.2 + (i + 1) * 10.4 / 7], [12.4, .002, .012], '#55565a', 0, .9)}</group>)}
+    </>}
     {block([-6.1, 2.7, 0], [.2, 5.4, 10.4], '#82776b', 0, .9)}
     <mesh position={[-5.985, 2.5, -1]} rotation={[0, Math.PI / 2, 0]}><planeGeometry args={[7.5, 4.8]} /><meshStandardMaterial map={maps.wood} roughness={.62} /></mesh>
     {Array.from({ length: 26 }, (_, i) => <group key={i}>{block([-5.9, 2.5, -4.6 + i * .28], [.1, 4.8, .04], '#785435', .05, .65)}</group>)}

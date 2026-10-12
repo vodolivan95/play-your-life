@@ -29,12 +29,19 @@ try {
   await page.screenshot({ path: 'room-preview/coastal-desktop.png', fullPage: true });
   const ids = ['health', 'sport', 'growth', 'finance', 'english', 'driving', 'together', 'tasks', 'hobby'];
   // Все входы находятся внутри изображения и открывают существующий экран своей сферы.
+  // Здания с 3D-интерьером открывают комнату, остальные — экран подготовки.
+  const rooms = { sport: 'Спорт', growth: 'Саморазвитие' };
   for (const id of ids.filter(id => id !== 'sport')) {
     const button = page.locator(`[data-building="${id}"]`);
     await button.scrollIntoViewIfNeeded();
     await button.click();
-    await page.getByText('3D-интерьер этой сферы готовится.', { exact: false }).waitFor();
-    await page.getByRole('button', { name: '← Вернуться в город', exact: true }).click();
+    if (rooms[id]) {
+      await page.locator(`section[aria-label="3D-комната ${rooms[id]}"]`).waitFor();
+      await page.getByRole('button', { name: 'Вернуться из комнаты', exact: true }).click();
+    } else {
+      await page.getByText('3D-интерьер этой сферы готовится.', { exact: false }).waitFor();
+      await page.getByRole('button', { name: '← Вернуться в город', exact: true }).click();
+    }
     assert.equal(await page.locator('.coastal-building').count(), 9);
   }
   for (const time of ['day', 'sunset', 'night']) {

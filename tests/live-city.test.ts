@@ -75,3 +75,42 @@ test('После снижения качества остаётся мобиль
   assert.ok(Math.abs(timeLighting('auto',239).night-timeLighting('auto',240).night)<.001);
   assert.equal(timeLighting('night',100).night,1);assert.equal(timeLighting('day',100).night,0);
 });
+
+test('Широкая карта ПК: маршруты валидны, лежат на карте, хранятся отдельно от вертикальной',async()=>{
+  const {wideProfile}=await import('../src/cityLive/wideMap.ts');
+  assert.equal(validRoutes(wideProfile.routes),true);
+  assert.notEqual(wideProfile.storageKey,routeStorageKey);
+  assert.deepEqual(readRoutes({getItem:()=>null},wideProfile),wideProfile.routes);
+  let key='';readRoutes({getItem:k=>{key=k;return null;}},wideProfile);assert.equal(key,wideProfile.storageKey);
+  for (const kind of ['road','water','pedestrian'] as const) assert.ok(wideProfile.routes.some(r=>r.kind===kind),kind);
+  for (const r of wideProfile.routes) {
+    const p=new LanePath(r,wideProfile);
+    for (let d=0;d<p.length;d+=1) {
+      const a=p.at(d),b=p.at(d+1);
+      assert.ok(a.x>=0&&a.x<=wideProfile.width&&a.y>=0&&a.y<=wideProfile.height,r.id);
+      assert.ok(Math.hypot(a.x-b.x,a.y-b.y)<=1.01,`${r.id} скачок на ${d}`);
+    }
+  }
+});
+
+test('Широкая карта: транспорт не пересекает радиусы безопасности и не стоит',async()=>{
+  const {wideProfile}=await import('../src/cityLive/wideMap.ts');
+  const budget=wideProfile.budgets!.high;
+  for (const seed of [3,8721]) {
+    const sim=new CitySimulation(wideProfile.routes,seed,wideProfile);sim.initialize(budget);
+    let motion=0,boats=0,walkers=0;
+    for (let step=0;step<6000;step++) {
+      sim.step(1/30,budget);
+      if (step%10) continue;
+      for (let i=0;i<sim.agents.length;i++) {
+        const a=sim.agents[i];if (a.kind==='pedestrian') continue;
+        for (const b of sim.agents.slice(i+1)) if (b.kind===a.kind)
+          assert.ok(Math.hypot(a.position.x-b.position.x,a.position.y-b.position.y)>=a.safeRadius+b.safeRadius-.01,`${a.path.route.id}/${b.path.route.id}`);
+      }
+      if (step>3000) {motion+=sim.agents.filter(a=>a.kind==='road'&&a.currentSpeed>2).length;boats+=sim.agents.filter(a=>a.kind==='water'&&a.currentSpeed>1).length;walkers+=sim.agents.filter(a=>a.kind==='pedestrian').length;}
+    }
+    assert.ok(motion>50,'Машины на широкой карте не должны стоять');
+    assert.ok(boats>20,'Суда на широкой карте плавают');
+    assert.ok(walkers>50,'Пешеходы на широкой карте ходят');
+  }
+});

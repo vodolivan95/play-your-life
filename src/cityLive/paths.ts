@@ -118,3 +118,29 @@ export function validRoutes(value: unknown): value is CityRoute[] {
       r.points.some(p => Math.hypot(p.x-r.points[0].x,p.y-r.points[0].y) > .015);
   });
 }
+
+export type Waterfall = { id: string; start: Point; end: Point; width: number };
+export type Intersection = { id: string; center: Point; radius: number };
+export type QualityBudget = { road: number; water: number; pedestrian: number };
+/** Профиль карты: размеры, маршруты и места эффектов одной картинки города. Движок не зависит от конкретной карты. */
+export type CityProfile = {
+  id: 'portrait' | 'wide'; width: number; height: number; storageKey: string;
+  routes: CityRoute[]; intersections: Intersection[]; fountains: Fountain[]; waterfalls: Waterfall[];
+  waterRegions: number[][][]; bridgeMasks: number[][][]; palms: number[][]; beach: number[][]; rainShine: number[][]; signs: number[][]; lightPoints: number[][];
+  /** Вращающийся глобус поверх карты: положение кадра и свечение; null — глобус нарисован на самой карте. */
+  globe: { x: number; y: number; size: number; glow: [number, number, number] } | null;
+  cleanSurfaces: boolean;
+  /** Эллипсы [x, y, rx, ry] объектов карты, закрывающих дорогу (например, шар над кольцом): транспорт и пешеходы под ними не рисуются. */
+  occluders?: number[][];
+  /** Во сколько раз крупнее рисуются транспорт и радиусы безопасности по сравнению с вертикальной картой. */
+  vehicleScale: number; birdScale: number;
+  budgets?: Record<'low' | 'medium' | 'high', QualityBudget>;
+};
+export const portraitProfile: CityProfile = {
+  id: 'portrait', width: MAP_WIDTH, height: MAP_HEIGHT, storageKey: 'play-your-life-live-city-routes-v1',
+  routes: defaultRoutes, intersections: roadGraph.intersections, fountains, waterfalls, waterRegions, bridgeMasks, palms,
+  beach: [[688,1163],[734,1175],[792,1180],[850,1190],[911,1207],[979,1222]],
+  rainShine: [[488,650],[502,700],[522,755]],
+  signs: [[507,144],[287,235],[785,249],[242,414],[823,450],[304,713],[786,652],[545,836],[840,982]],
+  lightPoints, globe: { x: 465, y: 462, size: 74, glow: [502, 499, 48] }, cleanSurfaces: true, vehicleScale: 1, birdScale: 1,
+};

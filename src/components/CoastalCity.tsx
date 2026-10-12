@@ -2,18 +2,18 @@ import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { spheres } from '../game';
 import type { GameState } from '../game';
-import { coastalBuildings, coastalHitShapes } from '../coastalCity';
+import { coastalBuildings, coastalHitShapes, wideBuildings } from '../coastalCity';
 import { buildingState } from '../city';
 import { cityAssets } from '../sphereAssets';
-import { defaultRoutes, validRoutes } from '../cityLive/paths';
+import wideMapUrl from '../assets/city-wide.webp';
+import { portraitProfile, validRoutes } from '../cityLive/paths';
 import type { CityRoute, Point, RouteKind } from '../cityLive/paths';
-import { readRoutes, routeStorageKey } from '../cityLive/simulation';
+import { readRoutes } from '../cityLive/simulation';
+import { wideProfile } from '../cityLive/wideMap';
 import type { Quality } from '../cityLive/simulation';
 import type { CityTime, DebugFlags } from '../cityLive/render';
 import LiveCityCanvas from './LiveCityCanvas';
 import CityAnimals from './CityAnimals';
-import CityPeople from './CityPeople';
-import sceneUrl from '../assets/city-scene.webp';
 import { sphereCards } from '../sphereDetails';
 import './CoastalCity.css';
 import { useCityZoom } from '../cityLive/useCityZoom';
@@ -31,8 +31,6 @@ function readPreferences():{time:CityTime;weather:string;quality:Quality} {
       quality:['auto','high','medium','low'].includes(value.quality)?value.quality:'auto'};
   } catch {return {time:'auto',weather:'clear',quality:'auto'};}
 }
-// Положение карты острова в цельной картинке-сцене 1440 × 900: здания, дороги и вода сцены совмещены с картой по общим деталям.
-const island={left:'25.02%',top:'1.21%',width:'56.34%'};
 const wideQuery='(min-width: 1000px)';
 function useWide() {
   const [wide,setWide]=useState(()=>typeof matchMedia==='function'&&matchMedia(wideQuery).matches);
@@ -55,7 +53,11 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
   const [picked,setPicked]=useState<string|null>(null);
   const current=cards.find(c=>c.id===picked)??null;
   const [preferences,setPreferences]=useState(readPreferences);
-  const [routes,setRoutes]=useState(()=>{try{return readRoutes(localStorage);}catch{return defaultRoutes;}});
+  const profile=wide?wideProfile:portraitProfile,buildings:readonly {id:string;x:number;y:number;width:number;height:number}[]=wide?wideBuildings:coastalBuildings;
+  // Маршруты хранятся отдельно для вертикальной и широкой карты: у каждой свои координаты.
+  const [stored,setStored]=useState(()=>Object.fromEntries([portraitProfile,wideProfile].map(p=>[p.id,(()=>{try{return readRoutes(localStorage,p);}catch{return p.routes;}})()])) as Record<string,CityRoute[]>);
+  const routes=stored[profile.id];
+  const setRoutes=(next:CityRoute[])=>setStored({...stored,[profile.id]:next});
   const [debug,setDebug]=useState(debugDefaults);
   const dev=new URLSearchParams(window.location.search).get('city-dev')==='1';
   const [editing,setEditing]=useState(false),[mode,setMode]=useState<RouteKind>('road');
@@ -67,7 +69,7 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
     const route:CityRoute={...existing,id:routeId,kind:mode,points:draft,closed,speed:existing?.speed??(mode==='road'?18:mode==='water'?9:4),capacity:existing?.capacity??(mode==='road'?2:1)};
     const next=[...routes.filter(r=>r.id!==routeId),route];
     if (!validRoutes(next)) {setMessage('Нужны минимум три разные точки и ID из латинских букв, цифр, дефиса.');return;}
-    try {localStorage.setItem(routeStorageKey,JSON.stringify(next));setRoutes(next);setDraft([]);setEditing(false);setMessage('Маршрут сохранён на этом устройстве. Экспортируй JSON для переноса в проект.');}
+    try {localStorage.setItem(profile.storageKey,JSON.stringify(next));setRoutes(next);setDraft([]);setEditing(false);setMessage('Маршрут сохранён на этом устройстве. Экспортируй JSON для переноса в проект.');}
     catch {setMessage('Хранилище недоступно. Экспортируй JSON перед закрытием страницы.');}
   };
   const exportRoutes=()=>{
@@ -108,10 +110,10 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
         <button disabled={!draft.length} onClick={()=>setDraft(draft.slice(0,-1))}>Отменить точку</button>
         <button disabled={draft.length<3} onClick={save}>SAVE</button>
         <button onClick={exportRoutes}>Экспорт JSON</button>
-        <button onClick={()=>{try{localStorage.removeItem(routeStorageKey);setRoutes(defaultRoutes);setDraft([]);setEditing(false);setSelected('');setMessage('Исходные маршруты восстановлены.');}catch{setMessage('Не удалось восстановить маршруты.');}}}>Исходные маршруты</button>
+        <button onClick={()=>{try{localStorage.removeItem(profile.storageKey);setRoutes(profile.routes);setDraft([]);setEditing(false);setSelected('');setMessage('Исходные маршруты восстановлены.');}catch{setMessage('Не удалось восстановить маршруты.');}}}>Исходные маршруты</button>
         <label>Импорт JSON <input type="file" accept="application/json,.json" aria-label="Импорт маршрутов" onChange={async e=>{
           const file=e.target.files?.[0];if (!file)return;
-          try {if(file.size>200000)throw Error();const value=JSON.parse(await file.text());if(!validRoutes(value))throw Error();localStorage.setItem(routeStorageKey,JSON.stringify(value));setRoutes(value);setMessage('Маршруты импортированы.');}
+          try {if(file.size>600000)throw Error();const value=JSON.parse(await file.text());if(!validRoutes(value))throw Error();localStorage.setItem(profile.storageKey,JSON.stringify(value));setRoutes(value);setMessage('Маршруты импортированы.');}
           catch{setMessage('Не удалось импортировать: проверь формат и координаты JSON.');}
         }}/></label>
       </div>
@@ -121,15 +123,13 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
     <div className="coastal-frame">
     <div ref={scroll} className="coastal-scroll" aria-label="Прибрежная карта" aria-describedby="coastal-hint">
       <div className="coastal-stage" style={wide?{width:`${zoom*100}%`}:undefined}>
-      {wide&&<img className="coastal-scene" src={sceneUrl} alt="" aria-hidden="true" draggable={false}/>}
-      {wide&&<CityPeople/>}
       <div className="coastal-map" data-time={preferences.time} data-weather={preferences.weather} data-paused={paused} data-editing={editing}
-        style={{...(wide?island:{width:`${zoom*100}%`}),'--city-rate':speed} as unknown as CSSProperties}>
-        <img src={cityAssets.background} width="1005" height="1280" alt="Прибрежный город на островах: девять зданий сфер жизни, мосты, водопады и пляж" draggable={false}/>
-        <LiveCityCanvas routes={routes} paused={paused} speed={speed} quality={preferences.quality} time={preferences.time} weather={preferences.weather}
-          debug={debug} draft={draft} editing={editing} scene={wide} onPoint={point=>setDraft([...draft,point])}/>
-        <CityAnimals/>
-        {coastalBuildings.map(building=>{
+        style={{...(wide?{}:{width:`${zoom*100}%`}),'--city-rate':speed} as unknown as CSSProperties}>
+        <img src={wide?wideMapUrl:cityAssets.background} width={wide?2400:1005} height={wide?1350:1280} alt="Прибрежный город на островах: девять зданий сфер жизни, мосты, водопады и пляж" draggable={false}/>
+        <LiveCityCanvas profile={profile} routes={routes} paused={paused} speed={speed} quality={preferences.quality} time={preferences.time} weather={preferences.weather}
+          debug={debug} draft={draft} editing={editing} onPoint={point=>setDraft([...draft,point])}/>
+        {!wide&&<CityAnimals/>}
+        {buildings.map(building=>{
           const sphere=spheres.find(s=>s.id===building.id)!,tier=buildingState(state,building.id).tier;
           return <button key={building.id} className="coastal-building" data-building={building.id}
             aria-label={`Войти: ${sphere.name}`} onClick={()=>onOpen(building.id)}
@@ -137,7 +137,7 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
             <span>{sphere.icon} {sphere.name}{tier>1?` · Здание ${tier} ур.`:''}</span>
           </button>;
         })}
-        {wide&&coastalBuildings.map(building=>{
+        {wide&&buildings.map(building=>{
           const card=cards.find(c=>c.id===building.id);if(!card)return null;
           return <button key={building.id} className="coastal-pin" data-pin={building.id} aria-pressed={picked===building.id}
             aria-label={`Район ${card.name}, уровень ${card.level}`} onClick={()=>setPicked(picked===building.id?null:building.id)}

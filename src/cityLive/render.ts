@@ -1,5 +1,5 @@
-import { bridgeMasks, fountains, lightPoints, MAP_HEIGHT, MAP_WIDTH, palms, pixels, roadGraph, waterRegions, waterfalls } from './paths.ts';
-import type { Point } from './paths.ts';
+import { portraitProfile } from './paths.ts';
+import type { CityProfile, Point } from './paths.ts';
 import type { Agent, CitySimulation } from './simulation.ts';
 import { boatCleanupMasks, carCleanupMasks } from './cleanSurfaces.ts';
 import { BOAT_ANCHOR, BOAT_CELL, boatTypes, CAR_CELL, CAR_DRAW, directionFrame } from './vehicles.ts';
@@ -37,22 +37,33 @@ export class CityRenderer {
   night=0; warm=0; cool=0;
   lastTime=0;
   ctx:CanvasRenderingContext2D;
-  constructor(ctx:CanvasRenderingContext2D) {this.ctx=ctx;}
+  profile:CityProfile;
+  constructor(ctx:CanvasRenderingContext2D,profile:CityProfile=portraitProfile) {this.ctx=ctx;this.profile=profile;}
+  private px(p:Point) {return {x:p.x*this.profile.width,y:p.y*this.profile.height};}
   draw(sim:CitySimulation,opts:RenderOptions) {
     const ctx=this.ctx,t=sim.elapsed;
     const delta=Math.min(.1,Math.max(0,t-this.lastTime));this.lastTime=t;
     const target=timeLighting(opts.time,t),blend=1-Math.exp(-delta/2.5);
     this.night+=(target.night-this.night)*blend;this.warm+=(target.warm-this.warm)*blend;this.cool+=(target.cool-this.cool)*blend;
-    ctx.clearRect(0,0,MAP_WIDTH,MAP_HEIGHT);
-    this.cleanupLayer(opts.clean,false);
+    ctx.clearRect(0,0,this.profile.width,this.profile.height);
+    if(this.profile.cleanSurfaces)this.cleanupLayer(opts.clean,false);
     this.waterLayer(t,opts);
     this.waterTrafficLayer(sim,opts);
     // В сцене-картинке мосты нарисованы самой картинкой: фрагменты старой карты не накладываются.
-    if(!opts.scene) this.bridgeLayer(opts.background);
-    this.cleanupLayer(opts.clean,true);
+    if(!opts.scene&&this.profile.bridgeMasks.length) this.bridgeLayer(opts.background);
+    if(this.profile.cleanSurfaces)this.cleanupLayer(opts.clean,true);
     this.nightLightingLayer(t,opts);
+    const hidden=this.profile.occluders??[];
+    ctx.save();
+    if(hidden.length) {
+      // Всё, что заходит за шар на карте, скрыто: вырезаем эллипсы из области рисования (even-odd).
+      ctx.beginPath();ctx.rect(0,0,this.profile.width,this.profile.height);
+      for(const [x,y,rx,ry] of hidden){ctx.moveTo(x+rx,y);ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);}
+      ctx.clip('evenodd');
+    }
     this.roadTrafficLayer(sim,opts);
     this.pedestrianLayer(sim,opts);
+    ctx.restore();
     this.waterfallLayer(t,opts);
     this.fountainLayer(t,opts);
     this.buildingEffectsLayer(t,opts);
@@ -66,8 +77,8 @@ export class CityRenderer {
   }
   private waterLayer(t:number,opts:RenderOptions) {
     const ctx=this.ctx;
-    ctx.save();ctx.beginPath();for (const region of waterRegions) polygon(ctx,region);ctx.clip();
-    const count=opts.low ? 35:65;
+    ctx.save();ctx.beginPath();for (const region of this.profile.waterRegions) polygon(ctx,region);ctx.clip();
+    const {width:MAP_WIDTH,height:MAP_HEIGHT}=this.profile,count=(opts.low ? 35:65)*Math.round(MAP_WIDTH/1005);
     ctx.lineWidth=.8;
     for (let i=0;i<count;i++) {
       const x=(i*173.7)%MAP_WIDTH,y=210+(i*117.3)%(MAP_HEIGHT-210);
@@ -77,7 +88,7 @@ export class CityRenderer {
     }
     ctx.restore();
     // Только прибой пляжа: отдельные фазы, пена постепенно растворяется.
-    const beach=[[688,1163],[734,1175],[792,1180],[850,1190],[911,1207],[979,1222]];
+    const beach=this.profile.beach;
     for (let i=0;i<beach.length-1;i++) {
       const phase=(t*.13+i*.29)%1,a=beach[i],b=beach[i+1];
       ctx.strokeStyle=`rgba(245,255,254,${Math.sin(phase*Math.PI)*.38})`;ctx.lineWidth=1+phase*2;
@@ -89,6 +100,7 @@ export class CityRenderer {
     const index=roads?1:0;
     if(!this.cleanupCache[index]) {
       const tile=document.createElement('canvas'),mask=document.createElement('canvas');
+      const MAP_WIDTH=this.profile.width,MAP_HEIGHT=this.profile.height;
       tile.width=mask.width=MAP_WIDTH;tile.height=mask.height=MAP_HEIGHT;
       const paint=tile.getContext('2d')!,cut=mask.getContext('2d')!;
       cut.fillStyle='white';cut.beginPath();
@@ -101,8 +113,8 @@ export class CityRenderer {
     this.ctx.drawImage(this.cleanupCache[index],0,0);
   }
   private bridgeLayer(image:HTMLImageElement) {
-    const ctx=this.ctx;ctx.save();ctx.beginPath();for (const mask of bridgeMasks) polygon(ctx,mask);ctx.clip();
-    ctx.drawImage(image,0,0,MAP_WIDTH,MAP_HEIGHT);ctx.restore();
+    const ctx=this.ctx;ctx.save();ctx.beginPath();for (const mask of this.profile.bridgeMasks) polygon(ctx,mask);ctx.clip();
+    ctx.drawImage(image,0,0,this.profile.width,this.profile.height);ctx.restore();
   }
   private sprite(agent:Agent,image:HTMLImageElement,t:number) {
     const ctx=this.ctx,p=agent.position;
@@ -114,15 +126,15 @@ export class CityRenderer {
     ctx.save();ctx.globalAlpha=alpha;
     if (boat) {
       // Судно покачивается на волне вверх-вниз; картинка уже повёрнута по курсу.
-      const type=boatTypes[agent.sprite]??boatTypes[0],size=type.draw,bob=Math.sin(t*1.3+agent.id)*.6;
+      const type=boatTypes[agent.sprite]??boatTypes[0],size=type.draw*this.profile.vehicleScale,bob=Math.sin(t*1.3+agent.id)*.6;
       ctx.drawImage(image,frame*BOAT_CELL,agent.sprite*BOAT_CELL,BOAT_CELL,BOAT_CELL,p.x-size/2,p.y-size*BOAT_ANCHOR+bob,size,size);
     } else {
-      ctx.drawImage(image,frame*CAR_CELL,agent.sprite*CAR_CELL,CAR_CELL,CAR_CELL,p.x-CAR_DRAW/2,p.y-CAR_DRAW/2,CAR_DRAW,CAR_DRAW);
+      ctx.drawImage(image,frame*CAR_CELL,agent.sprite*CAR_CELL,CAR_CELL,CAR_CELL,p.x-CAR_DRAW*this.profile.vehicleScale/2,p.y-CAR_DRAW*this.profile.vehicleScale/2,CAR_DRAW*this.profile.vehicleScale,CAR_DRAW*this.profile.vehicleScale);
     }
     const lamp=this.night+(boat?0:.55*(this.lastWeather==='rain'||this.lastWeather==='thunderstorm'?1:0));
     if (lamp>.02) {
       ctx.globalAlpha=alpha*Math.min(1,lamp);
-      ctx.translate(p.x,p.y);ctx.rotate(p.angle);
+      ctx.translate(p.x,p.y);ctx.rotate(p.angle);ctx.scale(this.profile.vehicleScale,this.profile.vehicleScale);
       if (!boat) {
         const gradient=ctx.createLinearGradient(6,0,30,0);gradient.addColorStop(0,'#fff5c07a');gradient.addColorStop(1,'#fff5c000');
         ctx.fillStyle=gradient;ctx.beginPath();ctx.moveTo(7,-2.5);ctx.lineTo(30,-7);ctx.lineTo(30,7);ctx.lineTo(7,2.5);ctx.fill();
@@ -136,11 +148,11 @@ export class CityRenderer {
   private lastWeather='clear';
   private waterTrafficLayer(sim:CitySimulation,opts:RenderOptions) {
     const ctx=this.ctx,t=sim.elapsed;
-    ctx.save();ctx.beginPath();for (const region of waterRegions) polygon(ctx,region);ctx.clip();
+    ctx.save();ctx.beginPath();for (const region of this.profile.waterRegions) polygon(ctx,region);ctx.clip();
     for (const a of sim.agents.filter(a=>a.kind==='water').sort((x,y)=>x.position.y-y.position.y)) {
       const p=a.position;
       if (a.currentSpeed>1) {
-        ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);ctx.lineWidth=.9;
+        ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);ctx.scale(this.profile.vehicleScale,this.profile.vehicleScale);ctx.lineWidth=.9;
         for (let i=0;i<6;i++) {
           const phase=(t*.6+i/6+a.id*.3)%1,len=(a.sprite===1?60:a.sprite>=2&&a.sprite<=5?34:24)*phase+8,width=2+phase*8;
           ctx.strokeStyle=`rgba(241,255,255,${(1-phase)*.27*Math.min(1,a.currentSpeed/5)})`;
@@ -183,8 +195,8 @@ export class CityRenderer {
   }
   private waterfallLayer(t:number,opts:RenderOptions) {
     const ctx=this.ctx;
-    for (const [i,fall] of waterfalls.entries()) {
-      const a=pixels(fall.start),b=pixels(fall.end),dx=b.x-a.x,dy=b.y-a.y;
+    for (const [i,fall] of this.profile.waterfalls.entries()) {
+      const a=this.px(fall.start),b=this.px(fall.end),dx=b.x-a.x,dy=b.y-a.y;
       ctx.save();ctx.beginPath();ctx.moveTo(a.x-fall.width/2,a.y);ctx.lineTo(a.x+fall.width/2,a.y);ctx.lineTo(b.x+fall.width/2,b.y);ctx.lineTo(b.x-fall.width/2,b.y);ctx.closePath();ctx.clip();
       const count=opts.low?9:17;
       for (let j=0;j<count;j++) {
@@ -202,8 +214,8 @@ export class CityRenderer {
   }
   private fountainLayer(t:number,opts:RenderOptions) {
     const ctx=this.ctx;
-    for (const [i,f] of fountains.entries()) {
-      const p=pixels(f.center),intensity=.87+.13*Math.sin(t*.24+i*1.3);
+    for (const [i,f] of this.profile.fountains.entries()) {
+      const p=this.px(f.center),intensity=.87+.13*Math.sin(t*.24+i*1.3);
       ctx.save();ctx.beginPath();ctx.ellipse(p.x,p.y-f.height*.45,f.rx+3,f.ry+f.height*.7,0,0,Math.PI*2);ctx.clip();
       for (let j=0;j<(opts.low?8:14);j++) {
         const angle=j*Math.PI*2/(opts.low?8:14),phase=(t*.75+j*.137+i*.37)%1;
@@ -223,20 +235,21 @@ export class CityRenderer {
   }
   private buildingEffectsLayer(t:number,opts:RenderOptions) {
     const ctx=this.ctx;
-    if (opts.globe.complete&&opts.globe.naturalWidth) {
-      const frame=Math.floor(t/3)%32;ctx.drawImage(opts.globe,frame*80,0,80,80,465,462,74,74);
-      this.glow(502,499,48,`rgba(121,227,255,${.03+this.night*.14})`);
+    const globe=this.profile.globe;
+    if (globe&&opts.globe.complete&&opts.globe.naturalWidth) {
+      const frame=Math.floor(t/3)%32;ctx.drawImage(opts.globe,frame*80,0,80,80,globe.x,globe.y,globe.size,globe.size);
+      this.glow(globe.glow[0],globe.glow[1],globe.glow[2],`rgba(121,227,255,${.03+this.night*.14})`);
     }
     // Смена блика экранов, не замена символов фасадов и не изменение UI-иконок.
-    const signs=[[507,144],[287,235],[785,249],[242,414],[823,450],[304,713],[786,652],[545,836],[840,982]];
+    const signs=this.profile.signs;
     for (let i=0;i<signs.length;i++) {
       const phase=(t+i*7)%47;
       if (phase<3) {ctx.fillStyle=`rgba(205,247,255,${Math.sin(phase/3*Math.PI)*.1})`;ctx.beginPath();ctx.ellipse(signs[i][0],signs[i][1],15,11,0,0,Math.PI*2);ctx.fill();}
     }
   }
   private vegetationLayer(t:number,opts:RenderOptions) {
-    const ctx=this.ctx;
-    for (let i=0;i<(opts.low?4:palms.length);i++) {
+    const ctx=this.ctx,palms=this.profile.palms,{width:MAP_WIDTH,height:MAP_HEIGHT}=this.profile;
+    for (let i=0;i<Math.min(palms.length,opts.low?4:palms.length);i++) {
       const [x,y]=palms[i],sway=Math.sin(t*.7+i*1.71)*.6;
       // Только листья, маленькая локальная маска; ствол, земля и архитектура неподвижны.
       ctx.save();ctx.beginPath();ctx.ellipse(x,y-13,7,5,0,0,Math.PI*2);ctx.clip();
@@ -250,9 +263,9 @@ export class CityRenderer {
     if (age<11) {
       const count=opts.low?3:5;
       for (let i=0;i<count;i++) {
-        const x=-50+age*105-i*12,y=75+(cycle%3)*34+Math.sin(age*.4+i)*3+i%2*5;
-        const wing=Math.sin(t*5+i)*2;
-        ctx.strokeStyle='#28495c99';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(x-3,y+wing);ctx.quadraticCurveTo(x-1,y-2,x,y);ctx.quadraticCurveTo(x+1,y-2,x+3,y+wing);ctx.stroke();
+        const k=this.profile.birdScale,x=(-50+age*105-i*12)*k,y=(75+(cycle%3)*34+Math.sin(age*.4+i)*3+i%2*5)*k;
+        const wing=Math.sin(t*5+i)*2*k;
+        ctx.strokeStyle='#28495c99';ctx.lineWidth=1.2*k;ctx.beginPath();ctx.moveTo(x-3*k,y+wing);ctx.quadraticCurveTo(x-k,y-2*k,x,y);ctx.quadraticCurveTo(x+k,y-2*k,x+3*k,y+wing);ctx.stroke();
       }
     }
   }
@@ -260,7 +273,7 @@ export class CityRenderer {
     const ctx=this.ctx,g=ctx.createRadialGradient(x,y,0,x,y,radius);g.addColorStop(0,color);g.addColorStop(1,'rgba(255,244,199,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);ctx.fill();
   }
   private nightLightingLayer(t:number,opts:RenderOptions) {
-    const ctx=this.ctx;
+    const ctx=this.ctx,{width:MAP_WIDTH,height:MAP_HEIGHT}=this.profile;
     // Холодное рассеянное освещение и тёплый закат вместо чёрного слоя.
     const sky=ctx.createLinearGradient(0,0,MAP_WIDTH,MAP_HEIGHT);
     sky.addColorStop(0,`rgba(27,49,108,${this.night*.54})`);sky.addColorStop(1,`rgba(17,68,108,${this.night*.48})`);
@@ -268,7 +281,7 @@ export class CityRenderer {
     if (this.warm>.01) {
       const sunset=ctx.createLinearGradient(0,0,MAP_WIDTH,MAP_HEIGHT);sunset.addColorStop(0,`rgba(255,155,84,${this.warm*.2})`);sunset.addColorStop(1,`rgba(139,104,176,${this.warm*.09})`);ctx.fillStyle=sunset;ctx.fillRect(0,0,MAP_WIDTH,MAP_HEIGHT);
     }
-    for (const [i,[x,y]] of lightPoints.entries()) {
+    for (const [i,[x,y]] of this.profile.lightPoints.entries()) {
       const active=Math.max(0,Math.min(1,(this.night-(i%7)*.055)*2));
       if (active<.01) continue;
       this.glow(x,y,14+i%3*4,`rgba(255,216,138,${active*.32})`);
@@ -278,12 +291,12 @@ export class CityRenderer {
       // Слабый холодный тон и локальные мокрые дорожные блики.
       ctx.fillStyle='#42658a15';ctx.fillRect(0,0,MAP_WIDTH,MAP_HEIGHT);
       ctx.strokeStyle='#bae3f526';ctx.lineWidth=2;
-      outline(ctx,[{x:488,y:650},{x:502,y:700},{x:522,y:755}]);
+      if (this.profile.rainShine.length) outline(ctx,this.profile.rainShine.map(([x,y])=>({x,y})));
       const phase=(t*.8)%1;ctx.strokeStyle=`rgba(205,237,255,${phase*.08})`;
     }
   }
   private weatherLayer(t:number,opts:RenderOptions) {
-    const ctx=this.ctx,cloudy=['partlyCloudy','cloudy','rain','thunderstorm','fog'].includes(opts.weather);
+    const {width:MAP_WIDTH,height:MAP_HEIGHT}=this.profile,ctx=this.ctx,cloudy=['partlyCloudy','cloudy','rain','thunderstorm','fog'].includes(opts.weather);
     if (cloudy) {
       for (let i=0;i<3;i++) {
         const x=((t*(2+i)+i*389)%(MAP_WIDTH+500))-250,y=80+i*343;
@@ -313,20 +326,20 @@ export class CityRenderer {
       if (!flags[path.route.kind]) continue;
       ctx.strokeStyle=path.route.kind==='road'?'#ffcb42':path.route.kind==='water'?'#66f8ff':'#f899f0';ctx.lineWidth=1.5;
       outline(ctx,path.samples);
-      for (const n of path.route.points.map(pixels)) {ctx.beginPath();ctx.arc(n.x,n.y,3,0,Math.PI*2);ctx.stroke();}
+      for (const n of path.route.points.map(q=>this.px(q))) {ctx.beginPath();ctx.arc(n.x,n.y,3,0,Math.PI*2);ctx.stroke();}
     }
     if (flags.spawn) for (const path of sim.paths) {
       const p=path.at(0);ctx.fillStyle='#89ff96';ctx.fillRect(p.x-4,p.y-4,8,8);
       if (!path.route.closed) {const end=path.at(path.length);ctx.fillStyle='#ff8e88';ctx.fillRect(end.x-4,end.y-4,8,8);}
     }
-    if (flags.intersections) for (const gate of roadGraph.intersections) {
-      const p=pixels(gate.center);ctx.strokeStyle=sim.intersections.reservations.has(gate.id)?'#ff6262':'#88ff9b';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(p.x,p.y,gate.radius,0,Math.PI*2);ctx.stroke();
+    if (flags.intersections) for (const gate of this.profile.intersections) {
+      const p=this.px(gate.center);ctx.strokeStyle=sim.intersections.reservations.has(gate.id)?'#ff6262':'#88ff9b';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(p.x,p.y,gate.radius,0,Math.PI*2);ctx.stroke();
       ctx.font='9px monospace';ctx.fillStyle='#142e49';ctx.fillText(gate.id,p.x+5,p.y-5);
     }
     if (flags.hitboxes) for (const a of sim.agents) {ctx.strokeStyle='#ff5151';ctx.lineWidth=.8;ctx.beginPath();ctx.arc(a.position.x,a.position.y,a.safeRadius,0,Math.PI*2);ctx.stroke();}
     if (opts.draft.length) {
-      ctx.strokeStyle='#ff4545';ctx.lineWidth=2;outline(ctx,opts.draft.map(pixels));
-      for (const p of opts.draft.map(pixels)) {ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();ctx.stroke();}
+      ctx.strokeStyle='#ff4545';ctx.lineWidth=2;outline(ctx,opts.draft.map(q=>this.px(q)));
+      for (const p of opts.draft.map(q=>this.px(q))) {ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();ctx.stroke();}
     }
   }
 }

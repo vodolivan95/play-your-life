@@ -27,6 +27,9 @@ export const boatsByRoute: Record<string, number[]> = {
   'ocean-speedboats': [2, 3, 4, 5],
   'west-cruise': [6, 7],
   'west-sail': [8, 9],
+  // Широкая карта.
+  'wide-bay-west-yacht': [0, 6], 'wide-bay-west-sail': [8, 9], 'wide-bay-east-yacht': [0, 7], 'wide-bay-east-sail': [8, 9],
+  'wide-horizon-sail': [8, 9], 'wide-horizon-yacht': [1, 0], 'wide-east-sail': [9, 8],
 };
 export const boatFallback = [6, 7];
 export function directionFrame(angle: number) {

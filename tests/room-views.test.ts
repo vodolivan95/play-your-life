@@ -57,3 +57,12 @@ test('из «Хобби» окна смотрят на «Задачи» (зап�
   assert.equal(views.back.building, 'tasks');
   assert.equal(views.side.building, 'together');
 });
+test('из «Задач» окна смотрят на «Вождение» (запад) и «Общие дела» (север); окна не повторяют здание', () => {
+  const views = roomViews('tasks');
+  assert.equal(views.back.building, 'driving');
+  assert.equal(views.side.building, 'together');
+  for (const id of ['health', 'sport', 'growth', 'finance', 'english', 'driving', 'together', 'tasks', 'hobby']) {
+    const v = roomViews(id);
+    assert.notEqual(v.back.building, v.side.building, id);
+  }
+});

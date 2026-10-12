@@ -57,7 +57,6 @@ test('кабинет «Саморазвития»: свой каталог, по
   const { hasRoom, roomConfigs, objectSpec } = await import('../src/roomEngine.ts');
   assert.equal(hasRoom('sport'), true);
   assert.equal(hasRoom('growth'), true);
-  assert.equal(hasRoom('tasks'), false);
   assert.equal(hasRoom('unknown'), false);
   assert.deepEqual(roomConfigs.growth.catalog.map(item => item.id), ['bookshelf', 'desk', 'armchair', 'floorLamp', 'globe', 'board']);
   assert.equal(objectSpec('globe').name, 'Глобус');
@@ -159,5 +158,17 @@ test('«Хобби»: свой каталог и уровни', async () => {
   let next = purchaseRoomObject(state, 'hobby', 'easel');
   next = placeRoomObject(next, 'hobby', { id: 'easel', position: [-4.5, 0, -3.5], rotation: [0, 0, 0], scale: [1, 1, 1] });
   assert.equal(next.coins, 880);
+  assert.equal(validRooms(next.rooms), true);
+});
+test('«Задачи»: свой каталог; интерьеры есть у всех девяти зданий', async () => {
+  const { hasRoom, roomConfigs } = await import('../src/roomEngine.ts');
+  for (const id of ['health', 'sport', 'growth', 'finance', 'english', 'driving', 'together', 'tasks', 'hobby']) assert.equal(hasRoom(id), true, id);
+  assert.deepEqual(roomConfigs.tasks.catalog.map(item => item.id), ['standingDesk', 'kanbanBoard', 'hourglass', 'filingCabinet', 'trophyCase', 'gong']);
+  const state = newAccountGame('Задачи'); state.coins = 1000;
+  assert.throws(() => purchaseRoomObject(state, 'tasks', 'trophyCase'), /уровень/);
+  assert.throws(() => purchaseRoomObject(state, 'tasks', 'gong'), /уровень/);
+  let next = purchaseRoomObject(state, 'tasks', 'kanbanBoard');
+  next = placeRoomObject(next, 'tasks', { id: 'kanbanBoard', position: [0, 0, -3.5], rotation: [0, 0, 0], scale: [1, 1, 1] });
+  assert.equal(next.coins, 860);
   assert.equal(validRooms(next.rooms), true);
 });

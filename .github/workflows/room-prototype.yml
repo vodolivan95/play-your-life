@@ -8,7 +8,7 @@ permissions:
 jobs:
   prototype:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -41,6 +41,8 @@ jobs:
         run: node --experimental-strip-types scripts/together-room-smoke.mjs
       - name: Verify the hobby studio in browser
         run: node --experimental-strip-types scripts/hobby-room-smoke.mjs
+      - name: Verify the tasks headquarters in browser
+        run: node --experimental-strip-types scripts/tasks-room-smoke.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

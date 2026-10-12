@@ -29,10 +29,9 @@ function surface(kind: 'stone' | 'wood', normal = false) {
   texture.anisotropy = 4;
   return texture;
 }
-/** Окна: в спортзале — согласованная панорама; в других комнатах — здания, видные из окон по карте (`roomViews`). */
+/** Окна: здания, которые видны из окон комнаты по карте острова (`roomViews`). */
 function Skyline({ roomId, time }: { roomId: RoomId; time: RoomTime }) {
   const views = useMemo(() => {
-    if (roomId === 'sport') return { back: cityAssets.skyline, side: cityAssets.skyline, width: 96 };
     const v = roomViews(roomId), pick = (id: string | null) => id ? sphereAssets[id as keyof typeof sphereAssets].building : cityAssets.skyline;
     return { back: pick(v.back.building), side: pick(v.side.building), width: 72 };
   }, [roomId]);

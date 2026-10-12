@@ -20,3 +20,9 @@ test('у каждого здания хотя бы одно окно выход�
     assert.notEqual(views.back.building, id);
   }
 });
+test('из спортзала окна смотрят на «Здоровье» (восток) и «Финансы» (юг)', () => {
+  const views = roomViews('sport');
+  assert.equal(views.facing, 'east');
+  assert.equal(views.back.building, 'health');
+  assert.equal(views.side.building, 'finance');
+});

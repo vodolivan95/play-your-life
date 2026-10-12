@@ -71,10 +71,10 @@ export default function HobbyDecor() {
     spot: new MeshStandardMaterial({ color: '#fff3d6', emissive: '#ffd99a', emissiveIntensity: 2, toneMapped: false }),
   }), []);
   useEffect(() => () => { Object.values(materials).forEach(m => m.dispose()); Object.values(geometries).forEach(g => g.dispose()); }, [materials, geometries]);
-  const art = useMemo(canvases, []);
-  const records = useMemo(vinyls, []);
+  const art = useMemo(() => canvases(), []);
+  const records = useMemo(() => vinyls(), []);
   const stuff = useMemo(() => shelfStuff(FRONT - .3), []);
-  const paint = useMemo(splatters, []);
+  const paint = useMemo(() => splatters(), []);
   const box = (key: string, pos: Vec3, scale: Vec3, material: MeshStandardMaterial) =>
     <mesh key={key} position={pos} scale={scale} geometry={geometries.box} material={material} castShadow receiveShadow />;
   return <group>

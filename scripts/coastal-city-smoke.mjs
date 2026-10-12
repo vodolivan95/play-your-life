@@ -1,4 +1,4 @@
-/* global fetch, setTimeout, document, innerWidth */
+/* global fetch, setTimeout, document, innerWidth, console, getComputedStyle */
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
@@ -52,12 +52,16 @@ try {
   await page.getByRole('combobox', { name: 'Погода города', exact: true }).selectOption('clear');
   await page.waitForTimeout(1100);
   await page.setViewportSize({ width: 390, height: 844 });
+  // Мобильная раскладка включается через matchMedia и перерисовку React: ждём её, а не меряем старую сцену ПК.
+  await page.locator('.coastal-chips').waitFor();
+  await page.waitForFunction(() => !document.querySelector('.coastal-districts') && !document.querySelector('.coastal-scene'));
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   const rects = await page.locator('.coastal-building').evaluateAll(nodes => nodes.map(node => {
     const bounds = node.getBoundingClientRect();
-    return { width: bounds.width, height: bounds.height };
+    return { id: node.dataset.building, width: Math.round(bounds.width), height: Math.round(bounds.height) };
   }));
-  assert.ok(rects.every(rect => rect.width >= 44 && rect.height >= 44), 'Все девять входов доступны пальцем');
+  const layout = await page.evaluate(() => ({ map: document.querySelector('.coastal-map')?.getBoundingClientRect().width, scroll: document.querySelector('.coastal-scroll')?.getBoundingClientRect().width, stage: getComputedStyle(document.querySelector('.coastal-map')).width }));
+  assert.ok(rects.every(rect => rect.width >= 44 && rect.height >= 44), `Все девять входов доступны пальцем: ${JSON.stringify({ rects, layout })}`);
   await page.screenshot({ path: 'room-preview/coastal-mobile.png', fullPage: true });
   await page.getByRole('button', { name: 'Увеличить карту', exact: true }).click();
   assert.equal(await map.evaluate(node => node.getBoundingClientRect().width > node.parentElement.clientWidth), true);
@@ -78,6 +82,8 @@ try {
   await writeFile('room-preview/coastal-result.json', JSON.stringify({ passed: true, buildings: ids, combinations: 21, mobileEntry: true, errors }, null, 2));
 } catch (error) {
   await writeFile('room-preview/coastal-error.txt', String(error.stack || error));
+  // Аннотация GitHub Actions: причина видна в проверке без скачивания логов.
+  console.log(`::error title=Coastal city smoke::${String(error.stack || error).slice(0, 3000).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`);
   throw error;
 } finally {
   await browser?.close();

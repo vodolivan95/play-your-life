@@ -41,7 +41,7 @@ try {
   assert.equal(await page.locator('.room3d-catalog article').filter({ hasText: 'Глобус' }).getByRole('button').isDisabled(), true, 'Глобус открывается на 3 уровне');
   await page.getByRole('button', { name: 'Закрыть панель' }).click();
   const placements = [
-    { name: 'Книжный шкаф', x: -3, z: -4 }, { name: 'Письменный стол', x: 2.5, z: -3.5 },
+    { name: 'Книжный шкаф', x: -3, z: -3.5 }, { name: 'Письменный стол', x: 2.5, z: -3.5 },
     { name: 'Кресло для чтения', x: -3, z: -1.5, turn: 2 }, { name: 'Торшер', x: -4.5, z: -1.5 },
   ];
   for (const item of placements) {

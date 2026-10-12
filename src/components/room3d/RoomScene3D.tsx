@@ -3,7 +3,7 @@ import PlayBrand from '../PlayBrand';
 import { Canvas, useThree } from '@react-three/fiber';
 import { ContactShadows, PerformanceMonitor, useProgress } from '@react-three/drei';
 import { ACESFilmicToneMapping, PerspectiveCamera, SRGBColorSpace } from 'three';
-import { objectSpec } from '../../roomEngine';
+import { objectSpec, roomConfigs } from '../../roomEngine';
 import RoomContactShadow from './RoomContactShadow';
 import type { ObjectId, RoomId, RoomObject, Vec3 } from '../../roomEngine';
 import RoomEnvironment from './RoomEnvironment';
@@ -61,7 +61,7 @@ export default function RoomScene3D({ roomId, objects, ghost, valid, build, time
         <RoomItemRenderer id={item.id} active={active === item.id} reduced={reduced} />
       </group>)}
       {effective === 'high' && <ContactShadows key={JSON.stringify(objects)} position={[0, .001, 0]} opacity={.4} scale={12} blur={1.5} far={2.5} resolution={256} frames={2} color="#172027" />}
-      <BuildSystem build={build} ghost={ghost} valid={valid} onFloor={onFloor} />
+      <BuildSystem size={roomConfigs[roomId].size} build={build} ghost={ghost} valid={valid} onFloor={onFloor} />
       <Ready onReady={setReady} />
     </Suspense>
     <RoomCamera preset={cameraPreset} revision={cameraRevision} placing={!!ghost} />

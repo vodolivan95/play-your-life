@@ -2,7 +2,9 @@ import { useEffect, useMemo } from 'react';
 import { CanvasTexture, RepeatWrapping, SRGBColorSpace, MeshStandardMaterial, BoxGeometry } from 'three';
 import { Environment, Lightformer, useTexture } from '@react-three/drei';
 import type { RoomId, Vec3 } from '../../roomEngine';
-import { cityAssets } from '../../sphereAssets';
+import { cityAssets, sphereAssets } from '../../sphereAssets';
+import { roomViews } from '../../roomViews';
+import StudyDecor from './StudyDecor';
 import type { RoomQuality, RoomTime } from './RoomScene3D';
 
 function surface(kind: 'stone' | 'wood', normal = false) {
@@ -27,15 +29,23 @@ function surface(kind: 'stone' | 'wood', normal = false) {
   texture.anisotropy = 4;
   return texture;
 }
-function Skyline({ time }: { time: RoomTime }) {
-  const texture = useTexture(cityAssets.skyline);
+/** Окна: в спортзале — согласованная панорама; в других комнатах — здания, видные из окон по карте (`roomViews`). */
+function Skyline({ roomId, time }: { roomId: RoomId; time: RoomTime }) {
+  const views = useMemo(() => {
+    if (roomId === 'sport') return { back: cityAssets.skyline, side: cityAssets.skyline, width: 96 };
+    const v = roomViews(roomId), pick = (id: string | null) => id ? sphereAssets[id as keyof typeof sphereAssets].building : cityAssets.skyline;
+    return { back: pick(v.back.building), side: pick(v.side.building), width: 72 };
+  }, [roomId]);
+  const [back, side] = useTexture([views.back, views.side]);
   // Three textures are imperative GPU resources, not React state.
   // eslint-disable-next-line react-hooks/immutability
-  useEffect(() => { texture.colorSpace = SRGBColorSpace; texture.needsUpdate = true; }, [texture]);
-  return <group><mesh position={[0, 3.5, -27]}>
-    <planeGeometry args={[96, 48]} />
-    <meshBasicMaterial map={texture} color={time === 'night' ? '#50628c' : time === 'sunset' ? '#ecc5a2' : '#ffffff'} toneMapped={false} />
-  </mesh><mesh position={[27, 3.5, 0]} rotation={[0, -Math.PI / 2, 0]}><planeGeometry args={[96, 48]} /><meshBasicMaterial map={texture} color={time === 'night' ? '#50628c' : time === 'sunset' ? '#ecc5a2' : '#ffffff'} toneMapped={false} /></mesh></group>;
+  useEffect(() => { for (const texture of [back, side]) { texture.colorSpace = SRGBColorSpace; texture.needsUpdate = true; } }, [back, side]);
+  const tint = time === 'night' ? '#50628c' : time === 'sunset' ? '#ecc5a2' : '#ffffff';
+  const height = 48, width = views.width;
+  return <group>
+    <mesh position={[0, 3.5, -27]}><planeGeometry args={[width, height]} /><meshBasicMaterial map={back} color={tint} toneMapped={false} /></mesh>
+    <mesh position={[27, 3.5, 0]} rotation={[0, -Math.PI / 2, 0]}><planeGeometry args={[width, height]} /><meshBasicMaterial map={side} color={tint} toneMapped={false} /></mesh>
+  </group>;
 }
 export default function RoomEnvironment({ roomId, time, quality }: { roomId: RoomId; time: RoomTime; quality: RoomQuality }) {
   // Кабинет «Саморазвития» — тёплый паркет вместо каменного пола спортзала.
@@ -60,7 +70,8 @@ export default function RoomEnvironment({ roomId, time, quality }: { roomId: Roo
       <Lightformer position={[-8, 2, 0]} rotation={[0, Math.PI / 2, 0]} scale={[8, 4, 1]} intensity={1.5} color="#ffcf99" />
       <Lightformer position={[6, 2, 0]} rotation={[0, -Math.PI / 2, 0]} scale={[8, 4, 1]} intensity={1} color="#94c9e5" />
     </Environment>
-    <Skyline time={time} />
+    <Skyline roomId={roomId} time={time} />
+    {study && <StudyDecor />}
     {study ? <>
       <mesh position={[0, -.005, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[12.4, 10.4]} /><meshStandardMaterial map={maps.parquet} roughness={.55} metalness={0} envMapIntensity={.9} /></mesh>
       <mesh position={[0, .004, .4]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[5.2, 3.6]} /><meshStandardMaterial color="#6d2f2a" roughness={.95} /></mesh>

@@ -68,10 +68,11 @@ test('кабинет «Саморазвития»: свой каталог, по
   let next = purchaseRoomObject(state, 'growth', 'bookshelf');
   next = purchaseRoomObject(next, 'growth', 'armchair');
   assert.equal(next.coins, 690);
-  const shelf: RoomObject = { id: 'bookshelf', position: [0, 0, -4], rotation: [0, 0, 0], scale: [1, 1, 1] };
+  const shelf: RoomObject = { id: 'bookshelf', position: [0, 0, -3.5], rotation: [0, 0, 0], scale: [1, 1, 1] };
   next = placeRoomObject(next, 'growth', shelf);
-  assert.throws(() => placeRoomObject(next, 'growth', { ...shelf, id: 'armchair', position: [.5, 0, -4] }), /занято/);
-  next = placeRoomObject(next, 'growth', { ...shelf, id: 'armchair', position: [0, 0, -2.5] });
+  assert.throws(() => placeRoomObject(next, 'growth', { ...shelf, id: 'armchair', position: [.5, 0, -3.5] }), /занято/);
+  assert.throws(() => placeRoomObject(next, 'growth', { ...shelf, id: 'armchair', position: [5, 0, 0] }), /занято/, 'стеллажи у стен');
+  next = placeRoomObject(next, 'growth', { ...shelf, id: 'armchair', position: [0, 0, -2] });
   assert.equal(roomData(next, 'growth').objects.length, 2);
   assert.equal(roomData(next, 'sport').objects.length, 0);
   assert.equal(validRooms(next.rooms), true);

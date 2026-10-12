@@ -18,7 +18,7 @@ const sportCatalog: readonly ObjectSpec[] = [
   { id: 'plant', name: 'Растение', price: 120, level: 1, size: [1, 1], asset: '/models/sport/plant.glb' },
   { id: 'treadmill', name: 'Беговая дорожка', price: 800, level: 18, size: [2, 3], asset: '/models/sport/treadmill.glb' },
 ];
-// Саморазвитие (ключ сохранений `growth`) — кабинет-библиотека. Первые четыре предмета доступны сразу, с 0 уровня новой сферы.
+// Саморазвитие (ключ сохранений `growth`) — кабинет-библиотека; пол для мебели 11 × 9 м, по краям стеллажи. Первые четыре предмета доступны сразу, с 0 уровня новой сферы.
 const growthCatalog: readonly ObjectSpec[] = [
   { id: 'bookshelf', name: 'Книжный шкаф', price: 150, level: 0, size: [2, 1], asset: '/models/growth/bookshelf.glb' },
   { id: 'desk', name: 'Письменный стол', price: 200, level: 0, size: [2, 1], asset: '/models/growth/desk.glb' },
@@ -31,7 +31,7 @@ const catalogs: Partial<Record<RoomId, readonly ObjectSpec[]>> = { sport: sportC
 
 export const roomConfigs: Record<RoomId, RoomConfig> = Object.fromEntries(
   (['health', 'sport', 'growth', 'english', 'finance', 'together', 'driving', 'tasks', 'hobby'] as const)
-    .map(id => [id, { id, title: ({ health: 'Здоровье', sport: 'Спорт', growth: 'Саморазвитие', english: 'Английский', finance: 'Финансы', together: 'Общие дела', driving: 'Вождение', tasks: 'Задачи', hobby: 'Хобби' })[id], size: [12, 10], catalog: catalogs[id] ?? [] }]),
+    .map(id => [id, { id, title: ({ health: 'Здоровье', sport: 'Спорт', growth: 'Саморазвитие', english: 'Английский', finance: 'Финансы', together: 'Общие дела', driving: 'Вождение', tasks: 'Задачи', hobby: 'Хобби' })[id], size: id === 'growth' ? [11, 9] : [12, 10], catalog: catalogs[id] ?? [] }]),
 ) as Record<RoomId, RoomConfig>;
 
 /** Есть ли у сферы наполненный 3D-интерьер (каталог предметов). */

@@ -10,7 +10,8 @@ export type ObjectId = 'mat' | 'dumbbells' | 'bench' | 'ball' | 'plant' | 'tread
   | 'carSimulator' | 'trafficLight' | 'tireStack' | 'toolCart' | 'motorcycle' | 'sportsCar'
   | 'diningTable' | 'gameTable' | 'beanBags' | 'karaoke' | 'pingPong' | 'fireplace'
   | 'easel' | 'guitar' | 'potteryWheel' | 'craftTable' | 'piano' | 'telescope'
-  | 'standingDesk' | 'kanbanBoard' | 'hourglass' | 'filingCabinet' | 'trophyCase' | 'gong';
+  | 'standingDesk' | 'kanbanBoard' | 'hourglass' | 'filingCabinet' | 'trophyCase' | 'gong'
+  | 'kettlebells' | 'dumbbell-rack' | 'exercise-bike' | 'boxing-bag' | 'power-rack';
 export type Vec3 = [number, number, number];
 export type RoomObject = { id: ObjectId; position: Vec3; rotation: Vec3; scale: Vec3 };
 export type RoomData = { purchased: ObjectId[]; objects: RoomObject[] };
@@ -23,7 +24,12 @@ const sportCatalog: readonly ObjectSpec[] = [
   { id: 'bench', name: 'Скамья', price: 300, level: 4, size: [2, 1], asset: '/models/sport/bench.glb' },
   { id: 'ball', name: 'Фитбол', price: 140, level: 3, size: [1, 1], asset: '/models/sport/ball.glb' },
   { id: 'plant', name: 'Растение', price: 120, level: 1, size: [1, 1], asset: '/models/sport/plant.glb' },
+  { id: 'kettlebells', name: 'Гири', price: 150, level: 5, size: [1, 1], asset: '/models/sport/kettlebells.glb' },
+  { id: 'dumbbell-rack', name: 'Стойка с гантелями', price: 400, level: 8, size: [2, 1], asset: '/models/sport/dumbbell-rack.glb' },
+  { id: 'exercise-bike', name: 'Велотренажёр', price: 650, level: 12, size: [1, 2], asset: '/models/sport/exercise-bike.glb' },
+  { id: 'boxing-bag', name: 'Боксёрская груша', price: 500, level: 15, size: [1, 1], asset: '/models/sport/boxing-bag.glb' },
   { id: 'treadmill', name: 'Беговая дорожка', price: 800, level: 18, size: [2, 3], asset: '/models/sport/treadmill.glb' },
+  { id: 'power-rack', name: 'Силовая рама', price: 1200, level: 30, size: [2, 2], asset: '/models/sport/power-rack.glb' },
 ];
 // Саморазвитие (ключ сохранений `growth`) — кабинет-библиотека; пол для мебели 11 × 9 м, по краям стеллажи. Первые четыре предмета доступны сразу, с 0 уровня новой сферы.
 const growthCatalog: readonly ObjectSpec[] = [

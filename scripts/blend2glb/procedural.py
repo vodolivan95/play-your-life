@@ -17,8 +17,8 @@ class Scene:
         self.materials = []
         self.textures = {}
 
-    def material(self, name, color, rough=0.6, metal=0.0, texture=None, normal_scale=None):
-        self.materials.append(dict(name=name, color=color, rough=rough, metal=metal, texture=texture))
+    def material(self, name, color, rough=0.6, metal=0.0, texture=None, normal_scale=None, emissive=None, double=False):
+        self.materials.append(dict(name=name, color=color, rough=rough, metal=metal, texture=texture, emissive=emissive, double=double))
         return len(self.materials) - 1
 
     def add(self, pos, nor, uv, idx, mat, transform=None):
@@ -173,6 +173,8 @@ def write_glb(scene, path):
     tex_index = {}
     for m in scene.materials:
         mat = {'name': m['name'], 'pbrMetallicRoughness': {'baseColorFactor': list(m['color']) + [1], 'metallicFactor': m['metal'], 'roughnessFactor': m['rough']}}
+        if m.get('emissive'): mat['emissiveFactor'] = list(m['emissive'])
+        if m.get('double'): mat['doubleSided'] = True
         if m['texture'] is not None:
             key = id(m['texture'])
             if key not in tex_index:

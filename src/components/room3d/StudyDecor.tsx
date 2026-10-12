@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import { BoxGeometry, Color, CylinderGeometry, InstancedMesh, MeshStandardMaterial, Object3D, SphereGeometry } from 'three';
+import { BoxGeometry, BufferGeometry, Color, CylinderGeometry, InstancedMesh, MeshStandardMaterial, Object3D, SphereGeometry } from 'three';
 import type { Vec3 } from '../../roomEngine';
 
 // Неподвижная обстановка кабинета «Саморазвития»: стеллажи с книгами вдоль глухих стен.
@@ -85,7 +85,7 @@ export default function StudyDecor() {
   }), []);
   useEffect(() => () => { Object.values(materials).forEach(m => m.dispose()); Object.values(geometries).forEach(g => g.dispose()); }, [materials, geometries]);
   const top = BASE + LEVELS * STEP;
-  const mesh = (key: string, pos: Vec3, scale: Vec3, material: MeshStandardMaterial, geometry = geometries.box, rotation: Vec3 = [0, 0, 0]) =>
+  const mesh = (key: string, pos: Vec3, scale: Vec3, material: MeshStandardMaterial, geometry: BufferGeometry = geometries.box, rotation: Vec3 = [0, 0, 0]) =>
     <mesh key={key} position={pos} scale={scale} rotation={rotation} geometry={geometry} material={material} castShadow receiveShadow />;
   // Лестница на латунной рейке вдоль передней стены.
   const ladderX = 2.4, railZ = 5.04 - DEPTH - .06, footZ = 4.2, ladderTop = top - .2;

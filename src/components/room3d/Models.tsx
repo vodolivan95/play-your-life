@@ -11,13 +11,19 @@ export default function Model3D({ id, ghost, active = false, reduced = false }: 
   const globe = useRef<Group>(null);
   const fish = useRef<Group>(null);
   const pig = useRef<Group>(null);
-  const geometries = useMemo(() => ({ box: new BoxGeometry(1, 1, 1), cylinder: new CylinderGeometry(.5, .5, 1, 12), sphere: new SphereGeometry(.5, 24, 16), cone: new CylinderGeometry(.28, .5, 1, 20, 1, true), ring: new TorusGeometry(.5, .025, 8, 40, Math.PI * 1.4) }), []);
+  const signal = useRef(-2);
+  const lights = useRef<Group>(null);
+  const geometries = useMemo(() => ({ box: new BoxGeometry(1, 1, 1), cylinder: new CylinderGeometry(.5, .5, 1, 12), sphere: new SphereGeometry(.5, 24, 16), cone: new CylinderGeometry(.28, .5, 1, 20, 1, true), ring: new TorusGeometry(.5, .025, 8, 40, Math.PI * 1.4), tire: new TorusGeometry(.38, .16, 10, 28) }), []);
   const materials = useMemo(() => {
     const make = (color: string, metalness = 0, roughness = .65) => new MeshStandardMaterial({ color: ghost ? ghost === 'valid' ? '#57caff' : '#ff7777' : color, metalness, roughness, transparent: !!ghost, opacity: ghost ? .45 : 1, depthWrite: !ghost });
     return { dark: make('#202731', .6, .35), steel: make('#a5afba', .85, .25), fabric: make('#36556d', 0, .9), rubber: make('#242d3b', 0, .9), leaf: make('#417858', 0, .8), wood: make('#b09072'), ball: make('#5c9daa', .15, .38), oak: make('#8a5a36', 0, .62), walnut: make('#4a2f1e', 0, .55), brass: make('#c79a4b', .85, .3), leather: make('#7a3b2a', 0, .55), paper: make('#f1ece1', 0, .9),
       red: make('#a8423a', 0, .7), blue: make('#2f5d8c', 0, .7), green: make('#3f7a5a', 0, .7), gold: make('#d1a24a', .2, .5), cream: make('#e7dcc4', 0, .8), ocean: make('#2f7fb3', .1, .45),
       white: make('#f4f2ee', 0, .35), mint: make('#4fb3a9', .05, .4), cedar: make('#b07a4a', 0, .7), orange: make('#f08a3c', .05, .5), lime: make('#8cc63f', 0, .55), berry: make('#b23a5a', 0, .5), sand: make('#e7d6b0', 0, .9),
       bronze: make('#8a5a2b', .9, .35), navy: make('#1c2a44', .1, .5), pink: make('#f29bb2', .05, .45), goldBar: make('#e8b93a', 1, .22), chestWood: make('#5a3418', 0, .6), black: make('#15181d', .4, .4),
+      carRed: make('#d3202f', .6, .25), yellow: make('#f2c230', .1, .5), road: make('#2b2f36', 0, .9), chrome: make('#d9dde3', 1, .15),
+      redLamp: new MeshStandardMaterial({ color: '#5a1010', emissive: '#ff2a2a', emissiveIntensity: ghost ? 0 : 1.6 }),
+      amberLamp: new MeshStandardMaterial({ color: '#5a3d10', emissive: '#ffb020', emissiveIntensity: ghost ? 0 : 1.6 }),
+      greenLamp: new MeshStandardMaterial({ color: '#0f4a24', emissive: '#22e06a', emissiveIntensity: ghost ? 0 : 1.6 }),
       londonRed: make('#c8202f', .1, .45), cream2: make('#efe6cf', 0, .6), stone: make('#cdbb8f', 0, .8), busGlass: make('#28323d', .5, .2),
       lamp: new MeshStandardMaterial({ color: active && !ghost ? '#fff4c9' : '#d9d2b8', emissive: active && !ghost ? '#ffd27a' : '#000000', emissiveIntensity: active ? 1.6 : 0, transparent: !!ghost, opacity: ghost ? .45 : 1 }),
       chart: new MeshStandardMaterial({ color: active && !ghost ? '#0b2a1d' : '#0a1420', emissive: ghost ? '#000000' : '#21c37a', emissiveIntensity: active ? 1.1 : .35, transparent: !!ghost, opacity: ghost ? .45 : 1 }),
@@ -32,6 +38,11 @@ export default function Model3D({ id, ghost, active = false, reduced = false }: 
     if (plant.current && !reduced) plant.current.rotation.z = Math.sin(clock.elapsedTime * .6) * .012;
     if (globe.current && !reduced) globe.current.rotation.y += delta * (active ? 1.6 : .12);
     if (fish.current && !reduced) fish.current.rotation.y += delta * (active ? 1.4 : .45);
+    if (lights.current) {
+      // Светофор: при включении — цикл красный → жёлтый → зелёный; иначе мигает жёлтый.
+      const t = clock.elapsedTime, phase = active ? Math.floor(t / 1.5) % 3 : (Math.floor(t * 2) % 2 ? 1 : -1);
+      if (phase !== signal.current) { signal.current = phase; lights.current.children.forEach((lamp, i) => { lamp.visible = i === phase; }); }
+    }
     if (pig.current && !reduced) pig.current.position.y = active ? Math.abs(Math.sin(clock.elapsedTime * 6)) * .12 : 0;
   });
   const box = (pos: Vec3, size: Vec3, mat = materials.dark, rotation: Vec3 = [0, 0, 0]) => <mesh position={pos} scale={size} rotation={rotation} geometry={geometries.box} material={mat} castShadow={!ghost} receiveShadow />;
@@ -315,6 +326,54 @@ export default function Model3D({ id, ghost, active = false, reduced = false }: 
       {box([0, 2.3, 0], [.5, .2, .5], materials.stone)}
       <mesh position={[0, 2.68, 0]} scale={[.5, .6, .5]} geometry={geometries.cone} material={materials.navy} rotation={[0, Math.PI / 4, 0]} />
       {cylinder([0, 3.05, 0], [.03, .2, .03], materials.goldBar)}
+    </>}
+    {id === 'carSimulator' && <>
+      {box([0, .05, 0], [1.8, .1, .9], materials.black)}
+      {box([-.3, .35, .1], [.55, .1, .55], materials.carRed)}
+      {box([-.3, .7, .35], [.55, .7, .12], materials.carRed, [.2, 0, 0])}
+      {box([.2, .45, .05], [.1, .7, .1], materials.steel)}
+      <mesh position={[.15, .8, .05]} rotation={[0, Math.PI / 2, .5]} scale={[.42, .42, .42]} geometry={geometries.tire} material={materials.black} />
+      {([[-.55, .45], [0, 0], [.55, -.45]] as const).map(([x, r]) => <group key={x} position={[x + .35, 1.1, -.3]} rotation={[0, r - Math.PI / 2, 0]}>
+        {box([0, 0, 0], [.55, .34, .04], materials.black)}{box([0, 0, .022], [.5, .3, .005], materials.screen)}
+      </group>)}
+    </>}
+    {id === 'trafficLight' && <>
+      {cylinder([0, .04, 0], [.45, .08, .45], materials.dark)}
+      {cylinder([0, 1.1, 0], [.08, 2.1, .08], materials.steel)}
+      {box([0, 2.25, .08], [.32, .9, .26], materials.black)}
+      {[2.52, 2.25, 1.98].map(y => <group key={y}>{cylinder([0, y, .22], [.2, .02, .2], materials.dark, [Math.PI / 2, 0, 0])}</group>)}
+      <group ref={lights}>{[[2.52, materials.redLamp], [2.25, materials.amberLamp], [1.98, materials.greenLamp]].map(([y, mat], i) => <mesh key={i} position={[0, y as number, .235]} rotation={[Math.PI / 2, 0, 0]} scale={[.18, .01, .18]} geometry={geometries.cylinder} material={mat as MeshStandardMaterial} />)}</group>
+      {box([0, 2.75, .2], [.34, .04, .2], materials.black)}
+    </>}
+    {id === 'tireStack' && [0, 1, 2, 3].map(i => <mesh key={i} position={[(i % 2) * .03, .17 + i * .3, 0]} rotation={[Math.PI / 2, 0, i * .4]} geometry={geometries.tire} material={materials.black} castShadow={!ghost} receiveShadow />)}
+    {id === 'toolCart' && <>
+      {box([0, .5, 0], [.8, .8, .5], materials.carRed)}
+      {[.25, .45, .65].map(y => <group key={y}>{box([0, y, .255], [.72, .14, .01], materials.dark)}{box([0, y, .27], [.3, .025, .03], materials.chrome)}</group>)}
+      {box([0, .92, 0], [.84, .04, .54], materials.black)}
+      {[-.3, .3].map(x => [-.18, .18].map(z => <group key={`${x}:${z}`}>{cylinder([x, .05, z], [.1, .06, .1], materials.black, [Math.PI / 2, 0, 0])}</group>))}
+      {box([-.15, .97, 0], [.3, .05, .06], materials.chrome, [0, .4, 0])}{box([.2, .96, .05], [.06, .03, .25], materials.yellow)}
+    </>}
+    {id === 'motorcycle' && <>
+      {[-.62, .62].map(x => <mesh key={x} position={[x, .32, 0]} scale={[.8, .8, .5]} geometry={geometries.tire} material={materials.black} castShadow={!ghost} />)}
+      {box([0, .55, 0], [.9, .28, .26], materials.carRed)}
+      {box([-.15, .78, 0], [.55, .1, .24], materials.black)}
+      {box([.25, .75, 0], [.35, .22, .3], materials.carRed)}
+      {cylinder([.55, .65, 0], [.05, .65, .05], materials.chrome, [0, 0, -.45])}
+      {box([.7, .98, 0], [.05, .05, .6], materials.chrome)}
+      {sphere([.74, .82, 0], [.12, .12, .12], materials.lamp)}
+      {cylinder([-.35, .4, .16], [.06, .5, .06], materials.chrome, [0, 0, Math.PI / 2 - .2])}
+    </>}
+    {id === 'sportsCar' && <>
+      {box([0, .4, 0], [1.8, .4, 2.8], materials.carRed)}
+      {box([0, .72, -.15], [1.5, .34, 1.3], materials.carRed)}
+      {box([0, .74, .52], [1.42, .26, .04], materials.busGlass, [-.9, 0, 0])}
+      {box([0, .76, -.8], [1.4, .24, .04], materials.busGlass, [.9, 0, 0])}
+      {[-.76, .76].map(x => <group key={x}>{box([x, .74, -.15], [.02, .26, 1.1], materials.busGlass)}</group>)}
+      {[-.86, .86].map(x => [-.95, .95].map(z => <mesh key={`${x}:${z}`} position={[x, .3, z]} rotation={[0, Math.PI / 2, 0]} scale={[.8, .8, .9]} geometry={geometries.tire} material={materials.black} castShadow={!ghost} />))}
+      {[-.6, .6].map(x => <group key={x}>{box([x, .48, 1.41], [.32, .08, .02], materials.lamp)}{box([x, .5, -1.41], [.36, .06, .02], materials.redLamp)}</group>)}
+      {box([0, .62, -1.35], [1.6, .04, .2], materials.black)}
+      {box([0, .3, 1.42], [1.2, .1, .02], materials.chrome)}
+      {active && !ghost && <spotLight position={[0, .5, 1.45]} angle={.5} intensity={6} distance={7} color="#fff1c9" />}
     </>}
   </group>;
 }

@@ -57,7 +57,7 @@ test('кабинет «Саморазвития»: свой каталог, по
   const { hasRoom, roomConfigs, objectSpec } = await import('../src/roomEngine.ts');
   assert.equal(hasRoom('sport'), true);
   assert.equal(hasRoom('growth'), true);
-  assert.equal(hasRoom('driving'), false);
+  assert.equal(hasRoom('together'), false);
   assert.equal(hasRoom('unknown'), false);
   assert.deepEqual(roomConfigs.growth.catalog.map(item => item.id), ['bookshelf', 'desk', 'armchair', 'floorLamp', 'globe', 'board']);
   assert.equal(objectSpec('globe').name, 'Глобус');
@@ -123,5 +123,17 @@ test('«Английский»: свой каталог, уровни и рас�
   let next = purchaseRoomObject(state, 'english', 'phoneBooth');
   next = placeRoomObject(next, 'english', { id: 'phoneBooth', position: [4.5, 0, -3.5], rotation: [0, 0, 0], scale: [1, 1, 1] });
   assert.equal(next.coins, 750);
+  assert.equal(validRooms(next.rooms), true);
+});
+test('«Вождение»: свой каталог, уровни и спорткар 2 × 3 м', async () => {
+  const { hasRoom, roomConfigs } = await import('../src/roomEngine.ts');
+  assert.equal(hasRoom('driving'), true);
+  assert.deepEqual(roomConfigs.driving.catalog.map(item => item.id), ['carSimulator', 'trafficLight', 'tireStack', 'toolCart', 'motorcycle', 'sportsCar']);
+  const state = newAccountGame('Вождение'); state.coins = 1000;
+  assert.throws(() => purchaseRoomObject(state, 'driving', 'motorcycle'), /уровень/);
+  assert.throws(() => purchaseRoomObject(state, 'driving', 'sportsCar'), /уровень/);
+  let next = purchaseRoomObject(state, 'driving', 'trafficLight');
+  next = placeRoomObject(next, 'driving', { id: 'trafficLight', position: [4.5, 0, 3.5], rotation: [0, 0, 0], scale: [1, 1, 1] });
+  assert.equal(next.coins, 910);
   assert.equal(validRooms(next.rooms), true);
 });

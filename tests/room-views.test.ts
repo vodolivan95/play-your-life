@@ -42,3 +42,8 @@ test('из «Английского» окна смотрят на «Общие 
   assert.equal(views.back.building, 'together');
   assert.equal(views.side.building, 'health');
 });
+test('из «Вождения» окна смотрят на «Финансы» (север) и «Задачи» (восток)', () => {
+  const views = roomViews('driving');
+  assert.equal(views.back.building, 'finance');
+  assert.equal(views.side.building, 'tasks');
+});

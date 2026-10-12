@@ -14,6 +14,8 @@ export default function Model3D({ id, ghost, active = false, reduced = false }: 
   const signal = useRef(-2);
   const lights = useRef<Group>(null);
   const flame = useRef<Group>(null);
+  const wheel = useRef<Group>(null);
+  const scope = useRef<Group>(null);
   const geometries = useMemo(() => ({ box: new BoxGeometry(1, 1, 1), cylinder: new CylinderGeometry(.5, .5, 1, 12), sphere: new SphereGeometry(.5, 24, 16), cone: new CylinderGeometry(.28, .5, 1, 20, 1, true), ring: new TorusGeometry(.5, .025, 8, 40, Math.PI * 1.4), tire: new TorusGeometry(.38, .16, 10, 28) }), []);
   const materials = useMemo(() => {
     const make = (color: string, metalness = 0, roughness = .65) => new MeshStandardMaterial({ color: ghost ? ghost === 'valid' ? '#57caff' : '#ff7777' : color, metalness, roughness, transparent: !!ghost, opacity: ghost ? .45 : 1, depthWrite: !ghost });
@@ -21,6 +23,7 @@ export default function Model3D({ id, ghost, active = false, reduced = false }: 
       red: make('#a8423a', 0, .7), blue: make('#2f5d8c', 0, .7), green: make('#3f7a5a', 0, .7), gold: make('#d1a24a', .2, .5), cream: make('#e7dcc4', 0, .8), ocean: make('#2f7fb3', .1, .45),
       white: make('#f4f2ee', 0, .35), mint: make('#4fb3a9', .05, .4), cedar: make('#b07a4a', 0, .7), orange: make('#f08a3c', .05, .5), lime: make('#8cc63f', 0, .55), berry: make('#b23a5a', 0, .5), sand: make('#e7d6b0', 0, .9),
       bronze: make('#8a5a2b', .9, .35), navy: make('#1c2a44', .1, .5), pink: make('#f29bb2', .05, .45), goldBar: make('#e8b93a', 1, .22), chestWood: make('#5a3418', 0, .6), black: make('#15181d', .4, .4),
+      canvasWhite: make('#fbf8f0', 0, .9), clay: make('#b8754a', 0, .8), pianoBlack: make('#0e0f12', .2, .15), keyWhite: make('#f7f5ef', 0, .3), guitarWood: make('#c77a32', .05, .35), purple: make('#7a4ad0', 0, .7),
       teal: make('#2d8a8a', 0, .85), mustard: make('#d9a21b', 0, .85), coral: make('#e86a5a', 0, .85), tableGreen: make('#1f6b4a', 0, .6), netWhite: make('#f4f2ee', 0, .8), brick: make('#9a4a32', 0, .9),
       fire: new MeshStandardMaterial({ color: '#ffb347', emissive: '#ff7a1a', emissiveIntensity: ghost ? 0 : active ? 3 : 1.6, transparent: true, opacity: ghost ? .3 : .9, toneMapped: false }),
       carRed: make('#d3202f', .6, .25), yellow: make('#f2c230', .1, .5), road: make('#2b2f36', 0, .9), chrome: make('#d9dde3', 1, .15),
@@ -47,6 +50,8 @@ export default function Model3D({ id, ghost, active = false, reduced = false }: 
       if (phase !== signal.current) { signal.current = phase; lights.current.children.forEach((lamp, i) => { lamp.visible = i === phase; }); }
     }
     if (flame.current && !reduced) flame.current.children.forEach((f, i) => { f.scale.y = (active ? 1.4 : 1) * (.8 + Math.sin(clock.elapsedTime * (6 + i) + i * 2) * .2); });
+    if (wheel.current && !reduced) wheel.current.rotation.y += delta * (active ? 9 : .5);
+    if (scope.current && !reduced) scope.current.rotation.y = Math.sin(clock.elapsedTime * (active ? .8 : .15)) * (active ? .9 : .3);
     if (pig.current && !reduced) pig.current.position.y = active ? Math.abs(Math.sin(clock.elapsedTime * 6)) * .12 : 0;
   });
   const box = (pos: Vec3, size: Vec3, mat = materials.dark, rotation: Vec3 = [0, 0, 0]) => <mesh position={pos} scale={size} rotation={rotation} geometry={geometries.box} material={mat} castShadow={!ghost} receiveShadow />;
@@ -425,6 +430,70 @@ export default function Model3D({ id, ghost, active = false, reduced = false }: 
       <group ref={flame} position={[0, .22, .05]}>{[-.15, 0, .15].map((x, i) => <mesh key={i} position={[x, .15, 0]} scale={[.16, .3 + (i === 1 ? .1 : 0), .1]} geometry={geometries.sphere} material={materials.fire} />)}</group>
       {active && !ghost && <pointLight position={[0, .5, .5]} intensity={3} distance={5} color="#ff9a4a" />}
       {[[-.6, materials.white], [.55, materials.cream2]].map(([x, mat], i) => <group key={i}>{box([x as number, 1.42, -.2], [.18, .28, .04], mat as MeshStandardMaterial)}</group>)}
+    </>}
+    {id === 'easel' && <>
+      {box([-.28, .9, .15], [.05, 1.8, .05], materials.oak, [-.12, 0, .12])}
+      {box([.28, .9, .15], [.05, 1.8, .05], materials.oak, [-.12, 0, -.12])}
+      {box([0, .85, -.3], [.05, 1.7, .05], materials.oak, [.3, 0, 0])}
+      {box([0, .72, .22], [.7, .04, .1], materials.oak)}
+      {box([0, 1.15, .2], [.7, .8, .03], materials.canvasWhite, [-.12, 0, 0])}
+      {[[-.15, 1.25, materials.blue, .3], [.12, 1.05, materials.coral, .25], [0, 1.3, materials.mustard, .18], [-.1, .95, materials.teal, .22]].map(([x, y, mat, r], i) => <group key={i}>{sphere([x as number, y as number, .225], [r as number, (r as number) * .7, .01], mat as MeshStandardMaterial)}</group>)}
+      {box([.15, .76, .3], [.25, .02, .12], materials.white)}
+    </>}
+    {id === 'guitar' && <>
+      {box([0, .04, 0], [.4, .04, .3], materials.black)}
+      {box([0, .45, -.12], [.04, .85, .04], materials.black, [-.2, 0, 0])}
+      <group position={[0, .1, .05]} rotation={[-.2, 0, 0]}>
+        {sphere([0, .32, 0], [.42, .4, .12], materials.guitarWood)}
+        {sphere([0, .6, 0], [.32, .3, .11], materials.guitarWood)}
+        {cylinder([0, .5, .06], [.1, .01, .1], materials.black, [Math.PI / 2, 0, 0])}
+        {box([0, 1.0, .02], [.06, .6, .03], materials.walnut)}
+        {box([0, 1.35, .02], [.1, .14, .03], materials.walnut)}
+        {box([0, .24, .065], [.14, .03, .01], materials.walnut)}
+      </group>
+    </>}
+    {id === 'potteryWheel' && <>
+      {box([0, .25, 0], [.6, .5, .6], materials.white)}
+      {box([0, .45, .35], [.8, .04, .3], materials.white)}
+      <group ref={wheel} position={[0, .54, 0]}>
+        {cylinder([0, 0, 0], [.42, .04, .42], materials.steel)}
+        {cylinder([0, .14, 0], [.2, .24, .2], materials.clay)}
+        {cylinder([0, .28, 0], [.14, .06, .14], materials.clay)}
+        {box([.1, .14, .1], [.02, .2, .02], materials.dark)}
+      </group>
+      {cylinder([-.35, .1, -.3], [.24, .2, .24], materials.steel)}
+    </>}
+    {id === 'craftTable' && <>
+      {box([0, .74, 0], [1.8, .05, .8], materials.oak)}
+      {[-.82, .82].map(x => [-.33, .33].map(z => <group key={`${x}:${z}`}>{box([x, .37, z], [.06, .74, .06], materials.oak)}</group>))}
+      {box([-.4, .78, 0], [.7, .02, .5], materials.tableGreen)}
+      {[[.3, .1, materials.coral], [.45, -.1, materials.purple], [.6, .12, materials.mustard], [.42, .22, materials.teal]].map(([x, z, mat], i) => <group key={i}>{sphere([x as number, .84, z as number], [.12, .12, .12], mat as MeshStandardMaterial)}</group>)}
+      {box([-.5, .8, -.05], [.3, .01, .2], materials.canvasWhite, [0, .3, 0])}
+      {box([-.2, .8, .1], [.02, .01, .3], materials.steel, [0, -.5, 0])}
+      {cylinder([.75, .82, -.25], [.08, .14, .08], materials.glass)}
+      {[-.02, .02].map(x => <group key={x}>{cylinder([.75 + x, .9, -.25], [.012, .22, .012], materials.walnut, [0, 0, x * 5])}</group>)}
+    </>}
+    {id === 'piano' && <>
+      {box([0, .6, -.15], [1.6, 1.2, .5], materials.pianoBlack)}
+      {box([0, .72, .2], [1.5, .06, .25], materials.pianoBlack)}
+      {box([0, .76, .2], [1.4, .02, .2], materials.keyWhite)}
+      {Array.from({ length: 20 }, (_, i) => i % 7 === 2 || i % 7 === 6 ? null : <group key={i}>{box([-.66 + i * .07, .785, .14], [.035, .025, .1], materials.pianoBlack)}</group>)}
+      {[-.7, .7].map(x => <group key={x}>{box([x, .36, .22], [.08, .72, .08], materials.pianoBlack)}</group>)}
+      {box([0, 1.0, .1], [.5, .3, .02], materials.canvasWhite, [-.25, 0, 0])}
+      {box([0, .02, .3], [.5, .03, .3], materials.pianoBlack)}
+      {active && !ghost && <pointLight position={[0, 1.4, .3]} intensity={1.6} distance={3} color="#ffe2a8" />}
+    </>}
+    {id === 'telescope' && <>
+      {[0, 2, 4].map(i => <group key={i} rotation={[0, i * Math.PI / 3, 0]}>{box([.2, .5, 0], [.04, 1.05, .04], materials.walnut, [0, 0, -.3])}</group>)}
+      {cylinder([0, 1, 0], [.12, .08, .12], materials.dark)}
+      <group ref={scope} position={[0, 1.08, 0]}>
+        <group rotation={[0, 0, .7]}>
+          {cylinder([0, .1, 0], [.16, .95, .16], materials.navy)}
+          {cylinder([0, .58, 0], [.2, .08, .2], materials.brass)}
+          {cylinder([0, -.38, 0], [.06, .14, .06], materials.brass)}
+          {cylinder([.1, .2, 0], [.04, .3, .04], materials.navy, [0, 0, .02])}
+        </group>
+      </group>
     </>}
   </group>;
 }

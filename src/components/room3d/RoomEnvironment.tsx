@@ -10,6 +10,7 @@ import FinanceDecor from './FinanceDecor';
 import EnglishDecor from './EnglishDecor';
 import DrivingDecor from './DrivingDecor';
 import TogetherDecor from './TogetherDecor';
+import HobbyDecor from './HobbyDecor';
 import type { RoomQuality, RoomTime } from './RoomScene3D';
 
 function surface(kind: 'stone' | 'wood', normal = false) {
@@ -53,7 +54,7 @@ function Skyline({ roomId, time }: { roomId: RoomId; time: RoomTime }) {
 }
 export default function RoomEnvironment({ roomId, time, quality }: { roomId: RoomId; time: RoomTime; quality: RoomQuality }) {
   // Кабинет «Саморазвития» — тёплый паркет вместо каменного пола спортзала.
-  const study = roomId === 'growth', health = roomId === 'health', finance = roomId === 'finance', english = roomId === 'english', driving = roomId === 'driving', together = roomId === 'together';
+  const study = roomId === 'growth', health = roomId === 'health', finance = roomId === 'finance', english = roomId === 'english', driving = roomId === 'driving', together = roomId === 'together', hobby = roomId === 'hobby';
   const stone = useTexture(`${import.meta.env.BASE_URL}environments/sport-stone.jpg`);
   // Texture sampler configuration is an imperative GPU operation.
   // eslint-disable-next-line react-hooks/immutability
@@ -81,7 +82,10 @@ export default function RoomEnvironment({ roomId, time, quality }: { roomId: Roo
     {english && <EnglishDecor />}
     {driving && <DrivingDecor />}
     {together && <TogetherDecor />}
-    {together ? <>
+    {hobby && <HobbyDecor />}
+    {hobby ? <>
+      <mesh position={[0, -.005, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[12.4, 10.4]} /><meshStandardMaterial map={stone} color="#b9b4ac" roughness={.7} metalness={0} /></mesh>
+    </> : together ? <>
       <mesh position={[0, -.005, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[12.4, 10.4]} /><meshStandardMaterial map={maps.parquet} color="#f0d2a8" roughness={.6} /></mesh>
       <mesh position={[0, .004, .2]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><circleGeometry args={[2.3, 48]} /><meshStandardMaterial color="#d97a5a" roughness={.95} /></mesh>
       <mesh position={[0, .005, .2]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[1.5, 1.62, 48]} /><meshStandardMaterial color="#f0d48a" roughness={.95} /></mesh>

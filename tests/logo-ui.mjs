@@ -127,7 +127,7 @@ try {
       await page.locator('.pyl-tabbar').getByRole('button', { name:'Цели', exact:true }).click();
       await page.locator('main.screen-goals').waitFor();
       await page.locator('.pyl-tabbar').getByRole('button', { name:'Ещё', exact:true }).click();
-      assert.equal(await page.locator('.pyl-more .pyl-more-item').count(), 8);
+      assert.equal(await page.locator('.pyl-more .pyl-more-item').count(), 9);
       await page.locator('.pyl-more').getByRole('button', { name:'Статистика', exact:true }).click();
       await page.locator('main.screen-statistics').waitFor();
       assert.equal(await page.locator('.pyl-more').count(), 0);

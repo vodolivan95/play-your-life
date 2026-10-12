@@ -53,3 +53,28 @@ test('валидация отклоняет повреждённые и пере
   assert.equal(validRooms({ sport: { purchased: ['treadmill', 'mat'], objects: [treadmill, { ...treadmill, id: 'mat' }] } }), false);
   assert.equal(validRooms({ sport: { purchased: ['treadmill'], objects: [treadmill] } }), true);
 });
+test('кабинет «Саморазвития»: свой каталог, покупка с 1 уровня и расстановка', async () => {
+  const { hasRoom, roomConfigs, objectSpec } = await import('../src/roomEngine.ts');
+  assert.equal(hasRoom('sport'), true);
+  assert.equal(hasRoom('growth'), true);
+  assert.equal(hasRoom('health'), false);
+  assert.equal(hasRoom('unknown'), false);
+  assert.deepEqual(roomConfigs.growth.catalog.map(item => item.id), ['bookshelf', 'desk', 'armchair', 'floorLamp', 'globe', 'board']);
+  assert.equal(objectSpec('globe').name, 'Глобус');
+  const state = newAccountGame('Кабинет'); state.coins = 1000;
+  assert.throws(() => purchaseRoomObject(state, 'sport', 'bookshelf'), /недоступен/);
+  assert.throws(() => purchaseRoomObject(state, 'growth', 'treadmill'), /недоступен/);
+  assert.throws(() => purchaseRoomObject(state, 'growth', 'globe'), /уровень/);
+  let next = purchaseRoomObject(state, 'growth', 'bookshelf');
+  next = purchaseRoomObject(next, 'growth', 'armchair');
+  assert.equal(next.coins, 690);
+  const shelf: RoomObject = { id: 'bookshelf', position: [0, 0, -4], rotation: [0, 0, 0], scale: [1, 1, 1] };
+  next = placeRoomObject(next, 'growth', shelf);
+  assert.throws(() => placeRoomObject(next, 'growth', { ...shelf, id: 'armchair', position: [.5, 0, -4] }), /занято/);
+  next = placeRoomObject(next, 'growth', { ...shelf, id: 'armchair', position: [0, 0, -2.5] });
+  assert.equal(roomData(next, 'growth').objects.length, 2);
+  assert.equal(roomData(next, 'sport').objects.length, 0);
+  assert.equal(validRooms(next.rooms), true);
+  assert.deepEqual(roomData(restoreBackup(backupText(next)), 'growth'), roomData(next, 'growth'));
+  assert.equal(validRooms({ growth: { purchased: ['treadmill'], objects: [] } }), false);
+});

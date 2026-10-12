@@ -8,7 +8,7 @@ import ThemeSwitch from './ThemeSwitch';
 import cityMap from '../assets/life-city.webp';
 import './AppMenu.css';
 
-/** Левое меню компьютера: логотип, игрок, плоский список из 12 разделов, карта города и тема. */
+/** Левое меню компьютера: логотип, игрок, тема под карточкой игрока, плоский список из 12 разделов и карта города. */
 export default function AppSidebar({ page, state, questCount, onNavigate }: { page: string; state: GameState; questCount: number; onNavigate: (id: string) => void }) {
   const [theme] = useMenuTheme();
   return (
@@ -24,6 +24,9 @@ export default function AppSidebar({ page, state, questCount, onNavigate }: { pa
         <SidebarReference />
       </a>
       <PlayerCard state={state} />
+      <div className="pyl-menu-theme">
+        <ThemeSwitch />
+      </div>
       <nav className="pyl-menu-nav" aria-label="Разделы">
         {navigation.map((item) => (
           <button
@@ -46,9 +49,6 @@ export default function AppSidebar({ page, state, questCount, onNavigate }: { pa
           <em>Открыть →</em>
         </span>
       </button>
-      <div className="pyl-menu-foot">
-        <ThemeSwitch />
-      </div>
     </aside>
   );
 }

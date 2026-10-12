@@ -13,6 +13,8 @@ import RoomCamera from './RoomCamera';
 import type { CameraPreset } from './RoomCamera';
 import RoomItemRenderer from './RoomItemRenderer';
 import BuildSystem from './BuildSystem';
+import RoomDecor from './RoomDecor';
+import type { RoomStats } from './RoomDecor';
 
 export type RoomTime = 'day' | 'sunset' | 'night';
 export type RoomQuality = 'low' | 'medium' | 'high';
@@ -21,6 +23,7 @@ type Props = {
   build: boolean; selected: ObjectId | null; time: RoomTime; quality: RoomQuality;
   cameraPreset: CameraPreset; cameraRevision: number;
   onFloor: (position: Vec3) => void; onSelect: (id: ObjectId) => void;
+  stats?: RoomStats; onComplete?: (questId: string) => void;
 };
 function Rendering({ time }: { time: RoomTime }) {
   const { gl, invalidate, camera, size } = useThree();
@@ -39,7 +42,7 @@ function Ready({ onReady }: { onReady: (value: boolean) => void }) {
   useEffect(() => { gl.domElement.dataset.ready = 'true'; onReady(true); }, [gl, onReady]);
   return null;
 }
-export default function RoomScene3D({ objects, ghost, valid, build, time, quality, onFloor, onSelect, cameraPreset, cameraRevision }: Props) {
+export default function RoomScene3D({ objects, ghost, valid, build, time, quality, onFloor, onSelect, cameraPreset, cameraRevision, stats, onComplete }: Props) {
   const [ready, setReady] = useState(false);
   const { progress } = useProgress();
   const [slow, setSlow] = useState(false);
@@ -55,6 +58,7 @@ export default function RoomScene3D({ objects, ghost, valid, build, time, qualit
     <Suspense fallback={null}>
       <RoomEnvironment time={time} quality={effective} />
       <RoomLighting time={time} quality={effective} />
+      <RoomDecor stats={stats} onComplete={build ? undefined : onComplete} />
       {objects.filter(item => item.id !== ghost?.id).map(item => <group key={item.id} position={item.position} rotation={item.rotation} scale={item.scale} onClick={event => { event.stopPropagation(); onSelect(item.id); if (!build && item.id === 'treadmill') setActive(active === 'treadmill' ? null : 'treadmill'); }}>
         {effective === 'low' && <RoomContactShadow size={objectSpec(item.id).size} />}
         <RoomItemRenderer id={item.id} active={active === item.id} reduced={reduced} />

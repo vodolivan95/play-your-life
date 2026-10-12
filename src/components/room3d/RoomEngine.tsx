@@ -6,6 +6,8 @@ import PlayBrand from '../PlayBrand';
 import type { ObjectId, RoomId, RoomObject, Vec3 } from '../../roomEngine';
 import { moveRoomObject, objectSpec, placementValid, placeRoomObject, purchaseRoomObject, removeRoomObject, roomConfigs, roomData } from '../../roomEngine';
 import { sphereProgress } from '../../sphereProgress';
+import { roomStats } from '../../roomStats';
+import { completeQuest } from '../../game';
 import type { RoomQuality, RoomTime } from './RoomScene3D';
 import './RoomEngine.css';
 import RoomHUD from './RoomHUD';
@@ -72,7 +74,7 @@ export default function RoomEngine({ state, onChange, onBack, roomId = 'sport', 
   const chosen = selected ? room.objects.find(item => item.id === selected) : null;
   return createPortal(<section className="room3d" aria-label={`3D-комната ${config.title}`}>
     <div className="room3d-stage" data-testid="room-scene">
-      {webgl ? <SceneBoundary><Suspense fallback={<div className="room3d-loading"><PlayBrand /><span>Загрузка спортзала…</span><i /></div>}><Scene roomId={roomId} objects={room.objects} ghost={ghost} valid={valid} build={build} selected={selected} time={time} quality={quality} cameraPreset={cameraPreset} cameraRevision={cameraRevision} onFloor={floor} onSelect={id => { setSelected(id); if (!build) setMessage(`${objectSpec(id).name}${id === 'treadmill' ? ' · Нажми, чтобы включить экран' : ''}`); }} /></Suspense></SceneBoundary> : <div className="room3d-unavailable">Для комнаты нужен WebGL 2. Попробуй актуальный Chrome или Safari. Покупки и позиции сохранены.</div>}
+      {webgl ? <SceneBoundary><Suspense fallback={<div className="room3d-loading"><PlayBrand /><span>Загрузка спортзала…</span><i /></div>}><Scene roomId={roomId} objects={room.objects} ghost={ghost} valid={valid} build={build} selected={selected} time={time} quality={quality} cameraPreset={cameraPreset} cameraRevision={cameraRevision} stats={roomStats(state, roomId, config.title.toUpperCase())} onComplete={id => { const quest = state.quests.find(q => q.id === id); apply(current => completeQuest(current, id), quest ? `«${quest.name}» выполнено — XP и монеты начислены.` : 'Задание выполнено.'); }} onFloor={floor} onSelect={id => { setSelected(id); if (!build) setMessage(`${objectSpec(id).name}${id === 'treadmill' ? ' · Нажми, чтобы включить экран' : ''}`); }} /></Suspense></SceneBoundary> : <div className="room3d-unavailable">Для комнаты нужен WebGL 2. Попробуй актуальный Chrome или Safari. Покупки и позиции сохранены.</div>}
     </div>
     <RoomHUD title={config.title} level={level} coins={state.coins} progress={config.catalog.length ? Math.round(room.objects.length / config.catalog.length * 100) : 0} preset={cameraPreset} onBack={onBack} onSettings={() => setSheet('settings')} onView={view => { setCameraPreset(view); setCameraRevision(n => n + 1); }} />
     {build && <div className="room3d-build-label">РЕЖИМ ОБУСТРОЙСТВА</div>}

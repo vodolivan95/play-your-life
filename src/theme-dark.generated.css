@@ -562,6 +562,20 @@
 :root[data-theme="dark"] .avatar-content.frame-rose { border-color: #6a2f41; }
 :root[data-theme="dark"] .owned-reward small { color: #9fb1db; }
 :root[data-theme="dark"] dialog.shop-confirm { color: #dae1f1; border: 1px solid #354664; }
+:root[data-theme="dark"] .shop-3d-open { background: #151d33d9; color: #9cb2ee; }
+:root[data-theme="dark"] .shop-confirm .shop-model-stage { background: radial-gradient(ellipse at 50% 40%, #1b2742 0%, #19233d 70%, #172139 100%); }
+:root[data-theme="dark"] .shop-confirm .shop-model-controls button { background: #1b2542; color: #9cb2ee; }
+:root[data-theme="dark"] .shop-art { background: radial-gradient(ellipse at 50% 40%, #151d33 0%, #141b30 60%, #1a2740 100%); }
+:root[data-theme="dark"] .shop-confirm .shop-model-stage { background: radial-gradient(ellipse at 50% 40%, #151d33 0%, #141b30 60%, #1a2640 100%); }
+:root[data-theme="dark"] .shop-kind { color: #a7b4d9; background: #1b2642; }
+:root[data-theme="dark"] .shop-kind.is-custom { color: #ffc66e; background: #3e3319; }
+:root[data-theme="dark"] .shop-card-create { border: 2px dashed #324167; }
+:root[data-theme="dark"] .shop-card-create > span:last-child { color: #9fb1db; }
+:root[data-theme="dark"] .custom-reward-form input,
+:root[data-theme="dark"] .custom-reward-form textarea { border: 1px solid #344465; }
+:root[data-theme="dark"] .custom-reward-preview { background: #141b30; }
+:root[data-theme="dark"] .custom-reward-error { color: #e9a9b5; }
+:root[data-theme="dark"] .text-button.danger { color: #e9a9b5; }
 
 /* components/SphereCity.css */
 :root[data-theme="dark"] .districts { background: #131b2f; border: 1px solid #375262; }

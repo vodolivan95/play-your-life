@@ -1,0 +1,28 @@
+/* Подвал главной на телефоне (вариант Г холста «Подвал главной — телефон»). Цвета берутся из темы :root[data-theme]. */
+.mobile-city-footer { display:none; }
+@media(max-width:760px) {
+  .mobile-city-footer { display:block; margin:25px 0 8px; padding-bottom:24px; text-align:center; background:linear-gradient(180deg,#cfe4ff,#f2f7ff 62%,#fff0); border-radius:28px; overflow:hidden; }
+  :root[data-theme='dark'] .mobile-city-footer { background:linear-gradient(180deg,#16305c,#0b1736 62%,#08102a00); }
+  .mobile-footer-map { position:relative; width:100%; aspect-ratio:16/9; overflow:hidden; -webkit-mask-image:linear-gradient(#000 72%,transparent); mask-image:linear-gradient(#000 72%,transparent); }
+  .mobile-footer-city-art { position:absolute; inset:0; display:block; width:100%; height:100%; object-fit:cover; animation:mfm-pan 28s ease-in-out infinite alternate; transform-origin:50% 60%; }
+  .mobile-city-footer > .play-wordmark { position:relative; margin:-6px auto 0; gap:4px; }
+  .mobile-city-footer .play-wordmark-crown { width:84px; height:84px; }
+  .mobile-city-footer .play-wordmark-copy strong { font-size:44px; letter-spacing:-1.2px; }
+  .mobile-city-footer .play-wordmark-copy small { font-size:15px; margin-top:9px; }
+  :root[data-theme='dark'] .mobile-city-footer .play-wordmark { color:#fff; }
+  :root[data-theme='dark'] .mobile-city-footer .play-wordmark-copy small { color:#9fb2db; }
+}
+.mfm-car { position:absolute; width:6px; height:3.5px; border-radius:2px; margin:-2px 0 0 -3px; box-shadow:0 1px 2px #00000073; }
+.mfm-car1 { background:#ff4d4d; animation:mfm-road 11s linear infinite; }
+.mfm-car2 { background:#fff; animation:mfm-road 13s linear infinite -5s; }
+.mfm-car3 { background:#ffd23f; animation:mfm-roadb 15s linear infinite -2s; }
+.mfm-boat { position:absolute; width:9px; height:4px; border-radius:1px 5px 5px 1px; background:#fff; margin:-2px 0 0 -4px; animation:mfm-boat 18s ease-in-out infinite alternate; }
+.mfm-bird { position:absolute; left:-8%; animation:mfm-bird 14s linear infinite; }
+.mfm-bird1 { top:9%; }
+.mfm-bird2 { top:15%; animation-delay:-4.5s; animation-duration:17s; }
+@keyframes mfm-pan { from { transform:scale(1.04) translateX(-1.5%); } to { transform:scale(1.16) translateX(1.5%); } }
+@keyframes mfm-road { 0%{left:2.7%;top:49.3%;opacity:0} 6%{opacity:1} 16%{left:15.8%;top:58.8%} 33%{left:29.3%;top:66.8%} 50%{left:42.5%;top:76.1%} 66%{left:56.3%;top:79.3%} 83%{left:69.1%;top:69.7%} 94%{opacity:1} 100%{left:82.2%;top:75.3%;opacity:0} }
+@keyframes mfm-roadb { 0%{left:82.2%;top:75.3%;opacity:0} 6%{opacity:1} 17%{left:69.1%;top:69.7%} 34%{left:56.3%;top:79.3%} 50%{left:42.5%;top:76.1%} 67%{left:29.3%;top:66.8%} 84%{left:15.8%;top:58.8%} 94%{opacity:1} 100%{left:2.7%;top:49.3%;opacity:0} }
+@keyframes mfm-boat { from{left:37%;top:93.5%} 50%{left:24%;top:88%} to{left:11%;top:80.5%} }
+@keyframes mfm-bird { 0%{left:-8%;transform:translateY(0)} 25%{transform:translateY(3px)} 50%{transform:translateY(-2px)} 75%{transform:translateY(3px)} 100%{left:108%;transform:translateY(0)} }
+@media (prefers-reduced-motion: reduce) { .mobile-footer-city-art, .mfm-car, .mfm-boat, .mfm-bird { animation:none; } .mfm-car, .mfm-bird { display:none; } }

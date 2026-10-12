@@ -119,9 +119,10 @@ try {
       await page.screenshot({ path: `work/logo-menu-${suffix}.png`, fullPage: true });
       await page.locator('.sidebar').screenshot({ path: `work/logo-sidebar-${suffix}.png` });
     } else {
-      await cityArtwork(page, '.mobile-footer-city-art', 1374, 1145);
-      const image = await page.locator('.mobile-footer-city-art').boundingBox();
-      assert.ok(Math.abs(image.width / image.height - 1374 / 1145) < .01, 'Footer city must remain uncropped and proportional');
+      await page.addStyleTag({ content:'.mobile-footer-city-art, .mfm-car, .mfm-boat, .mfm-bird { animation:none !important; }' });
+      await cityArtwork(page, '.mobile-footer-city-art', 1200, 675);
+      const image = await page.locator('.mobile-footer-map').boundingBox();
+      assert.ok(Math.abs(image.width / image.height - 16 / 9) < .02, 'Footer map must keep the 16:9 frame');
       assert.equal(await page.locator('.mobile-city-footer .play-wordmark').count(), 1);
       assert.equal(await page.locator('.pyl-tabbar .pyl-tab').count(), 5);
       await page.locator('.pyl-tabbar').getByRole('button', { name:'Цели', exact:true }).click();

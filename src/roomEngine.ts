@@ -4,7 +4,8 @@ import { sphereProgress } from './sphereProgress.ts';
 export type RoomId = 'health' | 'sport' | 'growth' | 'english' | 'finance' | 'together' | 'driving' | 'tasks' | 'hobby';
 export type ObjectId = 'mat' | 'dumbbells' | 'bench' | 'ball' | 'plant' | 'treadmill'
   | 'bookshelf' | 'desk' | 'armchair' | 'floorLamp' | 'globe' | 'board'
-  | 'massageTable' | 'waterCooler' | 'smoothieBar' | 'firstAid' | 'aquarium' | 'cedarBarrel';
+  | 'massageTable' | 'waterCooler' | 'smoothieBar' | 'firstAid' | 'aquarium' | 'cedarBarrel'
+  | 'tradingDesk' | 'safe' | 'sofa' | 'piggyBank' | 'bullStatue' | 'goldChest';
 export type Vec3 = [number, number, number];
 export type RoomObject = { id: ObjectId; position: Vec3; rotation: Vec3; scale: Vec3 };
 export type RoomData = { purchased: ObjectId[]; objects: RoomObject[] };
@@ -37,11 +38,20 @@ const healthCatalog: readonly ObjectSpec[] = [
   { id: 'aquarium', name: 'Аквариум', price: 260, level: 3, size: [2, 1], asset: '/models/health/aquarium.glb' },
   { id: 'cedarBarrel', name: 'Кедровая фитобочка', price: 300, level: 5, size: [1, 1], asset: '/models/health/cedar-barrel.glb' },
 ];
-const catalogs: Partial<Record<RoomId, readonly ObjectSpec[]>> = { sport: sportCatalog, growth: growthCatalog, health: healthCatalog };
+// Финансы — лаунж инвестора: экран с графиком и витрины с золотом по краям, пол для мебели 11 × 9 м.
+const financeCatalog: readonly ObjectSpec[] = [
+  { id: 'tradingDesk', name: 'Стол трейдера', price: 220, level: 0, size: [2, 1], asset: '/models/finance/trading-desk.glb' },
+  { id: 'safe', name: 'Сейф', price: 180, level: 0, size: [1, 1], asset: '/models/finance/safe.glb' },
+  { id: 'sofa', name: 'Кожаный диван', price: 200, level: 0, size: [2, 1], asset: '/models/finance/sofa.glb' },
+  { id: 'piggyBank', name: 'Копилка', price: 60, level: 0, size: [1, 1], asset: '/models/finance/piggy-bank.glb' },
+  { id: 'bullStatue', name: 'Бронзовый бык', price: 280, level: 3, size: [2, 1], asset: '/models/finance/bull.glb' },
+  { id: 'goldChest', name: 'Сундук с золотом', price: 350, level: 5, size: [1, 1], asset: '/models/finance/gold-chest.glb' },
+];
+const catalogs: Partial<Record<RoomId, readonly ObjectSpec[]>> = { sport: sportCatalog, growth: growthCatalog, health: healthCatalog, finance: financeCatalog };
 
 export const roomConfigs: Record<RoomId, RoomConfig> = Object.fromEntries(
   (['health', 'sport', 'growth', 'english', 'finance', 'together', 'driving', 'tasks', 'hobby'] as const)
-    .map(id => [id, { id, title: ({ health: 'Здоровье', sport: 'Спорт', growth: 'Саморазвитие', english: 'Английский', finance: 'Финансы', together: 'Общие дела', driving: 'Вождение', tasks: 'Задачи', hobby: 'Хобби' })[id], size: id === 'growth' || id === 'health' ? [11, 9] : [12, 10], catalog: catalogs[id] ?? [] }]),
+    .map(id => [id, { id, title: ({ health: 'Здоровье', sport: 'Спорт', growth: 'Саморазвитие', english: 'Английский', finance: 'Финансы', together: 'Общие дела', driving: 'Вождение', tasks: 'Задачи', hobby: 'Хобби' })[id], size: id === 'sport' ? [12, 10] : [11, 9], catalog: catalogs[id] ?? [] }]),
 ) as Record<RoomId, RoomConfig>;
 
 /** Есть ли у сферы наполненный 3D-интерьер (каталог предметов). */
@@ -52,7 +62,7 @@ export function roomData(state: GameState, id: RoomId): RoomData {
   return state.rooms?.[id] ?? { purchased: [], objects: [] };
 }
 export function objectSpec(id: ObjectId): ObjectSpec {
-  const item = [sportCatalog, growthCatalog, healthCatalog].flat().find(item => item.id === id);
+  const item = [sportCatalog, growthCatalog, healthCatalog, financeCatalog].flat().find(item => item.id === id);
   if (!item) throw new Error('Предмет не найден.');
   return item;
 }

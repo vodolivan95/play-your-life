@@ -44,7 +44,7 @@ export default function RoomScene3D({ roomId, objects, ghost, valid, build, time
   const { progress } = useProgress();
   const [slow, setSlow] = useState(false);
   const [active, setActive] = useState<ObjectId | null>(null);
-  const interactive: ObjectId[] = ['treadmill', 'floorLamp', 'globe', 'waterCooler', 'aquarium'];
+  const interactive: ObjectId[] = ['treadmill', 'floorLamp', 'globe', 'waterCooler', 'aquarium', 'tradingDesk', 'safe', 'piggyBank', 'goldChest'];
   const [visible, setVisible] = useState(!document.hidden);
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   useEffect(() => { const handle = () => setVisible(!document.hidden); document.addEventListener('visibilitychange', handle); return () => document.removeEventListener('visibilitychange', handle); }, []);

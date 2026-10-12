@@ -1,15 +1,15 @@
-import { defaultRoutes, MAP_HEIGHT, MAP_WIDTH, pixels, roadGraph, validRoutes } from './paths.ts';
+import { defaultRoutes, portraitProfile, validRoutes } from './paths.ts';
 import { boatFallback, boatsByRoute, boatTypes, CAR_TYPES } from './vehicles.ts';
-import type { CityRoute, Point } from './paths.ts';
+import type { CityProfile, CityRoute, Point, QualityBudget } from './paths.ts';
 
 export type Sample = Point & { distance: number; angle: number };
 export class LanePath {
   samples: Sample[] = [];
   length = 0;
   route: CityRoute;
-  constructor(route: CityRoute) {
+  constructor(route: CityRoute, profile: CityProfile = portraitProfile) {
     this.route=route;
-    const nodes = route.points.map(pixels);
+    const nodes = route.points.map(p => ({ x:p.x*profile.width, y:p.y*profile.height }));
     // Квадратичные кривые с контролем в вершине: без выбросов за дорогу.
     const dense: Point[] = [];
     const count = nodes.length;
@@ -49,17 +49,20 @@ export type Agent = {
 };
 export class IntersectionController {
   reservations = new Map<string,number>();
+  private profile: CityProfile;
+  constructor(profile: CityProfile = portraitProfile) { this.profile = profile; }
+  private center(gate: CityProfile['intersections'][number]) { return { x:gate.center.x*this.profile.width, y:gate.center.y*this.profile.height }; }
   update(agents: Agent[]) {
-    for (const gate of roadGraph.intersections) {
+    for (const gate of this.profile.intersections) {
       const owner = agents.find(a=>a.id===this.reservations.get(gate.id));
-      const p=pixels(gate.center);
+      const p=this.center(gate);
       if (!owner || Math.hypot(owner.position.x-p.x,owner.position.y-p.y)>gate.radius+25) this.reservations.delete(gate.id);
     }
   }
   canEnter(agent: Agent, ahead: Sample): boolean {
     if (agent.kind!=='road' || agent.path.route.training) return true;
-    for (const gate of roadGraph.intersections) {
-      const p=pixels(gate.center);
+    for (const gate of this.profile.intersections) {
+      const p=this.center(gate);
       const distance=Math.hypot(ahead.x-p.x,ahead.y-p.y);
       if (distance>gate.radius+12) continue;
       const owner=this.reservations.get(gate.id);
@@ -77,7 +80,8 @@ export class QualityManager {
   slowSeconds = 0;
   fps = 60;
   mode: Quality;
-  constructor(mode: Quality, mobile: boolean) { this.mode=mode;this.low=mode==='low';this.medium=mode==='medium'||(mode==='auto'&&mobile); }
+  budgets = qualityBudgets;
+  constructor(mode: Quality, mobile: boolean, budgets: Record<'low' | 'medium' | 'high', QualityBudget> = qualityBudgets) { this.budgets=budgets;this.mode=mode;this.low=mode==='low';this.medium=mode==='medium'||(mode==='auto'&&mobile); }
   observe(frameTime: number) {
     this.fps=this.fps*.94+Math.min(120,1/Math.max(.001,frameTime))*.06;
     if (this.mode!=='auto'||this.low) return;
@@ -89,21 +93,23 @@ export class QualityManager {
     }
   }
   get level() { return this.low?'low':this.medium?'medium':'high'; }
-  get budget() { return qualityBudgets[this.level]; }
+  get budget() { return this.budgets[this.level]; }
 }
 
 export class CitySimulation {
   agents: Agent[] = [];
   pool: Agent[] = [];
   paths: LanePath[];
-  intersections = new IntersectionController();
+  intersections: IntersectionController;
+  profile: CityProfile;
   elapsed = 0;
   seed: number;
   nextId = 1;
   nextSpawn = 0;
   collisionStops = 0;
-  constructor(routes: CityRoute[]=defaultRoutes, seed=8721) {
-    this.paths=routes.map(r=>new LanePath(r)); this.seed=seed;
+  constructor(routes: CityRoute[]=defaultRoutes, seed=8721, profile: CityProfile=portraitProfile) {
+    this.profile=profile; this.intersections=new IntersectionController(profile);
+    this.paths=routes.map(r=>new LanePath(r,profile)); this.seed=seed;
   }
   random() { this.seed=(Math.imul(this.seed,1664525)+1013904223)>>>0; return this.seed/4294967296; }
   spawn(path: LanePath, distance=0): boolean {
@@ -111,12 +117,12 @@ export class CitySimulation {
     const position=path.at(distance), kind=path.route.kind;
     const fleet=boatsByRoute[path.route.id]??boatFallback;
     const sprite=kind==='water' ? fleet[Math.floor(this.random()*fleet.length)] : kind==='road' ? Math.floor(this.random()*CAR_TYPES) : Math.floor(this.random()*5);
-    const radius=kind==='water' ? boatTypes[sprite].radius : kind==='road' ? 6 : 1.6;
+    const scale=this.profile.vehicleScale,radius=(kind==='water' ? boatTypes[sprite].radius : kind==='road' ? 6 : 1.6)*(kind==='pedestrian'?1:scale);
     if (this.agents.some(a=>a.kind===kind&&Math.hypot(position.x-a.position.x,position.y-a.position.y)<radius+a.safeRadius+24)) return false;
     const agent=this.pool.pop() ?? {} as Agent;
     Object.assign(agent,{ id:this.nextId++,kind,path,distance,position,currentSpeed:0,
       targetSpeed:path.route.speed*(.86+this.random()*.15),acceleration:kind==='road'?6:kind==='water'?2:4,
-      deceleration:kind==='road'?15:kind==='water'?5:8,safeDistance:kind==='water'?70:kind==='road'?27:9,
+      deceleration:kind==='road'?15:kind==='water'?5:8,safeDistance:(kind==='water'?70:kind==='road'?27:9)*(kind==='pedestrian'?1:scale),
       safeRadius:radius,vehicleAhead:null,sprite,state:'WALK',wait:0,age:0,stuck:0 });
     delete agent.retireAt;
     this.agents.push(agent); return true;
@@ -212,11 +218,11 @@ export class CitySimulation {
       }
     }
   }
-  get normalizedPositions() { return this.agents.map(a=>({id:a.id,kind:a.kind,x:a.position.x/MAP_WIDTH,y:a.position.y/MAP_HEIGHT,speed:a.currentSpeed,route:a.path.route.id})); }
+  get normalizedPositions() { return this.agents.map(a=>({id:a.id,kind:a.kind,x:a.position.x/this.profile.width,y:a.position.y/this.profile.height,speed:a.currentSpeed,route:a.path.route.id})); }
 }
 
-export const routeStorageKey = 'play-your-life-live-city-routes-v1';
-export function readRoutes(storage: Pick<Storage,'getItem'>): CityRoute[] {
-  try { const value=JSON.parse(storage.getItem(routeStorageKey) ?? 'null'); return validRoutes(value) ? value : defaultRoutes; }
-  catch { return defaultRoutes; }
+export const routeStorageKey = portraitProfile.storageKey;
+export function readRoutes(storage: Pick<Storage,'getItem'>, profile: CityProfile = portraitProfile): CityRoute[] {
+  try { const value=JSON.parse(storage.getItem(profile.storageKey) ?? 'null'); return validRoutes(value) ? value : profile.routes; }
+  catch { return profile.routes; }
 }

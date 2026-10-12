@@ -21,7 +21,7 @@ try {
  for(const kind of ['road','water','pedestrian'])assert.ok(after.positions.some(p=>p.kind===kind&&before.positions.some(b=>b.id===p.id&&Math.hypot(b.x-p.x,b.y-p.y)>.002)),kind+' движется');
  console.log("30-second profile",JSON.stringify({elapsed:after.elapsed,fps:after.fps,renderMs:after.renderMs,simulationMs:after.simulationMs,quality:after.quality,counts:after.counts}));
  await page.locator(".coastal-map").screenshot({path:"work/live-city/profile.png"});
- assert.ok(after.elapsed>before.elapsed+15);assert.equal(after.fountains,8);assert.equal(after.waterfalls,8);
+ assert.ok(after.elapsed>before.elapsed+15);assert.equal(after.fountains,9);assert.equal(after.waterfalls,14);
  await page.locator('.coastal-map').screenshot({path:'work/live-city/desktop-day.png'});
  results.push({width:1440,stats:after});
  for(const width of [360,390,412,430]) {

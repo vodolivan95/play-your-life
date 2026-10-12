@@ -23,3 +23,11 @@ export const coastalHitShapes:Record<string,string>={
   tasks:'polygon(18% 6%, 77% 0, 100% 25%, 93% 78%, 67% 100%, 8% 84%, 0 40%)',
   hobby:'polygon(20% 0, 76% 6%, 100% 25%, 100% 82%, 65% 100%, 5% 84%, 0 32%)',
 };
+
+// Области входа на широкой карте ПК: пиксели изображения 2000 × 1125 пересчитаны в проценты.
+const wideBox=(id:string,x:number,y:number,w:number,h:number)=>({id,x:+(x/20).toFixed(2),y:+(y/11.25).toFixed(2),width:+(w/20).toFixed(2),height:+(h/11.25).toFixed(2)});
+export const wideBuildings = [
+  wideBox('health',790,135,315,215), wideBox('sport',370,190,320,230), wideBox('growth',1235,230,375,210),
+  wideBox('finance',110,420,310,220), wideBox('english',1640,375,320,200), wideBox('driving',515,555,290,190),
+  wideBox('together',1245,520,365,200), wideBox('tasks',810,655,385,200), wideBox('hobby',1600,640,390,200),
+] as const;

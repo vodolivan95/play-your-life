@@ -7,7 +7,8 @@ export type ObjectId = 'mat' | 'dumbbells' | 'bench' | 'ball' | 'plant' | 'tread
   | 'massageTable' | 'waterCooler' | 'smoothieBar' | 'firstAid' | 'aquarium' | 'cedarBarrel'
   | 'tradingDesk' | 'safe' | 'sofa' | 'piggyBank' | 'bullStatue' | 'goldChest'
   | 'phoneBooth' | 'teaTable' | 'studyDesk' | 'chesterfield' | 'busModel' | 'bigBen'
-  | 'carSimulator' | 'trafficLight' | 'tireStack' | 'toolCart' | 'motorcycle' | 'sportsCar';
+  | 'carSimulator' | 'trafficLight' | 'tireStack' | 'toolCart' | 'motorcycle' | 'sportsCar'
+  | 'diningTable' | 'gameTable' | 'beanBags' | 'karaoke' | 'pingPong' | 'fireplace';
 export type Vec3 = [number, number, number];
 export type RoomObject = { id: ObjectId; position: Vec3; rotation: Vec3; scale: Vec3 };
 export type RoomData = { purchased: ObjectId[]; objects: RoomObject[] };
@@ -67,7 +68,16 @@ const drivingCatalog: readonly ObjectSpec[] = [
   { id: 'motorcycle', name: 'Мотоцикл', price: 300, level: 3, size: [2, 1], asset: '/models/driving/motorcycle.glb' },
   { id: 'sportsCar', name: 'Спорткар', price: 450, level: 5, size: [2, 3], asset: '/models/driving/sports-car.glb' },
 ];
-const catalogs: Partial<Record<RoomId, readonly ObjectSpec[]>> = { sport: sportCatalog, growth: growthCatalog, health: healthCatalog, finance: financeCatalog, english: englishCatalog, driving: drivingCatalog };
+// Общие дела — семейная гостиная: фотостена с гирляндой и кухонная стойка по краям.
+const togetherCatalog: readonly ObjectSpec[] = [
+  { id: 'diningTable', name: 'Обеденный стол', price: 200, level: 0, size: [2, 1], asset: '/models/together/dining-table.glb' },
+  { id: 'gameTable', name: 'Столик для настолок', price: 100, level: 0, size: [1, 1], asset: '/models/together/game-table.glb' },
+  { id: 'beanBags', name: 'Кресла-мешки', price: 120, level: 0, size: [2, 1], asset: '/models/together/bean-bags.glb' },
+  { id: 'karaoke', name: 'Караоке-стойка', price: 150, level: 0, size: [1, 1], asset: '/models/together/karaoke.glb' },
+  { id: 'pingPong', name: 'Теннисный стол', price: 300, level: 3, size: [2, 3], asset: '/models/together/ping-pong.glb' },
+  { id: 'fireplace', name: 'Камин', price: 380, level: 5, size: [2, 1], asset: '/models/together/fireplace.glb' },
+];
+const catalogs: Partial<Record<RoomId, readonly ObjectSpec[]>> = { sport: sportCatalog, growth: growthCatalog, health: healthCatalog, finance: financeCatalog, english: englishCatalog, driving: drivingCatalog, together: togetherCatalog };
 
 export const roomConfigs: Record<RoomId, RoomConfig> = Object.fromEntries(
   (['health', 'sport', 'growth', 'english', 'finance', 'together', 'driving', 'tasks', 'hobby'] as const)
@@ -82,7 +92,7 @@ export function roomData(state: GameState, id: RoomId): RoomData {
   return state.rooms?.[id] ?? { purchased: [], objects: [] };
 }
 export function objectSpec(id: ObjectId): ObjectSpec {
-  const item = [sportCatalog, growthCatalog, healthCatalog, financeCatalog, englishCatalog, drivingCatalog].flat().find(item => item.id === id);
+  const item = [sportCatalog, growthCatalog, healthCatalog, financeCatalog, englishCatalog, drivingCatalog, togetherCatalog].flat().find(item => item.id === id);
   if (!item) throw new Error('Предмет не найден.');
   return item;
 }

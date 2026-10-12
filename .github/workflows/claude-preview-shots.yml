@@ -16,6 +16,8 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: npm ci --no-audit --no-fund
+      - name: Lint report as annotations
+        run: npx eslint src scripts tests 2>&1 | grep -E 'error|warning' | head -30 | sed 's/^/::error::/' || true
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: node --experimental-strip-types scripts/room-smoke.mjs || true

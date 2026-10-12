@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import { BoxGeometry, Color, CylinderGeometry, InstancedMesh, Matrix4, MeshStandardMaterial, Object3D, SphereGeometry } from 'three';
+import { BoxGeometry, Color, CylinderGeometry, InstancedMesh, MeshStandardMaterial, Object3D, SphereGeometry } from 'three';
 import type { Vec3 } from '../../roomEngine';
 
 // Неподвижная обстановка кабинета «Саморазвития»: стеллажи с книгами вдоль глухих стен.

@@ -1,4 +1,4 @@
-/* global fetch, setTimeout, document, innerWidth, console */
+/* global fetch, setTimeout, document, innerWidth, console, getComputedStyle */
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
@@ -55,9 +55,10 @@ try {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   const rects = await page.locator('.coastal-building').evaluateAll(nodes => nodes.map(node => {
     const bounds = node.getBoundingClientRect();
-    return { width: bounds.width, height: bounds.height };
+    return { id: node.dataset.building, width: Math.round(bounds.width), height: Math.round(bounds.height) };
   }));
-  assert.ok(rects.every(rect => rect.width >= 44 && rect.height >= 44), 'Все девять входов доступны пальцем');
+  const layout = await page.evaluate(() => ({ map: document.querySelector('.coastal-map')?.getBoundingClientRect().width, scroll: document.querySelector('.coastal-scroll')?.getBoundingClientRect().width, stage: getComputedStyle(document.querySelector('.coastal-map')).width }));
+  assert.ok(rects.every(rect => rect.width >= 44 && rect.height >= 44), `Все девять входов доступны пальцем: ${JSON.stringify({ rects, layout })}`);
   await page.screenshot({ path: 'room-preview/coastal-mobile.png', fullPage: true });
   await page.getByRole('button', { name: 'Увеличить карту', exact: true }).click();
   assert.equal(await map.evaluate(node => node.getBoundingClientRect().width > node.parentElement.clientWidth), true);

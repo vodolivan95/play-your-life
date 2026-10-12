@@ -24,9 +24,9 @@ jobs:
       - run: node --experimental-strip-types scripts/room-smoke.mjs || true
       - name: Publish screenshots to previews branch
         run: |
-          mkdir -p /tmp/shots && cp room-preview/*.png /tmp/shots/ || true
+          mkdir -p /tmp/shots && cp room-preview/*.png /tmp/shots/ || true; cp /tmp/check.log /tmp/shots/check.log || true
           git config user.name "github-actions"; git config user.email "actions@github.com"
           git checkout --orphan previews/sport-room
           git rm -rfq . && git clean -fdq -e node_modules
-          cp /tmp/shots/*.png . && git add *.png && git commit -qm "Снимки спортзала ${GITHUB_SHA::7}"
+          cp /tmp/shots/* . && git add -A . && git commit -qm "Снимки спортзала ${GITHUB_SHA::7}"
           git push -f origin previews/sport-room

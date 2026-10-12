@@ -18,6 +18,8 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npx playwright install --with-deps chromium
+      - name: Snapshot city on a phone screen
+        run: node scripts/mobile-city-snapshot.mjs
       - name: Verify coastal map and nine entrances
         run: node --experimental-strip-types scripts/coastal-city-smoke.mjs
       - name: Save city preview before the full room scenario

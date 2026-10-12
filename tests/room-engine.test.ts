@@ -57,7 +57,7 @@ test('кабинет «Саморазвития»: свой каталог, по
   const { hasRoom, roomConfigs, objectSpec } = await import('../src/roomEngine.ts');
   assert.equal(hasRoom('sport'), true);
   assert.equal(hasRoom('growth'), true);
-  assert.equal(hasRoom('health'), false);
+  assert.equal(hasRoom('finance'), false);
   assert.equal(hasRoom('unknown'), false);
   assert.deepEqual(roomConfigs.growth.catalog.map(item => item.id), ['bookshelf', 'desk', 'armchair', 'floorLamp', 'globe', 'board']);
   assert.equal(objectSpec('globe').name, 'Глобус');
@@ -78,4 +78,23 @@ test('кабинет «Саморазвития»: свой каталог, по
   assert.equal(validRooms(next.rooms), true);
   assert.deepEqual(roomData(restoreBackup(backupText(next)), 'growth'), roomData(next, 'growth'));
   assert.equal(validRooms({ growth: { purchased: ['treadmill'], objects: [] } }), false);
+});
+test('«Центр здоровья»: свой каталог, уровни и расстановка у стен', async () => {
+  const { hasRoom, roomConfigs } = await import('../src/roomEngine.ts');
+  assert.equal(hasRoom('health'), true);
+  assert.deepEqual(roomConfigs.health.size, [11, 9]);
+  assert.deepEqual(roomConfigs.health.catalog.map(item => item.id), ['massageTable', 'waterCooler', 'smoothieBar', 'firstAid', 'aquarium', 'cedarBarrel']);
+  const state = newAccountGame('Здоровье'); state.coins = 1000;
+  assert.throws(() => purchaseRoomObject(state, 'health', 'bookshelf'), /недоступен/);
+  assert.throws(() => purchaseRoomObject(state, 'health', 'aquarium'), /уровень/);
+  assert.throws(() => purchaseRoomObject(state, 'health', 'cedarBarrel'), /уровень/);
+  let next = purchaseRoomObject(state, 'health', 'massageTable');
+  next = purchaseRoomObject(next, 'health', 'waterCooler');
+  assert.equal(next.coins, 770);
+  const table: RoomObject = { id: 'massageTable', position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1] };
+  next = placeRoomObject(next, 'health', table);
+  assert.throws(() => placeRoomObject(next, 'health', { ...table, id: 'waterCooler', position: [5, 0, 0] }), /занято/, 'полки у стен');
+  next = placeRoomObject(next, 'health', { ...table, id: 'waterCooler', position: [-4.5, 0, -3.5] });
+  assert.equal(roomData(next, 'health').objects.length, 2);
+  assert.equal(validRooms(next.rooms), true);
 });

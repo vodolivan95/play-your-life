@@ -197,8 +197,8 @@ export class CitySimulation {
         Math.hypot(next.x-other.position.x,next.y-other.position.y)<agent.safeRadius+other.safeRadius+1);
       if (blocked) { agent.currentSpeed=0;this.collisionStops++; }
       else { agent.distance=agent.path.route.closed ? distance%agent.path.length : distance;agent.position=next; }
-      // Пробка на перекрёстке не должна стоять вечно: застрявшая машина плавно уезжает со сцены.
-      if (agent.kind==='road'&&!agent.path.route.training) {
+      // Пробка на перекрёстке или суда на пересекающихся путях не должны стоять вечно: застрявший транспорт плавно уходит со сцены.
+      if ((agent.kind==='road'&&!agent.path.route.training)||agent.kind==='water') {
         agent.stuck=agent.currentSpeed<.5 ? (agent.stuck??0)+dt : 0;
         if (agent.stuck>9&&agent.retireAt===undefined) agent.retireAt=agent.age+2;
       }

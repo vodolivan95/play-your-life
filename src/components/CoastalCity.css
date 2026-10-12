@@ -6,8 +6,8 @@
 .coastal-zoom button:first-child, .coastal-zoom button:last-child { min-width:44px; font-size:20px; }
 .coastal-zoom button:disabled { opacity:.4; cursor:default; }
 .coastal-hint { color:#6b829c; font-size:12px; margin:0 0 12px; }
-.coastal-scroll { overflow:auto; width:min(100%,calc(78vh * 1005 / 1280)); width:min(100%,calc(78svh * 1005 / 1280)); max-height:78vh; max-height:78svh; margin-inline:auto; border-radius:22px; border:1px solid #c8e4f3; background:#31adca; box-shadow:0 12px 32px #16759620; overscroll-behavior:contain; }
-.coastal-map { position:relative; aspect-ratio:1005 / 1280; isolation:isolate; }
+.coastal-scroll { overflow:auto; width:100%; max-height:78vh; max-height:78svh; margin-inline:auto; border-radius:22px; border:1px solid #c8e4f3; background:#31adca; box-shadow:0 12px 32px #16759620; overscroll-behavior:contain; }
+.coastal-map { position:relative; aspect-ratio:2000 / 1125; isolation:isolate; }
 .coastal-map > img { display:block; width:100%; height:auto; user-select:none; transition:filter 1s; }
 .coastal-map[data-paused=true] * { animation-play-state:paused; }
 .coastal-building { position:absolute; background:transparent; border:0; padding:0; border-radius:22%; cursor:pointer; -webkit-tap-highlight-color:transparent; }
@@ -43,12 +43,6 @@
 .coastal-frame { position:relative; }
 .coastal-stage { position:relative; }
 .coastal-pin, .coastal-districts, .coastal-panel { --glass:#0b1428e6; --line:#96b9ff33; font-family:inherit; }
-.city-animals { position:absolute; inset:0; pointer-events:none; z-index:1; overflow:hidden; }
-.city-animal { position:absolute; left:var(--x1); top:var(--y1); aspect-ratio:1; transform:translate(-50%,-62%); background:0 0/800% 100% no-repeat; filter:drop-shadow(0 2px 2px #0005);
-  animation-name:city-animal-walk, city-animal-step; animation-timing-function:linear, steps(8); animation-iteration-count:infinite; }
-.city-animal.is-flying { z-index:2; filter:drop-shadow(0 14px 6px #0003); }
-@keyframes city-animal-walk { 0% { left:var(--x1); top:var(--y1); opacity:0; } 6%, 94% { opacity:1; } 100% { left:var(--x2); top:var(--y2); opacity:0; } }
-@keyframes city-animal-step { to { background-position:114.2857% 0; } }
 .coastal-chips { display:flex; gap:8px; overflow-x:auto; padding:12px 2px 4px; scrollbar-width:none; }
 .coastal-chips button { flex:none; display:flex; align-items:center; gap:7px; min-height:44px; padding:0 14px; border-radius:999px; border:1px solid #96b9ff44; background:#0b1428e6; color:#fff; font-family:inherit; font-size:13px; font-weight:700; line-height:1; cursor:pointer; }
 .coastal-chips button[aria-pressed=true] { background:var(--pin); border-color:var(--pin); }
@@ -97,8 +91,6 @@
   .coastal-districts b { font-size:13px; }
   .coastal-panel { position:absolute; right:12px; bottom:12px; z-index:4; width:min(300px,24%); margin:0; backdrop-filter:blur(10px); }
 }
-@media (prefers-reduced-motion:reduce) { .city-animal { animation:none; } }
-
 .coastal-scroll { cursor:grab; }
 .coastal-scroll[data-dragging=true] { cursor:grabbing; }
 .coastal-scroll[data-dragging=true] .coastal-building { pointer-events:none; }

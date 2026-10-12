@@ -1,0 +1,102 @@
+
+> play-your-life@0.17.0 check
+> npm run lint && npm run build
+
+
+> play-your-life@0.17.0 lint
+> eslint .
+
+
+/home/runner/work/play-your-life/play-your-life/src/components/city3d/CityScene.tsx
+  31:3  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/immutability')
+
+✖ 1 problem (0 errors, 1 warning)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+
+
+> play-your-life@0.17.0 build
+> node scripts/build-city-models.mjs && node scripts/build-dark-theme.mjs && tsc -b && tsc -p integrations/ticktick/tsconfig.json && vite build
+
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+THREE.GLTFExporter: Creating normalized normal attribute from the non-normalized one.
+City GLB: 13 моделей, 8.10 MB
+Тёмная тема: 584 правил из 15 файлов
+[36mvite v7.3.6 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32m✓[39m 789 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist/[22m[32mindex.html                                     [39m[1m[2m    1.53 kB[22m[1m[22m[2m │ gzip:   0.65 kB[22m
+[2mdist/[22m[2massets/[22m[32mparrot-10-Cc6PAmk7.webp                 [39m[1m[2m   12.97 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mparrot-0-p8F8t_OI.webp                  [39m[1m[2m   13.51 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mstork-2-UMlD2iXA.webp                   [39m[1m[2m   14.94 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mstork-8-Biy5XBXf.webp                   [39m[1m[2m   15.66 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mfox-8-lK_OAnXs.webp                     [39m[1m[2m   17.23 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mfox-0-a1EotEQx.webp                     [39m[1m[2m   17.32 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mhorse-0-Bcp1xY5U.webp                   [39m[1m[2m   18.47 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mhorse-8-DgaP88tT.webp                   [39m[1m[2m   18.51 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32memblem-128-8_kjTM3X.png                 [39m[1m[2m   28.54 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mdark-DFfWW6Q8.webp                      [39m[1m[2m   62.99 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mwhite-CVVyDd6h.webp                     [39m[1m[2m   66.66 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mpink-DkQtIPHd.webp                      [39m[1m[2m   68.09 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mred-BFCFGE0s.webp                       [39m[1m[2m   68.56 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mgreen-CTJaeNjq.webp                     [39m[1m[2m   69.09 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mcity-globe-CXcNrxIL.webp                [39m[1m[2m   69.73 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mblue-DgnbU-v8.webp                      [39m[1m[2m   70.37 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32morange-DdOYQmsi.webp                    [39m[1m[2m   71.16 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32myellow-DFfsJ6P7.webp                    [39m[1m[2m   71.98 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32msoldier-SI6Ho5CM.webp                   [39m[1m[2m   73.94 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32memblem-256-BLQ2Ln0P.png                 [39m[1m[2m   93.15 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mcity-skyline-Bdc79FGk.webp              [39m[1m[2m  141.10 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mhome-mountains-BErYMkP1.webp            [39m[1m[2m  196.89 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mtasks-building-CtWiFAdk.jpg             [39m[1m[2m  294.07 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mfinance-building-D0mC28w-.jpg           [39m[1m[2m  312.53 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mself-development-building-vZ-lv-WW.jpg  [39m[1m[2m  317.02 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32menglish-building-DyjKyiEK.jpg           [39m[1m[2m  321.95 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mjoint-tasks-building-CQVZekCf.jpg       [39m[1m[2m  326.34 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32msport-building-BalDUm-p.jpg             [39m[1m[2m  345.14 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mhealth-building-Bl42knnc.jpg            [39m[1m[2m  366.45 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mcity-boats-CGHC3V5d.webp                [39m[1m[2m  384.70 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mdriving-building-QBRCMNWY.jpg           [39m[1m[2m  468.07 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mlife-city-DqtwV2E-.webp                 [39m[1m[2m  579.39 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mcity-clean-surfaces-CIol4tzs.webp       [39m[1m[2m  686.41 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mcity-cars-BbdkDiA_.webp                 [39m[1m[2m  705.63 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mmobile-footer-city-CXe48KiO.webp        [39m[1m[2m  795.11 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mcity-scene-C1kRe_RE.webp                [39m[1m[2m  800.93 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32msphere-icons-XZAikVsU.png               [39m[1m[2m1,395.42 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mplayer-Dn1My2YF.png                     [39m[1m[2m1,396.46 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mcoastal-city-enhanced-DVScJFf3.webp     [39m[1m[2m1,415.35 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mleisure-building-CKnIowz5.webp          [39m[1m[2m2,633.98 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[35mSportRoomDemo-tANmJ_-e.css              [39m[1m[2m    0.64 kB[22m[1m[22m[2m │ gzip:   0.32 kB[22m
+[2mdist/[22m[2massets/[22m[35mRoomEngine-0a1qwsPU.css                 [39m[1m[2m    8.19 kB[22m[1m[22m[2m │ gzip:   2.46 kB[22m
+[2mdist/[22m[2massets/[22m[35mindex-BjPQWlTY.css                      [39m[1m[2m  311.64 kB[22m[1m[22m[2m │ gzip:  59.62 kB[22m
+[2mdist/[22m[2massets/[22m[36mSportRoomDemo-BYPy5IEC.js               [39m[1m[2m    1.15 kB[22m[1m[22m[2m │ gzip:   0.66 kB[22m
+[2mdist/[22m[2massets/[22m[36mShopModelViewer-DvmvKF9a.js             [39m[1m[2m    3.42 kB[22m[1m[22m[2m │ gzip:   1.70 kB[22m
+[2mdist/[22m[2massets/[22m[36mRoomEngine-BN8H1PtL.js                  [39m[1m[2m   12.65 kB[22m[1m[22m[2m │ gzip:   5.10 kB[22m
+[2mdist/[22m[2massets/[22m[36mRoomScene3D-DLYnvcKe.js                 [39m[1m[2m   39.31 kB[22m[1m[22m[2m │ gzip:  13.71 kB[22m
+[2mdist/[22m[2massets/[22m[36mLightformer-CYtvN231.js                 [39m[1m[33m1,029.42 kB[39m[22m[2m │ gzip: 284.27 kB[22m
+[2mdist/[22m[2massets/[22m[36mindex-CssFQsqr.js                       [39m[1m[33m1,227.55 kB[39m[22m[2m │ gzip: 370.85 kB[22m
+[33m
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+[32m✓ built in 8.66s[39m

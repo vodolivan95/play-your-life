@@ -35,6 +35,8 @@ jobs:
         run: node --experimental-strip-types scripts/finance-room-smoke.mjs
       - name: Verify the English club in browser
         run: node --experimental-strip-types scripts/english-room-smoke.mjs
+      - name: Verify the driving garage in browser
+        run: node --experimental-strip-types scripts/driving-room-smoke.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

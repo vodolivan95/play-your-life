@@ -8,6 +8,7 @@ import StudyDecor from './StudyDecor';
 import HealthDecor from './HealthDecor';
 import FinanceDecor from './FinanceDecor';
 import EnglishDecor from './EnglishDecor';
+import DrivingDecor from './DrivingDecor';
 import type { RoomQuality, RoomTime } from './RoomScene3D';
 
 function surface(kind: 'stone' | 'wood', normal = false) {
@@ -51,7 +52,7 @@ function Skyline({ roomId, time }: { roomId: RoomId; time: RoomTime }) {
 }
 export default function RoomEnvironment({ roomId, time, quality }: { roomId: RoomId; time: RoomTime; quality: RoomQuality }) {
   // Кабинет «Саморазвития» — тёплый паркет вместо каменного пола спортзала.
-  const study = roomId === 'growth', health = roomId === 'health', finance = roomId === 'finance', english = roomId === 'english';
+  const study = roomId === 'growth', health = roomId === 'health', finance = roomId === 'finance', english = roomId === 'english', driving = roomId === 'driving';
   const stone = useTexture(`${import.meta.env.BASE_URL}environments/sport-stone.jpg`);
   // Texture sampler configuration is an imperative GPU operation.
   // eslint-disable-next-line react-hooks/immutability
@@ -77,7 +78,13 @@ export default function RoomEnvironment({ roomId, time, quality }: { roomId: Roo
     {health && <HealthDecor />}
     {finance && <FinanceDecor />}
     {english && <EnglishDecor />}
-    {english ? <>
+    {driving && <DrivingDecor />}
+    {driving ? <>
+      <mesh position={[0, -.005, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[12.4, 10.4]} /><meshStandardMaterial color="#2b2f36" roughness={.85} /></mesh>
+      {[-3.6, -1.2, 1.2, 3.6].map(x => <mesh key={`lane-${x}`} position={[x, -.002, .2]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[.08, 7.6]} /><meshStandardMaterial color="#f4f2ee" roughness={.7} /></mesh>)}
+      {Array.from({ length: 8 }, (_, i) => <mesh key={`dash-${i}`} position={[0, -.002, -3.4 + i * 1]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[.1, .5]} /><meshStandardMaterial color="#f2c230" roughness={.7} /></mesh>)}
+      <mesh position={[0, -.002, 4.1]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[10.4, .1]} /><meshStandardMaterial color="#f2c230" roughness={.7} /></mesh>
+    </> : english ? <>
       <mesh position={[0, -.006, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[12.4, 10.4]} /><meshStandardMaterial color="#efe6cf" roughness={.35} /></mesh>
       {Array.from({ length: 13 * 11 }, (_, i) => { const x = i % 13, z = Math.floor(i / 13); return (x + z) % 2 ? null : <mesh key={`chk-${i}`} position={[-6 + x, -.004, -5 + z]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[1, 1]} /><meshStandardMaterial color="#1c2230" roughness={.35} /></mesh>; })}
       <mesh position={[0, .004, .3]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[4.6, 3.2]} /><meshStandardMaterial color="#8a1f2b" roughness={.95} /></mesh>

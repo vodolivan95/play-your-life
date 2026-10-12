@@ -78,6 +78,8 @@ try {
   await writeFile('room-preview/coastal-result.json', JSON.stringify({ passed: true, buildings: ids, combinations: 21, mobileEntry: true, errors }, null, 2));
 } catch (error) {
   await writeFile('room-preview/coastal-error.txt', String(error.stack || error));
+  // Аннотация GitHub Actions: причина видна в проверке без скачивания логов.
+  console.log(`::error title=Coastal city smoke::${String(error.stack || error).slice(0, 3000).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`);
   throw error;
 } finally {
   await browser?.close();

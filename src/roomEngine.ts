@@ -3,7 +3,8 @@ import { sphereProgress } from './sphereProgress.ts';
 
 export type RoomId = 'health' | 'sport' | 'growth' | 'english' | 'finance' | 'together' | 'driving' | 'tasks' | 'hobby';
 export type ObjectId = 'mat' | 'dumbbells' | 'bench' | 'ball' | 'plant' | 'treadmill'
-  | 'bookshelf' | 'desk' | 'armchair' | 'floorLamp' | 'globe' | 'board';
+  | 'bookshelf' | 'desk' | 'armchair' | 'floorLamp' | 'globe' | 'board'
+  | 'massageTable' | 'waterCooler' | 'smoothieBar' | 'firstAid' | 'aquarium' | 'cedarBarrel';
 export type Vec3 = [number, number, number];
 export type RoomObject = { id: ObjectId; position: Vec3; rotation: Vec3; scale: Vec3 };
 export type RoomData = { purchased: ObjectId[]; objects: RoomObject[] };
@@ -27,11 +28,20 @@ const growthCatalog: readonly ObjectSpec[] = [
   { id: 'globe', name: 'Глобус', price: 220, level: 3, size: [1, 1], asset: '/models/growth/globe.glb' },
   { id: 'board', name: 'Доска идей', price: 260, level: 5, size: [2, 1], asset: '/models/growth/board.glb' },
 ];
-const catalogs: Partial<Record<RoomId, readonly ObjectSpec[]>> = { sport: sportCatalog, growth: growthCatalog };
+// Здоровье — светлый велнес-центр: зелёная стена и полки с травами по краям, пол для мебели 11 × 9 м.
+const healthCatalog: readonly ObjectSpec[] = [
+  { id: 'massageTable', name: 'Массажный стол', price: 150, level: 0, size: [2, 1], asset: '/models/health/massage-table.glb' },
+  { id: 'waterCooler', name: 'Кулер с водой', price: 80, level: 0, size: [1, 1], asset: '/models/health/water-cooler.glb' },
+  { id: 'smoothieBar', name: 'Смузи-бар', price: 200, level: 0, size: [2, 1], asset: '/models/health/smoothie-bar.glb' },
+  { id: 'firstAid', name: 'Аптечка', price: 120, level: 0, size: [1, 1], asset: '/models/health/first-aid.glb' },
+  { id: 'aquarium', name: 'Аквариум', price: 260, level: 3, size: [2, 1], asset: '/models/health/aquarium.glb' },
+  { id: 'cedarBarrel', name: 'Кедровая фитобочка', price: 300, level: 5, size: [1, 1], asset: '/models/health/cedar-barrel.glb' },
+];
+const catalogs: Partial<Record<RoomId, readonly ObjectSpec[]>> = { sport: sportCatalog, growth: growthCatalog, health: healthCatalog };
 
 export const roomConfigs: Record<RoomId, RoomConfig> = Object.fromEntries(
   (['health', 'sport', 'growth', 'english', 'finance', 'together', 'driving', 'tasks', 'hobby'] as const)
-    .map(id => [id, { id, title: ({ health: 'Здоровье', sport: 'Спорт', growth: 'Саморазвитие', english: 'Английский', finance: 'Финансы', together: 'Общие дела', driving: 'Вождение', tasks: 'Задачи', hobby: 'Хобби' })[id], size: id === 'growth' ? [11, 9] : [12, 10], catalog: catalogs[id] ?? [] }]),
+    .map(id => [id, { id, title: ({ health: 'Здоровье', sport: 'Спорт', growth: 'Саморазвитие', english: 'Английский', finance: 'Финансы', together: 'Общие дела', driving: 'Вождение', tasks: 'Задачи', hobby: 'Хобби' })[id], size: id === 'growth' || id === 'health' ? [11, 9] : [12, 10], catalog: catalogs[id] ?? [] }]),
 ) as Record<RoomId, RoomConfig>;
 
 /** Есть ли у сферы наполненный 3D-интерьер (каталог предметов). */
@@ -42,7 +52,7 @@ export function roomData(state: GameState, id: RoomId): RoomData {
   return state.rooms?.[id] ?? { purchased: [], objects: [] };
 }
 export function objectSpec(id: ObjectId): ObjectSpec {
-  const item = [sportCatalog, growthCatalog].flat().find(item => item.id === id);
+  const item = [sportCatalog, growthCatalog, healthCatalog].flat().find(item => item.id === id);
   if (!item) throw new Error('Предмет не найден.');
   return item;
 }

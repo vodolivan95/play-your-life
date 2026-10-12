@@ -5,6 +5,7 @@ import type { RoomId, Vec3 } from '../../roomEngine';
 import { cityAssets, sphereAssets } from '../../sphereAssets';
 import { roomViews } from '../../roomViews';
 import StudyDecor from './StudyDecor';
+import HealthDecor from './HealthDecor';
 import type { RoomQuality, RoomTime } from './RoomScene3D';
 
 function surface(kind: 'stone' | 'wood', normal = false) {
@@ -48,7 +49,7 @@ function Skyline({ roomId, time }: { roomId: RoomId; time: RoomTime }) {
 }
 export default function RoomEnvironment({ roomId, time, quality }: { roomId: RoomId; time: RoomTime; quality: RoomQuality }) {
   // Кабинет «Саморазвития» — тёплый паркет вместо каменного пола спортзала.
-  const study = roomId === 'growth';
+  const study = roomId === 'growth', health = roomId === 'health';
   const stone = useTexture(`${import.meta.env.BASE_URL}environments/sport-stone.jpg`);
   // Texture sampler configuration is an imperative GPU operation.
   // eslint-disable-next-line react-hooks/immutability
@@ -71,7 +72,14 @@ export default function RoomEnvironment({ roomId, time, quality }: { roomId: Roo
     </Environment>
     <Skyline roomId={roomId} time={time} />
     {study && <StudyDecor />}
-    {study ? <>
+    {health && <HealthDecor />}
+    {health ? <>
+      <mesh position={[0, -.005, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[12.4, 10.4]} /><meshStandardMaterial color="#e9e4da" roughness={.28} metalness={.02} envMapIntensity={1.1} /></mesh>
+      {Array.from({ length: 11 }, (_, i) => <group key={`tile-x-${i}`}>{block([-6.2 + (i + 1) * 12.4 / 12, -.003, 0], [.01, .002, 10.4], '#55565a', 0, .9)}</group>)}
+      {Array.from({ length: 9 }, (_, i) => <group key={`tile-z-${i}`}>{block([0, -.003, -5.2 + (i + 1) * 10.4 / 10], [12.4, .002, .01], '#55565a', 0, .9)}</group>)}
+      <mesh position={[0, .004, .3]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><circleGeometry args={[2, 48]} /><meshStandardMaterial color="#9fd8cf" roughness={.95} /></mesh>
+      <mesh position={[0, .005, .3]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[1.8, 1.86, 64]} /><meshStandardMaterial color="#f4f2ee" roughness={.9} /></mesh>
+    </> : study ? <>
       <mesh position={[0, -.005, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[12.4, 10.4]} /><meshStandardMaterial map={maps.parquet} roughness={.55} metalness={0} envMapIntensity={.9} /></mesh>
       <mesh position={[0, .004, .4]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[5.2, 3.6]} /><meshStandardMaterial color="#6d2f2a" roughness={.95} /></mesh>
       <mesh position={[0, .005, .4]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[1.35, 1.45, 48]} /><meshStandardMaterial color="#c9a35a" roughness={.9} /></mesh>

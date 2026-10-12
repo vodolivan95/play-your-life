@@ -29,6 +29,8 @@ jobs:
         run: node --experimental-strip-types scripts/room-smoke.mjs
       - name: Verify the self-development study in browser
         run: node --experimental-strip-types scripts/growth-room-smoke.mjs
+      - name: Verify the health centre in browser
+        run: node --experimental-strip-types scripts/health-room-smoke.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

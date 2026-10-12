@@ -26,3 +26,8 @@ test('из спортзала окна смотрят на «Здоровье» 
   assert.equal(views.back.building, 'health');
   assert.equal(views.side.building, 'finance');
 });
+test('из «Центра здоровья» окна смотрят на «Английский» (юг) и «Спорт» (запад)', () => {
+  const views = roomViews('health');
+  assert.equal(views.back.building, 'english');
+  assert.equal(views.side.building, 'sport');
+});

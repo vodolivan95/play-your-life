@@ -98,7 +98,7 @@ test('Широкая карта: транспорт не пересекает р
   const budget=wideProfile.budgets!.high;
   for (const seed of [3,8721]) {
     const sim=new CitySimulation(wideProfile.routes,seed,wideProfile);sim.initialize(budget);
-    let motion=0,boats=0,walkers=0;
+    let motion=0,boats=0,walkers=0,idleBoatSamples=0,samples=0;
     for (let step=0;step<6000;step++) {
       sim.step(1/30,budget);
       if (step%10) continue;
@@ -107,10 +107,11 @@ test('Широкая карта: транспорт не пересекает р
         for (const b of sim.agents.slice(i+1)) if (b.kind===a.kind)
           assert.ok(Math.hypot(a.position.x-b.position.x,a.position.y-b.position.y)>=a.safeRadius+b.safeRadius-.01,`${a.path.route.id}/${b.path.route.id}`);
       }
-      if (step>3000) {motion+=sim.agents.filter(a=>a.kind==='road'&&a.currentSpeed>2).length;boats+=sim.agents.filter(a=>a.kind==='water'&&a.currentSpeed>1).length;walkers+=sim.agents.filter(a=>a.kind==='pedestrian').length;}
+      if (step>3000) {motion+=sim.agents.filter(a=>a.kind==='road'&&a.currentSpeed>2).length;const sailing=sim.agents.filter(a=>a.kind==='water'&&a.currentSpeed>1).length;boats+=sailing;samples++;if(!sailing)idleBoatSamples++;walkers+=sim.agents.filter(a=>a.kind==='pedestrian').length;}
     }
     assert.ok(motion>50,'Машины на широкой карте не должны стоять');
     assert.ok(boats>20,'Суда на широкой карте плавают');
+    assert.ok(idleBoatSamples<=samples*.1,`Суда не должны вставать надолго: ${idleBoatSamples}/${samples}`);
     assert.ok(walkers>50,'Пешеходы на широкой карте ходят');
   }
 });

@@ -149,3 +149,15 @@ test('«Общие дела»: свой каталог, уровни и тенн
   assert.equal(next.coins, 800);
   assert.equal(validRooms(next.rooms), true);
 });
+test('«Хобби»: свой каталог и уровни', async () => {
+  const { hasRoom, roomConfigs } = await import('../src/roomEngine.ts');
+  assert.equal(hasRoom('hobby'), true);
+  assert.deepEqual(roomConfigs.hobby.catalog.map(item => item.id), ['easel', 'guitar', 'potteryWheel', 'craftTable', 'piano', 'telescope']);
+  const state = newAccountGame('Хобби'); state.coins = 1000;
+  assert.throws(() => purchaseRoomObject(state, 'hobby', 'piano'), /уровень/);
+  assert.throws(() => purchaseRoomObject(state, 'hobby', 'telescope'), /уровень/);
+  let next = purchaseRoomObject(state, 'hobby', 'easel');
+  next = placeRoomObject(next, 'hobby', { id: 'easel', position: [-4.5, 0, -3.5], rotation: [0, 0, 0], scale: [1, 1, 1] });
+  assert.equal(next.coins, 880);
+  assert.equal(validRooms(next.rooms), true);
+});

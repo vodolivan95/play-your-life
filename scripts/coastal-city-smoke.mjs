@@ -1,4 +1,4 @@
-/* global fetch, setTimeout, document, innerWidth */
+/* global fetch, setTimeout, document, innerWidth, console */
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';

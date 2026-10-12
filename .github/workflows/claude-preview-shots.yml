@@ -1,0 +1,29 @@
+# Временный workflow ветки claude/sport-room-v2: снимки 3D-спортзала для согласования с Иваном.
+# Удаляется перед слиянием.
+name: Claude preview shots
+on:
+  push:
+    branches: [claude/sport-room-v2]
+permissions:
+  contents: write
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: node --experimental-strip-types scripts/room-smoke.mjs || true
+      - name: Publish screenshots to previews branch
+        run: |
+          mkdir -p /tmp/shots && cp room-preview/*.png /tmp/shots/ || true
+          git config user.name "github-actions"; git config user.email "actions@github.com"
+          git checkout --orphan previews/sport-room
+          git rm -rfq . && git clean -fdq -e node_modules
+          cp /tmp/shots/*.png . && git add *.png && git commit -qm "Снимки спортзала ${GITHUB_SHA::7}"
+          git push -f origin previews/sport-room

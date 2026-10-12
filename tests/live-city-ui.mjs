@@ -73,12 +73,8 @@ try {
  await page.locator('.coastal-map').scrollIntoViewIfNeeded();await page.waitForTimeout(1200);const paused=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));
  await page.waitForTimeout(1200);const paused2=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));assert.equal(paused.elapsed,paused2.elapsed);
  await page.getByRole('button',{name:'▶ Продолжить',exact:true}).click();
- for(const [id,title] of [['growth','Саморазвитие'],['health','Здоровье'],['finance','Финансы'],['english','Английский'],['driving','Вождение'],['together','Общие дела'],['hobby','Хобби']]) {const button=page.locator('[data-building="'+id+'"]');await button.scrollIntoViewIfNeeded();await button.click();
+ for(const [id,title] of [['growth','Саморазвитие'],['health','Здоровье'],['finance','Финансы'],['english','Английский'],['driving','Вождение'],['together','Общие дела'],['hobby','Хобби'],['tasks','Задачи']]) {const button=page.locator('[data-building="'+id+'"]');await button.scrollIntoViewIfNeeded();await button.click();
   await page.locator('section[aria-label="3D-комната '+title+'"]').waitFor();await page.getByRole('button',{name:'Вернуться из комнаты',exact:true}).click();}
- for(const id of ['tasks']) {
-  const button=page.locator('[data-building="'+id+'"]');await button.scrollIntoViewIfNeeded();await button.click();
-  await page.getByText('3D-интерьер этой сферы готовится.',{exact:false}).waitFor();await page.getByRole('button',{name:'← Вернуться в город',exact:true}).click();
- }
  await page.goto('http://127.0.0.1:5175/?room-demo=sport&city-dev=1');
  await page.locator('.city-dev-tools summary').click();await page.getByLabel('Дороги',{exact:true}).check();await page.getByLabel('FPS',{exact:true}).check();
  await page.getByLabel('ID маршрута',{exact:true}).fill('browser-test');await page.getByRole('button',{name:'Расставить точки',exact:true}).click();

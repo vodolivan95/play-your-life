@@ -11,6 +11,7 @@ import EnglishDecor from './EnglishDecor';
 import DrivingDecor from './DrivingDecor';
 import TogetherDecor from './TogetherDecor';
 import HobbyDecor from './HobbyDecor';
+import TasksDecor from './TasksDecor';
 import type { RoomQuality, RoomTime } from './RoomScene3D';
 
 function surface(kind: 'stone' | 'wood', normal = false) {
@@ -54,7 +55,7 @@ function Skyline({ roomId, time }: { roomId: RoomId; time: RoomTime }) {
 }
 export default function RoomEnvironment({ roomId, time, quality }: { roomId: RoomId; time: RoomTime; quality: RoomQuality }) {
   // Кабинет «Саморазвития» — тёплый паркет вместо каменного пола спортзала.
-  const study = roomId === 'growth', health = roomId === 'health', finance = roomId === 'finance', english = roomId === 'english', driving = roomId === 'driving', together = roomId === 'together', hobby = roomId === 'hobby';
+  const study = roomId === 'growth', health = roomId === 'health', finance = roomId === 'finance', english = roomId === 'english', driving = roomId === 'driving', together = roomId === 'together', hobby = roomId === 'hobby', tasks = roomId === 'tasks';
   const stone = useTexture(`${import.meta.env.BASE_URL}environments/sport-stone.jpg`);
   // Texture sampler configuration is an imperative GPU operation.
   // eslint-disable-next-line react-hooks/immutability
@@ -83,7 +84,12 @@ export default function RoomEnvironment({ roomId, time, quality }: { roomId: Roo
     {driving && <DrivingDecor />}
     {together && <TogetherDecor />}
     {hobby && <HobbyDecor />}
-    {hobby ? <>
+    {tasks && <TasksDecor />}
+    {tasks ? <>
+      <mesh position={[0, -.005, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[12.4, 10.4]} /><meshStandardMaterial color="#c9ced6" roughness={.95} /></mesh>
+      <mesh position={[0, .003, .2]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[1.2, 8]} /><meshStandardMaterial color="#2f5fd0" roughness={.95} /></mesh>
+      {[-2.6, 2.6].map(x => <mesh key={x} position={[x, .003, .2]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[.06, 7.6]} /><meshStandardMaterial color="#f2b632" roughness={.9} /></mesh>)}
+    </> : hobby ? <>
       <mesh position={[0, -.005, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[12.4, 10.4]} /><meshStandardMaterial map={stone} color="#b9b4ac" roughness={.7} metalness={0} /></mesh>
     </> : together ? <>
       <mesh position={[0, -.005, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[12.4, 10.4]} /><meshStandardMaterial map={maps.parquet} color="#f0d2a8" roughness={.6} /></mesh>

@@ -52,6 +52,9 @@ try {
   await page.getByRole('combobox', { name: 'Погода города', exact: true }).selectOption('clear');
   await page.waitForTimeout(1100);
   await page.setViewportSize({ width: 390, height: 844 });
+  // Мобильная раскладка включается через matchMedia и перерисовку React: ждём её, а не меряем старую сцену ПК.
+  await page.locator('.coastal-chips').waitFor();
+  await page.waitForFunction(() => !document.querySelector('.coastal-districts') && !document.querySelector('.coastal-scene'));
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   const rects = await page.locator('.coastal-building').evaluateAll(nodes => nodes.map(node => {
     const bounds = node.getBoundingClientRect();

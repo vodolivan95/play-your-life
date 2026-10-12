@@ -12,7 +12,7 @@ export default function MobileCityFooter() {
         <svg className="mfm-bird mfm-bird1" viewBox="0 0 12 6" width="11" height="6"><path d="M0 1 Q3 -1 6 3 Q9 -1 12 1" fill="none" stroke="#173a5c" strokeWidth="1.2" strokeLinecap="round" /></svg>
         <svg className="mfm-bird mfm-bird2" viewBox="0 0 12 6" width="9" height="5"><path d="M0 1 Q3 -1 6 3 Q9 -1 12 1" fill="none" stroke="#173a5c" strokeWidth="1.3" strokeLinecap="round" /></svg>
       </div>
-      <PlayWordmark />
+      <PlayWordmark tagline="Ты — творец своей истории." />
     </div>
   );
 }

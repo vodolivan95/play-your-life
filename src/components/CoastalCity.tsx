@@ -2,18 +2,16 @@ import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { spheres } from '../game';
 import type { GameState } from '../game';
-import { coastalBuildings, coastalHitShapes, wideBuildings } from '../coastalCity';
+import { coastalHitShapes, wideBuildings } from '../coastalCity';
 import { buildingState } from '../city';
-import { cityAssets } from '../sphereAssets';
 import wideMapUrl from '../assets/city-wide.webp';
-import { portraitProfile, validRoutes } from '../cityLive/paths';
+import { validRoutes } from '../cityLive/paths';
 import type { CityRoute, Point, RouteKind } from '../cityLive/paths';
 import { readRoutes } from '../cityLive/simulation';
 import { wideProfile } from '../cityLive/wideMap';
 import type { Quality } from '../cityLive/simulation';
 import type { CityTime, DebugFlags } from '../cityLive/render';
 import LiveCityCanvas from './LiveCityCanvas';
-import CityAnimals from './CityAnimals';
 import { sphereCards } from '../sphereDetails';
 import './CoastalCity.css';
 import { useCityZoom } from '../cityLive/useCityZoom';
@@ -53,11 +51,9 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
   const [picked,setPicked]=useState<string|null>(null);
   const current=cards.find(c=>c.id===picked)??null;
   const [preferences,setPreferences]=useState(readPreferences);
-  const profile=wide?wideProfile:portraitProfile,buildings:readonly {id:string;x:number;y:number;width:number;height:number}[]=wide?wideBuildings:coastalBuildings;
-  // Маршруты хранятся отдельно для вертикальной и широкой карты: у каждой свои координаты.
-  const [stored,setStored]=useState(()=>Object.fromEntries([portraitProfile,wideProfile].map(p=>[p.id,(()=>{try{return readRoutes(localStorage,p);}catch{return p.routes;}})()])) as Record<string,CityRoute[]>);
-  const routes=stored[profile.id];
-  const setRoutes=(next:CityRoute[])=>setStored({...stored,[profile.id]:next});
+  // Одна горизонтальная карта острова для ПК и телефона; на телефоне она шире экрана и листается.
+  const profile=wideProfile,buildings=wideBuildings;
+  const [routes,setRoutes]=useState<CityRoute[]>(()=>{try{return readRoutes(localStorage,profile);}catch{return profile.routes;}});
   const [debug,setDebug]=useState(debugDefaults);
   const dev=new URLSearchParams(window.location.search).get('city-dev')==='1';
   const [editing,setEditing]=useState(false),[mode,setMode]=useState<RouteKind>('road');
@@ -124,11 +120,10 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
     <div ref={scroll} className="coastal-scroll" aria-label="Прибрежная карта" aria-describedby="coastal-hint">
       <div className="coastal-stage" style={wide?{width:`${zoom*100}%`}:undefined}>
       <div className="coastal-map" data-time={preferences.time} data-weather={preferences.weather} data-paused={paused} data-editing={editing}
-        style={{...(wide?{}:{width:`${zoom*100}%`}),'--city-rate':speed} as unknown as CSSProperties}>
-        <img src={wide?wideMapUrl:cityAssets.background} width={wide?2400:1005} height={wide?1350:1280} alt="Прибрежный город на островах: девять зданий сфер жизни, мосты, водопады и пляж" draggable={false}/>
+        style={{...(wide?{}:{width:`${zoom*175}%`}),'--city-rate':speed} as unknown as CSSProperties}>
+        <img src={wideMapUrl} width={2400} height={1350} alt="Прибрежный город на островах: девять зданий сфер жизни, мосты, водопады и пляж" draggable={false}/>
         <LiveCityCanvas profile={profile} routes={routes} paused={paused} speed={speed} quality={preferences.quality} time={preferences.time} weather={preferences.weather}
           debug={debug} draft={draft} editing={editing} onPoint={point=>setDraft([...draft,point])}/>
-        {!wide&&<CityAnimals/>}
         {buildings.map(building=>{
           const sphere=spheres.find(s=>s.id===building.id)!,tier=buildingState(state,building.id).tier;
           return <button key={building.id} className="coastal-building" data-building={building.id}

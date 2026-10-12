@@ -79,10 +79,10 @@ try {
  await page.locator('.city-dev-tools summary').click();await page.getByLabel('Дороги',{exact:true}).check();await page.getByLabel('FPS',{exact:true}).check();
  await page.getByLabel('ID маршрута',{exact:true}).fill('browser-test');await page.getByRole('button',{name:'Расставить точки',exact:true}).click();
  const canvas=page.locator('.live-city-canvas');await canvas.click({position:{x:40,y:100}});await canvas.click({position:{x:80,y:110}});await canvas.click({position:{x:120,y:140}});
- await page.getByRole('button',{name:'SAVE',exact:true}).click();assert.ok(await page.evaluate(()=>JSON.parse(localStorage.getItem('play-your-life-live-city-routes-v1')).some(r=>r.id==='browser-test')));
+ await page.getByRole('button',{name:'SAVE',exact:true}).click();assert.ok(await page.evaluate(()=>JSON.parse(localStorage.getItem('play-your-life-live-city-routes-wide-v1')).some(r=>r.id==='browser-test')));
  await page.reload();await page.locator('.city-dev-tools summary').click();assert.equal(await page.locator('option[value="browser-test"]').count(),1);
  await page.getByRole('button',{name:'Исходные маршруты',exact:true}).click();
- assert.equal(await page.evaluate(()=>localStorage.getItem('play-your-life-live-city-routes-v1')),null);
+ assert.equal(await page.evaluate(()=>localStorage.getItem('play-your-life-live-city-routes-wide-v1')),null);
  assert.deepEqual(errors,[]);await context.close();
  // Reduced motion removes ambient effects and lowers budget, without freezing the transport.
  const reducedContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:3,reducedMotion:'reduce'});

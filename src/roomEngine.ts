@@ -18,12 +18,12 @@ const sportCatalog: readonly ObjectSpec[] = [
   { id: 'plant', name: 'Растение', price: 120, level: 1, size: [1, 1], asset: '/models/sport/plant.glb' },
   { id: 'treadmill', name: 'Беговая дорожка', price: 800, level: 18, size: [2, 3], asset: '/models/sport/treadmill.glb' },
 ];
-// Саморазвитие (ключ сохранений `growth`) — кабинет-библиотека. Первые четыре предмета доступны с 1 уровня сферы.
+// Саморазвитие (ключ сохранений `growth`) — кабинет-библиотека. Первые четыре предмета доступны сразу, с 0 уровня новой сферы.
 const growthCatalog: readonly ObjectSpec[] = [
-  { id: 'bookshelf', name: 'Книжный шкаф', price: 150, level: 1, size: [2, 1], asset: '/models/growth/bookshelf.glb' },
-  { id: 'desk', name: 'Письменный стол', price: 200, level: 1, size: [2, 1], asset: '/models/growth/desk.glb' },
-  { id: 'armchair', name: 'Кресло для чтения', price: 160, level: 1, size: [1, 1], asset: '/models/growth/armchair.glb' },
-  { id: 'floorLamp', name: 'Торшер', price: 90, level: 1, size: [1, 1], asset: '/models/growth/floor-lamp.glb' },
+  { id: 'bookshelf', name: 'Книжный шкаф', price: 150, level: 0, size: [2, 1], asset: '/models/growth/bookshelf.glb' },
+  { id: 'desk', name: 'Письменный стол', price: 200, level: 0, size: [2, 1], asset: '/models/growth/desk.glb' },
+  { id: 'armchair', name: 'Кресло для чтения', price: 160, level: 0, size: [1, 1], asset: '/models/growth/armchair.glb' },
+  { id: 'floorLamp', name: 'Торшер', price: 90, level: 0, size: [1, 1], asset: '/models/growth/floor-lamp.glb' },
   { id: 'globe', name: 'Глобус', price: 220, level: 3, size: [1, 1], asset: '/models/growth/globe.glb' },
   { id: 'board', name: 'Доска идей', price: 260, level: 5, size: [2, 1], asset: '/models/growth/board.glb' },
 ];

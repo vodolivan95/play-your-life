@@ -53,7 +53,7 @@ test('валидация отклоняет повреждённые и пере
   assert.equal(validRooms({ sport: { purchased: ['treadmill', 'mat'], objects: [treadmill, { ...treadmill, id: 'mat' }] } }), false);
   assert.equal(validRooms({ sport: { purchased: ['treadmill'], objects: [treadmill] } }), true);
 });
-test('кабинет «Саморазвития»: свой каталог, покупка с 1 уровня и расстановка', async () => {
+test('кабинет «Саморазвития»: свой каталог, покупка с 0 уровня и расстановка', async () => {
   const { hasRoom, roomConfigs, objectSpec } = await import('../src/roomEngine.ts');
   assert.equal(hasRoom('sport'), true);
   assert.equal(hasRoom('growth'), true);

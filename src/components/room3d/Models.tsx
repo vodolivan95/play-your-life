@@ -10,12 +10,15 @@ export default function Model3D({ id, ghost, active = false, reduced = false }: 
   const plant = useRef<Group>(null);
   const globe = useRef<Group>(null);
   const fish = useRef<Group>(null);
+  const pig = useRef<Group>(null);
   const geometries = useMemo(() => ({ box: new BoxGeometry(1, 1, 1), cylinder: new CylinderGeometry(.5, .5, 1, 12), sphere: new SphereGeometry(.5, 24, 16), cone: new CylinderGeometry(.28, .5, 1, 20, 1, true), ring: new TorusGeometry(.5, .025, 8, 40, Math.PI * 1.4) }), []);
   const materials = useMemo(() => {
     const make = (color: string, metalness = 0, roughness = .65) => new MeshStandardMaterial({ color: ghost ? ghost === 'valid' ? '#57caff' : '#ff7777' : color, metalness, roughness, transparent: !!ghost, opacity: ghost ? .45 : 1, depthWrite: !ghost });
     return { dark: make('#202731', .6, .35), steel: make('#a5afba', .85, .25), fabric: make('#36556d', 0, .9), rubber: make('#242d3b', 0, .9), leaf: make('#417858', 0, .8), wood: make('#b09072'), ball: make('#5c9daa', .15, .38), oak: make('#8a5a36', 0, .62), walnut: make('#4a2f1e', 0, .55), brass: make('#c79a4b', .85, .3), leather: make('#7a3b2a', 0, .55), paper: make('#f1ece1', 0, .9),
       red: make('#a8423a', 0, .7), blue: make('#2f5d8c', 0, .7), green: make('#3f7a5a', 0, .7), gold: make('#d1a24a', .2, .5), cream: make('#e7dcc4', 0, .8), ocean: make('#2f7fb3', .1, .45),
       white: make('#f4f2ee', 0, .35), mint: make('#4fb3a9', .05, .4), cedar: make('#b07a4a', 0, .7), orange: make('#f08a3c', .05, .5), lime: make('#8cc63f', 0, .55), berry: make('#b23a5a', 0, .5), sand: make('#e7d6b0', 0, .9),
+      bronze: make('#8a5a2b', .9, .35), navy: make('#1c2a44', .1, .5), pink: make('#f29bb2', .05, .45), goldBar: make('#e8b93a', 1, .22), chestWood: make('#5a3418', 0, .6), black: make('#15181d', .4, .4),
+      chart: new MeshStandardMaterial({ color: active && !ghost ? '#0b2a1d' : '#0a1420', emissive: ghost ? '#000000' : '#21c37a', emissiveIntensity: active ? 1.1 : .35, transparent: !!ghost, opacity: ghost ? .45 : 1 }),
       glass: new MeshStandardMaterial({ color: ghost ? ghost === 'valid' ? '#57caff' : '#ff7777' : '#bfe8f2', transparent: true, opacity: ghost ? .4 : .28, roughness: .05, metalness: .1, depthWrite: false }),
       water: new MeshStandardMaterial({ color: ghost ? ghost === 'valid' ? '#57caff' : '#ff7777' : '#4fb8e8', emissive: active && !ghost ? '#2fb6ff' : '#000000', emissiveIntensity: active ? .7 : 0, transparent: true, opacity: ghost ? .4 : .55, roughness: .1, depthWrite: false }),
       shade: new MeshStandardMaterial({ color: ghost ? ghost === 'valid' ? '#57caff' : '#ff7777' : '#f3e2bd', emissive: active && !ghost ? '#ffc56b' : '#000000', emissiveIntensity: active ? 1.4 : 0, transparent: true, opacity: ghost ? .45 : .92, side: DoubleSide }),
@@ -27,6 +30,7 @@ export default function Model3D({ id, ghost, active = false, reduced = false }: 
     if (plant.current && !reduced) plant.current.rotation.z = Math.sin(clock.elapsedTime * .6) * .012;
     if (globe.current && !reduced) globe.current.rotation.y += delta * (active ? 1.6 : .12);
     if (fish.current && !reduced) fish.current.rotation.y += delta * (active ? 1.4 : .45);
+    if (pig.current && !reduced) pig.current.position.y = active ? Math.abs(Math.sin(clock.elapsedTime * 6)) * .12 : 0;
   });
   const box = (pos: Vec3, size: Vec3, mat = materials.dark, rotation: Vec3 = [0, 0, 0]) => <mesh position={pos} scale={size} rotation={rotation} geometry={geometries.box} material={mat} castShadow={!ghost} receiveShadow />;
   const sphere = (pos: Vec3, size: Vec3, mat = materials.gold) => <mesh position={pos} scale={size} geometry={geometries.sphere} material={mat} castShadow={!ghost} receiveShadow />;
@@ -177,6 +181,73 @@ export default function Model3D({ id, ghost, active = false, reduced = false }: 
       {sphere([0, 1.45, -.18], [.22, .18, .2], materials.cedar)}
       {box([0, .55, .41], [.4, .5, .02], materials.walnut)}
       {box([.32, .62, .41], [.03, .12, .03], materials.brass)}
+    </>}
+    {id === 'tradingDesk' && <>
+      {box([0, .74, 0], [1.85, .05, .8], materials.black)}
+      {[-.85, .85].map(x => <group key={x}>{box([x, .37, 0], [.06, .74, .74], materials.steel)}</group>)}
+      {([[-.55, .35], [0, 0], [.55, -.35]] as const).map(([x, r]) => <group key={x} position={[x, 1.08, -.2]} rotation={[0, r, 0]}>
+        {box([0, 0, 0], [.52, .32, .03], materials.black)}
+        {box([0, 0, .017], [.48, .28, .005], materials.chart)}
+        {box([0, -.22, -.02], [.04, .14, .04], materials.steel)}
+      </group>)}
+      {box([0, .78, .15], [.45, .02, .15], materials.dark)}
+      {box([.42, .78, .17], [.07, .02, .1], materials.dark)}
+      {cylinder([-.7, .82, .2], [.08, .1, .08], materials.white)}
+    </>}
+    {id === 'safe' && <>
+      {box([0, .5, 0], [.78, 1, .7], materials.black)}
+      <group position={[-.33, .5, .36]} rotation={[0, active && !ghost ? -1.2 : 0, 0]}>
+        {box([.33, 0, 0], [.7, .92, .06], materials.steel)}
+        {cylinder([.33, .1, .05], [.2, .04, .2], materials.goldBar, [Math.PI / 2, 0, 0])}
+        {box([.55, -.15, .05], [.04, .2, .04], materials.goldBar)}
+      </group>
+      {active && !ghost && [0, 1, 2].map(i => <group key={i}>{box([0, .2 + i * .09, 0], [.4, .07, .2], materials.goldBar)}</group>)}
+      {[-.32, .32].map(x => <group key={x}>{box([x, .02, 0], [.1, .04, .6], materials.dark)}</group>)}
+    </>}
+    {id === 'sofa' && <>
+      {box([0, .25, .05], [1.85, .3, .8], materials.chestWood)}
+      {[-.45, .45].map(x => <group key={x}>{box([x, .46, .08], [.86, .14, .7], materials.leather)}</group>)}
+      {box([0, .7, -.3], [1.85, .6, .2], materials.leather, [-.1, 0, 0])}
+      {[-.95, .95].map(x => <group key={x}>{box([x, .5, .05], [.14, .4, .8], materials.leather)}</group>)}
+      {[-.82, .82].map(x => [-.28, .38].map(z => <group key={`${x}:${z}`}>{cylinder([x, .05, z], [.06, .1, .06], materials.goldBar)}</group>))}
+      {box([.5, .62, .05], [.32, .28, .1], materials.navy, [-.15, .2, .1])}
+    </>}
+    {id === 'piggyBank' && <>
+      {cylinder([0, .2, 0], [.5, .4, .5], materials.navy)}
+      {cylinder([0, .41, 0], [.54, .03, .54], materials.goldBar)}
+      <group ref={pig} >
+        <group position={[0, .62, 0]}>
+          {sphere([0, 0, 0], [.42, .32, .3], materials.pink)}
+          {sphere([.2, .03, 0], [.12, .14, .14], materials.pink)}
+          {cylinder([.26, .03, 0], [.07, .04, .07], materials.pink, [0, 0, Math.PI / 2])}
+          {[-.07, .07].map(z => <group key={z}>{sphere([.16, .14, z], [.06, .08, .03], materials.pink)}{sphere([.21, .08, z * .6], [.025, .025, .025], materials.black)}</group>)}
+          {[-.12, .12].map(x => [-.08, .08].map(z => <group key={`${x}:${z}`}>{cylinder([x, -.17, z], [.06, .1, .06], materials.pink)}</group>))}
+          {box([-.02, .16, 0], [.1, .01, .02], materials.black)}
+          {active && !ghost && cylinder([-.02, .28, 0], [.09, .015, .09], materials.goldBar, [Math.PI / 2, 0, 0])}
+        </group>
+      </group>
+    </>}
+    {id === 'bullStatue' && <>
+      {box([0, .15, 0], [1.6, .3, .7], materials.black)}
+      {box([0, .31, .36], [.5, .06, .01], materials.goldBar)}
+      <group position={[0, .3, 0]}>
+        {sphere([-.1, .55, 0], [1.05, .5, .42], materials.bronze)}
+        {sphere([.35, .62, 0], [.4, .52, .4], materials.bronze)}
+        {sphere([.62, .5, 0], [.26, .26, .24], materials.bronze)}
+        {[-.1, .1].map(z => <group key={z}>{cylinder([.68, .7, z * 2.2], [.04, .28, .04], materials.goldBar, [z > 0 ? -.9 : .9, 0, -.4])}</group>)}
+        {([[-.42, -.15], [-.42, .15], [.3, -.15], [.42, .15]] as const).map(([x, z], i) => <group key={i}>{cylinder([x, .18, z], [.12, .38, .12], materials.bronze, [0, 0, i === 3 ? -.35 : 0])}</group>)}
+        {cylinder([-.68, .62, 0], [.03, .4, .03], materials.bronze, [0, 0, -.9])}
+      </group>
+    </>}
+    {id === 'goldChest' && <>
+      {box([0, .25, 0], [.8, .5, .55], materials.chestWood)}
+      {[-.3, .3].map(x => <group key={x}>{box([x, .26, 0], [.06, .52, .57], materials.goldBar)}</group>)}
+      <group position={[0, .5, -.27]} rotation={[active && !ghost ? -1.1 : -.35, 0, 0]}>
+        {box([0, .03, .27], [.8, .08, .55], materials.chestWood)}
+        {box([0, .08, .27], [.82, .04, .57], materials.goldBar)}
+      </group>
+      {[[-.18, 0], [0, 0], [.18, 0], [-.09, .1], [.09, .1]].map(([x, y], i) => <group key={i}>{box([x, .53 + y, .02], [.16, .08, .26], materials.goldBar)}</group>)}
+      {box([0, .38, .28], [.1, .12, .02], materials.goldBar)}
     </>}
   </group>;
 }

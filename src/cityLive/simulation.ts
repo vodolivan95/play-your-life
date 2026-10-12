@@ -70,7 +70,7 @@ export class IntersectionController {
   }
 }
 export type Quality = 'auto'|'high'|'medium'|'low';
-export const qualityBudgets = { low:{road:6,water:3,pedestrian:4},medium:{road:9,water:4,pedestrian:10},high:{road:14,water:5,pedestrian:18} };
+export const qualityBudgets = { low:{road:6,water:3,pedestrian:10},medium:{road:9,water:4,pedestrian:15},high:{road:14,water:5,pedestrian:28} };
 export class QualityManager {
   low: boolean;
   medium: boolean;

@@ -49,14 +49,14 @@ export const waterPaths: CityRoute[] = [
   route('west-sail', 'water', [[0,1230],[28,1205],[69,1162],[105,1116],[97,1076],[66,1044],[30,1020],[0,1007]], false, 6, 1),
 ];
 export const pedestrianPaths: CityRoute[] = [
-  route('health-promenade', 'pedestrian', [[402,268],[433,280],[454,287],[460,302],[440,316],[413,313],[397,298]], true, 4, 2),
-  route('health-fountain', 'pedestrian', [[563,279],[578,302],[567,322],[552,337],[533,345],[547,365],[574,365]], false, 3.8, 2),
-  route('growth-plaza', 'pedestrian', [[688,359],[706,347],[735,347],[776,348],[801,355],[844,371],[876,379]], false, 4, 2),
-  route('finance-plaza', 'pedestrian', [[132,537],[166,553],[207,564],[247,568],[282,558]], false, 3.6, 2),
-  route('english-plaza', 'pedestrian', [[723,551],[755,565],[780,566],[815,569],[855,582],[907,585]], false, 3.8, 2),
-  route('joint-plaza', 'pedestrian', [[619,786],[651,789],[692,797],[744,811],[790,814],[841,810],[885,794]], false, 4, 2),
-  route('tasks-plaza', 'pedestrian', [[417,928],[445,944],[480,950],[516,957],[553,957],[591,950],[624,934]], false, 4, 2),
-  route('leisure-plaza', 'pedestrian', [[783,1033],[819,1046],[854,1053],[892,1062],[931,1073],[971,1082]], false, 3.5, 2),
+  route('health-promenade', 'pedestrian', [[402,268],[433,280],[454,287],[460,302],[440,316],[413,313],[397,298]], true, 4, 4),
+  route('health-fountain', 'pedestrian', [[563,279],[578,302],[567,322],[552,337],[533,345],[547,365],[574,365]], false, 3.8, 4),
+  route('growth-plaza', 'pedestrian', [[688,359],[706,347],[735,347],[776,348],[801,355],[844,371],[876,379]], false, 4, 4),
+  route('finance-plaza', 'pedestrian', [[132,537],[166,553],[207,564],[247,568],[282,558]], false, 3.6, 4),
+  route('english-plaza', 'pedestrian', [[723,551],[755,565],[780,566],[815,569],[855,582],[907,585]], false, 3.8, 4),
+  route('joint-plaza', 'pedestrian', [[619,786],[651,789],[692,797],[744,811],[790,814],[841,810],[885,794]], false, 4, 4),
+  route('tasks-plaza', 'pedestrian', [[417,928],[445,944],[480,950],[516,957],[553,957],[591,950],[624,934]], false, 4, 4),
+  route('leisure-plaza', 'pedestrian', [[783,1033],[819,1046],[854,1053],[892,1062],[931,1073],[971,1082]], false, 3.5, 4),
   route('sport-runners', 'pedestrian', [[111,268],[137,276],[170,295],[177,308],[157,307],[126,294],[98,275],[96,263]], true, 10, 2, { runner: true }),
 ];
 export const defaultRoutes = [...roadGraph.lanes, ...waterPaths, ...pedestrianPaths];

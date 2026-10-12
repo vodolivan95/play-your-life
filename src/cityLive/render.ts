@@ -164,16 +164,16 @@ export class CityRenderer {
       const p=a.position,alpha=Math.min(1,a.age/2)*(a.retireAt===undefined?1:Math.max(0,(a.retireAt-a.age)/2));
       if (alpha<=0) continue;
       ctx.save();ctx.translate(p.x,p.y);ctx.globalAlpha=alpha;
-      ctx.fillStyle='#10303a40';ctx.beginPath();ctx.ellipse(.6,.4,3.4,1.2,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#10303a40';ctx.beginPath();ctx.ellipse(.8,.5,4.6,1.6,0,0,Math.PI*2);ctx.fill();
       const look=looks.length?looks[a.id%looks.length]:null;
       if (look) {
         const cell=look.naturalWidth/8,row=((Math.round(p.angle/(Math.PI/4))%8)+8)%8;
         const moving=a.state==='WALK'&&a.currentSpeed>.2;
         const frame=moving?Math.floor(a.distance/(a.path.route.runner?2.4:1.7))%8:0;
-        const size=a.path.route.runner?17:16;
+        const size=a.path.route.runner?23:22;
         ctx.drawImage(look,frame*cell,row*cell,cell,cell,-size/2,-size*.94,size,size);
       }
-      if (rain) {ctx.fillStyle='#2d7bb5';ctx.beginPath();ctx.arc(0,-12,4.2,Math.PI,0);ctx.fill();ctx.strokeStyle='#1d3d55';ctx.lineWidth=.6;ctx.beginPath();ctx.moveTo(0,-12);ctx.lineTo(0,-7);ctx.stroke();}
+      if (rain) {ctx.fillStyle='#2d7bb5';ctx.beginPath();ctx.arc(0,-17,5.6,Math.PI,0);ctx.fill();ctx.strokeStyle='#1d3d55';ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(0,-17);ctx.lineTo(0,-10);ctx.stroke();}
       ctx.restore();
     }
   }

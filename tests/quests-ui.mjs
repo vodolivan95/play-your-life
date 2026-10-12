@@ -2,6 +2,16 @@ import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { mkdir } from "node:fs/promises";
+
+// «Мои задачи» (бывшие «Квесты»): в левом меню — кнопка, на телефоне — в шторке «Ещё».
+async function openTasks(page, mobile) {
+  if (mobile) {
+    await page.locator(".pyl-tabbar").getByRole("button", { name: /^Ещё/ }).click();
+    await page.locator(".pyl-more").getByRole("button", { name: /^Мои задачи/ }).click();
+  } else {
+    await page.locator(".sidebar").getByRole("button", { name: /^Мои задачи/ }).click();
+  }
+}
 await mkdir("work", { recursive: true });
 const server = spawn(
   process.execPath,
@@ -69,10 +79,7 @@ try {
     await page
       .getByRole("button", { name: "Продолжить игру на этом устройстве" })
       .click();
-    await page
-      .locator(mobile ? ".pyl-tabbar" : ".sidebar")
-      .getByRole("button", { name: /^Квесты/ })
-      .click();
+    await openTasks(page, mobile);
     assert.equal(await page.locator(".pyl-quest-spheres>button").count(), 9);
     await page
       .getByRole("button", { name: "＋ Создать квест" })
@@ -165,10 +172,7 @@ try {
     await page
       .getByRole("button", { name: "Продолжить игру на этом устройстве" })
       .click();
-    await page
-      .locator(mobile ? ".pyl-tabbar" : ".sidebar")
-      .getByRole("button", { name: /^Квесты/ })
-      .click();
+    await openTasks(page, mobile);
     const state = await page.evaluate(() =>
       JSON.parse(localStorage.getItem("play-your-life-v1")),
     );

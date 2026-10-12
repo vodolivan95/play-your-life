@@ -1,10 +1,11 @@
 import type { MenuIconId } from './menuIcons';
 
-/** Двенадцать разделов приложения: плоский список в боковом меню и источник заголовков страниц. */
+/** Тринадцать разделов приложения: плоский список в боковом меню и источник заголовков страниц. */
 export const navigation: { id: MenuIconId; label: string; icon: string }[] = [
   { id: 'home', label: 'Главная', icon: 'home' },
   { id: 'spheres', label: 'Сферы жизни', icon: 'spheres' },
-  { id: 'quests', label: 'Квесты', icon: 'quests' },
+  { id: 'tasks', label: 'Мои задачи', icon: 'tasks' },
+  { id: 'quests', label: 'Привычки', icon: 'quests' },
   { id: 'goals', label: 'Цели', icon: 'goals' },
   { id: 'plan', label: 'План жизни', icon: 'plan' },
   { id: 'monthly', label: 'Итоги месяца', icon: 'calendar' },

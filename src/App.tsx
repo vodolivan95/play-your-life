@@ -45,6 +45,7 @@ import {
 } from './game';
 import type { Quest, GameState } from './game';
 import QuestBoard from './components/QuestBoard';
+import HabitsPage from './components/HabitsPage';
 import QuestWizard from './components/QuestWizard';
 import { saveCustomQuest, saveHabit } from './personalQuests';
 
@@ -258,7 +259,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
       >
         <AppSidebar page={page} state={state} questCount={active.length} onNavigate={navigate} />
         <div className="main-wrap">
-          <header className="topbar"><DashboardHeader state={state} onProfile={() => navigate('profile')} onQuests={() => navigate('quests')} /></header>
+          <header className="topbar"><DashboardHeader state={state} onProfile={() => navigate('profile')} onQuests={() => navigate('tasks')} /></header>
           <main
             className={`screen-${page} ${sphere ? 'screen-sphere-detail' : ''}`}
           >
@@ -325,8 +326,8 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 }
               />
             )}
-            {page === 'home' && <HomeDashboard state={state} onChange={setState} onSphere={(id) => { setSelected(id); setSphereTab('overview'); setPage('spheres'); }} onQuests={() => navigate('quests')} onGoal={() => navigate('goals')} onShop={() => navigate('shop')} onProfile={() => navigate('profile')} onIntegration={() => navigate('profile')} onCreate={newQuest} onNewGoal={() => setModal('goal')} onStart={() => setModal('start')} renderQuest={q => <QuestRow key={q.id} quest={q} />} />}
-            {page === 'spheres' && !sphere && <SpheresOverview state={state} onSelect={(id) => { setSelected(id); setSphereTab('overview'); window.scrollTo({ top: 0 }); }} onQuick={setQuickSphere} onQuest={(id) => { setQuestTemplate(null); setQuestSphere(id); setModal('quest'); }} onQuests={() => navigate('quests')} renderQuest={(q) => <QuestRow key={q.id} quest={q} />} onAddRecommendation={(idea) => { setState(current => current.goals.some(g => g.sphere === idea.sphereId && g.name === idea.title && g.current < g.target) ? current : saveGoal(current, { name: idea.title, description: idea.description, sphere: idea.sphereId, target: 100, reward: 100, progressMode: 'tasks' })); notify('Проект добавлен в план. Открой его и добавь этапы и задачи.'); }} />}
+            {page === 'home' && <HomeDashboard state={state} onChange={setState} onSphere={(id) => { setSelected(id); setSphereTab('overview'); setPage('spheres'); }} onQuests={() => navigate('tasks')} onGoal={() => navigate('goals')} onShop={() => navigate('shop')} onProfile={() => navigate('profile')} onIntegration={() => navigate('profile')} onCreate={newQuest} onNewGoal={() => setModal('goal')} onStart={() => setModal('start')} renderQuest={q => <QuestRow key={q.id} quest={q} />} />}
+            {page === 'spheres' && !sphere && <SpheresOverview state={state} onSelect={(id) => { setSelected(id); setSphereTab('overview'); window.scrollTo({ top: 0 }); }} onQuick={setQuickSphere} onQuest={(id) => { setQuestTemplate(null); setQuestSphere(id); setModal('quest'); }} onQuests={() => navigate('tasks')} renderQuest={(q) => <QuestRow key={q.id} quest={q} />} onAddRecommendation={(idea) => { setState(current => current.goals.some(g => g.sphere === idea.sphereId && g.name === idea.title && g.current < g.target) ? current : saveGoal(current, { name: idea.title, description: idea.description, sphere: idea.sphereId, target: 100, reward: 100, progressMode: 'tasks' })); notify('Проект добавлен в план. Открой его и добавь этапы и задачи.'); }} />}
             {sphere && (
               <>
                 <SphereScene
@@ -551,7 +552,8 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 </button>
               </div>
             )}
-            {page === 'quests' && <QuestBoard state={state} onChange={setState} ownerId={userId ?? 'local'} today={today} notify={notify} onCreate={q => { setQuestTemplate(q ?? null); setQuestSphere(q?.sphere ?? 'health'); setModal('quest'); }} />}
+            {page === 'quests' && <HabitsPage state={state} onChange={setState} ownerId={userId ?? 'local'} today={today} notify={notify} />}
+            {page === 'tasks' && <QuestBoard state={state} onChange={setState} ownerId={userId ?? 'local'} today={today} notify={notify} onCreate={q => { setQuestTemplate(q ?? null); setQuestSphere(q?.sphere ?? 'health'); setModal('quest'); }} />}
             {page === 'goals' && (
               <GoalsBoard
                 ownerId={userId ?? 'local'}
@@ -673,7 +675,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
             </footer>
           </main>
         </div>
-        <MobileNav page={page} state={state} questCount={active.length} onNavigate={navigate} />
+        <MobileNav page={page} state={state} onNavigate={navigate} />
         <dialog
           aria-label={
             modal === 'quest'

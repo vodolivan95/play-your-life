@@ -105,8 +105,8 @@ try {
       assert.equal(await page.locator('.sidebar .play-wordmark').count(), 1);
       assert.equal(await page.locator('.sidebar .pyl-player').count(), 1);
       const buttons = page.locator('.sidebar .pyl-menu-nav .pyl-nav-item');
-      assert.equal(await buttons.count(), 12);
-      for (const [index, id] of ['home','spheres','quests','goals','plan','monthly','tree','achievements','shop','city','statistics','profile'].entries()) {
+      assert.equal(await buttons.count(), 13);
+      for (const [index, id] of ['home','spheres','tasks','quests','goals','plan','monthly','tree','achievements','shop','city','statistics','profile'].entries()) {
         const button = buttons.nth(index);
         const box = await button.boundingBox();
         assert.ok(box.y >= 0 && box.y + box.height <= height && box.height >= 24, `${id} must fit the sidebar`);
@@ -127,7 +127,7 @@ try {
       await page.locator('.pyl-tabbar').getByRole('button', { name:'Цели', exact:true }).click();
       await page.locator('main.screen-goals').waitFor();
       await page.locator('.pyl-tabbar').getByRole('button', { name:'Ещё', exact:true }).click();
-      assert.equal(await page.locator('.pyl-more .pyl-more-item').count(), 8);
+      assert.equal(await page.locator('.pyl-more .pyl-more-item').count(), 9);
       await page.locator('.pyl-more').getByRole('button', { name:'Статистика', exact:true }).click();
       await page.locator('main.screen-statistics').waitFor();
       assert.equal(await page.locator('.pyl-more').count(), 0);

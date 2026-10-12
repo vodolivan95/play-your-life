@@ -38,7 +38,7 @@ export default function AppSidebar({ page, state, questCount, onNavigate }: { pa
           >
             <img className="pyl-nav-icon" src={menuIconSrc(item.id)} alt="" width={32} height={32} />
             <span>{item.label}</span>
-            {item.id === 'quests' && <span className="pyl-nav-count">{questCount}</span>}
+            {item.id === 'tasks' && <span className="pyl-nav-count">{questCount}</span>}
           </button>
         ))}
       </nav>

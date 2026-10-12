@@ -9,13 +9,13 @@ import ThemeSwitch from './ThemeSwitch';
 import './AppMenu.css';
 
 /** Разделы, которые не помещаются в нижнюю панель и открываются шторкой «Ещё». */
-const moreIds: MenuIconId[] = ['spheres', 'tree', 'plan', 'monthly', 'achievements', 'shop', 'statistics', 'profile'];
+const moreIds: MenuIconId[] = ['tasks', 'spheres', 'tree', 'plan', 'monthly', 'achievements', 'shop', 'statistics', 'profile'];
 
 /**
- * Нижняя панель телефона: Главная, Квесты, выпуклая «Цели» по центру, Город и «Ещё».
+ * Нижняя панель телефона: Главная, Привычки, выпуклая «Цели» по центру, Город и «Ещё».
  * «Ещё» открывает шторку с остальными разделами, карточкой игрока и переключателем темы.
  */
-export default function MobileNav({ page, state, questCount, onNavigate }: { page: string; state: GameState; questCount: number; onNavigate: (id: string) => void }) {
+export default function MobileNav({ page, state, onNavigate }: { page: string; state: GameState; onNavigate: (id: string) => void }) {
   const [theme] = useMenuTheme();
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -70,7 +70,7 @@ export default function MobileNav({ page, state, questCount, onNavigate }: { pag
       )}
       <nav className="pyl-tabbar" data-theme={theme} aria-label="Разделы">
         {tab('home', 'Главная')}
-        {tab('quests', 'Квесты', questCount)}
+        {tab('quests', 'Привычки')}
         <button
           type="button"
           className="pyl-tab pyl-tab-center"

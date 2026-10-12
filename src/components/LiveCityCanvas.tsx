@@ -2,6 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import spritesUrl from '../assets/city-cars.webp';
 import boatsUrl from '../assets/city-boats.webp';
 import globeUrl from '../assets/city-globe.webp';
+import soldierUrl from '../assets/city-people/soldier.webp';
+import redUrl from '../assets/city-people/red.webp';
+import blueUrl from '../assets/city-people/blue.webp';
+import yellowUrl from '../assets/city-people/yellow.webp';
+import greenUrl from '../assets/city-people/green.webp';
+import whiteUrl from '../assets/city-people/white.webp';
+import orangeUrl from '../assets/city-people/orange.webp';
+import pinkUrl from '../assets/city-people/pink.webp';
+import darkUrl from '../assets/city-people/dark.webp';
+const peopleUrls=[soldierUrl,redUrl,blueUrl,yellowUrl,greenUrl,whiteUrl,orangeUrl,pinkUrl,darkUrl];
 import { cityAssets } from '../sphereAssets';
 import { CitySimulation, QualityManager } from '../cityLive/simulation';
 import type { Quality } from '../cityLive/simulation';
@@ -28,10 +38,11 @@ export default function LiveCityCanvas(props:Props) {
     sim.initialize(quality.budget);
     const renderer=new CityRenderer(ctx);
     const background=new Image(),sprites=new Image(),boats=new Image(),globe=new Image(),clean=new Image();
+    const people=peopleUrls.map(url=>{const img=new Image();img.src=url;return img;});
     background.src=cityAssets.background;sprites.src=spritesUrl;boats.src=boatsUrl;globe.src=globeUrl;clean.src=cityAssets.cleanSurfaces;
-    let frame=0,previous=0,lastStats=0,visible=true,disposed=false,ready=false,lastSignature='',renderMs=0,simulationMs=0;
+    let unitPx=1,frame=0,previous=0,lastStats=0,visible=true,disposed=false,ready=false,lastSignature='',renderMs=0,simulationMs=0;
     const resize=()=>{
-      const width=Math.max(1,node.getBoundingClientRect().width);
+      const width=Math.max(1,node.getBoundingClientRect().width);unitPx=width/MAP_WIDTH;
       if (mode==='auto'&&window.innerWidth<=760)quality.medium=true;
       // LOW reduces object/effect counts, not the sharpness of the mobile canvas.
       const ratio=Math.min(2,window.devicePixelRatio||1);
@@ -53,7 +64,7 @@ export default function LiveCityCanvas(props:Props) {
       const signature=JSON.stringify([settings.time,settings.weather,settings.debug,settings.draft,node.width]);
       if (!paused||signature!==lastSignature) {
         if (paused) Object.assign(renderer,timeLighting(settings.time,sim.elapsed));
-        const renderStart=performance.now();renderer.draw(sim,{...settings,low:quality.level!=='high',reduced,background,sprites,boats,globe,clean,scene:settings.scene});renderMs=renderMs*.9+(performance.now()-renderStart)*.1;lastSignature=signature;
+        const renderStart=performance.now();renderer.draw(sim,{...settings,low:quality.level!=='high',reduced,background,sprites,boats,globe,clean,people,unitPx,scene:settings.scene});renderMs=renderMs*.9+(performance.now()-renderStart)*.1;lastSignature=signature;
       }
       if (now-lastStats>1000) {
         lastStats=now;

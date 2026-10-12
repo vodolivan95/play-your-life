@@ -9,6 +9,10 @@ export type DebugFlags = { road:boolean;water:boolean;pedestrian:boolean;hitboxe
 export type RenderOptions = {
   time: CityTime; weather:string; low:boolean; reduced?:boolean; debug:DebugFlags;
   draft:Point[]; background:HTMLImageElement; sprites:HTMLImageElement; boats:HTMLImageElement; globe:HTMLImageElement; clean:HTMLImageElement; scene?:boolean;
+  /** Атласы 3D-пешеходов 8 × 8: строки — направление через 45° (0 — вправо, по часовой), столбцы — кадры шага. */
+  people?:HTMLImageElement[];
+  /** Сколько CSS-пикселей экрана приходится на одну единицу карты — чтобы жители были видны на телефоне. */
+  unitPx?:number;
 };
 const polygon = (ctx: CanvasRenderingContext2D, points: number[][]) => {
   ctx.moveTo(points[0][0],points[0][1]); for (const [x,y] of points.slice(1)) ctx.lineTo(x,y); ctx.closePath();
@@ -153,19 +157,27 @@ export class CityRenderer {
     for (const agent of sim.agents.filter(a=>a.kind==='road').sort((x,y)=>x.position.y-y.position.y)) this.sprite(agent,opts.sprites,sim.elapsed);
   }
   private pedestrianLayer(sim:CitySimulation,opts:RenderOptions) {
-    const ctx=this.ctx;
-    const walkers=sim.agents.filter(a=>a.kind==='pedestrian');
+    const ctx=this.ctx,looks=(opts.people??[]).filter(img=>img.complete&&img.naturalWidth);
+    const rain=opts.weather==='rain'||opts.weather==='thunderstorm';
+    // Жители — отрисованные 3D-модели (те же атласы, что у пешеходов сцены на ПК), без нарисованных кодом человечков.
+    const walkers=sim.agents.filter(a=>a.kind==='pedestrian').sort((x,y)=>x.position.y-y.position.y);
     for (const [i,a] of walkers.entries()) {
-      const rain=opts.weather==='rain'||opts.weather==='thunderstorm';
       if (rain&&i%3===0) continue;
-      const p=a.position,walk=Math.sin(a.distance*(a.path.route.runner?1.9:1.2));
-      ctx.save();ctx.translate(p.x,p.y);ctx.globalAlpha=Math.min(1,a.age/2)*(a.retireAt===undefined?1:Math.max(0,(a.retireAt-a.age)/2));
-      ctx.fillStyle='#174b5544';ctx.beginPath();ctx.ellipse(1,3,2.8,1,0,0,Math.PI*2);ctx.fill();
-      ctx.strokeStyle='#28495c';ctx.lineWidth=1;
-      ctx.beginPath();ctx.moveTo(-.6,1);ctx.lineTo(-1-walk*.8,3);ctx.moveTo(.6,1);ctx.lineTo(1+walk*.8,3);ctx.stroke();
-      ctx.fillStyle=['#e86864','#5f9fca','#e7c76d','#b69be0','#f4e7d7'][a.sprite];ctx.fillRect(-1.4,-2,2.8,a.state==='SIT'?2:4);
-      ctx.fillStyle='#dca780';ctx.beginPath();ctx.arc(0,-3,1.2,0,Math.PI*2);ctx.fill();
-      if (rain) {ctx.fillStyle='#2d7bb5';ctx.beginPath();ctx.arc(0,-4,3.5,Math.PI,0);ctx.fill();}
+      const p=a.position,alpha=Math.min(1,a.age/2)*(a.retireAt===undefined?1:Math.max(0,(a.retireAt-a.age)/2));
+      if (alpha<=0) continue;
+      ctx.save();ctx.translate(p.x,p.y);ctx.globalAlpha=alpha;
+      const k=Math.max(1,Math.min(2.4,1/Math.max(.05,opts.unitPx??1)));
+      ctx.fillStyle='#10303a40';ctx.beginPath();ctx.ellipse(.8*k,.5*k,4.6*k,1.6*k,0,0,Math.PI*2);ctx.fill();
+      const look=looks.length?looks[a.id%looks.length]:null;
+      if (look) {
+        const cell=look.naturalWidth/8,row=((Math.round(p.angle/(Math.PI/4))%8)+8)%8;
+        const moving=a.state==='WALK'&&a.currentSpeed>.2;
+        const frame=moving?Math.floor(a.distance/(a.path.route.runner?2.4:1.7))%8:0;
+        // Рост ~18 CSS-пикселей на экране, но не меньше 22 и не больше 52 единиц карты.
+        const size=Math.max(22,Math.min(52,22/Math.max(.05,opts.unitPx??1)))*(a.path.route.runner?1.05:1);
+        ctx.drawImage(look,frame*cell,row*cell,cell,cell,-size/2,-size*.94,size,size);
+      }
+      if (rain) {ctx.fillStyle='#2d7bb5';ctx.beginPath();ctx.arc(0,-17*k,5.6*k,Math.PI,0);ctx.fill();ctx.strokeStyle='#1d3d55';ctx.lineWidth=.7*k;ctx.beginPath();ctx.moveTo(0,-17*k);ctx.lineTo(0,-10*k);ctx.stroke();}
       ctx.restore();
     }
   }

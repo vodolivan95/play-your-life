@@ -52,7 +52,7 @@ export default function RoomScene3D({ roomId, objects, ghost, valid, build, time
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   useEffect(() => { const handle = () => setVisible(!document.hidden); document.addEventListener('visibilitychange', handle); return () => document.removeEventListener('visibilitychange', handle); }, []);
   const effective = slow ? 'low' : quality;
-  return <>{!ready && <div className="room3d-loading" role="status"><PlayBrand /><span>Загрузка комнаты… {progress > 0 ? `${Math.round(progress)}%` : ''}</span><i /></div>}<Canvas shadows={effective !== 'low'} dpr={effective === 'low' ? 1 : effective === 'medium' ? 1.25 : 1.75} camera={{ position: [4.8, 3.3, 4.1], fov: 68, near: .08, far: 130 }} gl={{ antialias: quality !== 'low', powerPreference: 'low-power' }} frameloop={visible && !reduced ? 'always' : 'demand'} data-quality={effective}>
+  return <>{!ready && <div className="room3d-loading" role="status"><PlayBrand /><span>Загрузка комнаты… {progress > 0 ? `${Math.round(progress)}%` : ''}</span><i /></div>}<Canvas shadows={effective !== 'low'} dpr={effective === 'low' ? 1 : effective === 'medium' ? [1, 1.5] : [1, 2]} camera={{ position: [4.8, 3.3, 4.1], fov: 68, near: .08, far: 130 }} gl={{ antialias: quality !== 'low', powerPreference: 'low-power' }} frameloop={visible && !reduced ? 'always' : 'demand'} data-quality={effective}>
     <Rendering time={time} />
     <color attach="background" args={[roomLighting[time].sky]} />
     <PerformanceMonitor bounds={() => [24, 48]} flipflops={2} onDecline={() => setSlow(true)} onFallback={() => setSlow(true)} />

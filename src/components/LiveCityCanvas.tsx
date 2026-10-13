@@ -43,7 +43,9 @@ export default function LiveCityCanvas(props:Props) {
       if (mode==='auto'&&window.innerWidth<=760)quality.medium=true;
       // LOW reduces object/effect counts, not the sharpness of the mobile canvas.
       const ratio=Math.min(2,window.devicePixelRatio||1);
-      node.width=Math.round(Math.min(1400,width*ratio));node.height=Math.round(node.width*MAP_HEIGHT/MAP_WIDTH);
+      // Холст не ограничен 1400 px: при приближении карты (щипок, колёсико) ширина растёт, и жители с машинами остаются чёткими. Потолок защищает слабые устройства.
+      const maxWidth=quality.low?1400:window.innerWidth<=760?2400:3200;
+      node.width=Math.round(Math.min(maxWidth,width*ratio));node.height=Math.round(node.width*MAP_HEIGHT/MAP_WIDTH);
       ctx.setTransform(node.width/MAP_WIDTH,0,0,node.height/MAP_HEIGHT,0,0);
       // Смена размера очищает холст: при щипке/колёсике это шло каждый кадр, и машины, люди и суда мигали до следующего тика. Перерисовываем сразу.
       if (ready&&!disposed) paint(live.current);

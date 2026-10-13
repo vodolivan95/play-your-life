@@ -30,12 +30,13 @@ test('Живой город: пути судов целиком лежат в в
 
 test('Живой город: тротуары идут вдоль дорог, но не по проезжей части',()=>{
   const lanes=new Map(wideProfile.routes.filter(r=>r.kind==='road').map(r=>[r.id,new LanePath(r,wideProfile)]));
-  const walks=lifeRoutes.filter(r=>r.kind==='pedestrian');
+  const walks=lifeRoutes.filter(r=>r.id.startsWith('life-walk'));
   assert.ok(walks.length>=10);
   for (const r of walks) {
     const p=new LanePath(r,wideProfile);
-    const best=Math.min(...[...lanes.values()].map(l=>nearest(l,...Object.values(p.at(p.length/2)) as [number,number])));
-    assert.ok(best>=3&&best<=40,`${r.id}: расстояние до дороги ${best.toFixed(1)}`);
+    const near=[...Array(12)].map((_,i)=>{const q=p.at(p.length*(i+.5)/12);return Math.min(...[...lanes.values()].map(l=>nearest(l,q.x,q.y)));}).sort((a,b)=>a-b);
+    const best=near[6];
+    assert.ok(best>=3&&best<=40,`${r.id}: медианное расстояние до дороги ${best.toFixed(1)}`);
   }
 });
 
@@ -68,7 +69,7 @@ test('Живой город: жителей много на всех уровн�
     const routes=new Set(walkers.map(a=>a.path.route.id));
     assert.ok(routes.size>=(level==='low'?6:10),`${level}: жители только на ${routes.size} маршрутах`);
     for (let i=0;i<walkers.length;i++) for (const b of walkers.slice(i+1))
-      assert.ok(Math.hypot(walkers[i].position.x-b.position.x,walkers[i].position.y-b.position.y)>=.9,'двое жителей в одной точке');
+      assert.ok(Math.hypot(walkers[i].position.x-b.position.x,walkers[i].position.y-b.position.y)>=14,'жители слиплись в кучу');
   }
 });
 
@@ -81,4 +82,32 @@ test('Живой город: спрайты жителей плотные — в
     assert.ok(m.worstHoleShare<=.06,`${name}: дыр ${m.worstHoleShare}`);
     assert.ok(m.minInteriorPixels>=400,`${name}: фигура слишком тонкая (${m.minInteriorPixels})`);
   }
+});
+
+test('Живой город: пешеходные маршруты не уводят жителей к воде и краю моста',()=>{
+  const m=JSON.parse(readFileSync(new URL('../scripts/city-routes-metrics.json',import.meta.url),'utf8')) as {maxWetShare:number;wetShare:Record<string,number>};
+  const ids=wideProfile.routes.filter(r=>r.kind==='pedestrian').map(r=>r.id);
+  for (const id of ids) {
+    if (!id.startsWith('life-walk')&&!id.startsWith('wide-plaza')) continue;
+    assert.ok(id in m.wetShare,`${id}: нет в метриках, пересоберите scripts/build-wide-life.py`);
+    // Круг у глобуса идёт вдоль бассейна фонтана — вода рядом с плиткой допустима.
+    assert.ok(m.wetShare[id]<=(id==='wide-plaza-globe'?.15:m.maxWetShare),`${id}: у воды ${m.wetShare[id]}`);
+  }
+  assert.ok(ids.length>=18);
+});
+
+test('Живой город: за 5 минут жители не толпятся и равномерно распределены по маршрутам',()=>{
+  const budget=wideProfile.budgets!.high;
+  const sim=new CitySimulation(wideProfile.routes,3,wideProfile);sim.initialize(budget);
+  let closePairs=0,samples=0;const used=new Set<string>();
+  for (let step=0;step<9000;step++) {
+    sim.step(1/30,budget);
+    if (step%30) continue;
+    const w=sim.agents.filter(a=>a.kind==='pedestrian');
+    for (const a of w) used.add(a.path.route.id);
+    for (let i=0;i<w.length;i++) for (const b of w.slice(i+1)) if (Math.hypot(w[i].position.x-b.position.x,w[i].position.y-b.position.y)<12) closePairs++;
+    samples++;
+  }
+  assert.equal(closePairs,0,'жители ближе 12 единиц друг к другу');
+  assert.ok(used.size>=18,`жители побывали только на ${used.size} маршрутах`);
 });

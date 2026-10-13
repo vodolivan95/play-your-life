@@ -117,7 +117,7 @@ export class CitySimulation {
     const position=path.at(distance), kind=path.route.kind;
     const fleet=boatsByRoute[path.route.id]??boatFallback;
     const sprite=kind==='water' ? fleet[Math.floor(this.random()*fleet.length)] : kind==='road' ? Math.floor(this.random()*CAR_TYPES) : Math.floor(this.random()*5);
-    const scale=this.profile.vehicleScale,radius=(kind==='water' ? boatTypes[sprite].radius : kind==='road' ? 6 : 1.6)*(kind==='pedestrian'?1:scale);
+    const scale=this.profile.vehicleScale,radius=(kind==='water' ? boatTypes[sprite].radius : kind==='road' ? 6 : 8)*(kind==='pedestrian'?1:scale);
     if (this.agents.some(a=>a.kind===kind&&Math.hypot(position.x-a.position.x,position.y-a.position.y)<radius+a.safeRadius+24)) return false;
     const agent=this.pool.pop() ?? {} as Agent;
     Object.assign(agent,{ id:this.nextId++,kind,path,distance,position,currentSpeed:0,

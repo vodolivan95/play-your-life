@@ -19,12 +19,17 @@ from skimage.graph import route_through_array
 ROOT = Path(__file__).resolve().parent.parent
 W, H = 2000, 1125
 MAX_POINTS = 95
+PLAZA_CAP = {'wide-plaza-globe': 12}
+PLAZA_SPEED = {}
+MARGIN = 9.0  # пешеходы не ближе 9 px к воде
+MAX_WET = 0.03  # доля точек маршрута ближе 4 px к воде, выше которой маршрут отбрасывается
 
 
 def dump():
     code = ("import { wideProfile as p } from '%s/src/cityLive/wideMap.ts';"
-            "console.log(JSON.stringify({regions:p.waterRegions,routes:p.routes.filter(r=>!r.id.startsWith('life-')).map(r=>({id:r.id,kind:r.kind,closed:r.closed,"
-            "pts:r.points.map(q=>[q.x*p.width,q.y*p.height])}))}));") % ROOT
+            "import { basePlazaRoutes as b } from '%s/src/cityLive/wideMap.ts';"
+            "console.log(JSON.stringify({regions:p.waterRegions,routes:[...p.routes.filter(r=>r.kind!=='pedestrian'),...b].map(r=>({id:r.id,kind:r.kind,closed:r.closed,"
+            "pts:r.points.map(q=>[q.x*p.width,q.y*p.height])}))}));") % (ROOT, ROOT)
     out = subprocess.run(['node', '--experimental-strip-types', '-e', code, '--input-type=module'], capture_output=True, text=True, check=True).stdout
     return json.loads(out)
 
@@ -87,6 +92,36 @@ def water_distance(regions):
     return cv2.distanceTransform(water, cv2.DIST_L2, 5)
 
 
+def land_distance():
+    """Расстояние от каждой точки карты до воды (любой синий пиксель, включая тени под арками мостов)."""
+    im = np.array(Image.open(ROOT / 'src/assets/city-wide.webp').convert('RGB').resize((W, H), Image.LANCZOS))
+    hsv = cv2.cvtColor(im, cv2.COLOR_RGB2HSV)
+    h, s, v = hsv[..., 0].astype(int) * 2, hsv[..., 1], hsv[..., 2]
+    blue = ((h >= 170) & (h <= 240) & (s >= 90) & (v >= 60)).astype(np.uint8)
+    blue = cv2.morphologyEx(blue, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+    return cv2.distanceTransform(1 - blue, cv2.DIST_L2, 5)
+
+
+def keep_dry(p, land, closed=False, margin=MARGIN, radius=28):
+    """Сдвигает точки пешеходного маршрута от воды: каждая точка ближе MARGIN px к воде переносится на ближайший сухой пиксель."""
+    q = resample(p, 5.0)
+    out = []
+    for x, y in q:
+        xi, yi = min(W - 1, max(0, int(x))), min(H - 1, max(0, int(y)))
+        if land[yi, xi] >= margin: out.append((x, y)); continue
+        sn = snap(land, (x, y), margin, radius)
+        out.append((float(sn[0]), float(sn[1])) if sn else (x, y))
+    out = smooth(np.array(out), 2, closed)
+    out = np.array([(x, y) if land[min(H - 1, max(0, int(y))), min(W - 1, max(0, int(x)))] >= margin * .6 else
+                    (snap(land, (x, y), margin, radius) or (x, y)) for x, y in out], float)
+    return simplify(out, 0.9, closed)
+
+
+def wet_share(p, land, closed=False):
+    q = resample(np.vstack([p, p[:1]]) if closed else p, 3.0)
+    return float(np.mean([land[min(H - 1, max(0, int(y))), min(W - 1, max(0, int(x)))] < 4 for x, y in q]))
+
+
 def snap(dist, pt, need, radius=60):
     x, y = int(pt[0]), int(pt[1])
     y0, y1, x0, x1 = max(0, y - radius), min(H, y + radius), max(0, x - radius), min(W, x + radius)
@@ -146,6 +181,22 @@ def main():
         p = simplify(offset_right(base, off, closed), 0.9, closed)
         entries.append((rid, 'pedestrian', closed, speed, cap, p))
         if both and not closed: entries.append((rid + '-back', 'pedestrian', False, speed, cap, p[::-1]))
+    land = land_distance()
+    for k, (rid, kind, closed, speed, cap, p) in enumerate(entries):
+        entries[k] = (rid, kind, closed, speed, cap, keep_dry(p, land, closed))
+    for rid, r in lanes.items():
+        if r['kind'] == 'pedestrian' and rid.startswith('wide-plaza'):
+            cap = PLAZA_CAP.get(rid, 11)
+            entries.append((rid, 'pedestrian', r['closed'], PLAZA_SPEED.get(rid, 5.2), cap, keep_dry(np.array(r['pts']), land, r['closed'])))
+    kept = []
+    for e in entries:
+        w = wet_share(e[5], land, e[2])
+        print('%-26s у воды %4.1f%%' % (e[0], w * 100))
+        if w > MAX_WET and e[0].startswith('life-walk'): print('  ОТБРОШЕН: слишком близко к воде'); continue
+        kept.append((e, w))
+    entries = [e for e, _ in kept]
+    wet = {e[0]: round(w, 4) for e, w in kept}
+    (ROOT / 'scripts/city-routes-metrics.json').write_text(json.dumps({'maxWetShare': MAX_WET, 'wetShare': wet}, indent=2) + '\n')
     dist = water_distance(data['regions'])
     for rid, (way, speed, cap, need) in SEA.items():
         p = sea_route(dist, way, need)

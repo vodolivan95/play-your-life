@@ -48,6 +48,12 @@ export default function LiveCityCanvas(props:Props) {
       const ratio=Math.min(2,window.devicePixelRatio||1);
       node.width=Math.round(Math.min(1400,width*ratio));node.height=Math.round(node.width*MAP_HEIGHT/MAP_WIDTH);
       ctx.setTransform(node.width/MAP_WIDTH,0,0,node.height/MAP_HEIGHT,0,0);
+      // Смена размера очищает холст: при щипке/колёсике это шло каждый кадр, и машины, люди и суда мигали до следующего тика. Перерисовываем сразу.
+      if (ready&&!disposed) paint(live.current);
+    };
+    const paint=(settings:Props)=>{
+      const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      renderer.draw(sim,{...settings,low:quality.level!=='high',reduced,background,sprites,boats,globe,clean,people,unitPx});
     };
     const observer=new ResizeObserver(resize);observer.observe(node);
     const tick=(now:number)=>{
@@ -64,7 +70,7 @@ export default function LiveCityCanvas(props:Props) {
       const signature=JSON.stringify([settings.time,settings.weather,settings.debug,settings.draft,node.width]);
       if (!paused||signature!==lastSignature) {
         if (paused) Object.assign(renderer,timeLighting(settings.time,sim.elapsed));
-        const renderStart=performance.now();renderer.draw(sim,{...settings,low:quality.level!=='high',reduced,background,sprites,boats,globe,clean,people,unitPx});renderMs=renderMs*.9+(performance.now()-renderStart)*.1;lastSignature=signature;
+        const renderStart=performance.now();paint(settings);renderMs=renderMs*.9+(performance.now()-renderStart)*.1;lastSignature=signature;
       }
       if (now-lastStats>1000) {
         lastStats=now;

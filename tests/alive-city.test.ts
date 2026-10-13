@@ -99,14 +99,13 @@ test('Живой город: пешеходные маршруты не увод
 test('Живой город: за 5 минут жители не толпятся и равномерно распределены по маршрутам',()=>{
   const budget=wideProfile.budgets!.high;
   const sim=new CitySimulation(wideProfile.routes,3,wideProfile);sim.initialize(budget);
-  let closePairs=0,samples=0;const used=new Set<string>();
+  let closePairs=0;const used=new Set<string>();
   for (let step=0;step<9000;step++) {
     sim.step(1/30,budget);
     if (step%30) continue;
     const w=sim.agents.filter(a=>a.kind==='pedestrian');
     for (const a of w) used.add(a.path.route.id);
     for (let i=0;i<w.length;i++) for (const b of w.slice(i+1)) if (Math.hypot(w[i].position.x-b.position.x,w[i].position.y-b.position.y)<12) closePairs++;
-    samples++;
   }
   assert.equal(closePairs,0,'жители ближе 12 единиц друг к другу');
   assert.ok(used.size>=18,`жители побывали только на ${used.size} маршрутах`);

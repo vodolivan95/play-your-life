@@ -117,6 +117,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   const [achievementFilter, setAchievementFilter] = useState('all');
   const [sphereTab, setSphereTab] = useState('overview');
   const [quickSphere, setQuickSphere] = useState<string | null>(null);
+  const [cityEnter, setCityEnter] = useState<string | null>(null);
   const [questSphere, setQuestSphere] = useState('english');
   const [questTemplate, setQuestTemplate] = useState<Partial<Quest> | null>(null);
   const [toast, setToast] = useState('');
@@ -337,7 +338,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                   onTab={setSphereTab}
                   onBack={() => setSelected(null)}
                   onQuest={newQuest}
-                  onCity={() => navigate('city')}
+                  onCity={() => { setCityEnter(sphere.id); navigate('city'); }}
                 />
                 {sphereTab === 'overview' && (
                   <SphereOverview
@@ -440,6 +441,8 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
             )}
             {page === 'city' && (
               <LifeCity
+                enter={cityEnter}
+                onEntered={() => setCityEnter(null)}
                 onChange={setState}
                 notify={notify}
                 state={state}
@@ -782,7 +785,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
             onClose={() => setQuickSphere(null)}
             onOpen={() => { setPage('spheres'); setSelected(quickSphere); setSphereTab('overview'); setQuickSphere(null); window.scrollTo({ top: 0 }); }}
             onQuest={() => { setQuestTemplate(null); setQuestSphere(quickSphere); setQuickSphere(null); setModal('quest'); }}
-            onCity={() => { setQuickSphere(null); navigate('city'); }}
+            onCity={() => { setCityEnter(quickSphere); setQuickSphere(null); navigate('city'); }}
             onIdea={(name, description) => { setState((current) => current.goals.some((g) => g.sphere === quickSphere && g.name === name) ? current : saveGoal(current, { name, description, sphere: quickSphere, target: 100, reward: 100, progressMode: 'tasks' })); notify('Проект добавлен. Открой его, чтобы настроить этапы и задачи.'); }}
           />
         )}

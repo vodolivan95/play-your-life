@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { GameState } from '../game';
 import BuildingInterior from './BuildingInterior';
@@ -10,14 +10,20 @@ export default function LifeCity({
   onChange,
   notify,
   roomNotice,
+  enter,
+  onEntered,
 }: {
   state: GameState;
   onOpen?: (id: string) => void;
   roomNotice?: string;
+  /** Здание, в которое нужно сразу войти (кнопка «Войти в здание» в сфере). */
+  enter?: string | null;
+  onEntered?: () => void;
   onChange: Dispatch<SetStateAction<GameState>>;
   notify: (message: string) => void;
 }) {
-  const [inside, setInside] = useState<string | null>(null);
+  const [inside, setInside] = useState<string | null>(enter ?? null);
+  useEffect(() => { if (enter) onEntered?.(); }, [enter, onEntered]);
   const [paused, setPaused] = useState(false);
   const [speed, setSpeed] = useState(1);
   if (inside)

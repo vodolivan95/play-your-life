@@ -276,7 +276,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                   ) : page === 'home' ? (
                     `Привет, ${state.profile.name}`
                   ) : (
-                    navigation.find((n) => n.id === page)?.label
+                    navigation.find((n) => n.id === page)?.label ?? (page === 'monthly' ? 'Итоги месяца' : undefined)
                   )}
                   <span className="heading-dot">.</span>
                 </h1>

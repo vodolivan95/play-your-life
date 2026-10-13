@@ -97,7 +97,8 @@ try {
     });
     if (width > 760) {
       if (height >= 880) {
-        await cityArtwork(page, '.pyl-city-art', 1536, 1024);
+        await page.addStyleTag({ content:'.mfm-pan, .mfm-car, .mfm-boat, .mfm-bird { animation:none !important; }' });
+        await cityArtwork(page, '.pyl-city-card .mfm-pan', 1200, 675);
         assert.equal(await page.locator('.pyl-city-card').isVisible(), true);
       } else {
         assert.equal(await page.locator('.pyl-city-card').isVisible(), false);
@@ -105,8 +106,8 @@ try {
       assert.equal(await page.locator('.sidebar .play-wordmark').count(), 1);
       assert.equal(await page.locator('.sidebar .pyl-player').count(), 1);
       const buttons = page.locator('.sidebar .pyl-menu-nav .pyl-nav-item');
-      assert.equal(await buttons.count(), 13);
-      for (const [index, id] of ['home','spheres','tasks','quests','goals','plan','monthly','tree','achievements','shop','city','statistics','profile'].entries()) {
+      assert.equal(await buttons.count(), 12);
+      for (const [index, id] of ['home','spheres','tasks','quests','goals','plan','tree','achievements','shop','city','profile','statistics'].entries()) {
         const button = buttons.nth(index);
         const box = await button.boundingBox();
         assert.ok(box.y >= 0 && box.y + box.height <= height && box.height >= 24, `${id} must fit the sidebar`);
@@ -119,8 +120,8 @@ try {
       await page.screenshot({ path: `work/logo-menu-${suffix}.png`, fullPage: true });
       await page.locator('.sidebar').screenshot({ path: `work/logo-sidebar-${suffix}.png` });
     } else {
-      await page.addStyleTag({ content:'.mobile-footer-city-art, .mfm-car, .mfm-boat, .mfm-bird { animation:none !important; }' });
-      await cityArtwork(page, '.mobile-footer-city-art', 1200, 675);
+      await page.addStyleTag({ content:'.mfm-pan, .mfm-car, .mfm-boat, .mfm-bird { animation:none !important; }' });
+      await cityArtwork(page, '.mobile-footer-map .mfm-pan', 1200, 675);
       const image = await page.locator('.mobile-footer-map').boundingBox();
       assert.ok(Math.abs(image.width / image.height - 16 / 9) < .02, 'Footer map must keep the 16:9 frame');
       assert.equal(await page.locator('.mobile-city-footer .play-wordmark').count(), 1);
@@ -128,8 +129,8 @@ try {
       await page.locator('.pyl-tabbar').getByRole('button', { name:'Цели', exact:true }).click();
       await page.locator('main.screen-goals').waitFor();
       await page.locator('.pyl-tabbar').getByRole('button', { name:'Ещё', exact:true }).click();
-      assert.equal(await page.locator('.pyl-more .pyl-more-item').count(), 9);
-      await page.locator('.pyl-more').getByRole('button', { name:'Статистика', exact:true }).click();
+      assert.equal(await page.locator('.pyl-more .pyl-more-item').count(), 8);
+      await page.locator('.pyl-more').getByRole('button', { name:'Ключевые итоги', exact:true }).click();
       await page.locator('main.screen-statistics').waitFor();
       assert.equal(await page.locator('.pyl-more').count(), 0);
       await page.locator('.pyl-tabbar').getByRole('button', { name:'Главная', exact:true }).click();

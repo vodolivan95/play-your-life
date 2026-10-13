@@ -200,9 +200,17 @@ def render(model, parts, heading, scale, base):
     rgba[..., :3] = np.clip(color, 0, 255) * alpha[..., None]
     rgba[..., 3] = alpha * 255
     small = cv2.resize(rgba, (CELL, CELL), interpolation=cv2.INTER_AREA)
-    a = small[..., 3:4]
-    rgb = np.where(a > 0, small[..., :3] / np.maximum(a, 1e-3) * 255, 0)
-    return np.clip(np.concatenate([rgb, a], 2), 0, 255).astype(np.uint8)
+    a = small[..., 3] / 255.0
+    rgb = np.where(a[..., None] > 0, small[..., :3] / np.maximum(a[..., None] * 255, 1e-3) * 255, 0)
+    # Плотная фигура: мягкие края (суперсэмплинг) подтягиваем к 0/1, внутри альфа ровно 1.
+    solid = np.clip((a - .12) / .45, 0, 1)
+    # Тонкий тёмный контур в 1 px вокруг фигуры — не «тает» на светлой плитке и воде.
+    ring = cv2.dilate((solid > .35).astype(np.uint8), np.ones((3, 3), np.uint8)).astype(np.float32)
+    outline = np.clip(ring - solid, 0, 1) * .9
+    out_a = np.clip(solid + outline * (1 - solid), 0, 1)
+    ink = np.array([22, 26, 40], np.float32)
+    mix = (rgb * solid[..., None] + ink * (outline * (1 - solid))[..., None]) / np.maximum(out_a[..., None], 1e-3)
+    return np.clip(np.concatenate([mix, out_a[..., None] * 255], 2), 0, 255).astype(np.uint8)
 
 
 def main():

@@ -175,7 +175,7 @@ export class CityRenderer {
     const walkers=sim.agents.filter(a=>a.kind==='pedestrian').sort((x,y)=>x.position.y-y.position.y);
     for (const [i,a] of walkers.entries()) {
       if (rain&&i%3===0) continue;
-      const p=a.position,alpha=Math.min(1,a.age/2)*(a.retireAt===undefined?1:Math.max(0,(a.retireAt-a.age)/2));
+      const p=a.position,alpha=Math.min(1,a.age/.5)*(a.retireAt===undefined?1:Math.max(0,(a.retireAt-a.age)/1));
       if (alpha<=0) continue;
       ctx.save();ctx.translate(p.x,p.y);ctx.globalAlpha=alpha;
       const k=Math.max(1,Math.min(2.4,1/Math.max(.05,opts.unitPx??1)));

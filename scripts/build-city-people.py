@@ -14,8 +14,8 @@ import numpy as np
 import cv2
 from PIL import Image
 
-CELL = 64          # размер кадра в атласе, px (загрузчик берёт cell = ширина / 8)
-SS = 4             # суперсэмплинг
+CELL = 128         # размер кадра в атласе, px (загрузчик берёт cell = ширина / 8)
+SS = 3             # суперсэмплинг
 SLIM = 0.80        # сужение тела по плечам (до поворота), чтобы герои не выглядели «жирными»
 ELEV = math.radians(32)   # угол камеры над горизонтом
 FRAMES = 8
@@ -231,7 +231,7 @@ def main():
         for d in range(DIRS):
             for f in range(FRAMES):
                 sheet[d * CELL:(d + 1) * CELL, f * CELL:(f + 1) * CELL] = render(m, poses[f], d * math.pi / 4, scale, base)
-        Image.fromarray(sheet, 'RGBA').save(out / f'{name}.webp', quality=88, method=6)
+        Image.fromarray(sheet, 'RGBA').save(out / f'{name}.webp', lossless=True, method=6)
         print('готово', name)
 
 

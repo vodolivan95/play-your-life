@@ -1,32 +1,32 @@
 {
   "kaykit-barbarian.webp": {
     "cells": 64,
-    "worstHoleShare": 0.0418,
-    "meanInteriorAlpha": 0.9957,
-    "minInteriorPixels": 737
+    "worstHoleShare": 0.0089,
+    "meanInteriorAlpha": 0.9992,
+    "minInteriorPixels": 3175
   },
   "kaykit-hooded.webp": {
     "cells": 64,
-    "worstHoleShare": 0.028,
-    "meanInteriorAlpha": 0.9976,
-    "minInteriorPixels": 614
+    "worstHoleShare": 0.0152,
+    "meanInteriorAlpha": 0.999,
+    "minInteriorPixels": 2704
   },
   "kaykit-knight.webp": {
     "cells": 64,
-    "worstHoleShare": 0.0225,
-    "meanInteriorAlpha": 0.998,
-    "minInteriorPixels": 699
+    "worstHoleShare": 0.0118,
+    "meanInteriorAlpha": 0.9992,
+    "minInteriorPixels": 3021
   },
   "kaykit-mage.webp": {
     "cells": 64,
-    "worstHoleShare": 0.0136,
-    "meanInteriorAlpha": 0.9984,
-    "minInteriorPixels": 879
+    "worstHoleShare": 0.0078,
+    "meanInteriorAlpha": 0.9995,
+    "minInteriorPixels": 3848
   },
   "kaykit-rogue.webp": {
     "cells": 64,
-    "worstHoleShare": 0.0293,
-    "meanInteriorAlpha": 0.9976,
-    "minInteriorPixels": 597
+    "worstHoleShare": 0.0156,
+    "meanInteriorAlpha": 0.9989,
+    "minInteriorPixels": 2622
   }
 }

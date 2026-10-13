@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { initialState } from '../src/game.ts';
-import { buyItem, redeemPurchase, selectRewardTarget } from '../src/shop.ts';
+import { buyItem, redeemPurchase, selectRewardTarget, shopItems } from '../src/shop.ts';
 import { backupText, restoreBackup } from '../src/backup.ts';
 
 test('покупка списывает только монеты и сохраняется в копии', () => {
@@ -143,4 +143,26 @@ test('сохранение с поддельной своей наградой �
   assert.throws(() => restoreBackup(backupText(bad as typeof state)));
   const orphan = { ...state, shop: { ...state.shop!, purchases: [{ id: 'p', itemId: 'custom-unknown-0000', price: 1, date: new Date().toISOString() }] } };
   assert.throws(() => restoreBackup(backupText(orphan as typeof state)));
+});
+
+test('раздел «Награда Люкс»: много дорогих наград, обычные награды отдельно', () => {
+  const lux = shopItems.filter((i) => 'lux' in i && i.lux);
+  assert.ok(lux.length >= 9);
+  assert.ok(lux.every((i) => i.kind === 'reward' && i.price >= 1500));
+  assert.ok(shopItems.filter((i) => i.kind === 'reward' && !('lux' in i)).length >= 8);
+  const state = buyItem({ ...initialState(), coins: 5000 }, 'luxhotel');
+  assert.equal(state.coins, 2000);
+  assert.deepEqual(restoreBackup(backupText(state)), state);
+});
+test('своя награда может попасть в «Награду Люкс» и сохраняется', () => {
+  const base = { ...initialState(), coins: 9000 };
+  const next = saveCustomReward(base, { name: 'Новый велосипед', price: 6000, lux: true });
+  const own = shopCatalog(next).find((i) => i.name === 'Новый велосипед')!;
+  assert.equal(own.lux, true);
+  assert.equal(own.price, 6000);
+  assert.equal(shopCatalog(saveCustomReward(base, { name: 'Пицца', price: 200 })).find((i) => i.name === 'Пицца')!.lux, undefined);
+  assert.deepEqual(restoreBackup(backupText(next)), next);
+  assert.equal(buyItem(next, own.id).coins, 3000);
+  const broken = { ...next, shop: { ...next.shop, customRewards: [{ ...next.shop!.customRewards![0], lux: 'да' }] } };
+  assert.throws(() => restoreBackup(JSON.stringify(broken)));
 });

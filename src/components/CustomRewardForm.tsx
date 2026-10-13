@@ -6,8 +6,9 @@ import type { CustomReward } from '../shop';
 import { readProjectImage } from '../projectImage';
 
 /** Окно создания и изменения своей награды: название, описание, картинка и цена. */
-export default function CustomRewardForm({ reward, state, onChange, notify, onClose }: {
+export default function CustomRewardForm({ reward, state, onChange, notify, onClose, defaultLux = false }: {
   reward?: CustomReward;
+  defaultLux?: boolean;
   state: GameState;
   onChange: (state: GameState) => void;
   notify: (message: string) => void;
@@ -19,6 +20,7 @@ export default function CustomRewardForm({ reward, state, onChange, notify, onCl
   const [description, setDescription] = useState(reward?.description ?? '');
   const [price, setPrice] = useState(String(reward?.price ?? 100));
   const [image, setImage] = useState<string | undefined>(reward?.image);
+  const [lux, setLux] = useState(reward?.lux ?? defaultLux);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -27,8 +29,8 @@ export default function CustomRewardForm({ reward, state, onChange, notify, onCl
   function submit(e: FormEvent) {
     e.preventDefault();
     try {
-      onChange(saveCustomReward(state, { id: reward?.id, name, description, price: Number(price), image }));
-      notify(reward ? 'Награда обновлена' : 'Своя награда добавлена в магазин');
+      onChange(saveCustomReward(state, { id: reward?.id, name, description, price: Number(price), image, lux }));
+      notify(reward ? 'Награда обновлена' : lux ? 'Награда добавлена в «Награду Люкс»' : 'Своя награда добавлена в магазин');
       onClose();
     } catch (err) {
       setError((err as Error).message);
@@ -76,6 +78,10 @@ export default function CustomRewardForm({ reward, state, onChange, notify, onCl
         <label>
           Цена в монетах
           <input type="number" inputMode="numeric" min={1} max={MAX_CUSTOM_REWARD_PRICE} step={1} required value={price} onChange={(e) => setPrice(e.target.value)} />
+        </label>
+        <label className="custom-reward-lux">
+          <input type="checkbox" checked={lux} onChange={(e) => setLux(e.target.checked)} />
+          <span>Награда Люкс — для самых дорогих наград, отдельный раздел магазина</span>
         </label>
         {bought && <p className="custom-reward-note">Новая цена действует для следующих покупок. Прежние покупки не меняются.</p>}
         {error && <p role="alert" className="custom-reward-error">{error}</p>}

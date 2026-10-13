@@ -126,7 +126,8 @@ export function validateState(value: unknown): asserts value is SavedState {
           (r.price as number) <= MAX_CUSTOM_REWARD_PRICE &&
           validProjectImage(r.image) &&
           date(r.createdAt) &&
-          (r.archived === undefined || typeof r.archived === 'boolean'),
+          (r.archived === undefined || typeof r.archived === 'boolean') &&
+          (r.lux === undefined || typeof r.lux === 'boolean'),
       ) ||
         (shop.customRewards as Record<string, unknown>[]).filter((r) => !r.archived).length > MAX_CUSTOM_REWARDS)
     )

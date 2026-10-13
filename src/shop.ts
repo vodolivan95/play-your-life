@@ -75,6 +75,96 @@ export const shopItems = [
     kind: 'reward',
   },
   {
+    id: 'luxspa',
+    name: 'Спа-день',
+    description: 'Тёплые бассейны и полный отдых',
+    icon: '🧖',
+    price: 1500,
+    color: '#fff1e2',
+    kind: 'reward',
+    lux: true,
+  },
+  {
+    id: 'luxconcert',
+    name: 'Концерт любимой группы',
+    description: 'Живая музыка и вечер эмоций',
+    icon: '🎤',
+    price: 1800,
+    color: '#f3e8ff',
+    kind: 'reward',
+    lux: true,
+  },
+  {
+    id: 'luxdinner',
+    name: 'Ужин в лучшем ресторане',
+    description: 'Вечер, который запомнится',
+    icon: '🍽️',
+    price: 2000,
+    color: '#fff4dc',
+    kind: 'reward',
+    lux: true,
+  },
+  {
+    id: 'luxcourse',
+    name: 'Дорогой курс',
+    description: 'Обучение, о котором давно мечтаешь',
+    icon: '🎓',
+    price: 2500,
+    color: '#e8eeff',
+    kind: 'reward',
+    lux: true,
+  },
+  {
+    id: 'luxhotel',
+    name: 'Выходные в отеле',
+    description: 'Два дня вдали от дел, с ужином и спа',
+    icon: '🏨',
+    price: 3000,
+    color: '#efeaff',
+    kind: 'reward',
+    lux: true,
+  },
+  {
+    id: 'luxtech',
+    name: 'Новая техника',
+    description: 'Гаджет, который улучшит твой день',
+    icon: '💻',
+    price: 4000,
+    color: '#e1f6ff',
+    kind: 'reward',
+    lux: true,
+  },
+  {
+    id: 'luxtrip',
+    name: 'Поездка на выходные',
+    description: 'Новый город и новые впечатления',
+    icon: '✈️',
+    price: 5000,
+    color: '#e7f8f0',
+    kind: 'reward',
+    lux: true,
+  },
+  {
+    id: 'luxgift',
+    name: 'Подарок мечты',
+    description: 'Вещь, о которой давно думаешь',
+    icon: '🎁',
+    price: 8000,
+    color: '#ffedf1',
+    kind: 'reward',
+    lux: true,
+  },
+  {
+    id: 'luxworld',
+    name: 'Путешествие мечты',
+    description: 'Большая поездка за всё, что заработано',
+    icon: '🌍',
+    price: 15000,
+    color: '#fff4dc',
+    kind: 'reward',
+    lux: true,
+  },
+  {
     id: 'gold',
     name: 'Золотая рамка',
     description: 'Сияющий акцент для твоего аватара',
@@ -117,20 +207,22 @@ export type CustomReward = {
   price: number;
   image?: string;
   createdAt: string;
+  /** Дорогая награда: показывается в разделе «Награда Люкс». */
+  lux?: boolean;
   /** Купленную награду не удаляют, а убирают из витрины: покупки в «Моих» сохраняются. */
   archived?: boolean;
 };
 export type ShopState = { purchases: Purchase[]; equippedFrame?: string; rewardTargetId?: string; customRewards?: CustomReward[] };
 export type ShopItem = {
   id: string; name: string; description: string; icon: string; price: number; color: string;
-  kind: 'reward' | 'frame'; image?: string; custom?: boolean; archived?: boolean;
+  kind: 'reward' | 'frame'; image?: string; custom?: boolean; archived?: boolean; lux?: boolean;
 };
 export const MAX_CUSTOM_REWARDS = 24;
 export const MAX_CUSTOM_REWARD_PRICE = 100000;
 export const customRewardIdPattern = /^custom-[A-Za-z0-9-]{8,60}$/;
 
 function customItem(r: CustomReward): ShopItem {
-  return { id: r.id, name: r.name, description: r.description ?? '', icon: '🎁', price: r.price, color: '#eef3ff', kind: 'reward', image: r.image, custom: true, archived: r.archived };
+  return { id: r.id, name: r.name, description: r.description ?? '', icon: '🎁', price: r.price, color: '#eef3ff', kind: 'reward', image: r.image, custom: true, archived: r.archived, lux: r.lux };
 }
 /** Каталог для витрины: встроенные товары и свои награды (без убранных из витрины). */
 export function shopCatalog(state: GameState): ShopItem[] {
@@ -146,7 +238,7 @@ export function findShopItem(state: GameState, id: string): ShopItem | undefined
 }
 export function saveCustomReward(
   state: GameState,
-  input: { id?: string; name: string; description?: string; price: number; image?: string },
+  input: { id?: string; name: string; description?: string; price: number; image?: string; lux?: boolean },
   now = new Date(),
 ): GameState {
   const name = input.name.trim(), description = input.description?.trim() || undefined;
@@ -165,6 +257,7 @@ export function saveCustomReward(
     name, price: input.price, createdAt: old?.createdAt ?? now.toISOString(),
     ...(description ? { description } : {}),
     ...(input.image ? { image: input.image } : {}),
+    ...(input.lux ? { lux: true } : {}),
   };
   return {
     ...state,

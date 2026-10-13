@@ -47,46 +47,47 @@
 }
 .shop-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
 }
 .shop-card {
   background: #fff;
-  padding: 16px;
+  padding: 12px;
   border: 1px solid #eaf0ff;
-  border-radius: 26px;
+  border-radius: 22px;
   box-shadow: 0 9px 24px #345eda13;
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 .shop-art {
-  border-radius: 20px;
-  aspect-ratio: 1.15;
+  border-radius: 16px;
+  aspect-ratio: 1;
   display: grid;
   place-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 .shop-art > span:not(.shop-frame-preview) {
-  font-size: 72px;
+  font-size: 58px;
   filter: drop-shadow(0 12px 9px #35446c20);
 }
-.shop-card h2 {
-  font-size: 17px;
+.shop-card h2,
+.shop-card h3 {
+  font-size: 15px;
   line-height: 1.3;
-  margin: 0 4px 8px;
+  margin: 0 4px 6px;
 }
 .shop-card p {
-  font-size: 13px;
+  font-size: 12px;
   color: #536278;
-  line-height: 1.5;
-  margin: 0 4px 16px;
+  line-height: 1.45;
+  margin: 0 4px 12px;
   flex: 1;
 }
 .shop-price {
   background: #e9efff;
   color: #214abd;
-  border-radius: 16px;
+  border-radius: 14px;
   width: 100%;
   min-height: 44px;
   font-weight: 700;
@@ -125,29 +126,6 @@
 .avatar-content.frame-rose {
   border-color: #f48bab;
 }
-.owned-reward {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 14px 0;
-}
-.owned-reward > span {
-  font-size: 30px;
-}
-.owned-reward > div {
-  flex: 1;
-  min-width: 0;
-}
-.owned-reward h3 {
-  font-size: 14px;
-}
-.owned-reward small {
-  color: #536278;
-  font-size: 11px;
-}
-.owned-reward button {
-  font-size: 12px;
-}
 .shop-confirm {
   max-width: 420px;
   width: calc(100% - 32px);
@@ -168,10 +146,19 @@
 .shop-confirm .primary-button {
   width: 100%;
 }
-@media (max-width: 900px) {
+@media (max-width: 1180px) {
+  .shop-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 960px) {
+  .shop-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
   .shop-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
   }
 }
 @media (max-width: 380px) {
@@ -196,9 +183,6 @@
   }
   .shop-balance strong {
     font-size: 34px;
-  }
-  .owned-reward {
-    flex-wrap: wrap;
   }
   .mobile-nav button span {
     font-size: 8px !important;
@@ -238,7 +222,7 @@ dialog.shop-confirm::backdrop {
   inset: 0;
   display: grid;
   place-items: center;
-  font-size: 72px;
+  font-size: 58px;
 }
 .shop-3d-open {
   position: absolute;
@@ -358,7 +342,7 @@ dialog.shop-confirm::backdrop {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  min-height: 240px;
+  min-height: 200px;
   text-align: center;
   border: 2px dashed #b9c8ef;
   background: transparent;
@@ -368,10 +352,10 @@ dialog.shop-confirm::backdrop {
   font: inherit;
 }
 .shop-card-create strong {
-  font-size: 17px;
+  font-size: 15px;
 }
 .shop-card-create > span:last-child {
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.5;
   color: #536278;
   max-width: 220px;
@@ -379,10 +363,10 @@ dialog.shop-confirm::backdrop {
 .shop-create-plus {
   display: grid;
   place-items: center;
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  font-size: 30px;
+  font-size: 28px;
   color: #fff;
   background: #3267ed;
 }
@@ -396,12 +380,6 @@ dialog.shop-confirm::backdrop {
 }
 :root[data-theme='dark'] .shop-card-create > span:last-child {
   color: #9fb1db;
-}
-.owned-reward-photo {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  object-fit: cover;
 }
 .shop-confirm-photo {
   display: block;
@@ -495,4 +473,158 @@ dialog.shop-confirm::backdrop {
 }
 .text-button.danger {
   color: #c2334d;
+}
+
+/* Награда Люкс — баннер в стиле презентации Apple: чёрный фон, крупный заголовок, одно действие */
+.lux-hero,
+.lux-owned {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  text-align: center;
+  color: #f5f5f7;
+  background: radial-gradient(120% 90% at 50% 0%, #2b2552 0%, #0c0b16 55%, #000 100%);
+  font-family: -apple-system, 'SF Pro Display', 'Inter', system-ui, sans-serif;
+}
+.lux-hero::before,
+.lux-owned::before {
+  content: '';
+  position: absolute;
+  inset: -35% 18% auto;
+  height: 75%;
+  background: radial-gradient(closest-side, #ffd86a40, transparent);
+  filter: blur(36px);
+  z-index: -1;
+}
+.lux-hero {
+  margin: 0 0 20px;
+  padding: clamp(40px, 6vw, 80px) clamp(22px, 5vw, 64px);
+  border-radius: 32px;
+  box-shadow: 0 28px 60px #0000003d;
+}
+.lux-eyebrow {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #ffd86a;
+}
+.lux-title,
+.lux-owned h3 {
+  margin: 0;
+  font-size: clamp(42px, 7vw, 88px);
+  line-height: 1.03;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  background: linear-gradient(180deg, #fff 25%, #b4b4c2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.lux-lead {
+  max-width: 620px;
+  margin: 18px auto 28px;
+  font-size: clamp(16px, 1.8vw, 22px);
+  line-height: 1.4;
+  color: #a1a1aa;
+}
+.lux-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.lux-buy {
+  min-height: 48px;
+  padding: 0 28px;
+  border-radius: 999px;
+  background: #f5f5f7;
+  color: #111;
+  font-size: 17px;
+  font-weight: 600;
+}
+.lux-buy:hover:not(:disabled),
+.lux-buy:focus-visible {
+  background: #fff;
+}
+.lux-buy:disabled {
+  opacity: 0.55;
+}
+.lux-note {
+  font-size: 14px;
+  color: #a1a1aa;
+}
+
+/* Мои награды */
+.shop-owned {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.owned-head {
+  text-align: center;
+  padding: clamp(8px, 2vw, 24px) 0 4px;
+}
+.owned-eyebrow {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #3267ed;
+}
+.owned-head h2 {
+  margin: 0;
+  font-size: clamp(34px, 5vw, 56px);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+.owned-stats {
+  display: flex;
+  justify-content: center;
+  gap: clamp(20px, 5vw, 64px);
+  margin: 22px 0 0;
+}
+.owned-stats div {
+  display: grid;
+  gap: 2px;
+}
+.owned-stats dt {
+  order: 2;
+  font-size: 13px;
+  color: #536278;
+}
+.owned-stats dd {
+  margin: 0;
+  font-size: clamp(30px, 4vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.owned-empty {
+  text-align: center;
+  color: #536278;
+}
+.lux-owned {
+  padding: clamp(28px, 4vw, 52px) clamp(20px, 4vw, 48px);
+  border-radius: 28px;
+}
+.lux-owned h3 {
+  font-size: clamp(34px, 5vw, 60px);
+}
+.lux-owned .lux-lead {
+  margin: 12px auto 14px;
+}
+.lux-owned small {
+  display: block;
+  margin-bottom: 18px;
+  color: #8e8e99;
+}
+.owned-card .shop-art {
+  aspect-ratio: 1.3;
+}
+:root[data-theme='dark'] .owned-eyebrow {
+  color: #8fb0ff;
+}
+:root[data-theme='dark'] .owned-stats dt,
+:root[data-theme='dark'] .owned-empty {
+  color: #9fb1db;
 }

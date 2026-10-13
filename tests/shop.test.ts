@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { initialState } from '../src/game.ts';
-import { buyItem, redeemPurchase, selectRewardTarget } from '../src/shop.ts';
+import { buyItem, LUX_REWARD_ID, redeemPurchase, selectRewardTarget, shopItems } from '../src/shop.ts';
 import { backupText, restoreBackup } from '../src/backup.ts';
 
 test('покупка списывает только монеты и сохраняется в копии', () => {
@@ -143,4 +143,18 @@ test('сохранение с поддельной своей наградой �
   assert.throws(() => restoreBackup(backupText(bad as typeof state)));
   const orphan = { ...state, shop: { ...state.shop!, purchases: [{ id: 'p', itemId: 'custom-unknown-0000', price: 1, date: new Date().toISOString() }] } };
   assert.throws(() => restoreBackup(backupText(orphan as typeof state)));
+});
+
+test('«Награда Люкс» — самая дорогая награда: покупается, используется и входит в копию', () => {
+  const lux = shopItems.find((i) => i.id === LUX_REWARD_ID);
+  assert.ok(lux && lux.kind === 'reward');
+  assert.equal(lux.name, 'Награда Люкс');
+  assert.ok(shopItems.filter((i) => i.kind === 'reward' && i.id !== LUX_REWARD_ID).every((i) => i.price < lux.price));
+  assert.throws(() => buyItem({ ...initialState(), coins: lux.price - 1 }, LUX_REWARD_ID), /Недостаточно/);
+  const bought = buyItem({ ...initialState(), coins: lux.price + 5 }, LUX_REWARD_ID);
+  assert.equal(bought.coins, 5);
+  const used = redeemPurchase(bought, bought.shop!.purchases[0].id);
+  assert.ok(used.shop!.purchases[0].usedAt);
+  assert.equal(used.coins, 5);
+  assert.deepEqual(restoreBackup(backupText(used)), used);
 });

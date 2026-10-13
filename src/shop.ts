@@ -75,6 +75,15 @@ export const shopItems = [
     kind: 'reward',
   },
   {
+    id: 'lux',
+    name: 'Награда Люкс',
+    description: 'Главная награда: выходные в отеле с ужином и спа — только для тебя',
+    icon: '✨',
+    price: 3000,
+    color: '#15131f',
+    kind: 'reward',
+  },
+  {
     id: 'gold',
     name: 'Золотая рамка',
     description: 'Сияющий акцент для твоего аватара',
@@ -102,6 +111,8 @@ export const shopItems = [
     kind: 'frame',
   },
 ] as const;
+/** Главная награда магазина: показывается отдельным баннером, а не в общей сетке. */
+export const LUX_REWARD_ID = 'lux';
 export type Purchase = {
   id: string;
   itemId: string;

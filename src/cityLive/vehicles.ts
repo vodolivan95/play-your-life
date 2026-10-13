@@ -1,7 +1,7 @@
 // Атласы транспорта: 3D-модели Kenney (Car Kit, Watercraft Kit, CC0), отрисованные под углом карты.
 // Каждая строка — одна модель, 16 столбцов — направления движения по экрану с шагом 22.5°, столбец 0 смотрит вправо.
 export const DIRECTIONS = 16;
-export const CAR_CELL = 64;
+export const CAR_CELL = 128;
 export const CAR_TYPES = 40;
 // Размер кадра на карте (единицы MAP_WIDTH); точка касания дороги — центр кадра.
 export const CAR_DRAW = 30;

@@ -41,7 +41,7 @@ export class CityRenderer {
   constructor(ctx:CanvasRenderingContext2D,profile:CityProfile=portraitProfile) {this.ctx=ctx;this.profile=profile;}
   private px(p:Point) {return {x:p.x*this.profile.width,y:p.y*this.profile.height};}
   draw(sim:CitySimulation,opts:RenderOptions) {
-    const ctx=this.ctx,t=sim.elapsed;
+    const ctx=this.ctx,t=sim.elapsed;ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
     const delta=Math.min(.1,Math.max(0,t-this.lastTime));this.lastTime=t;
     const target=timeLighting(opts.time,t),blend=1-Math.exp(-delta/2.5);
     this.night+=(target.night-this.night)*blend;this.warm+=(target.warm-this.warm)*blend;this.cool+=(target.cool-this.cool)*blend;

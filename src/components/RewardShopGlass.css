@@ -1,0 +1,125 @@
+/* ===== Магазин 0.23.0: стекло в стиле презентации Apple (холст «Магазин и Награда Люкс») ===== */
+.reward-shop {
+  --g-card: linear-gradient(145deg, #ffffffee, #ffffffb8);
+  --g-border: #d8e2fb;
+  --g-text: #172033;
+  --g-muted: #536278;
+  --g-chip: #eef3ff;
+  --g-btn: #e9efff;
+  --g-btn-text: #214abd;
+  --g-glow: none;
+  position: relative;
+  isolation: isolate;
+  border-radius: 32px;
+  padding: 4px;
+  color: var(--g-text);
+}
+:root[data-theme='dark'] .reward-shop {
+  --g-card: linear-gradient(145deg, #ffffff21, #ffffff0a);
+  --g-border: #ffffff26;
+  --g-text: #ffffff;
+  --g-muted: #ffffffa8;
+  --g-chip: #ffffff1a;
+  --g-btn: #ffffff24;
+  --g-btn-text: #ffffff;
+  --g-glow: radial-gradient(60% 18% at 12% 0%, #3d60ff66, transparent), radial-gradient(50% 16% at 100% 20%, #8a4cff4d, transparent);
+  padding: 16px;
+  background: var(--g-glow);
+}
+@media (max-width: 600px) { :root[data-theme='dark'] .reward-shop { padding: 12px 4px; } }
+:root:not(.zz) .reward-shop > * { position: relative; z-index: 1; }
+:root:not(.zz) .reward-shop > .lux-stars { position: absolute; z-index: 0; }
+:root:not(.zz) .reward-shop .shop-balance {
+  background: linear-gradient(120deg, #3d64ffd1, #82a0ff52);
+  border: 1px solid #ffffff33;
+  box-shadow: inset 0 1px 0 #ffffff52, 0 18px 44px #03081e5c;
+  backdrop-filter: blur(26px) saturate(170%);
+  -webkit-backdrop-filter: blur(26px) saturate(170%);
+  border-radius: 30px;
+}
+:root:not(.zz) .reward-shop .shop-balance strong { font-size: 46px; letter-spacing: -0.03em; }
+:root:not(.zz) .reward-shop .shop-coin {
+  background: none; border: 0; box-shadow: none; width: auto; height: auto;
+  filter: drop-shadow(0 6px 14px #f6b12d99);
+}
+:root:not(.zz) .reward-shop .shop-coin .shop-coin-icon { width: 72px; height: 72px; }
+:root:not(.zz) .reward-shop .shop-explanation { color: var(--g-muted); }
+:root:not(.zz) .reward-shop .shop-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 6px;
+  border-radius: 22px;
+  background: #ffffff10;
+  border: 1px solid var(--g-border);
+}
+:root:not(.zz) .reward-shop .shop-tabs button { min-height: 48px; border-radius: 16px; border: 1px solid transparent; background: transparent; color: var(--g-muted); font-weight: 600; }
+:root:not(.zz) .reward-shop .shop-tabs button.selected { background: #ffffff2e; border-color: #ffffff47; color: var(--g-text); }
+:root:not(.zz) .reward-shop .shop-tabs button.is-lux-tab { color: #e0a416; }
+:root:not(.zz) .reward-shop .shop-tabs button.is-lux-tab.selected { background: #ffd86a2e; border-color: #ffd86a8c; color: #ffe9a8; }
+:root:not(.zz) .reward-shop .shop-section-title { font-size: 28px; letter-spacing: -0.025em; margin: 22px 4px 16px; color: var(--g-text); }
+:root:not(.zz) .reward-shop .shop-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+:root:not(.zz) .reward-shop .shop-card {
+  padding: 12px;
+  gap: 8px;
+  border-radius: 24px;
+  background: var(--g-card);
+  border: 1px solid var(--g-border);
+  box-shadow: inset 0 1px 0 #ffffff42, 0 18px 44px #03081e38;
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  color: var(--g-text);
+}
+:root:not(.zz) .reward-shop .shop-art { aspect-ratio: 1; margin-bottom: 0; position: relative; overflow: hidden; border-radius: 16px; background: radial-gradient(circle at 50% 36%, #8fb0ff59 0%, #8fb0ff1a 55%, #ffffff08 100%); border: 1px solid #ffffff1a; }
+:root:not(.zz) .reward-shop .shop-card.is-lux .shop-art { background: radial-gradient(circle at 50% 36%, #ffd86a66 0%, #ffd86a1a 55%, #ffffff08 100%); }
+:root:not(.zz) .reward-shop .shop-art > span:not(.shop-frame-preview) { font-size: 54px; }
+:root:not(.zz) .reward-shop .shop-card h2, :root:not(.zz) .reward-shop .shop-card h3 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; margin: 0 4px; color: var(--g-text); }
+:root:not(.zz) .reward-shop .shop-card p { font-size: 12.5px; margin: 0 4px; min-height: 36px; color: var(--g-muted); }
+:root:not(.zz) .reward-shop .shop-kind { align-self: flex-start; margin: 0 4px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--g-muted); background: var(--g-chip); }
+:root:not(.zz) .reward-shop .shop-kind.is-lux { color: #ffe9a8; background: #ffd86a33; }
+:root:not(.zz) .reward-shop .shop-kind.is-custom { color: #ffc66e; background: #ffc66e24; }
+:root:not(.zz) .reward-shop .shop-price {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 54px; border-radius: 16px; border: 1px solid #ffffff38;
+  background: var(--g-btn); color: var(--g-btn-text);
+  font-size: 24px; font-weight: 700; letter-spacing: -0.02em;
+  box-shadow: inset 0 1px 0 #ffffff47;
+}
+:root:not(.zz) .reward-shop .shop-price.shop-use { font-size: 14px; letter-spacing: 0; background: #f5f5f7; color: #0b0b14; }
+:root:not(.zz) .reward-shop .shop-price.shop-use:disabled { background: #ffffff14; color: var(--g-muted); }
+:root:not(.zz) .reward-shop .shop-coin-icon { flex: none; filter: drop-shadow(0 2px 5px #f6b12d8c); }
+:root:not(.zz) .reward-shop .shop-saving { margin: 0 4px; display: grid; gap: 6px; font-size: 12px; color: var(--g-muted); }
+:root:not(.zz) .reward-shop .shop-saving-bar { height: 5px; border-radius: 999px; background: #ffffff24; overflow: hidden; }
+:root:not(.zz) .reward-shop .shop-saving-bar > div { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #ffe796, #f6b12d); }
+:root:not(.zz) .reward-shop .shop-card-create { background: #ffffff0a; border: 1.5px dashed #ffffff4d; box-shadow: none; }
+:root:not(.zz) .reward-shop .shop-card-create strong { color: var(--g-text); }
+:root:not(.zz) .reward-shop .shop-card-create > span:last-child { color: var(--g-muted); }
+:root:not(.zz) .reward-shop .shop-art .shop-3d-open { position: absolute; top: 10px; right: 10px; padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 800; letter-spacing: 0.05em; background: #ffffff29; border: 1px solid #ffffff3d; color: #fff; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+:root:not(.zz) .reward-shop .shop-art .shop-3d-open.shop-edit { top: auto; bottom: 10px; right: 10px; }
+:root:not(.zz) .reward-shop .owned-head { text-align: center; padding: 22px 0 10px; }
+:root:not(.zz) .reward-shop .owned-eyebrow { color: #9db8ff; font-weight: 600; margin: 0 0 6px; }
+:root:not(.zz) .reward-shop .owned-head h2 { font-size: 46px; letter-spacing: -0.045em; margin: 0 0 18px; color: var(--g-text); }
+:root:not(.zz) .reward-shop .owned-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; max-width: 560px; margin: 0 auto 20px; }
+:root:not(.zz) .reward-shop .owned-stats > div { padding: 16px 8px; border-radius: 22px; background: var(--g-card); border: 1px solid var(--g-border); box-shadow: inset 0 1px 0 #ffffff42; backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
+:root:not(.zz) .reward-shop .owned-stats dd { margin: 0; font-size: 36px; font-weight: 700; letter-spacing: -0.04em; color: var(--g-text); }
+:root:not(.zz) .reward-shop .owned-stats dt { font-size: 12px; color: var(--g-muted); }
+:root:not(.zz) .reward-shop .owned-empty { text-align: center; color: var(--g-muted); }
+/* Награда Люкс: звёздное небо и золотой заголовок */
+:root:not(.zz) .reward-shop.is-lux-page { background: radial-gradient(50% 14% at 50% 0%, #ffc45057, transparent), radial-gradient(55% 16% at 6% 30%, #3d60ff66, transparent), radial-gradient(50% 16% at 96% 52%, #8a4cff59, transparent); }
+:root[data-theme='dark'] .reward-shop.is-lux-page { background: radial-gradient(50% 14% at 50% 0%, #ffc45057, transparent), radial-gradient(55% 16% at 6% 30%, #3d60ff66, transparent), radial-gradient(50% 16% at 96% 52%, #8a4cff59, transparent), #070c22; }
+.reward-shop.is-lux-page { overflow: hidden; --g-card: linear-gradient(145deg, #ffffff21, #ffffff0a); --g-border: #ffffff26; --g-text: #fff; --g-muted: #ffffffa8; --g-chip: #ffffff1a; --g-btn: #ffffff24; --g-btn-text: #fff; background-color: #070c22; }
+.lux-stars { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.lux-stars > span { position: absolute; border-radius: 50%; background: #fff; box-shadow: 0 0 6px 1px #b4c8ff99; }
+.lux-stars > span.is-gold { background: #ffe9a8; box-shadow: 0 0 8px 2px #ffd86ab3; }
+.lux-sparkle { position: absolute; }
+.lux-sparkle-a { left: 14%; top: 150px; filter: drop-shadow(0 0 14px #ffd86ae6); }
+.lux-sparkle-b { right: 12%; top: 300px; filter: drop-shadow(0 0 10px #a0beffe6); }
+.lux-header { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 48px 0 24px; }
+.lux-eyebrow { margin: 0 0 14px; font-size: 18px; font-weight: 600; letter-spacing: 0.02em; color: #ffd86a; }
+.lux-title { margin: 0; font-size: clamp(52px, 11vw, 132px); line-height: 0.98; font-weight: 700; letter-spacing: -0.05em; background: linear-gradient(180deg, #fff 28%, #aab6e0 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lux-lead { margin: 20px 0 0; max-width: 820px; font-size: clamp(17px, 2.4vw, 30px); line-height: 1.3; font-weight: 500; color: #ffffffbd; }
+.custom-reward-lux { display: flex !important; align-items: center; gap: 10px; text-align: left; }
+.custom-reward-lux input { width: auto !important; flex: none; }
+@media (max-width: 1280px) { :root:not(.zz) .reward-shop .shop-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 1000px) { :root:not(.zz) .reward-shop .shop-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 700px) { :root:not(.zz) .reward-shop .shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } :root:not(.zz) .reward-shop .shop-price { font-size: 20px; } }

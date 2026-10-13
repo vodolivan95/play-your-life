@@ -121,7 +121,7 @@ try {
       await page.locator('.sidebar').screenshot({ path: `work/logo-sidebar-${suffix}.png` });
     } else {
       await page.addStyleTag({ content:'.mobile-footer-city-art, .mfm-car, .mfm-boat, .mfm-bird { animation:none !important; }' });
-      await cityArtwork(page, '.mobile-footer-city-art', 1200, 675);
+      await cityArtwork(page, '.mobile-footer-map .mfm-pan', 1200, 675);
       const image = await page.locator('.mobile-footer-map').boundingBox();
       assert.ok(Math.abs(image.width / image.height - 16 / 9) < .02, 'Footer map must keep the 16:9 frame');
       assert.equal(await page.locator('.mobile-city-footer .play-wordmark').count(), 1);

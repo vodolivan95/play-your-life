@@ -117,7 +117,7 @@ export class CitySimulation {
     const position=path.at(distance), kind=path.route.kind;
     const fleet=boatsByRoute[path.route.id]??boatFallback;
     const sprite=kind==='water' ? fleet[Math.floor(this.random()*fleet.length)] : kind==='road' ? Math.floor(this.random()*CAR_TYPES) : Math.floor(this.random()*5);
-    const scale=this.profile.vehicleScale,radius=(kind==='water' ? boatTypes[sprite].radius : kind==='road' ? 6 : 1.6)*(kind==='pedestrian'?1:scale);
+    const scale=this.profile.vehicleScale,radius=(kind==='water' ? boatTypes[sprite].radius : kind==='road' ? 6 : 8)*(kind==='pedestrian'?1:scale);
     if (this.agents.some(a=>a.kind===kind&&Math.hypot(position.x-a.position.x,position.y-a.position.y)<radius+a.safeRadius+24)) return false;
     const agent=this.pool.pop() ?? {} as Agent;
     Object.assign(agent,{ id:this.nextId++,kind,path,distance,position,currentSpeed:0,
@@ -208,7 +208,7 @@ export class CitySimulation {
       if ((a.retireAt!==undefined&&a.age>=a.retireAt)||(!a.path.route.closed&&a.distance>=a.path.length-.1)) { this.pool.push(a);this.agents.splice(i,1); }
     }
     if (this.elapsed>this.nextSpawn) {
-      this.nextSpawn=this.elapsed+.5+this.random()*.8;
+      this.nextSpawn=this.elapsed+.2+this.random()*.4;
       // Следующим появляется тот вид, у которого ещё есть место: полный лимит пешеходов не отнимает события у судов и машин.
       const open=(['road','water','pedestrian'] as const).filter(k=>{
         const limit=k==='pedestrian'&&rain ? Math.ceil(budget[k]*.65) : budget[k];

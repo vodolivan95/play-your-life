@@ -30,6 +30,10 @@ export const boatsByRoute: Record<string, number[]> = {
   // Широкая карта.
   'wide-bay-west-yacht': [0, 6], 'wide-bay-west-sail': [8, 9], 'wide-bay-east-yacht': [0, 7], 'wide-bay-east-sail': [8, 9],
   'wide-horizon-sail': [8, 9], 'wide-horizon-yacht': [1, 0], 'wide-east-sail': [9, 8],
+  // Живой город (scripts/build-wide-life.py): суда по открытой воде вокруг острова.
+  'life-sea-nw-out': [8, 9, 6], 'life-sea-nw-back': [9, 8, 7], 'life-sea-w': [6, 7],
+  'life-sea-sw-out': [1, 0, 8], 'life-sea-sw-mid': [2, 3, 4, 5], 'life-sea-sw-north': [8, 9, 0],
+  'life-sea-s-out': [1, 9, 8], 'life-sea-e': [6, 7],
 };
 export const boatFallback = [6, 7];
 export function directionFrame(angle: number) {

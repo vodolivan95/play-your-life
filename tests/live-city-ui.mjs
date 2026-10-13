@@ -23,6 +23,16 @@ try {
  assert.ok(after.positions.some(p=>p.kind==='water'&&p.speed>1),'water движется');
  console.log("30-second profile",JSON.stringify({elapsed:after.elapsed,fps:after.fps,renderMs:after.renderMs,simulationMs:after.simulationMs,quality:after.quality,counts:after.counts}));
  await page.locator(".coastal-map").screenshot({path:"work/live-city/profile.png"});
+ // Спрайты жителей в браузере: внутри силуэта почти нет прозрачных пикселей (фигуры не «призраки»).
+ const opacity=await page.evaluate(async()=>{const out={};for(const name of ['knight','barbarian','mage','rogue','hooded']){
+  const image=new Image();image.src=`/src/assets/city-people/kaykit-${name}.webp`;await image.decode();
+  const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);
+  const data=ctx.getImageData(0,0,canvas.width,canvas.height).data,cell=canvas.width/8;let solid=0,faint=0;
+  for(let y=2;y<canvas.height-2;y++)for(let x=2;x<canvas.width-2;x++){const a=data[(y*canvas.width+x)*4+3];if(a<=128)continue;
+   let all=true;for(const [dx,dy] of [[-2,0],[2,0],[0,-2],[0,2]])if(data[((y+dy)*canvas.width+x+dx)*4+3]<=128){all=false;break;}
+   if(!all)continue;solid++;if(a<200)faint++;}
+  out[name]={cell,share:faint/Math.max(1,solid)};}return out;});
+ for(const [name,m] of Object.entries(opacity))assert.ok(m.share<.05,`Спрайт ${name} прозрачный: ${m.share}`);
  assert.ok(after.elapsed>before.elapsed+15);assert.equal(after.fountains,9);assert.equal(after.waterfalls,14);
  await page.locator('.coastal-map').screenshot({path:'work/live-city/desktop-day.png'});
  results.push({width:1440,stats:after});

@@ -2,16 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import spritesUrl from '../assets/city-cars.webp';
 import boatsUrl from '../assets/city-boats.webp';
 import globeUrl from '../assets/city-globe.webp';
-import soldierUrl from '../assets/city-people/soldier.webp';
-import redUrl from '../assets/city-people/red.webp';
-import blueUrl from '../assets/city-people/blue.webp';
-import yellowUrl from '../assets/city-people/yellow.webp';
-import greenUrl from '../assets/city-people/green.webp';
-import whiteUrl from '../assets/city-people/white.webp';
-import orangeUrl from '../assets/city-people/orange.webp';
-import pinkUrl from '../assets/city-people/pink.webp';
-import darkUrl from '../assets/city-people/dark.webp';
-const peopleUrls=[soldierUrl,redUrl,blueUrl,yellowUrl,greenUrl,whiteUrl,orangeUrl,pinkUrl,darkUrl];
+import knightUrl from '../assets/city-people/kaykit-knight.webp';
+import barbarianUrl from '../assets/city-people/kaykit-barbarian.webp';
+import mageUrl from '../assets/city-people/kaykit-mage.webp';
+import rogueUrl from '../assets/city-people/kaykit-rogue.webp';
+import hoodedUrl from '../assets/city-people/kaykit-hooded.webp';
 import { cityAssets } from '../sphereAssets';
 import wideMapUrl from '../assets/city-wide.webp';
 import { CitySimulation, QualityManager } from '../cityLive/simulation';
@@ -19,6 +14,8 @@ import type { Quality } from '../cityLive/simulation';
 import type { CityProfile, CityRoute, Point } from '../cityLive/paths';
 import { CityRenderer, timeLighting } from '../cityLive/render';
 import type { CityTime, DebugFlags } from '../cityLive/render';
+// Жители — герои KayKit Adventurers (Kay Lousberg, CC0); атласы собирает scripts/build-city-people.py.
+const peopleUrls=[knightUrl,barbarianUrl,mageUrl,rogueUrl,hoodedUrl];
 
 type Props = {
   profile:CityProfile; routes: CityRoute[]; paused:boolean; speed:number; quality:Quality; time:CityTime;

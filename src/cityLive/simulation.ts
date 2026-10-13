@@ -209,10 +209,13 @@ export class CitySimulation {
     }
     if (this.elapsed>this.nextSpawn) {
       this.nextSpawn=this.elapsed+.5+this.random()*.8;
-      const kind=(['road','water','pedestrian'] as const)[Math.floor(this.random()*3)];
-      const limit=kind==='pedestrian'&&rain ? Math.ceil(budget[kind]*.65) : budget[kind];
-      const count=this.agents.filter(a=>a.kind===kind).length;
-      if (count<limit) {
+      // Следующим появляется тот вид, у которого ещё есть место: полный лимит пешеходов не отнимает события у судов и машин.
+      const open=(['road','water','pedestrian'] as const).filter(k=>{
+        const limit=k==='pedestrian'&&rain ? Math.ceil(budget[k]*.65) : budget[k];
+        return this.agents.filter(a=>a.kind===k).length<limit;
+      });
+      const kind=open[Math.floor(this.random()*open.length)];
+      if (kind) {
         const paths=this.paths.filter(p=>p.route.kind===kind),path=paths[Math.floor(this.random()*paths.length)];
         if (path) this.spawn(path);
       }

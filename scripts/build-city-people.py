@@ -16,6 +16,7 @@ from PIL import Image
 
 CELL = 64          # размер кадра в атласе, px (загрузчик берёт cell = ширина / 8)
 SS = 4             # суперсэмплинг
+SLIM = 0.80        # сужение тела по плечам (до поворота), чтобы герои не выглядели «жирными»
 ELEV = math.radians(32)   # угол камеры над горизонтом
 FRAMES = 8
 DIRS = 8
@@ -162,7 +163,7 @@ def render(model, parts, heading, scale, base):
     color = np.zeros((size, size, 3)); alpha = np.zeros((size, size), bool); zbuf = np.full((size, size), -1e9)
     tex = model.tex; th, tw = tex.shape[:2]
     for p, uv, idx in parts:
-        q = p @ R.T
+        q = (p * np.array([SLIM, 1.0, 1.0])) @ R.T
         sx = size / 2 + q[:, 0] * scale * SS
         sy = base * SS - (q[:, 1] * ce - q[:, 2] * se) * scale * SS
         dz = q[:, 1] * se + q[:, 2] * ce
@@ -206,7 +207,7 @@ def render(model, parts, heading, scale, base):
     solid = np.clip((a - .12) / .45, 0, 1)
     # Тонкий тёмный контур в 1 px вокруг фигуры — не «тает» на светлой плитке и воде.
     ring = cv2.dilate((solid > .35).astype(np.uint8), np.ones((3, 3), np.uint8)).astype(np.float32)
-    outline = np.clip(ring - solid, 0, 1) * .9
+    outline = np.clip(ring - solid, 0, 1) * .55
     out_a = np.clip(solid + outline * (1 - solid), 0, 1)
     ink = np.array([22, 26, 40], np.float32)
     mix = (rgb * solid[..., None] + ink * (outline * (1 - solid))[..., None]) / np.maximum(out_a[..., None], 1e-3)

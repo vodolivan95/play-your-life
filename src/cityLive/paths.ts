@@ -106,7 +106,7 @@ export const lightPoints = [
 ];
 
 export function validRoutes(value: unknown): value is CityRoute[] {
-  if (!Array.isArray(value) || !value.length || value.length > 60) return false;
+  if (!Array.isArray(value) || !value.length || value.length > 80) return false;
   const ids = new Set<string>();
   return value.every((r: CityRoute) => {
     if (!r || typeof r.id !== 'string' || !/^[a-zA-Z0-9_-]{1,64}$/.test(r.id) || ids.has(r.id)) return false;

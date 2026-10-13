@@ -121,7 +121,7 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
       <div className="coastal-stage" style={wide?{width:`${zoom*100}%`}:undefined}>
       <div className="coastal-map" data-time={preferences.time} data-weather={preferences.weather} data-paused={paused} data-editing={editing}
         style={{...(wide?{}:{width:`${zoom*175}%`}),'--city-rate':speed} as unknown as CSSProperties}>
-        <img src={wideMapUrl} width={2400} height={1350} alt="Прибрежный город на островах: девять зданий сфер жизни, мосты, водопады и пляж" draggable={false}/>
+        <img src={wideMapUrl} width={2576} height={1449} alt="Прибрежный город на островах: девять зданий сфер жизни, мосты, водопады и пляж" draggable={false}/>
         <LiveCityCanvas profile={profile} routes={routes} paused={paused} speed={speed} quality={preferences.quality} time={preferences.time} weather={preferences.weather}
           debug={debug} draft={draft} editing={editing} onPoint={point=>setDraft([...draft,point])}/>
         {buildings.map(building=>{

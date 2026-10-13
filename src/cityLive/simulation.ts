@@ -130,7 +130,7 @@ export class CitySimulation {
   initialize(budget=qualityBudgets.low) {
     for (const kind of ['road','water','pedestrian'] as const) {
       const paths=this.paths.filter(p=>p.route.kind===kind);
-      for (let i=0,attempts=0; i<budget[kind]&&attempts<100; attempts++) {
+      for (let i=0,attempts=0; i<budget[kind]&&attempts<Math.max(100,budget[kind]*5); attempts++) {
         const path=paths[attempts%paths.length];
         if (path && this.spawn(path,path.length*(.07+this.random()*.82))) i++;
       }

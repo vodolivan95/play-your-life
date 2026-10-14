@@ -1,25 +1,25 @@
 {
   "maxWetShare": 0.03,
   "wetShare": {
-    "life-walk-coast-n": 0.0145,
-    "life-walk-coast-n-back": 0.0145,
-    "life-walk-coast-s": 0.0101,
-    "life-walk-coast-s-back": 0.0101,
+    "life-walk-coast-n": 0.0087,
+    "life-walk-coast-n-back": 0.0158,
+    "life-walk-coast-s": 0.0043,
+    "life-walk-coast-s-back": 0.01,
+    "life-walk-sport-in": 0.0,
     "life-walk-sport-out": 0.0,
     "life-walk-sport-out-back": 0.0,
-    "life-walk-eng-in": 0.0262,
-    "life-walk-eng-in-back": 0.0262,
+    "life-walk-eng-in": 0.0265,
     "life-walk-eng-out": 0.0,
     "life-walk-eng-out-back": 0.0,
-    "life-walk-globe": 0.0125,
+    "life-walk-globe": 0.0,
     "wide-plaza-finance": 0.0,
     "wide-plaza-sport": 0.0,
-    "wide-plaza-health": 0.0187,
+    "wide-plaza-health": 0.0,
     "wide-plaza-growth": 0.0,
     "wide-plaza-tasks": 0.0,
     "wide-plaza-joint": 0.0,
     "wide-plaza-english": 0.0,
     "wide-plaza-leisure": 0.0,
-    "wide-plaza-globe": 0.1223
+    "wide-plaza-globe": 0.0929
   }
 }

@@ -186,7 +186,7 @@ export class CityRenderer {
         const moving=a.state==='WALK'&&a.currentSpeed>.2;
         const frame=moving?Math.floor(a.distance/(a.path.route.runner?2.4:1.7))%8:0;
         // Рост ~18 CSS-пикселей на экране, но не меньше 22 и не больше 52 единиц карты.
-        const size=Math.max(22,Math.min(52,22/Math.max(.05,opts.unitPx??1)))*(a.path.route.runner?1.05:1);
+        const size=Math.max(26,Math.min(60,26/Math.max(.05,opts.unitPx??1)))*(a.path.route.runner?1.05:1);
         ctx.drawImage(look,frame*cell,row*cell,cell,cell,-size/2,-size*.94,size,size);
       }
       if (rain) {ctx.fillStyle='#2d7bb5';ctx.beginPath();ctx.arc(0,-17*k,5.6*k,Math.PI,0);ctx.fill();ctx.strokeStyle='#1d3d55';ctx.lineWidth=.7*k;ctx.beginPath();ctx.moveTo(0,-17*k);ctx.lineTo(0,-10*k);ctx.stroke();}

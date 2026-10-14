@@ -203,11 +203,13 @@ def render(model, parts, heading, scale, base):
     small = cv2.resize(rgba, (CELL, CELL), interpolation=cv2.INTER_AREA)
     a = small[..., 3] / 255.0
     rgb = np.where(a[..., None] > 0, small[..., :3] / np.maximum(a[..., None] * 255, 1e-3) * 255, 0)
+    blur = cv2.GaussianBlur(rgb.astype(np.float32), (0, 0), 1.0)
+    rgb = np.clip(rgb + .7 * (rgb - blur), 0, 255)
     # Плотная фигура: мягкие края (суперсэмплинг) подтягиваем к 0/1, внутри альфа ровно 1.
     solid = np.clip((a - .12) / .45, 0, 1)
     # Тонкий тёмный контур в 1 px вокруг фигуры — не «тает» на светлой плитке и воде.
     ring = cv2.dilate((solid > .35).astype(np.uint8), np.ones((3, 3), np.uint8)).astype(np.float32)
-    outline = np.clip(ring - solid, 0, 1) * .55
+    outline = np.clip(ring - solid, 0, 1) * .85
     out_a = np.clip(solid + outline * (1 - solid), 0, 1)
     ink = np.array([22, 26, 40], np.float32)
     mix = (rgb * solid[..., None] + ink * (outline * (1 - solid))[..., None]) / np.maximum(out_a[..., None], 1e-3)

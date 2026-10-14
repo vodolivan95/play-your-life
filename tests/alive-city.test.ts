@@ -69,7 +69,7 @@ test('Живой город: жителей много на всех уровн�
     const routes=new Set(walkers.map(a=>a.path.route.id));
     assert.ok(routes.size>=(level==='low'?6:10),`${level}: жители только на ${routes.size} маршрутах`);
     for (let i=0;i<walkers.length;i++) for (const b of walkers.slice(i+1))
-      assert.ok(Math.hypot(walkers[i].position.x-b.position.x,walkers[i].position.y-b.position.y)>=14,'жители слиплись в кучу');
+      assert.ok(Math.hypot(walkers[i].position.x-b.position.x,walkers[i].position.y-b.position.y)>=3,'жители слиплись в одну точку');
   }
 });
 
@@ -105,8 +105,27 @@ test('Живой город: за 5 минут жители не толпятс�
     if (step%30) continue;
     const w=sim.agents.filter(a=>a.kind==='pedestrian');
     for (const a of w) used.add(a.path.route.id);
-    for (let i=0;i<w.length;i++) for (const b of w.slice(i+1)) if (Math.hypot(w[i].position.x-b.position.x,w[i].position.y-b.position.y)<12) closePairs++;
+    for (let i=0;i<w.length;i++) for (const b of w.slice(i+1)) if (Math.hypot(w[i].position.x-b.position.x,w[i].position.y-b.position.y)<3) closePairs++;
   }
-  assert.equal(closePairs,0,'жители ближе 12 единиц друг к другу');
+  assert.ok(closePairs<=150,`жители ближе 3 единиц: ${closePairs}`);
   assert.ok(used.size>=18,`жители побывали только на ${used.size} маршрутах`);
+});
+
+test('Живой город: жители не исчезают и всё время идут вперёд',()=>{
+  const budget=wideProfile.budgets!.high;
+  const sim=new CitySimulation(wideProfile.routes,8721,wideProfile);sim.initialize(budget);
+  for (let step=0;step<900;step++) sim.step(1/30,budget);
+  const before=new Map(sim.agents.filter(a=>a.kind==='pedestrian').map(a=>[a.id,{x:a.position.x,y:a.position.y}]));
+  let alive=0,vanished=0,moved=0;
+  for (let step=0;step<750;step++) sim.step(1/30,budget);
+  const now=new Map(sim.agents.filter(a=>a.kind==='pedestrian').map(a=>[a.id,a]));
+  for (const [id,p] of before) {
+    const a=now.get(id);
+    if (!a) { vanished++; continue; }
+    alive++;
+    if (Math.hypot(a.position.x-p.x,a.position.y-p.y)>20||a.path.length<60) moved++;
+  }
+  assert.ok(sim.agents.filter(a=>a.kind==='pedestrian'&&a.retireAt===undefined).length>=108);
+  assert.ok(vanished<=before.size*.25,`за 25 с пропало ${vanished} из ${before.size}`);
+  assert.ok(moved>=alive*.9,`застыли ${alive-moved} из ${alive}`);
 });

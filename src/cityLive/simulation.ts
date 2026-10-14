@@ -45,7 +45,7 @@ export type Agent = {
   id: number; kind: CityRoute['kind']; path: LanePath; distance: number; position: Sample;
   currentSpeed: number; targetSpeed: number; acceleration: number; deceleration: number;
   safeDistance: number; safeRadius: number; vehicleAhead: number | null;
-  sprite: number; state: 'WALK'|'IDLE'|'LOOK'|'SIT'; wait: number; age: number; retireAt?:number; stuck?: number;
+  sprite: number; state: 'WALK'|'IDLE'|'LOOK'|'SIT'; wait: number; age: number; retireAt?:number; stuck?: number; shiftX?: number; shiftY?: number;
 };
 export class IntersectionController {
   reservations = new Map<string,number>();
@@ -111,6 +111,15 @@ export class CitySimulation {
     this.profile=profile; this.intersections=new IntersectionController(profile);
     this.paths=routes.map(r=>new LanePath(r,profile)); this.seed=seed;
   }
+  private pairs=new Map<LanePath,LanePath|null>();
+  /** Обратная дорожка пары `id` ↔ `id-back` (одна геометрия, противоположное направление). */
+  pairOf(path: LanePath) {
+    if (!this.pairs.has(path)) {
+      const id=path.route.id,other=id.endsWith('-back') ? id.slice(0,-5) : id+'-back';
+      this.pairs.set(path,this.paths.find(p=>p.route.id===other&&!p.route.closed)??null);
+    }
+    return this.pairs.get(path)??null;
+  }
   random() { this.seed=(Math.imul(this.seed,1664525)+1013904223)>>>0; return this.seed/4294967296; }
   spawn(path: LanePath, distance=0): boolean {
     if (this.agents.filter(a=>a.path===path).length>=path.route.capacity) return false;
@@ -123,7 +132,7 @@ export class CitySimulation {
     Object.assign(agent,{ id:this.nextId++,kind,path,distance,position,currentSpeed:0,
       targetSpeed:path.route.speed*(.86+this.random()*.15),acceleration:kind==='road'?6:kind==='water'?2:4,
       deceleration:kind==='road'?15:kind==='water'?5:8,safeDistance:(kind==='water'?70:kind==='road'?27:9)*(kind==='pedestrian'?1:scale),
-      safeRadius:radius,vehicleAhead:null,sprite,state:'WALK',wait:0,age:0,stuck:0 });
+      safeRadius:radius,vehicleAhead:null,sprite,state:'WALK',wait:0,age:0,stuck:0,shiftX:0,shiftY:0 });
     delete agent.retireAt;
     this.agents.push(agent); return true;
   }
@@ -158,9 +167,9 @@ export class CitySimulation {
         if (agent.state!=='WALK') {
           target=0;
           if (agent.wait<=0) agent.state='WALK';
-        } else if (agent.age>8 && this.random()<dt*.045) {
+        } else if (agent.age>8 && this.random()<dt*.012) {
           agent.state=(['IDLE','LOOK','SIT'] as const)[Math.floor(this.random()*3)];
-          agent.wait=2+this.random()*5;
+          agent.wait=1+this.random()*2;
         }
       }
       const look=agent.path.at(agent.distance+Math.max(agent.safeDistance,agent.currentSpeed*1.5));
@@ -181,7 +190,9 @@ export class CitySimulation {
           const dx=other.position.x-agent.position.x,dy=other.position.y-agent.position.y;
           const forward=dx*Math.cos(agent.position.angle)+dy*Math.sin(agent.position.angle);
           const sideways=Math.abs(-dx*Math.sin(agent.position.angle)+dy*Math.cos(agent.position.angle));
-          if (forward>0&&sideways<agent.safeRadius+other.safeRadius+8&&Math.cos(agent.position.angle-other.position.angle)>.25) gap=forward;
+          // Житель уступает на пересечении дорожек только жителю с меньшим номером: так двое не ждут друг друга вечно.
+          const yields=agent.kind!=='pedestrian'||other.id<agent.id;
+          if (yields&&forward>0&&sideways<agent.safeRadius+other.safeRadius+8&&Math.cos(agent.position.angle-other.position.angle)>.25) gap=forward;
         }
         if (gap<agent.safeDistance+agent.currentSpeed*1.2) {
           agent.vehicleAhead=other.id;
@@ -192,19 +203,31 @@ export class CitySimulation {
       const change=(target>agent.currentSpeed ? agent.acceleration : agent.deceleration)*dt;
       agent.currentSpeed+=Math.max(-change,Math.min(change,target-agent.currentSpeed));
       const distance=agent.distance+agent.currentSpeed*dt;
-      const next=agent.path.at(distance);
-      const blocked=this.agents.some(other=>other!==agent&&other.kind===agent.kind&&
+      // Сдвиг после разворота на обратной дорожке плавно затухает: житель не «прыгает» в сторону.
+      const decay=Math.exp(-dt/1.2);agent.shiftX=(agent.shiftX??0)*decay;agent.shiftY=(agent.shiftY??0)*decay;
+      const raw=agent.path.at(distance),next=agent.shiftX||agent.shiftY ? {...raw,x:raw.x+(agent.shiftX??0),y:raw.y+(agent.shiftY??0)} : raw;
+      // Жители не блокируют друг друга жёстко: встречные на обратных дорожках расходятся, а не замирают лицом к лицу.
+      const blocked=agent.kind!=='pedestrian'&&this.agents.some(other=>other!==agent&&other.kind===agent.kind&&
         Math.hypot(next.x-other.position.x,next.y-other.position.y)<agent.safeRadius+other.safeRadius+1);
       if (blocked) { agent.currentSpeed=0;this.collisionStops++; }
       else { agent.distance=agent.path.route.closed ? distance%agent.path.length : distance;agent.position=next; }
       // Пробка на перекрёстке или суда на пересекающихся путях не должны стоять вечно: застрявший транспорт плавно уходит со сцены.
-      if ((agent.kind==='road'&&!agent.path.route.training)||agent.kind==='water') {
+      if ((agent.kind==='road'&&!agent.path.route.training)||agent.kind==='water'||(agent.kind==='pedestrian'&&agent.state==='WALK')) {
         agent.stuck=agent.currentSpeed<.5 ? (agent.stuck??0)+dt : 0;
-        if (agent.stuck>9&&agent.retireAt===undefined) agent.retireAt=agent.age+2;
+        if (agent.stuck>(agent.kind==='pedestrian' ? 14 : 9)&&agent.retireAt===undefined) agent.retireAt=agent.age+2;
       }
     }
     for (let i=this.agents.length-1;i>=0;i--) {
       const a=this.agents[i];
+      // Конец открытой дорожки: житель разворачивается на обратную (`…-back`) и идёт дальше, а не исчезает.
+      if (a.kind==='pedestrian'&&a.retireAt===undefined&&!a.path.route.closed&&a.distance>=a.path.length-.1) {
+        const pair=this.pairOf(a.path);
+        if (pair) {
+          const start=pair.at(0);
+          a.shiftX=(a.shiftX??0)+a.position.x-start.x;a.shiftY=(a.shiftY??0)+a.position.y-start.y;
+          a.path=pair;a.distance=0;a.position=start;a.currentSpeed*=.5;continue;
+        }
+      }
       if ((a.retireAt!==undefined&&a.age>=a.retireAt)||(!a.path.route.closed&&a.distance>=a.path.length-.1)) { this.pool.push(a);this.agents.splice(i,1); }
     }
     if (this.elapsed>this.nextSpawn) {

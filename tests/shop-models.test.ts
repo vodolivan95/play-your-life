@@ -17,7 +17,7 @@ test('у каждой 3D-модели магазина есть товар и к
 
 test('товар без модели остаётся с прежней картинкой', () => {
   assert.equal(shopModelFile('coffee'), 'coffee.glb');
-  assert.equal(shopModelFile('rest'), null);
+  assert.equal(shopModelFile('games'), null);
 });
 
 test('у моделей магазина лицевые грани смотрят наружу (иначе three.js отсекает их)', () => {

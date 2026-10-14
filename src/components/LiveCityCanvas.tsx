@@ -84,7 +84,10 @@ export default function LiveCityCanvas(props:Props) {
     const resume=()=>{ if (!frame&&!disposed&&ready&&!document.hidden&&visible) {previous=0;frame=requestAnimationFrame(tick);} };
     const intersection=new IntersectionObserver(entries=>{visible=entries[0]?.isIntersecting??false;if (!visible) {cancelAnimationFrame(frame);frame=0;}else resume();});
     intersection.observe(node);document.addEventListener('visibilitychange',resume);
-    Promise.all([background.decode(),sprites.decode(),boats.decode(),(profile.globe?globe.decode():Promise.resolve()).catch(()=>undefined),(profile.cleanSurfaces?clean.decode():Promise.resolve()).catch(()=>undefined)]).then(()=>{ready=true;resize();resume();}).catch(()=>{node.dataset.error='city-assets-unavailable';if(!disposed)setLoadError(true);});
+    // Анимация стартует сразу после карты: спрайты, суда, шар и жители дорисовываются по мере загрузки (render пропускает незагруженные).
+    const optional=[sprites,boats,...(profile.globe?[globe]:[]),...(profile.cleanSurfaces?[clean]:[])];
+    optional.forEach(img=>{img.decode().catch(()=>undefined);});
+    background.decode().then(()=>{ready=true;resize();resume();}).catch(()=>{node.dataset.error='city-assets-unavailable';if(!disposed)setLoadError(true);});
     return ()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();intersection.disconnect();document.removeEventListener('visibilitychange',resume);};
   },[routes,mode,profile]);
   return <>

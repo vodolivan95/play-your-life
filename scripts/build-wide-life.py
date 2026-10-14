@@ -180,7 +180,7 @@ def main():
         base = smooth(resample(lane['pts']), 3, closed)
         p = simplify(offset_right(base, off, closed), 0.9, closed)
         entries.append((rid, 'pedestrian', closed, speed, cap, p))
-        if both and not closed: entries.append((rid + '-back', 'pedestrian', False, speed, cap, p[::-1]))
+        if both and not closed: entries.append((rid + '-back', 'pedestrian', False, speed, cap, offset_right(p[::-1], -7)))
     land = land_distance()
     for k, (rid, kind, closed, speed, cap, p) in enumerate(entries):
         entries[k] = (rid, kind, closed, speed, cap, keep_dry(p, land, closed))

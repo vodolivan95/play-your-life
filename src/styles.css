@@ -3340,6 +3340,30 @@ dialog {
 .sphere-list-mapping small { grid-column: 1 / -1; }
 .ticktick-unsaved { color: #925d17; background: #fff5dd; padding: 12px; border-radius: 12px; font-size: 13px; }
 .ticktick-account .include-shared { line-height: 1.6; align-items: flex-start; }
+/* Входящие из TickTick */
+.ticktick-inbox { margin: 0 0 22px; padding: 18px; border-radius: 18px; background: #f4f9ff; border: 1px solid #dbe8f7; }
+.ticktick-inbox h3 { font-size: 19px; margin: 6px 0 8px; }
+.ticktick-inbox-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 12px; }
+.ticktick-inbox-item { padding: 14px; border-radius: 14px; background: #ffffff; border: 1px solid #e2eaf7; display: grid; gap: 12px; }
+.ticktick-inbox-title { display: grid; gap: 4px; }
+.ticktick-inbox-title small { font-size: 12px; color: #4e607e; }
+.ticktick-inbox-choice { display: grid; gap: 10px; padding: 14px; border-radius: 14px; background: #f3f7fd; border: 1px solid #e2eaf7; }
+.ticktick-inbox-label { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #496084; }
+.ticktick-inbox-chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ticktick-chip { min-height: 44px; padding: 0 14px; border-radius: 14px; border: 2px solid #c3d0e8; background: transparent; color: #3f5174; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
+.ticktick-chip[aria-pressed="true"] { border-color: #2f6fe0; background: #e6eefc; color: #14213d; }
+.ticktick-chip-add { border-style: dashed; color: #2f6fe0; }
+.ticktick-chip:disabled { opacity: .6; cursor: not-allowed; }
+.ticktick-stage-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; width: 100%; }
+.ticktick-stage-form input { flex: 1 1 220px; min-height: 44px; min-width: 0; }
+.ticktick-inbox-hint { margin: 0; font-size: 13px; }
+.ticktick-inbox-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.ticktick-inbox .transfer-message { white-space: pre-line; }
+@media (max-width: 720px) {
+  .ticktick-chip { min-height: 44px; }
+  .ticktick-stage-form > * { flex: 1 1 100%; }
+  .ticktick-inbox-actions > button { flex: 1 1 160px; min-height: 44px; }
+}
 @media (max-width: 600px) {
   .sphere-list-mapping { grid-template-columns: 1fr; gap: 6px; }
   .ticktick-account .account-buttons > button { flex: 1 1 180px; min-height: 44px; }

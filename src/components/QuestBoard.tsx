@@ -20,6 +20,7 @@ import type { Habit } from "../personalQuests";
 import { sphereProgress } from "../sphereProgress";
 import { SphereBuilding } from "./SphereCity";
 import QuestWizard from "./QuestWizard";
+import TickTickInbox from "./TickTickInbox";
 import { cityAssets, sphereAssets } from "../sphereAssets";
 const hero = cityAssets.preview;
 import "./QuestBoard.css";
@@ -243,6 +244,7 @@ export default function QuestBoard({
       </div>
       <div className="pyl-quest-columns">
         <main>
+          <TickTickInbox state={state} onChange={onChange} />
           {(tab === 0 || tab === 1) && (
             <section className="pyl-habit-section">
               <div className="pyl-section-title">

@@ -21,6 +21,10 @@
 - Логика: `src/ticktickInbox.ts`, экран `src/components/TickTickInbox.tsx`, методы `loadIncoming`, `acceptIncoming`, `dismissIncoming` в `useTickTick`. Сервер `integrations/ticktick` не менялся. Тесты: `tests/ticktick-inbox.test.ts`.
 - Привычки с TickTick по-прежнему не синхронизируются: официальный Open API для них не подтверждён, нужен отдельный выбор подхода.
 
+## 0.24.1 — 16 октября 2026
+
+Главная: заголовок главного блока заменён на «Ты творец своей истории» (вместо «Твоя жизнь в твоих руках») по поручению пользователя. Данные игры не менялись.
+
 ## 0.24.0 — 15 октября 2026
 
 «План жизни» получил «Карту пересечений» по согласованному холсту (https://claude.ai/artifact/4WggKoanbT1DzFvhmehHUh).

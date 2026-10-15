@@ -15,6 +15,7 @@ import { TaskForm } from './PlanningForms';
 import TickTickTransfer from './TickTickTransfer';
 import Icon from './Icon';
 import ProjectArt from './ProjectArt';
+import LifePlanMap from './LifePlanMap';
 export default function LifePlanner({
   state,
   onChange,
@@ -150,6 +151,12 @@ export default function LifePlanner({
           </button>
         </div>
       </section>
+      <LifePlanMap
+        state={state}
+        onChange={onChange}
+        onGoal={onGoal}
+        onNotify={onNotify}
+      />
       <div className="plan-toolbar">
         <div className="tabs plan-scopes">
           {[

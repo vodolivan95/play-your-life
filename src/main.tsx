@@ -1,6 +1,7 @@
 import { StrictMode, lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import AccountRoot from './AccountRoot';
+import { preloadCityAssets } from './cityLive/preload';
 import './styles.css';
 import './interface.css';
 import './components/PlayerAppearance.css';
@@ -13,6 +14,7 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 );
 
+if (new URLSearchParams(location.search).get('room-demo') !== 'sport') preloadCityAssets();
 
 import './selection.css';
 import './menuTheme';

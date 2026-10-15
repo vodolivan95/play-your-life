@@ -117,6 +117,7 @@ export class CityRenderer {
     ctx.drawImage(image,0,0,this.profile.width,this.profile.height);ctx.restore();
   }
   private sprite(agent:Agent,image:HTMLImageElement,t:number) {
+    if(!image.complete||!image.naturalWidth)return;
     const ctx=this.ctx,p=agent.position;
     const boat=agent.kind==='water';
     const frame=directionFrame(p.angle);

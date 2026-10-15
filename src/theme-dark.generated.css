@@ -225,6 +225,10 @@
 :root[data-theme="dark"] .ticktick-setup-note a { color: #8ccefa; }
 :root[data-theme="dark"] .ticktick-server-settings summary { color: #9eb0da; }
 :root[data-theme="dark"] .ticktick-unsaved { color: #edc28b; background: #40351a; }
+:root[data-theme="dark"] .ticktick-inbox { background: #141c31; border: 1px solid #324b67; }
+:root[data-theme="dark"] .ticktick-inbox-item { background: #151d33; border: 1px solid #354764; }
+:root[data-theme="dark"] .ticktick-inbox-title small { color: #9fb1db; }
+:root[data-theme="dark"] .ticktick-inbox-choice label { color: #9eb0da; }
 
 /* interface.css */
 :root[data-theme="dark"] { --muted: #a2b3dc; --border: #283353; color: #cad4eb; background: #141b30; }

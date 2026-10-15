@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { GameState } from './game';
+import type { RemoteTask } from './ticktick';
 import { applyTickTickResult, bridgeRequest, connectionStorageKey, newConnection, hasTickTickTargets, matchSphereLists, syncTickTick } from './ticktick';
 import type { TickTickConnection } from './ticktick';
 import { emptyTickTickSettings, validateTickTickSettings } from './ticktickSettings';
 import type { TickTickSettings } from './ticktickSettings';
 import type { TickTickManager } from './tickTickContext';
+import { acceptIncomingTask, dismissIncomingTask, findIncomingTasks, mappedProjectIds } from './ticktickInbox';
+import type { IncomingChoice, IncomingTask } from './ticktickInbox';
 
 function readConnection(storageKey: string): TickTickConnection | null {
   try {
@@ -46,6 +49,9 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
   const [connected, setConnected] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+  const [incoming, setIncoming] = useState<IncomingTask[]>([]);
+  const [inboxBusy, setInboxBusy] = useState(false);
+  const [inboxError, setInboxError] = useState('');
   const working = useRef(false);
   const recoveryPending = useRef(false);
   const latest = useRef({ state, connection, connected, dirty });
@@ -129,6 +135,68 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
       setStatus(error instanceof Error ? error.message : 'Не удалось синхронизировать.');
     } finally { working.current = false; setBusy(false); }
   }
+  // Входящие: новые задачи сопоставленных списков. В игру они попадают только после выбора сферы, цели и этапа.
+  async function loadIncoming() {
+    const current = latest.current;
+    if (working.current || !current.connection || !current.connected || current.dirty || current.state.profile.mode === 'demo') return;
+    if (!navigator.onLine) return;
+    working.current = true; setBusy(true); setInboxBusy(true); setInboxError('');
+    try {
+      let c = current.connection;
+      if (c.auth === 'firebase') c = { ...c, ...validateTickTickSettings(await request(c, '/settings')) };
+      setConnection(c);
+      const byProject: Record<string, RemoteTask[]> = {};
+      for (const projectId of mappedProjectIds(c)) {
+        const data = await request<{ tasks?: RemoteTask[] }>(c, `/api/project/${encodeURIComponent(projectId)}/data`);
+        if (!Array.isArray(data?.tasks)) throw new Error('TickTick не вернул список задач.');
+        byProject[projectId] = data.tasks;
+      }
+      setIncoming(findIncomingTasks(c, byProject));
+    } catch (error) {
+      if (error instanceof Error && error.message.endsWith('(401)')) setConnected(false);
+      setInboxError(error instanceof Error ? error.message : 'Не удалось получить новые задачи TickTick.');
+    } finally { working.current = false; setBusy(false); setInboxBusy(false); }
+  }
+  async function acceptIncoming(remoteId: string, choice: IncomingChoice): Promise<string> {
+    const current = latest.current;
+    const item = incoming.find(i => i.remote.id === remoteId);
+    if (!item) throw new Error('Задача больше не найдена. Обновите список.');
+    if (working.current || !current.connection || !current.connected || current.dirty) throw new Error('Дождитесь окончания обмена или сохраните настройки.');
+    working.current = true; setBusy(true);
+    try {
+      let c = current.connection;
+      if (c.auth === 'firebase') c = { ...c, ...validateTickTickSettings(await request(c, '/settings')) };
+      const taskId = crypto.randomUUID();
+      // Проверка и расчёт без изменений: при ошибке (например, сроки цели) ничего не меняется ни здесь, ни в TickTick.
+      const accepted = acceptIncomingTask(latest.current.state, c, item, choice, taskId);
+      // Метка PYL в заметке TickTick защищает от копий, даже если сохранение связи прервётся.
+      await request(c, `/api/task/${encodeURIComponent(item.remote.id)}`, 'POST', accepted.remoteUpdate);
+      onChange(state => { try { return acceptIncomingTask(state, c, item, choice, taskId).state; } catch { return state; } });
+      setIncoming(list => list.filter(i => i.remote.id !== remoteId));
+      try {
+        const next = c.auth === 'firebase' ? validateTickTickSettings(await request(c, '/settings', 'PUT', settings(accepted.connection))) : settings(accepted.connection);
+        setConnection({ ...c, ...next });
+        return `Задача «${accepted.task.name}» добавлена в игру и связана с TickTick.`;
+      } catch (error) {
+        // Задача уже в игре. Оставляем связь здесь и приостанавливаем обмен, чтобы не создать копию.
+        setConnection(accepted.connection); setDirty(true);
+        return `Задача «${accepted.task.name}» добавлена, но связь не сохранена: ${error instanceof Error ? error.message : 'нет ответа сервера'}. Нажмите «Сохранить настройки» в профиле.`;
+      }
+    } finally { working.current = false; setBusy(false); }
+  }
+  async function dismissIncoming(remoteId: string) {
+    const current = latest.current;
+    if (working.current || !current.connection || !current.connected || current.dirty) throw new Error('Дождитесь окончания обмена или сохраните настройки.');
+    working.current = true; setBusy(true);
+    try {
+      let c = current.connection;
+      if (c.auth === 'firebase') c = { ...c, ...validateTickTickSettings(await request(c, '/settings')) };
+      const next = dismissIncomingTask(c, remoteId);
+      const saved = c.auth === 'firebase' ? validateTickTickSettings(await request(c, '/settings', 'PUT', settings(next))) : settings(next);
+      setConnection({ ...c, ...saved });
+      setIncoming(list => list.filter(i => i.remote.id !== remoteId));
+    } finally { working.current = false; setBusy(false); }
+  }
   async function disconnect() {
     const c = latest.current.connection;
     if (!c) return;
@@ -166,7 +234,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const restoreBlocked = connected || wasActivated(connection);
-  return { connection, status, busy, projects, connected, signedIn, dirty, restoreBlocked, configure, refresh, sync, save, disconnect,
+  return { connection, status, busy, projects, connected, signedIn, dirty, restoreBlocked, configure, refresh, sync, save, disconnect, incoming, inboxBusy, inboxError, loadIncoming, acceptIncoming, dismissIncoming,
     update: patch => { if (!working.current) { setConnection(c => c ? { ...c, ...patch } : c); setDirty(true); } },
     suggest: () => { const c = latest.current.connection; if (c && !working.current) { setConnection({ ...c, sphereLists: matchSphereLists(projects, c.sphereLists) }); setDirty(true); } },
   };

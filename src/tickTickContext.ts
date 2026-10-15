@@ -1,5 +1,6 @@
 import { createContext } from 'react';
 import type { TickTickConnection } from './ticktick';
+import type { IncomingChoice, IncomingTask } from './ticktickInbox';
 export type TickTickManager = {
   connection: TickTickConnection | null;
   status: string;
@@ -16,5 +17,11 @@ export type TickTickManager = {
   disconnect: () => Promise<void>;
   save: () => Promise<void>;
   suggest: () => void;
+  incoming: IncomingTask[];
+  inboxBusy: boolean;
+  inboxError: string;
+  loadIncoming: () => Promise<void>;
+  acceptIncoming: (remoteId: string, choice: IncomingChoice) => Promise<string>;
+  dismissIncoming: (remoteId: string) => Promise<void>;
 };
 export const TickTickContext = createContext<TickTickManager | null>(null);

@@ -164,7 +164,7 @@ export function localFingerprint(task: Quest, state?: GameState) {
       ?.stages?.find((s) => s.id === task.stageId)?.name ?? null,
   ]);
 }
-function remoteFields(remote: RemoteTask) {
+export function remoteFields(remote: RemoteTask) {
   return {
     name: remote.title,
     notes: notes(remote.content),
@@ -177,7 +177,7 @@ function remoteFields(remote: RemoteTask) {
         : 'normal') as Quest['priority'],
   };
 }
-function remoteFingerprint(remote: RemoteTask) {
+export function remoteFingerprint(remote: RemoteTask) {
   return localFingerprint({
     ...remoteFields(remote),
     id: remote.id,

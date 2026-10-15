@@ -20,3 +20,4 @@ import './selection.css';
 import './menuTheme';
 import './theme-dark.generated.css';
 import './theme-dark.css';
+import './apple-switch.css';

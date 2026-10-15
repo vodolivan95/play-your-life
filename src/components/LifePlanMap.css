@@ -1,0 +1,70 @@
+/* «Карта пересечений» экрана «План жизни». Свои переменные: тёмная тема по умолчанию, светлая — по data-theme. */
+.lpm {
+  --lpm-card: #222b44; --lpm-card-2: #1a2240; --lpm-line: #2f3b5c; --lpm-text: #fff; --lpm-muted: #9aa8c8;
+  --lpm-track: #2a3556; --lpm-accent: #0a84ff; --lpm-peak: #ff6b6b; --lpm-gold: #f0ac1f; --lpm-goldbg: rgba(240, 172, 31, .12);
+  color: var(--lpm-text); display: grid; gap: 18px; min-width: 0; font-family: inherit;
+}
+:root[data-theme='light'] .lpm {
+  --lpm-card: #fff; --lpm-card-2: #f1f5fc; --lpm-line: #dbe3f1; --lpm-text: #163556; --lpm-muted: #5b6f8f;
+  --lpm-track: #e6ecf7; --lpm-accent: #1d7fe0; --lpm-peak: #e5484d; --lpm-gold: #d98b00; --lpm-goldbg: rgba(240, 172, 31, .16);
+}
+.lpm h2, .lpm h3, .lpm p { margin: 0; }
+.lpm button { font-family: inherit; cursor: pointer; }
+.lpm-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px; }
+.lpm-head h2 { font-size: 30px; font-weight: 900; }
+.lpm-head p, .lpm-sub { margin-top: 6px; font-size: 14px; color: var(--lpm-muted); }
+.lpm-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.lpm-seg { display: inline-flex; padding: 3px; border-radius: 12px; background: var(--lpm-track); gap: 2px; }
+.lpm-seg button { min-height: 34px; padding: 0 14px; border: 0; border-radius: 9px; background: transparent; color: var(--lpm-muted); font-size: 13px; font-weight: 700; }
+.lpm-seg button.is-on { background: var(--lpm-card); color: var(--lpm-text); box-shadow: 0 1px 4px rgba(0, 0, 0, .2); }
+.lpm-nav { display: inline-flex; gap: 6px; align-items: center; }
+.lpm-nav button { min-width: 34px; min-height: 34px; padding: 0 10px; border: 1.5px solid var(--lpm-line); border-radius: 10px; background: var(--lpm-card); color: var(--lpm-text); font-size: 16px; font-weight: 700; }
+.lpm-nav .lpm-today { font-size: 13px; }
+.lpm-card { padding: 18px 20px; border-radius: 22px; background: var(--lpm-card); border: 1.5px solid var(--lpm-line); min-width: 0; }
+.lpm-card h3 { font-size: 18px; font-weight: 800; }
+.lpm-card-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+.lpm-card-head p { margin-top: 4px; font-size: 13px; color: var(--lpm-muted); }
+.lpm-peak { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-bottom: 10px; font-size: 14px; color: var(--lpm-muted); }
+.lpm-peak b { color: var(--lpm-peak); }
+.lpm-grid { display: grid; gap: 6px; }
+.lpm-row { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 10px; align-items: center; padding: 3px 6px; border-radius: 12px; border: 1.5px solid transparent; }
+.lpm-row.is-key { border-color: var(--lpm-gold); background: var(--lpm-goldbg); box-shadow: 0 0 14px rgba(240, 172, 31, .25); }
+.lpm-name { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.lpm-name em { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.lpm-star { border: 0; background: transparent; color: var(--lpm-muted); font-size: 16px; padding: 0; line-height: 1; }
+.lpm-star.is-on { color: var(--lpm-gold); }
+.lpm-cells { display: grid; gap: 2px; min-width: 0; }
+.lpm-cells > span { height: 18px; border-radius: 4px; background: var(--lpm-track); }
+.lpm-cells > span.is-today, .lpm-bar-col.is-today { outline: 2px solid var(--lpm-accent); outline-offset: 1px; }
+.lpm-bars .lpm-cells { align-items: end; min-height: 64px; }
+.lpm-bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; border-radius: 4px; }
+.lpm-bar-col i { font-size: 10px; font-style: normal; color: var(--lpm-muted); line-height: 1; }
+.lpm-bar-col span { width: 100%; border-radius: 4px 4px 0 0; background: var(--lpm-accent); }
+.lpm-bar-col span.is-peak { background: var(--lpm-peak); }
+.lpm-hint { margin-top: 10px; font-size: 12px; color: var(--lpm-muted); }
+.lpm-gantt { position: relative; display: grid; gap: 6px; padding: 26px 0 4px; min-height: 60px; }
+.lpm-now { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px dashed var(--lpm-accent); font-style: normal; z-index: 2; pointer-events: none; }
+.lpm-now b { position: absolute; top: 0; left: 0; transform: translateX(-50%); padding: 2px 8px; border-radius: 999px; background: var(--lpm-accent); color: #fff; font-size: 11px; white-space: nowrap; }
+.lpm-span { position: relative; display: block; width: 100%; height: 26px; padding: 0; border: 0; border-radius: 8px; background: var(--lpm-track); }
+.lpm-span:disabled { cursor: default; }
+.lpm-span > span { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; border-radius: 8px; color: #fff; font-size: 12px; font-weight: 700; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+.lpm-span > small { position: absolute; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--lpm-muted); white-space: nowrap; }
+.lpm-span.is-key > span { box-shadow: 0 0 0 2px var(--lpm-gold); }
+.lpm-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.lpm-bal { display: grid; grid-template-columns: 120px minmax(0, 1fr) 42px; gap: 10px; align-items: center; margin-top: 10px; font-size: 13px; padding: 2px 6px; border-radius: 10px; border: 1.5px solid transparent; }
+.lpm-bal.is-key { border-color: var(--lpm-gold); background: var(--lpm-goldbg); }
+.lpm-bal > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 700; }
+.lpm-bal > div { height: 8px; border-radius: 99px; background: var(--lpm-track); overflow: hidden; }
+.lpm-bal i { display: block; height: 100%; border-radius: 99px; }
+.lpm-bal b { text-align: right; }
+.lpm-free { display: flex; justify-content: space-between; margin-top: 10px; padding: 10px 14px; border-radius: 14px; background: var(--lpm-card-2); font-size: 14px; }
+.lpm-free span { color: var(--lpm-muted); }
+.lpm-empty, .lpm-warn { margin-top: 10px; font-size: 13px; color: var(--lpm-muted); }
+.lpm-warn { color: var(--lpm-gold); }
+@media (max-width: 760px) {
+  .lpm-row { grid-template-columns: 1fr; gap: 4px; }
+  .lpm-two { grid-template-columns: 1fr; }
+  .lpm-head h2 { font-size: 24px; }
+  .lpm-bar-col i { font-size: 8px; }
+  .lpm-bal { grid-template-columns: 96px minmax(0, 1fr) 38px; }
+}

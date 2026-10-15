@@ -3347,13 +3347,21 @@ dialog {
 .ticktick-inbox-item { padding: 14px; border-radius: 14px; background: #ffffff; border: 1px solid #e2eaf7; display: grid; gap: 12px; }
 .ticktick-inbox-title { display: grid; gap: 4px; }
 .ticktick-inbox-title small { font-size: 12px; color: #4e607e; }
-.ticktick-inbox-choice { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.ticktick-inbox-choice label { display: grid; gap: 6px; font-size: 12px; color: #496084; font-weight: 600; }
-.ticktick-inbox-choice select { width: 100%; min-width: 0; min-height: 44px; }
+.ticktick-inbox-choice { display: grid; gap: 10px; padding: 14px; border-radius: 14px; background: #f3f7fd; border: 1px solid #e2eaf7; }
+.ticktick-inbox-label { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #496084; }
+.ticktick-inbox-chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ticktick-chip { min-height: 44px; padding: 0 14px; border-radius: 14px; border: 2px solid #c3d0e8; background: transparent; color: #3f5174; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
+.ticktick-chip[aria-pressed="true"] { border-color: #2f6fe0; background: #e6eefc; color: #14213d; }
+.ticktick-chip-add { border-style: dashed; color: #2f6fe0; }
+.ticktick-chip:disabled { opacity: .6; cursor: not-allowed; }
+.ticktick-stage-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; width: 100%; }
+.ticktick-stage-form input { flex: 1 1 220px; min-height: 44px; min-width: 0; }
+.ticktick-inbox-hint { margin: 0; font-size: 13px; }
 .ticktick-inbox-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .ticktick-inbox .transfer-message { white-space: pre-line; }
 @media (max-width: 720px) {
-  .ticktick-inbox-choice { grid-template-columns: 1fr; }
+  .ticktick-chip { min-height: 44px; }
+  .ticktick-stage-form > * { flex: 1 1 100%; }
   .ticktick-inbox-actions > button { flex: 1 1 160px; min-height: 44px; }
 }
 @media (max-width: 600px) {

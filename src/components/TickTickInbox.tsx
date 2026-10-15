@@ -1,6 +1,8 @@
 import { useContext, useEffect, useRef, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { spheres } from '../game';
 import type { GameState } from '../game';
+import { saveStage } from '../planning';
 import { TickTickContext } from '../tickTickContext';
 import { goalsForSphere, openStages } from '../ticktickInbox';
 import type { IncomingChoice, IncomingTask } from '../ticktickInbox';
@@ -11,9 +13,10 @@ function formatDate(value?: string | null) {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('ru-RU');
 }
-function Row({ item, state, busy, listName, onAccept, onDismiss }: {
+function Row({ item, state, busy, listName, onAccept, onDismiss, onChange }: {
   item: IncomingTask;
   state: GameState;
+  onChange: Dispatch<SetStateAction<GameState>>;
   busy: boolean;
   listName: string;
   onAccept: (choice: IncomingChoice) => Promise<string>;
@@ -23,6 +26,8 @@ function Row({ item, state, busy, listName, onAccept, onDismiss }: {
   const [goalId, setGoalId] = useState('');
   const [stageId, setStageId] = useState('');
   const [error, setError] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState('');
   const goals = goalsForSphere(state, sphere);
   const goal = goals.find((g) => g.id === goalId);
   const stages = openStages(goal);
@@ -38,25 +43,42 @@ function Row({ item, state, busy, listName, onAccept, onDismiss }: {
       <small>Список TickTick: {listName}{start ? ` · начало ${start}` : ''}{due ? ` · срок ${due}` : ''}</small>
     </div>
     <div className="ticktick-inbox-choice">
-      <label>Сфера
-        <select value={sphere} disabled={busy} onChange={(e) => { setSphere(e.target.value); setGoalId(''); setStageId(''); }}>
-          {spheres.map((s) => <option key={s.id} value={s.id}>{s.icon} {s.name}</option>)}
-        </select>
-      </label>
-      <label>Цель
-        <select value={goalId} disabled={busy || !goals.length} onChange={(e) => { setGoalId(e.target.value); setStageId(''); }}>
-          <option value="">{goals.length ? 'Выберите цель' : 'В этой сфере нет целей'}</option>
-          {goals.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-        </select>
-      </label>
-      <label>Этап
-        <select value={stageId} disabled={busy || !goal} onChange={(e) => setStageId(e.target.value)}>
-          <option value="">Без этапа</option>
-          {stages.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
-      </label>
+      <span className="ticktick-inbox-label" id={`sphere-${item.remote.id}`}>Сфера</span>
+      <div className="ticktick-inbox-chips" role="group" aria-labelledby={`sphere-${item.remote.id}`}>
+        {spheres.map((s) => <button key={s.id} type="button" className="ticktick-chip" aria-pressed={sphere === s.id} disabled={busy}
+          onClick={() => { setSphere(s.id); setGoalId(''); setStageId(''); setAdding(false); }}>{s.icon} {s.name}</button>)}
+      </div>
+      <span className="ticktick-inbox-label" id={`goal-${item.remote.id}`}>Цель</span>
+      <div className="ticktick-inbox-chips" role="group" aria-labelledby={`goal-${item.remote.id}`}>
+        {goals.map((g) => <button key={g.id} type="button" className="ticktick-chip" aria-pressed={goalId === g.id} disabled={busy}
+          onClick={() => { setGoalId(g.id); setStageId(''); setAdding(false); }}>{g.name}</button>)}
+        {!goals.length && <span className="muted">В этой сфере нет целей.</span>}
+      </div>
+      {goal && <>
+        <span className="ticktick-inbox-label" id={`stage-${item.remote.id}`}>Этап</span>
+        <div className="ticktick-inbox-chips" role="group" aria-labelledby={`stage-${item.remote.id}`}>
+          <button type="button" className="ticktick-chip" aria-pressed={!stageId} disabled={busy} onClick={() => setStageId('')}>Без этапа</button>
+          {stages.map((s) => <button key={s.id} type="button" className="ticktick-chip" aria-pressed={stageId === s.id} disabled={busy} onClick={() => setStageId(s.id)}>{s.name}</button>)}
+          {!adding && <button type="button" className="ticktick-chip ticktick-chip-add" disabled={busy} onClick={() => setAdding(true)}>＋ Новый этап</button>}
+          {adding && <form className="ticktick-stage-form" onSubmit={(e) => {
+            e.preventDefault();
+            void run(async () => {
+              const next = saveStage(state, goal.id, { name: draft, status: 'active' });
+              const created = next.goals.find((g) => g.id === goal.id)?.stages?.slice(-1)[0];
+              onChange(next);
+              if (created) setStageId(created.id);
+              setDraft(''); setAdding(false);
+            });
+          }}>
+            <input value={draft} maxLength={100} autoFocus placeholder="Название этапа" aria-label="Название нового этапа" onChange={(e) => setDraft(e.target.value)} />
+            <button className="primary-button" type="submit" disabled={busy || !draft.trim()}>Создать этап</button>
+            <button className="text-button" type="button" onClick={() => { setAdding(false); setDraft(''); }}>Отмена</button>
+          </form>}
+        </div>
+      </>}
     </div>
     {!goals.length && <p className="score-note">Задача из TickTick добавляется в цель. Создайте цель в этой сфере или выберите другую сферу.</p>}
+    <p className="muted ticktick-inbox-hint">Награда придёт один раз — при выполнении задачи.</p>
     <div className="ticktick-inbox-actions">
       <button className="primary-button" disabled={busy || !goalId} onClick={() => void run(() => onAccept({ sphere, goalId, stageId: stageId || undefined }))}>Принять в игру</button>
       <button className="text-button" disabled={busy} onClick={() => void run(onDismiss)}>Пропустить</button>
@@ -64,7 +86,7 @@ function Row({ item, state, busy, listName, onAccept, onDismiss }: {
     {error && <p className="transfer-message" role="alert">{error}</p>}
   </li>;
 }
-export default function TickTickInbox({ state }: { state: GameState }) {
+export default function TickTickInbox({ state, onChange }: { state: GameState; onChange: Dispatch<SetStateAction<GameState>> }) {
   const manager = useContext(TickTickContext);
   const [shown, setShown] = useState(pageSize);
   const [notice, setNotice] = useState('');
@@ -90,7 +112,7 @@ export default function TickTickInbox({ state }: { state: GameState }) {
     {manager.inboxError && <p className="transfer-message" role="alert">{manager.inboxError}</p>}
     {!items.length && !manager.inboxError && <p className="empty">Новых задач в сопоставленных списках нет.</p>}
     {items.length > 0 && <ul className="ticktick-inbox-list">
-      {items.slice(0, shown).map((item) => <Row key={item.remote.id} item={item} state={state} busy={manager.busy}
+      {items.slice(0, shown).map((item) => <Row key={item.remote.id} item={item} state={state} onChange={onChange} busy={manager.busy}
         listName={names.get(item.projectId) ?? 'без названия'}
         onAccept={async (choice) => { const message = await manager.acceptIncoming(item.remote.id, choice); setNotice(message); return message; }}
         onDismiss={() => manager.dismissIncoming(item.remote.id)} />)}

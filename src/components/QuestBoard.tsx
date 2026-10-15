@@ -244,7 +244,7 @@ export default function QuestBoard({
       </div>
       <div className="pyl-quest-columns">
         <main>
-          <TickTickInbox state={state} />
+          <TickTickInbox state={state} onChange={onChange} />
           {(tab === 0 || tab === 1) && (
             <section className="pyl-habit-section">
               <div className="pyl-section-title">

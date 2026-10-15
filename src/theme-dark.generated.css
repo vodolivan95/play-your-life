@@ -228,7 +228,10 @@
 :root[data-theme="dark"] .ticktick-inbox { background: #141c31; border: 1px solid #324b67; }
 :root[data-theme="dark"] .ticktick-inbox-item { background: #151d33; border: 1px solid #354764; }
 :root[data-theme="dark"] .ticktick-inbox-title small { color: #9fb1db; }
-:root[data-theme="dark"] .ticktick-inbox-choice label { color: #9eb0da; }
+:root[data-theme="dark"] .ticktick-inbox-choice { background: #141c31; border: 1px solid #354764; }
+:root[data-theme="dark"] .ticktick-inbox-label { color: #9eb0da; }
+:root[data-theme="dark"] .ticktick-chip { border: 2px solid #3a475f; color: #abbadf; }
+:root[data-theme="dark"] .ticktick-chip[aria-pressed="true"] { background: #1a2841; color: #d9e0f1; }
 
 /* interface.css */
 :root[data-theme="dark"] { --muted: #a2b3dc; --border: #283353; color: #cad4eb; background: #141b30; }

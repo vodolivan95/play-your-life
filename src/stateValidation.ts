@@ -6,6 +6,7 @@ import { shopItems, customRewardIdPattern, MAX_CUSTOM_REWARDS, MAX_CUSTOM_REWARD
 import { validProjectImage } from './projectImage.ts';
 import { validSkillTrees } from './skillTree.ts';
 import { validMonthlyFocus } from './monthlyFocus.ts';
+import { validKeySpheres } from './lifePlanMap.ts';
 import type { GameState } from './game.ts';
 import { imageDocPattern, imageRefPattern, monthPattern } from './cloudSplit.ts';
 
@@ -83,6 +84,8 @@ export function validateState(value: unknown): asserts value is SavedState {
   if (value.skillTrees !== undefined && !validSkillTrees(value.skillTrees))
     return fail();
   if (value.monthlyFocus !== undefined && !validMonthlyFocus(value.monthlyFocus))
+    return fail();
+  if (value.keySpheres !== undefined && !validKeySpheres(value.keySpheres))
     return fail();
   if (
     value.historyIndex !== undefined &&

@@ -10,6 +10,7 @@ import hoodedUrl from '../assets/city-people/kaykit-hooded.webp';
 import { cityAssets } from '../sphereAssets';
 import wideMapUrl from '../assets/city-wide.webp';
 import { CitySimulation, QualityManager } from '../cityLive/simulation';
+import { isConstrainedDevice } from '../cityLive/device';
 import type { Quality } from '../cityLive/simulation';
 import type { CityProfile, CityRoute, Point } from '../cityLive/paths';
 import { CityRenderer, timeLighting } from '../cityLive/render';
@@ -31,7 +32,8 @@ export default function LiveCityCanvas(props:Props) {
     if (!node) return;
     const ctx=node.getContext('2d',{alpha:true});
     if (!ctx) {node.dataset.error='canvas-unavailable';return;}
-    const sim=new CitySimulation(routes,8721,profile),quality=new QualityManager(mode,window.innerWidth<=760,profile.budgets);
+    let constrained=isConstrainedDevice();const reducedQuery=window.matchMedia('(prefers-reduced-motion: reduce)');
+    const sim=new CitySimulation(routes,8721,profile),quality=new QualityManager(mode,constrained,profile.budgets);
     sim.initialize(quality.budget);
     const renderer=new CityRenderer(ctx,profile);
     const background=new Image(),sprites=new Image(),boats=new Image(),globe=new Image(),clean=new Image();
@@ -40,33 +42,40 @@ export default function LiveCityCanvas(props:Props) {
     let unitPx=1,frame=0,previous=0,lastStats=0,visible=true,disposed=false,ready=false,lastSignature='',renderMs=0,simulationMs=0;
     const resize=()=>{
       const width=Math.max(1,node.getBoundingClientRect().width);unitPx=width/MAP_WIDTH;
-      if (mode==='auto'&&window.innerWidth<=760)quality.medium=true;
+      // Поворот экрана и смена размера окна пересчитывают тип устройства: телефон в ландшафте остаётся «слабым».
+      constrained=isConstrainedDevice();
+      if (mode==='auto'&&constrained)quality.medium=true;
       // LOW reduces object/effect counts, not the sharpness of the mobile canvas.
       const ratio=Math.min(2,window.devicePixelRatio||1);
       // Холст не ограничен 1400 px: при приближении карты (щипок, колёсико) ширина растёт, и жители с машинами остаются чёткими. Потолок защищает слабые устройства.
-      const maxWidth=quality.low?1400:window.innerWidth<=760?2400:3200;
+      const maxWidth=quality.low?1400:constrained?2400:3200;
       node.width=Math.round(Math.min(maxWidth,width*ratio));node.height=Math.round(node.width*MAP_HEIGHT/MAP_WIDTH);
       ctx.setTransform(node.width/MAP_WIDTH,0,0,node.height/MAP_HEIGHT,0,0);
       // Смена размера очищает холст: при щипке/колёсике это шло каждый кадр, и машины, люди и суда мигали до следующего тика. Перерисовываем сразу.
       if (ready&&!disposed) paint(live.current);
     };
     const paint=(settings:Props)=>{
-      const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const reduced=reducedQuery.matches;
       renderer.draw(sim,{...settings,low:quality.level!=='high',reduced,background,sprites,boats,globe,clean,people,unitPx});
     };
     const observer=new ResizeObserver(resize);observer.observe(node);
     const tick=(now:number)=>{
       frame=0;
       if (disposed||document.hidden||!visible||!ready) {previous=0;return;}
+      // Телефон рисует город 30 раз в секунду (экономия батареи и нагрева), остальные — не чаще 60 даже на экранах 120 Гц.
+      const capped=constrained&&quality.level!=='high';
+      if (previous&&now-previous<(capped?32:15)) {frame=requestAnimationFrame(tick);return;}
       const settings=live.current,rawDelta=previous ? (now-previous)/1000:1/60,dt=Math.min(rawDelta,.1);previous=now;
+      quality.capped=capped;
       const wasLow=quality.low;quality.observe(rawDelta);if (wasLow!==quality.low) resize();
-      const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const reduced=reducedQuery.matches;
       if(reduced)quality.low=true;
       const paused=settings.paused;
       const simulationStart=performance.now();
       if (!paused) sim.step(dt*settings.speed,quality.budget,['rain','thunderstorm'].includes(settings.weather));
       simulationMs=simulationMs*.9+(performance.now()-simulationStart)*.1;
-      const signature=JSON.stringify([settings.time,settings.weather,settings.debug,settings.draft,node.width]);
+      // Подпись настроек нужна только на паузе: на ходу город и так перерисовывается каждый кадр.
+      const signature=paused ? JSON.stringify([settings.time,settings.weather,settings.debug,settings.draft,node.width]) : '';
       if (!paused||signature!==lastSignature) {
         if (paused) Object.assign(renderer,timeLighting(settings.time,sim.elapsed));
         const renderStart=performance.now();paint(settings);renderMs=renderMs*.9+(performance.now()-renderStart)*.1;lastSignature=signature;

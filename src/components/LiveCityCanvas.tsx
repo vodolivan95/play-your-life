@@ -32,7 +32,7 @@ export default function LiveCityCanvas(props:Props) {
     if (!node) return;
     const ctx=node.getContext('2d',{alpha:true});
     if (!ctx) {node.dataset.error='canvas-unavailable';return;}
-    const constrained=isConstrainedDevice(),reducedQuery=window.matchMedia('(prefers-reduced-motion: reduce)');
+    let constrained=isConstrainedDevice();const reducedQuery=window.matchMedia('(prefers-reduced-motion: reduce)');
     const sim=new CitySimulation(routes,8721,profile),quality=new QualityManager(mode,constrained,profile.budgets);
     sim.initialize(quality.budget);
     const renderer=new CityRenderer(ctx,profile);
@@ -42,6 +42,8 @@ export default function LiveCityCanvas(props:Props) {
     let unitPx=1,frame=0,previous=0,lastStats=0,visible=true,disposed=false,ready=false,lastSignature='',renderMs=0,simulationMs=0;
     const resize=()=>{
       const width=Math.max(1,node.getBoundingClientRect().width);unitPx=width/MAP_WIDTH;
+      // Поворот экрана и смена размера окна пересчитывают тип устройства: телефон в ландшафте остаётся «слабым».
+      constrained=isConstrainedDevice();
       if (mode==='auto'&&constrained)quality.medium=true;
       // LOW reduces object/effect counts, not the sharpness of the mobile canvas.
       const ratio=Math.min(2,window.devicePixelRatio||1);

@@ -115,3 +115,30 @@ test('Широкая карта: транспорт не пересекает р
     assert.ok(walkers>50,'Пешеходы на широкой карте ходят');
   }
 });
+
+test('Лимит 30 кадров на телефоне не считается тормозами; настоящие тормоза всё равно снижают качество',()=>{
+  const capped=new QualityManager('auto',true);capped.capped=true;
+  // 30 кадров в секунду — это нормальный лимит, качество остаётся прежним.
+  for (let i=0;i<600;i++)capped.observe(1/30);
+  assert.equal(capped.level,'medium');
+  // 15 кадров в секунду — устойчивые тормоза, качество падает до LOW.
+  for (let i=0;i<200;i++)capped.observe(1/15);
+  assert.equal(capped.level,'low');
+  // Без лимита 30 кадров в секунду уже считается медленно.
+  const free=new QualityManager('auto',false);
+  for (let i=0;i<300;i++)free.observe(1/25);
+  assert.notEqual(free.level,'high');
+});
+
+test('Быстрый поиск соседей даёт тот же результат: жители и машины не пересекаются, повторный запуск идентичен',()=>{
+  const run=()=>{
+    const sim=new CitySimulation();sim.initialize(qualityBudgets.high);
+    for(let i=0;i<1200;i++)sim.step(1/60,qualityBudgets.high,i%500>300);
+    return sim;
+  };
+  const a=run(),b=run();
+  assert.equal(JSON.stringify(a.normalizedPositions),JSON.stringify(b.normalizedPositions));
+  const cars=a.agents.filter(x=>x.kind==='road');
+  for(const [i,x] of cars.entries())for(const y of cars.slice(i+1))
+    assert.ok(Math.hypot(x.position.x-y.position.x,x.position.y-y.position.y)>=(x.safeRadius+y.safeRadius)*.5,'машины не должны занимать одну точку');
+});

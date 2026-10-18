@@ -1,0 +1,91 @@
+/* «Входящие из TickTick» — стекло в стиле Apple (светлая и тёмная темы). */
+.ticktick-inbox {
+  --glass-bg: rgba(255, 255, 255, 0.62);
+  --glass-border: rgba(255, 255, 255, 0.85);
+  --glass-shadow: 0 10px 34px rgba(31, 60, 110, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --glass-item: rgba(255, 255, 255, 0.55);
+  --glass-item-border: rgba(120, 150, 200, 0.28);
+  --glass-pill: rgba(60, 90, 150, 0.1);
+  --glass-pill-text: #3d5280;
+  --glass-text: #14213d;
+  --glass-muted: #5b6b82;
+  --glass-accent: #1f6feb;
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 28px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  color: var(--glass-text);
+}
+:root[data-theme="dark"] .ticktick-inbox {
+  --glass-bg: radial-gradient(120% 140% at 0% 0%, rgba(52, 78, 168, 0.5) 0%, rgba(52, 78, 168, 0) 45%), linear-gradient(160deg, #16224a 0%, #0f1832 55%, #0b1228 100%);
+  --glass-border: rgba(140, 175, 255, 0.28);
+  --glass-shadow: 0 18px 48px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --glass-item: rgba(255, 255, 255, 0.075);
+  --glass-item-border: rgba(150, 175, 230, 0.2);
+  --glass-pill: rgba(255, 255, 255, 0.09);
+  --glass-pill-text: #c9d6f2;
+  --glass-text: #ffffff;
+  --glass-muted: #9fb0cc;
+  --glass-accent: #8db4ff;
+}
+.ticktick-inbox-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
+.ticktick-inbox-head h3 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.01em; color: var(--glass-text); }
+.ticktick-badge-count {
+  display: inline-grid; place-items: center; min-width: 34px; height: 34px; padding: 0 10px; border-radius: 999px;
+  background: #8db4ff; color: #0b1a3a; font-size: 16px; font-weight: 800;
+  box-shadow: 0 0 0 4px rgba(141, 180, 255, 0.22);
+}
+:root:not([data-theme="dark"]) .ticktick-badge-count { background: #1f6feb; color: #fff; box-shadow: 0 0 0 4px rgba(31, 111, 235, 0.16); }
+.ticktick-inbox-note { margin-left: auto; font-size: 14px; color: var(--glass-muted); }
+.ticktick-refresh {
+  min-height: 36px; padding: 0 16px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+  color: var(--glass-accent); background: var(--glass-pill); border: 1px solid var(--glass-item-border);
+}
+.ticktick-refresh:disabled { opacity: 0.6; cursor: wait; }
+.ticktick-inbox .ticktick-inbox-list { margin: 0; gap: 12px; }
+.ticktick-inbox .ticktick-inbox-item {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px 16px; padding: 18px 20px; border-radius: 22px;
+  background: var(--glass-item); border: 1px solid var(--glass-item-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+.ticktick-inbox-item > :not(.ticktick-inbox-title):not(.ticktick-inbox-actions) { grid-column: 1 / -1; }
+.ticktick-inbox-title { display: grid; gap: 10px; }
+.ticktick-inbox-title strong { font-size: 19px; font-weight: 800; color: var(--glass-text); }
+.ticktick-inbox-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+.ticktick-pill {
+  display: inline-flex; align-items: center; min-height: 32px; padding: 0 14px; border-radius: 999px;
+  font-size: 14px; font-weight: 700; color: var(--glass-pill-text); background: var(--glass-pill); border: 1px solid var(--glass-item-border);
+}
+.ticktick-inbox .ticktick-inbox-actions { justify-content: flex-end; }
+.ticktick-sort-button, .ticktick-inbox .ticktick-inbox-actions .primary-button {
+  min-height: 52px; padding: 0 28px; border-radius: 18px; font: inherit; font-size: 17px; font-weight: 800; cursor: pointer;
+  color: var(--glass-accent); background: rgba(141, 180, 255, 0.1); border: 2px solid var(--glass-accent); box-shadow: none;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+.ticktick-sort-button:hover:not(:disabled), .ticktick-inbox .ticktick-inbox-actions .primary-button:hover:not(:disabled) { background: rgba(141, 180, 255, 0.22); }
+.ticktick-sort-button:disabled, .ticktick-inbox .ticktick-inbox-actions .primary-button:disabled { opacity: 0.5; cursor: not-allowed; }
+.ticktick-inbox .text-button { color: var(--glass-muted); }
+.ticktick-inbox .ticktick-inbox-choice { background: var(--glass-pill); border: 1px solid var(--glass-item-border); border-radius: 18px; }
+.ticktick-inbox .ticktick-inbox-label { color: var(--glass-muted); }
+.ticktick-inbox .ticktick-chip { border: 1px solid var(--glass-item-border); background: var(--glass-pill); color: var(--glass-pill-text); border-radius: 999px; }
+.ticktick-inbox .ticktick-chip[aria-pressed="true"] { border-color: var(--glass-accent); background: rgba(141, 180, 255, 0.24); color: var(--glass-text); }
+.ticktick-inbox .ticktick-chip-add { border-style: dashed; color: var(--glass-accent); }
+.ticktick-inbox .muted, .ticktick-inbox .empty { color: var(--glass-muted); }
+@media (max-width: 640px) {
+  .ticktick-inbox { padding: 14px; border-radius: 22px; }
+  .ticktick-inbox-head h3 { font-size: 20px; }
+  .ticktick-inbox-note { margin-left: 0; width: 100%; order: 3; }
+  .ticktick-inbox .ticktick-inbox-item { grid-template-columns: 1fr; }
+  .ticktick-inbox .ticktick-inbox-actions { justify-content: stretch; }
+  .ticktick-sort-button { flex: 1 1 auto; }
+}
+.ticktick-inbox { margin: 0 0 22px; }
+.ticktick-inbox .ticktick-inbox-choice { display: grid; gap: 10px; padding: 14px; }
+.ticktick-inbox .ticktick-inbox-label { font-size: 12px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.ticktick-inbox .ticktick-chip { min-height: 44px; padding: 0 16px; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }

@@ -119,6 +119,18 @@ try {
   await page.getByRole('button',{name:/^Входящие/}).first().click();
   const inbox = page.getByRole('region',{name:'Входящие из TickTick'});
   await inbox.getByText('Купить билеты').waitFor();
+  if (process.env.SHOT) {
+    for (const theme of ['dark','light']) {
+      await page.evaluate(t=>{document.documentElement.dataset.theme=t;document.body.style.background=t==='dark'?'#0a0f20':'#eef3fb';document.querySelectorAll('.ticktick-inbox').forEach(e=>{e.parentElement.style.background='transparent'});},theme);
+      await page.waitForTimeout(300);
+      await inbox.screenshot({path:`/tmp/inbox-${theme}.png`});
+    }
+    await page.evaluate(()=>{document.documentElement.dataset.theme='dark';});
+    await inbox.locator('li',{hasText:'Купить билеты'}).getByRole('button',{name:'Разобрать'}).click();
+    await page.waitForTimeout(300);
+    await inbox.screenshot({path:'/tmp/inbox-open.png'});
+    await inbox.locator('li',{hasText:'Купить билеты'}).getByRole('button',{name:'Свернуть'}).click();
+  }
   // 1. Одиночная задача без цели.
   const row = t => inbox.locator('li',{hasText:t});
   await row('Купить билеты').getByRole('button',{name:'Разобрать'}).click();

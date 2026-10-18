@@ -1,6 +1,6 @@
 import { migrateState } from './game.ts';
 import type { GameState } from './game.ts';
-import { validateState } from './stateValidation.ts';
+import { repairState, validateState } from './stateValidation.ts';
 export const stateStorageKey = 'play-your-life-v1';
 export const recoveryStorageKey = 'play-your-life-recovery-v1';
 export function backupText(state: GameState) {
@@ -36,6 +36,7 @@ export function restoreBackup(text: string): GameState {
       throw new Error('Этот формат резервной копии не поддерживается.');
     parsed = envelope.state;
   }
+  repairState(parsed);
   validateState(parsed);
   return migrateState(parsed);
 }

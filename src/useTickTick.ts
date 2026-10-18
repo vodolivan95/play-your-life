@@ -179,10 +179,10 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
       if (c.auth === 'firebase') c = { ...c, ...validateTickTickSettings(await request(c, '/settings')) };
       const taskId = crypto.randomUUID();
       // Проверка и расчёт без изменений: при ошибке (например, сроки цели) ничего не меняется ни здесь, ни в TickTick.
-      const accepted = acceptIncomingTask(latest.current.state, c, item, choice, taskId);
+      const accepted = acceptIncomingTask(latest.current.state, c, item, choice, taskId, userId ?? 'local');
       // Метка PYL в заметке TickTick защищает от копий, даже если сохранение связи прервётся.
       if (accepted.remoteUpdate) await request(c, `/api/task/${encodeURIComponent(item.remote.id)}`, 'POST', accepted.remoteUpdate);
-      onChange(state => { try { return acceptIncomingTask(state, c, item, choice, taskId).state; } catch { return state; } });
+      onChange(state => { try { return acceptIncomingTask(state, c, item, choice, taskId, userId ?? 'local').state; } catch { return state; } });
       setIncoming(list => list.filter(i => i.remote.id !== remoteId));
       try {
         const next = c.auth === 'firebase' ? validateTickTickSettings(await request(c, '/settings', 'PUT', settings(accepted.connection))) : settings(accepted.connection);

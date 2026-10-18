@@ -22,3 +22,4 @@ import './theme-dark.generated.css';
 import './theme-dark.css';
 import './apple-switch.css';
 import './theme-light-glass.css';
+import './theme-dark-glass.css';

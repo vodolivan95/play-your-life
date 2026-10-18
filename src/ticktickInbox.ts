@@ -19,6 +19,7 @@ export type IncomingTask = {
 };
 export type IncomingChoice = {
   sphere: string;
+  /** Пустая строка — одиночная задача без цели (в TickTick не синхронизируется). */
   goalId: string;
   stageId?: string;
 };
@@ -27,7 +28,7 @@ export type IncomingAccepted = {
   connection: TickTickConnection;
   task: Quest;
   /** Тело обновления задачи в TickTick: добавляет цель, этап и служебную метку. */
-  remoteUpdate: Record<string, unknown>;
+  remoteUpdate: Record<string, unknown> | null;
 };
 
 const idPattern = /^[\w-]{1,100}$/;
@@ -121,8 +122,9 @@ export function acceptIncomingTask(
   choice: IncomingChoice,
   taskId: string = crypto.randomUUID(),
 ): IncomingAccepted {
+  if (!choice.goalId) return acceptSingleTask(state, connection, incoming, choice, taskId);
   const goal = state.goals.find((g) => g.id === choice.goalId);
-  if (!goal) throw new Error('Выбери цель: задача из TickTick добавляется в цель.');
+  if (!goal) throw new Error('Выбери цель или «Без цели».');
   if (goal.sphere !== choice.sphere)
     throw new Error('Эта цель относится к другой сфере.');
   const stage = choice.stageId
@@ -172,6 +174,25 @@ export function acceptIncomingTask(
       },
     },
   };
+}
+
+/** Одиночная задача: попадает в игру без цели и этапа, в TickTick ничего не меняется и обратно не синхронизируется. */
+function acceptSingleTask(
+  state: GameState,
+  connection: TickTickConnection,
+  incoming: IncomingTask,
+  choice: IncomingChoice,
+  taskId: string,
+): IncomingAccepted {
+  if (!state.spheres[choice.sphere]) throw new Error('Выбери сферу.');
+  if (state.quests.some((q) => q.id === taskId)) throw new Error('Задача уже добавлена.');
+  const fields = remoteFields(incoming.remote);
+  const name = fields.name.trim().slice(0, maxTaskName);
+  if (!name) throw new Error('У задачи TickTick нет названия.');
+  const next = saveTask(state, { ...fields, id: taskId, name, sphere: choice.sphere, difficulty: 'Medium', goalId: undefined, stageId: undefined, tickTickSync: false });
+  const task = next.quests.find((q) => q.id === taskId);
+  if (!task) throw new Error('Не удалось добавить задачу.');
+  return { state: next, task, remoteUpdate: null, connection: dismissIncomingTask(connection, incoming.remote.id) };
 }
 
 export function dismissIncomingTask(

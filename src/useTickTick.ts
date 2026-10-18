@@ -174,13 +174,13 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
       // Проверка и расчёт без изменений: при ошибке (например, сроки цели) ничего не меняется ни здесь, ни в TickTick.
       const accepted = acceptIncomingTask(latest.current.state, c, item, choice, taskId);
       // Метка PYL в заметке TickTick защищает от копий, даже если сохранение связи прервётся.
-      await request(c, `/api/task/${encodeURIComponent(item.remote.id)}`, 'POST', accepted.remoteUpdate);
+      if (accepted.remoteUpdate) await request(c, `/api/task/${encodeURIComponent(item.remote.id)}`, 'POST', accepted.remoteUpdate);
       onChange(state => { try { return acceptIncomingTask(state, c, item, choice, taskId).state; } catch { return state; } });
       setIncoming(list => list.filter(i => i.remote.id !== remoteId));
       try {
         const next = c.auth === 'firebase' ? validateTickTickSettings(await request(c, '/settings', 'PUT', settings(accepted.connection))) : settings(accepted.connection);
         setConnection({ ...c, ...next });
-        return `Задача «${accepted.task.name}» добавлена в игру и связана с TickTick.`;
+        return accepted.remoteUpdate ? `Задача «${accepted.task.name}» добавлена в игру и связана с TickTick.` : `Одиночная задача «${accepted.task.name}» добавлена в игру.`;
       } catch (error) {
         // Задача уже в игре. Оставляем связь здесь и приостанавливаем обмен, чтобы не создать копию.
         setConnection(accepted.connection); setDirty(true);

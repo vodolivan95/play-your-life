@@ -233,6 +233,8 @@ export type GameState = {
   monthlyTracking?: { since: string; scores: Record<string, number> };
   monthlyReflections?: Record<string, MonthReflection>;
   /** Быстрые отметки «как ты сейчас»: дата → настроение и энергия 1–5. */
+  /** Важность сфер 1–5, раз в квартал (отчёт месяца). */
+  sphereImportance?: import('./monthReport').SphereImportance;
   moodCheckins?: Record<string, { mood: number; energy: number }>;
   /** Только в облачном документе: подписи архивных месяцев (см. cloudSplit.ts). */
   historyIndex?: Record<string, string>;

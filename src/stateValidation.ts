@@ -8,6 +8,7 @@ import { validSkillTrees } from './skillTree.ts';
 import { validMonthlyFocus } from './monthlyFocus.ts';
 import { validKeySpheres } from './lifePlanMap.ts';
 import { validReview, validMoodCheckins } from './keyResults.ts';
+import { validImportance } from './monthReport.ts';
 import type { GameState } from './game.ts';
 import { imageDocPattern, imageRefPattern, monthPattern } from './cloudSplit.ts';
 
@@ -374,4 +375,5 @@ export function validateState(value: unknown): asserts value is SavedState {
   )
     return fail();
   if (!validMoodCheckins(value.moodCheckins)) return fail();
+  if (!validImportance(value.sphereImportance)) return fail();
 }

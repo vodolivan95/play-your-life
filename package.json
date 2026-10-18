@@ -1,7 +1,7 @@
 {
   "name": "play-your-life",
   "private": true,
-  "version": "0.36.2",
+  "version": "0.37.1",
   "type": "module",
   "engines": {
     "node": ">=24 <25"
@@ -22,7 +22,8 @@
     "test:goals-ui": "node tests/goals-ui.mjs",
     "test:theme-ui": "node tests/theme-ui.mjs",
     "test:spheres-ui": "node tests/spheres-ui.mjs",
-    "test:key-results-ui": "node tests/key-results-ui.mjs"
+    "test:key-results-ui": "node tests/key-results-ui.mjs",
+    "test:month-report-ui": "node tests/month-report-ui.mjs"
   },
   "dependencies": {
     "firebase": "12.19.0",

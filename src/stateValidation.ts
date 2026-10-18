@@ -43,6 +43,21 @@ function list(v: unknown, check: (item: Record<string, unknown>) => boolean) {
     new Set(v.map((item) => item.id)).size === v.length
   );
 }
+/**
+ * Чинит сохранения версий 0.34–0.36.1: одиночная задача, принятая из входящих TickTick,
+ * помечалась «созданной игроком» без владельца и монет, и всё сохранение отклонялось проверкой.
+ * Такой задаче убираем пометку, остальные данные не трогаем. Меняет переданный объект.
+ */
+export function repairState(value: unknown): void {
+  if (!record(value) || !Array.isArray(value.quests)) return;
+  value.quests = value.quests.map((q: unknown) => {
+    if (!record(q) || q.sourceType !== 'USER_CREATED') return q;
+    if (typeof q.ownerId === 'string' && q.ownerId && Number.isInteger(q.rewardCoins)) return q;
+    const rest = { ...q };
+    delete rest.sourceType;
+    return rest;
+  });
+}
 export function validateState(value: unknown): asserts value is SavedState {
   const fail = () => {
     throw new Error(

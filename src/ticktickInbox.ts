@@ -132,8 +132,9 @@ export function acceptIncomingTask(
   incoming: IncomingTask,
   choice: IncomingChoice,
   taskId: string = crypto.randomUUID(),
+  ownerId = 'local',
 ): IncomingAccepted {
-  if (!choice.goalId) return acceptSingleTask(state, connection, incoming, choice, taskId);
+  if (!choice.goalId) return acceptSingleTask(state, connection, incoming, choice, taskId, ownerId);
   const goal = state.goals.find((g) => g.id === choice.goalId);
   if (!goal) throw new Error('Выбери цель или «Без цели».');
   if (goal.sphere !== choice.sphere)
@@ -194,13 +195,14 @@ function acceptSingleTask(
   incoming: IncomingTask,
   choice: IncomingChoice,
   taskId: string,
+  ownerId: string,
 ): IncomingAccepted {
   if (!state.spheres[choice.sphere]) throw new Error('Выбери сферу.');
   if (state.quests.some((q) => q.id === taskId)) throw new Error('Задача уже добавлена.');
   const fields = remoteFields(incoming.remote);
   const name = fields.name.trim().slice(0, maxTaskName);
   if (!name) throw new Error('У задачи TickTick нет названия.');
-  const next = saveTask(state, { ...fields, id: taskId, name, sphere: choice.sphere, difficulty: 'Medium', sourceType: 'USER_CREATED' });
+  const next = saveTask(state, { ...fields, id: taskId, name, sphere: choice.sphere, difficulty: 'Medium', sourceType: 'USER_CREATED', ownerId, rewardCoins: 0 });
   const task = next.quests.find((q) => q.id === taskId);
   if (!task) throw new Error('Не удалось добавить задачу.');
   const scoped = { ...connection, projectId: incoming.projectId };

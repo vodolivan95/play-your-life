@@ -1,6 +1,6 @@
 import { goalProgressValue, stageMetrics, stageAccess } from './goalWorkspace.ts';
 import { SPHERE_PROGRESSION_MODEL, MAX_SPHERE_LEVEL, sphereProgress } from './sphereProgress.ts';
-import { validateState } from './stateValidation.ts';
+import { repairState, validateState } from './stateValidation.ts';
 import { questCoins, recordQuestReward } from './personalQuests.ts';
 export const spheres = [
   {
@@ -703,6 +703,7 @@ export function loadState(): GameState {
     if (!raw) return initialState();
     recoveryRaw = raw;
     const value: unknown = JSON.parse(raw);
+    repairState(value);
     validateState(value);
     recoveryRaw = '';
     return migrateState(value);

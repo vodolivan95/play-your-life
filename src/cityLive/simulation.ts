@@ -79,13 +79,15 @@ export class QualityManager {
   medium: boolean;
   slowSeconds = 0;
   fps = 60;
+  /** Кадры намеренно ограничены (30 на телефоне): порог «слишком медленно» ниже, чтобы лимит не считался тормозами. */
+  capped = false;
   mode: Quality;
   budgets = qualityBudgets;
   constructor(mode: Quality, mobile: boolean, budgets: Record<'low' | 'medium' | 'high', QualityBudget> = qualityBudgets) { this.budgets=budgets;this.mode=mode;this.low=mode==='low';this.medium=mode==='medium'||(mode==='auto'&&mobile); }
   observe(frameTime: number) {
     this.fps=this.fps*.94+Math.min(120,1/Math.max(.001,frameTime))*.06;
     if (this.mode!=='auto'||this.low) return;
-    this.slowSeconds=this.fps<27 ? this.slowSeconds+frameTime : 0;
+    this.slowSeconds=this.fps<(this.capped?22:27) ? this.slowSeconds+frameTime : 0;
     if (this.slowSeconds>3) {
       if (this.medium) this.low=true;
       else this.medium=true;
@@ -158,7 +160,11 @@ export class CitySimulation {
       for (const a of active.slice(target)) a.retireAt=a.age+2;
     }
     this.intersections.update(this.agents);
+    // Списки по видам собираются один раз за шаг: сравнение идёт только между своими (и машин с пешеходами), а не всех со всеми.
+    const lists: Record<Agent['kind'],Agent[]>={road:[],water:[],pedestrian:[]};
+    for (const a of this.agents) lists[a.kind].push(a);
     for (const agent of this.agents) {
+      const same=lists[agent.kind];
       agent.age+=dt;
       let target=agent.targetSpeed*(rain ? .83 : 1);
       agent.vehicleAhead=null;
@@ -174,13 +180,11 @@ export class CitySimulation {
       }
       const look=agent.path.at(agent.distance+Math.max(agent.safeDistance,agent.currentSpeed*1.5));
       if (!this.intersections.canEnter(agent,look)) target=0;
-      for (const other of this.agents) {
+      // Пешеход на проезжей части имеет приоритет, если редактором добавлен переход.
+      if (agent.kind==='road') for (const other of lists.pedestrian) if (Math.hypot(look.x-other.position.x,look.y-other.position.y)<14) {target=0;break;}
+      const cosA=Math.cos(agent.position.angle),sinA=Math.sin(agent.position.angle);
+      for (const other of same) {
         if (other===agent) continue;
-        if (agent.kind!==other.kind) {
-          // Пешеход на проезжей части имеет приоритет, если редактором добавлен переход.
-          if (agent.kind==='road'&&other.kind==='pedestrian'&&Math.hypot(look.x-other.position.x,look.y-other.position.y)<14) target=0;
-          continue;
-        }
         let gap=Infinity;
         if (other.path===agent.path) {
           gap=other.distance-agent.distance;
@@ -188,11 +192,14 @@ export class CitySimulation {
           if (gap<=0) gap=Infinity;
         } else {
           const dx=other.position.x-agent.position.x,dy=other.position.y-agent.position.y;
-          const forward=dx*Math.cos(agent.position.angle)+dy*Math.sin(agent.position.angle);
-          const sideways=Math.abs(-dx*Math.sin(agent.position.angle)+dy*Math.cos(agent.position.angle));
+          // Далёкого соседа отсекаем до тригонометрии: впереди он может быть только в пределах дистанции реакции плюс поперечный допуск.
+          const reach=agent.safeDistance+agent.currentSpeed*1.2,lateral=agent.safeRadius+other.safeRadius+8;
+          if (dx*dx+dy*dy>reach*reach+lateral*lateral) continue;
+          const forward=dx*cosA+dy*sinA;
+          const sideways=Math.abs(-dx*sinA+dy*cosA);
           // Житель уступает на пересечении дорожек только жителю с меньшим номером: так двое не ждут друг друга вечно.
           const yields=agent.kind!=='pedestrian'||other.id<agent.id;
-          if (yields&&forward>0&&sideways<agent.safeRadius+other.safeRadius+8&&Math.cos(agent.position.angle-other.position.angle)>.25) gap=forward;
+          if (yields&&forward>0&&sideways<lateral&&Math.cos(agent.position.angle-other.position.angle)>.25) gap=forward;
         }
         if (gap<agent.safeDistance+agent.currentSpeed*1.2) {
           agent.vehicleAhead=other.id;
@@ -207,7 +214,7 @@ export class CitySimulation {
       const decay=Math.exp(-dt/1.2);agent.shiftX=(agent.shiftX??0)*decay;agent.shiftY=(agent.shiftY??0)*decay;
       const raw=agent.path.at(distance),next=agent.shiftX||agent.shiftY ? {...raw,x:raw.x+(agent.shiftX??0),y:raw.y+(agent.shiftY??0)} : raw;
       // Жители не блокируют друг друга жёстко: встречные на обратных дорожках расходятся, а не замирают лицом к лицу.
-      const blocked=agent.kind!=='pedestrian'&&this.agents.some(other=>other!==agent&&other.kind===agent.kind&&
+      const blocked=agent.kind!=='pedestrian'&&same.some(other=>other!==agent&&
         Math.hypot(next.x-other.position.x,next.y-other.position.y)<agent.safeRadius+other.safeRadius+1);
       if (blocked) { agent.currentSpeed=0;this.collisionStops++; }
       else { agent.distance=agent.path.route.closed ? distance%agent.path.length : distance;agent.position=next; }

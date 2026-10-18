@@ -270,6 +270,19 @@ export class CityRenderer {
       }
     }
   }
+  private lampCache=new Map<number,HTMLCanvasElement>();
+  /** Мягкий ореол фонаря рисуется один раз на радиус; каждый кадр — только drawImage вместо создания 70+ градиентов. */
+  private lampGlow(radius:number) {
+    let sprite=this.lampCache.get(radius);
+    if (!sprite) {
+      const size=Math.ceil(radius*4);
+      sprite=document.createElement('canvas');sprite.width=sprite.height=size;
+      const paint=sprite.getContext('2d')!,g=paint.createRadialGradient(size/2,size/2,0,size/2,size/2,size/2);
+      g.addColorStop(0,'rgb(255,216,138)');g.addColorStop(1,'rgba(255,244,199,0)');
+      paint.fillStyle=g;paint.fillRect(0,0,size,size);this.lampCache.set(radius,sprite);
+    }
+    return sprite;
+  }
   private glow(x:number,y:number,radius:number,color:string) {
     const ctx=this.ctx,g=ctx.createRadialGradient(x,y,0,x,y,radius);g.addColorStop(0,color);g.addColorStop(1,'rgba(255,244,199,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);ctx.fill();
   }
@@ -285,7 +298,8 @@ export class CityRenderer {
     for (const [i,[x,y]] of this.profile.lightPoints.entries()) {
       const active=Math.max(0,Math.min(1,(this.night-(i%7)*.055)*2));
       if (active<.01) continue;
-      this.glow(x,y,14+i%3*4,`rgba(255,216,138,${active*.32})`);
+      const r=14+i%3*4;
+      ctx.globalAlpha=active*.32;ctx.drawImage(this.lampGlow(r),x-r,y-r,r*2,r*2);ctx.globalAlpha=1;
       ctx.fillStyle=`rgba(255,234,169,${active*.8})`;ctx.fillRect(x-1,y-1,2,2.3);
     }
     if (opts.weather==='rain'||opts.weather==='thunderstorm') {

@@ -94,7 +94,6 @@ export default function QuestBoard({
   return (
     <div className="pyl-quest-board">
       <header className="pyl-tasks-head">
-        <h1>Мои задачи</h1>
         <nav className="pyl-quest-modes" aria-label="Раздел">
           {modes.map(([id, label]) => (
             <button

@@ -55,11 +55,12 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
   });
   useEffect(() => { try { localStorage.setItem(inboxKey, JSON.stringify(incoming)); } catch { /* кэш необязателен */ } }, [incoming, inboxKey]);
   const [inboxBusy, setInboxBusy] = useState(false);
+  const [inboxNew, setInboxNew] = useState(0);
   const [inboxError, setInboxError] = useState('');
   const working = useRef(false);
   const recoveryPending = useRef(false);
-  const latest = useRef({ state, connection, connected, dirty });
-  useEffect(() => { latest.current = { state, connection, connected, dirty }; }, [state, connection, connected, dirty]);
+  const latest = useRef({ state, connection, connected, dirty, incoming: [] as IncomingTask[] });
+  useEffect(() => { latest.current = { state, connection, connected, dirty, incoming }; }, [state, connection, connected, dirty, incoming]);
   useEffect(() => {
     try {
       if (connection) localStorage.setItem(storageKey, JSON.stringify(connection));
@@ -155,12 +156,18 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
         if (!Array.isArray(data?.tasks)) throw new Error('TickTick не вернул список задач.');
         byProject[projectId] = data.tasks;
       }
-      setIncoming(findIncomingTasks(c, byProject));
+      const fresh = findIncomingTasks(c, byProject);
+      // Подгружаем только новое: уже известные задачи остаются как есть, исчезнувшие из TickTick убираются.
+      const known = new Set(latest.current.incoming.map(i => i.remote.id));
+      setInboxNew(fresh.filter(i => !known.has(i.remote.id)).length);
+      setIncoming(fresh.map(i => latest.current.incoming.find(o => o.remote.id === i.remote.id) ?? i));
     } catch (error) {
       if (error instanceof Error && error.message.endsWith('(401)')) setConnected(false);
       setInboxError(error instanceof Error ? error.message : 'Не удалось получить новые задачи TickTick.');
     } finally { working.current = false; setBusy(false); setInboxBusy(false); }
   }
+  // «Обновить»: изменения и удаления в обе стороны только по связанным задачам, затем новые задачи из списков.
+  async function refreshAll() { await sync(); await loadIncoming(); }
   async function acceptIncoming(remoteId: string, choice: IncomingChoice): Promise<string> {
     const current = latest.current;
     const item = incoming.find(i => i.remote.id === remoteId);
@@ -180,7 +187,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
       try {
         const next = c.auth === 'firebase' ? validateTickTickSettings(await request(c, '/settings', 'PUT', settings(accepted.connection))) : settings(accepted.connection);
         setConnection({ ...c, ...next });
-        return accepted.remoteUpdate ? `Задача «${accepted.task.name}» добавлена в игру и связана с TickTick.` : `Одиночная задача «${accepted.task.name}» добавлена в игру.`;
+        return `Задача «${accepted.task.name}» добавлена в игру и связана с TickTick.`;
       } catch (error) {
         // Задача уже в игре. Оставляем связь здесь и приостанавливаем обмен, чтобы не создать копию.
         setConnection(accepted.connection); setDirty(true);
@@ -238,7 +245,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const restoreBlocked = connected || wasActivated(connection);
-  return { connection, status, busy, projects, connected, signedIn, dirty, restoreBlocked, configure, refresh, sync, save, disconnect, incoming, inboxBusy, inboxError, loadIncoming, acceptIncoming, dismissIncoming,
+  return { connection, status, busy, projects, connected, signedIn, dirty, restoreBlocked, configure, refresh, sync, save, disconnect, incoming, inboxBusy, inboxError, inboxNew, loadIncoming, refreshAll, acceptIncoming, dismissIncoming,
     update: patch => { if (!working.current) { setConnection(c => c ? { ...c, ...patch } : c); setDirty(true); } },
     suggest: () => { const c = latest.current.connection; if (c && !working.current) { setConnection({ ...c, sphereLists: matchSphereLists(projects, c.sphereLists) }); setDirty(true); } },
   };

@@ -200,7 +200,20 @@ test('одновременная правка сохраняет локальн�
   assert.equal(applied.state.xp, state.xp + 20);
   assert.equal(applied.warnings.length, 1);
 });
-test('недоступная удалённая задача не считается выполненной или удалённой', async () => {
+test('одиночная задача без цели создаётся в TickTick, а системные задачи не передаются', async () => {
+  const { state, connection } = setup();
+  const base = state.quests[0];
+  state.quests = [
+    { ...base, id: 'solo', goalId: undefined, stageId: undefined, sourceType: 'USER_CREATED' },
+    { ...base, id: 'sys', goalId: undefined, stageId: undefined, sourceType: 'SYSTEM' },
+  ];
+  const api = upstream();
+  const result = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
+  assert.ok(result.connection.links.solo);
+  assert.equal(result.connection.links.sys, undefined);
+  assert.equal(api.calls.filter((c) => c.path === '/create').length, 1);
+});
+test('удалённая в TickTick задача удаляется и в игре, без награды и повторного создания', async () => {
   let { state, connection } = setup();
   const api = upstream();
   let result = applyTickTickResult(
@@ -209,18 +222,20 @@ test('недоступная удалённая задача не считает
   );
   state = result.state;
   connection = result.connection;
+  const xp = state.xp;
   api.tasks.clear();
   result = applyTickTickResult(
     state,
     await syncTickTick(state, connection, api.request),
   );
-  assert.equal(result.state.quests.length, 1);
-  assert.equal(result.state.quests[0].done, false);
-  assert.equal(result.state.xp, state.xp);
-  assert.equal(result.warnings.length, 1);
+  assert.equal(result.state.quests.length, 0);
+  assert.equal(result.state.xp, xp);
+  assert.equal(api.calls.filter((c) => c.path === '/create').length, 1);
+  const again = applyTickTickResult(result.state, await syncTickTick(result.state, result.connection, api.request));
+  assert.equal(again.state.quests.length, 0);
   assert.equal(api.calls.filter((c) => c.path === '/create').length, 1);
 });
-test('локальное удаление сохраняет TickTick по умолчанию и не импортирует задачу обратно', async () => {
+test('локальное удаление по умолчанию удаляет задачу и в TickTick, обратно она не приходит', async () => {
   let { state, connection } = setup();
   const api = upstream();
   let result = applyTickTickResult(
@@ -234,8 +249,7 @@ test('локальное удаление сохраняет TickTick по ум�
     await syncTickTick(state, connection, api.request),
   );
   assert.equal(result.state.quests.length, 0);
-  assert.equal(api.tasks.size, 1);
-  assert.equal(result.connection.dismissed.length, 1);
+  assert.equal(api.tasks.size, 0);
   const repeated = applyTickTickResult(
     result.state,
     await syncTickTick(result.state, result.connection, api.request),

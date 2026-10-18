@@ -98,7 +98,7 @@ const stateOf = (page,uid) => page.evaluate(uid=>JSON.parse(localStorage.getItem
 const names = g => g.map(x=>x.name).sort();
 try {
   let ready=false;
-  for(let i=0;i<100;i++) { try { if((await fetch(home)).ok) {ready=true;break;} } catch {} await new Promise(r=>setTimeout(r,100)); }
+  for(let i=0;i<100;i++) { try { if((await fetch(home)).ok) {ready=true;break;} } catch { /* Starting. */ } await new Promise(r=>setTimeout(r,100)); }
   assert.ok(ready,output);
   browser=await chromium.launch({executablePath:process.env.LIFEGAME_CHROMIUM_PATH||undefined,args:['--no-sandbox','--disable-dev-shm-usage']});
   const uid='flow-user'; const ctx=await context(1440); const page=await ctx.newPage(); activePage=page;

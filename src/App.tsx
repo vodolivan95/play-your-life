@@ -30,6 +30,7 @@ import { saveGoal } from './planning';
 import useTickTick from './useTickTick';
 import TickTickConnection from './components/TickTickConnection';
 import { TickTickContext } from './tickTickContext';
+import { incomingForToday } from './ticktickInbox';
 import {
   achievements,
   completeQuest,
@@ -259,7 +260,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
       <div
         className={`app-shell pyl-shell app-page-${page} ${modal === 'quest' ? 'quest-dialog-open' : ''}`}
       >
-        <AppSidebar page={page} state={state} questCount={questsForToday(state).filter((q) => !q.done).length} onNavigate={navigate} />
+        <AppSidebar page={page} state={state} questCount={questsForToday(state).filter((q) => !q.done).length + incomingForToday(tickTick.incoming).length} onNavigate={navigate} />
         <div className="main-wrap">
           <header className="topbar"><DashboardHeader state={state} onProfile={() => navigate('profile')} onQuests={() => navigate('tasks')} /></header>
           <main

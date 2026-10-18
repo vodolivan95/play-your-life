@@ -213,6 +213,26 @@ test('одиночная задача без цели создаётся в Tick
   assert.equal(result.connection.links.sys, undefined);
   assert.equal(api.calls.filter((c) => c.path === '/create').length, 1);
 });
+test('перенос срока и переименование в TickTick отражаются в игре', async () => {
+  let { state, connection } = setup();
+  const api = upstream();
+  let result = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
+  state = result.state;
+  connection = result.connection;
+  const id = state.quests[0].id;
+  const remote = api.tasks.get(connection.links[id].remoteId)!;
+  remote.dueDate = '2026-11-20T09:00:00+0000';
+  remote.title = 'Перенесено в TickTick';
+  result = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
+  const q = result.state.quests.find((x) => x.id === id)!;
+  assert.equal(q.name, 'Перенесено в TickTick');
+  assert.equal(new Date(q.dueAt!).toISOString().slice(0, 10), '2026-11-20');
+  // Обратно: перенос в игре уходит в TickTick.
+  state = saveTask(result.state, { ...q, dueAt: '2026-12-01T09:00:00.000Z' });
+  connection = result.connection;
+  await syncTickTick(state, connection, api.request);
+  assert.match(String(api.tasks.get(connection.links[id].remoteId)!.dueDate), /^2026-12-01/);
+});
 test('удалённая в TickTick задача удаляется и в игре, без награды и повторного создания', async () => {
   let { state, connection } = setup();
   const api = upstream();

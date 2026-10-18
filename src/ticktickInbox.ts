@@ -1,6 +1,6 @@
 // Входящие задачи TickTick: новые задачи из сопоставленных списков не попадают в игру сами.
 // Игрок выбирает сферу, цель и этап, и только после этого создаётся задача цели и её связь.
-import { spheres } from './game.ts';
+import { dateKey, spheres } from './game.ts';
 import type { GameState, Goal, GoalStage, Quest } from './game.ts';
 import { saveTask } from './planning.ts';
 import {
@@ -102,6 +102,17 @@ export function findIncomingTasks(
     }
   }
   return found;
+}
+
+/** Входящие, срок или начало которых сегодня или раньше: они тоже «на сегодня», хотя ещё не приняты в игру. */
+export function incomingForToday(incoming: IncomingTask[], now: Date = new Date()): IncomingTask[] {
+  const today = dateKey(now);
+  return incoming.filter((item) => {
+    const value = item.remote.dueDate || item.remote.startDate;
+    if (!value) return false;
+    const date = new Date(value);
+    return !Number.isNaN(date.getTime()) && dateKey(date) <= today;
+  });
 }
 
 /** Цели сферы, в которые можно добавить задачу. */

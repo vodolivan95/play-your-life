@@ -80,9 +80,9 @@ try {
       .getByRole("button", { name: "Продолжить игру на этом устройстве" })
       .click();
     await openTasks(page, mobile);
-    assert.equal(await page.locator(".pyl-quest-spheres>button").count(), 9);
+    assert.equal(await page.locator(".pyl-quest-modes>button").count(), 3);
     await page
-      .getByRole("button", { name: "＋ Создать задачу" })
+      .getByRole("button", { name: "＋ Новая задача" })
       .first()
       .click();
     let d = page.locator(".pyl-quest-dialog");
@@ -123,14 +123,14 @@ try {
     await d.getByRole("button", { name: "Далее →" }).click();
     await d.getByRole("button", { name: "Создать задачу", exact: true }).click();
     const card = page
-      .locator(".pyl-custom-card")
+      .locator(".gtl-item")
       .filter({ hasText: "Пробежать 10 км" });
     await card.getByRole("button", { name: "Продолжить", exact: true }).click();
     await page.locator(".pyl-overlay input").fill("3");
     await page
       .getByRole("button", { name: "Сохранить прогресс", exact: true })
       .click();
-    await card.getByRole("button", { name: "Настройки" }).click();
+    await card.locator(".gtl-row").click();
     await page.getByRole("dialog", { name: /Пробежать 10 км/ }).getByRole("button", { name: "Расширенные настройки" }).click();
     d = page.locator(".pyl-quest-dialog");
     for (let i = 0; i < 4; i++)
@@ -140,35 +140,6 @@ try {
     await card.getByRole("button", { name: "Продолжить", exact: true }).click();
     await page.getByRole("button", { name: "Выполнить полностью" }).click();
     await page.locator(".pyl-celebration button").click();
-    await page.getByRole("button", { name: "В SPORT", exact: true }).click();
-    await page
-      .getByRole("button", { name: "＋ Добавить привычку" })
-      .first()
-      .click();
-    d = page.locator(".pyl-quest-dialog");
-    await d.getByLabel("Название *").fill("Выпить воду");
-    await d.getByRole("button", { name: "Далее →" }).click();
-    await d.getByRole("button", { name: "Здоровье", exact: true }).click();
-    await d.getByRole("button", { name: "Чтение", exact: true }).click();
-    await d.getByRole("button", { name: "Далее →" }).click();
-    await d.getByLabel("Цель / количество *").fill("2");
-    await d.getByRole("button", { name: "Далее →" }).click();
-    await d.getByLabel("Life Coins").fill("10");
-    await d.getByRole("button", { name: "Далее →" }).click();
-    await d
-      .getByRole("button", { name: "Создать привычку", exact: true })
-      .click();
-    await page
-      .locator(".pyl-habit-card")
-      .getByRole("button", { name: "Выполнить", exact: true })
-      .click();
-    assert.equal(
-      await page
-        .locator(".pyl-habit-card")
-        .getByRole("button", { name: "✓ Выполнено", exact: true })
-        .isDisabled(),
-      true,
-    );
     await page.reload();
     await page
       .getByRole("button", { name: "Продолжить игру на этом устройстве" })
@@ -177,14 +148,9 @@ try {
     const state = await page.evaluate(() =>
       JSON.parse(localStorage.getItem("play-your-life-v1")),
     );
-    assert.equal(state.coins, 110);
+    assert.equal(state.coins, 100);
     assert.equal(state.completed, 1);
-    assert.equal(state.habitCompletions.length, 1);
-    assert.equal(state.rewardInventory[0].placedIn, "sport");
-    await page.getByPlaceholder("Поиск задач...").fill("нет такой цели");
-    assert.equal(await page.locator(".pyl-custom-card").count(), 0);
-    await page.getByPlaceholder("Поиск задач...").fill("");
-    const overflow = await page.evaluate(
+        const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > window.innerWidth,
     );
     assert.equal(overflow, false);

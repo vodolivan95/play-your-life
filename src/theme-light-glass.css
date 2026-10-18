@@ -114,9 +114,16 @@
 }
 :root:not([data-theme="dark"]) .home-continue > span { background: #fff; color: #1f6feb; }
 @media (max-width: 760px) {
-  :root:not([data-theme="dark"]) .home-welcome::before { width: 100%; background-position: 78% center; mask-image: linear-gradient(90deg, transparent 0%, #000 55%); -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 55%); }
-  :root:not([data-theme="dark"]) .home-welcome { min-height: 220px; }
+  /* Телефон: картина сверху с плавным затуханием вниз, текст лежит на чистом небе под ней. */
+  :root:not([data-theme="dark"]) .home-dashboard .home-welcome { padding-top: 168px; min-height: 0; }
+  :root:not([data-theme="dark"]) .home-welcome::before {
+    inset: 0 0 auto 0; width: 100%; height: 215px;
+    background-position: 70% 30%;
+    -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+  }
 }
+
 @media (max-width: 720px) {
   /* На телефоне размытие дороже: чуть меньше радиус. */
   :where(:root:not([data-theme="dark"])) :is(.panel, .sphere-card, .gl-card, .mrep-card, .myr-card, .shop-card, .tas-card) {

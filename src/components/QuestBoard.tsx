@@ -20,6 +20,7 @@ import type { Habit } from "../personalQuests";
 import { sphereProgress } from "../sphereProgress";
 import { SphereBuilding } from "./SphereCity";
 import QuestWizard from "./QuestWizard";
+import GoalTaskList from "./GoalTaskList";
 import TaskWindow from "./TaskWindow";
 import TasksSummary from "./TasksSummary";
 import TasksCalendar from "./TasksCalendar";
@@ -270,6 +271,9 @@ export default function QuestBoard({
       <div className="pyl-quest-columns" hidden={mode === "calendar"}>
         <main>
           <TickTickInbox state={state} onChange={onChange} />
+          {(tab === 0 || tab === 3 || tab === 4) && (
+            <GoalTaskList state={state} quests={quests} today={today} onOpen={setOpenTask} />
+          )}
           {(tab === 0 || tab === 1) && (
             <section className="pyl-habit-section">
               <div className="pyl-section-title">

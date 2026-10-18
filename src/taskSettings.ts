@@ -10,7 +10,7 @@ export type TaskPatch = {
   difficulty?: string;
   dueAt?: string | null;
   stageId?: string | null;
-  shared?: boolean;
+  sync?: boolean;
   repeat?: Quest['repeat'] | null;
   subtasks?: NonNullable<Quest['subtasks']>;
 };
@@ -92,9 +92,9 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
       q.stageId = patch.stageId;
     }
   }
-  if (patch.shared !== undefined) {
-    if (patch.shared && !isGoalTask(state, old)) throw new Error('В TickTick передаются задачи внутри целей.');
-    q.tickTickSharedAt = patch.shared ? old.tickTickSharedAt ?? new Date().toISOString() : undefined;
+  if (patch.sync !== undefined) {
+    if (!isGoalTask(state, old)) throw new Error('В TickTick передаются задачи внутри целей.');
+    q.tickTickSync = patch.sync ? undefined : false;
   }
   if (patch.repeat !== undefined) q.repeat = patch.repeat ?? undefined;
   if (patch.subtasks !== undefined) {

@@ -10,7 +10,7 @@ service cloud.firestore {
         return r.keys().hasOnly(['type','coins','xp','item','sphere','locked','completed','progress','claims','offset','weekdays','active','createdDay'])
           && r.keys().hasAll(['type','coins','xp','item','sphere','locked','completed','progress','claims','offset','weekdays','active','createdDay'])
           && r.type in ['quest','habit'] && r.coins is int && r.coins >= 0
-          && r.xp is int && r.xp in [5,10,20,35,50]
+          && r.xp is int && r.xp in [5,10,20,35,40,50,80]
           && r.item in ['', 'plant_basic','book_basic','cup_basic','crown_basic','key_basic','medal_basic']
           && r.sphere in ['health','sport','growth','english','finance','together','driving','tasks','hobby']
           && r.locked is bool && r.completed is bool && r.active is bool
@@ -33,8 +33,11 @@ service cloud.firestore {
             && int(day) <= int((request.time.toMillis() + next.offset * 60000) / 86400000)
             && next.weekdays.hasAny([(int(day) + 4) % 7])));
       }
+      function questXpOk(d, x) {
+        return x == questXp(d) || (d == 'Hard' && x == 35) || (d == 'Very Hard' && x == 50);
+      }
       function questXp(d) {
-        return d == 'Micro' ? 5 : d == 'Simple' ? 10 : d == 'Medium' ? 20 : d == 'Hard' ? 35 : d == 'Very Hard' ? 50 : -1;
+        return d == 'Micro' ? 5 : d == 'Simple' ? 10 : d == 'Medium' ? 20 : d == 'Hard' ? 40 : d == 'Very Hard' ? 80 : -1;
       }
       function receipt(r, p, claimId, sourceId, kind) {
         let ledger = request.resource.data.state.get('coinTransactions', []);
@@ -48,7 +51,7 @@ service cloud.firestore {
         return q.size() > 0 && id == 'quest:' + q.id && q.get('ownerId', userId) == userId
           && q.done && q.rewardClaimed && q.completedAt is string && q.rewardClaimedAt is string
           && q.sphere == r.sphere && q.xp == r.xp
-          && (q.get('sourceType','SYSTEM') != 'USER_CREATED' || q.xp == questXp(q.difficulty)) && q.get('virtualRewardId','') == r.item
+          && (q.get('sourceType','SYSTEM') != 'USER_CREATED' || questXpOk(q.difficulty, q.xp)) && q.get('virtualRewardId','') == r.item
           && r.coins == (q.get('sourceType','SYSTEM') == 'USER_CREATED' ? q.rewardCoins : int((q.xp + 4) / 5))
           && receipt(r,p,id,q.id,'QUEST_REWARD');
       }

@@ -89,9 +89,11 @@ export const difficulties = {
   Micro: 5,
   Simple: 10,
   Medium: 20,
-  Hard: 35,
-  'Very Hard': 50,
+  Hard: 40,
+  'Very Hard': 80,
 };
+// До 0.29.0: «Сложная» — 35 XP, «Очень сложная» — 50 XP. Такие значения в старых сохранениях допустимы и приводятся к новым при загрузке.
+export const legacyDifficultyXp: Record<string, number> = { Hard: 35, 'Very Hard': 50 };
 export const streakRewards: Record<number, number> = {
   3: 10,
   7: 30,
@@ -130,6 +132,7 @@ export type Quest = {
   notes?: string;
   priority?: 'low' | 'normal' | 'high';
   tickTickSharedAt?: string;
+  tickTickSync?: false;
   repeat?: 'daily' | 'weekdays' | 'weekly' | 'monthly';
   subtasks?: { id: string; title: string; done: boolean }[];
 };
@@ -345,6 +348,7 @@ export function migrateState(
   return {
     ...state,
     sphereProgressionModel: SPHERE_PROGRESSION_MODEL,
+    quests: state.quests.map((q) => q.sourceType === 'USER_CREATED' && !q.done && Object.hasOwn(difficulties, q.difficulty) && q.xp !== difficulties[q.difficulty as keyof typeof difficulties] ? { ...q, xp: difficulties[q.difficulty as keyof typeof difficulties] } : q),
     goals: state.goals.map(g => g.progressMode === 'tasks' && state.quests.some(q => q.goalId === g.id && q.required !== false) ? { ...g, current: goalProgressValue(state, g), target: 100 } : g),
     monthlyTracking: state.monthlyTracking ?? {
       since: new Date().toISOString(),

@@ -87,7 +87,7 @@ test('Firebase-подключения изолированы по провере
   const again = new URL(((await (await call(tokenA, '/authorize', 'POST')).json()) as { url: string }).url);
   await worker.fetch(new Request(`https://bridge.example/callback?state=${again.searchParams.get('state')}&code=another-ticktick`), env);
   const reset = validateTickTickSettings(await (await call(tokenA, '/settings')).json());
-  assert.deepEqual(reset.links, {}); assert.deepEqual(reset.sphereLists, {}); assert.equal(reset.auto, false);
+  assert.deepEqual(reset.links, {}); assert.deepEqual(reset.sphereLists, {}); assert.equal(reset.auto, true);
   assert.equal(accountA.get('epoch'), 2, 'creation IDs from another TickTick login are no longer reused');
   await call(tokenA, '/disconnect', 'POST');
   assert.deepEqual(await (await call(tokenA, '/status')).json(), { connected: false });

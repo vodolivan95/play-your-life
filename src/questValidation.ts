@@ -1,4 +1,4 @@
-import { difficulties } from "./game.ts";
+import { difficulties, legacyDifficultyXp } from "./game.ts";
 import { habitIcons, virtualRewards } from "./personalQuests.ts";
 import { validProjectImage } from "./projectImage.ts";
 const record = (v: unknown): v is Record<string, unknown> =>
@@ -51,6 +51,7 @@ export function validQuestExtension(q: Record<string, unknown>) {
     (q.rewardCoins === undefined || integer(q.rewardCoins, 100)) &&
     (q.virtualRewardId === undefined ||
       virtualRewards.some((i) => i.id === q.virtualRewardId)) &&
+    (q.tickTickSync === undefined || q.tickTickSync === false) &&
     (q.repeat === undefined ||
       ["daily", "weekdays", "weekly", "monthly"].includes(String(q.repeat))) &&
     (q.subtasks === undefined ||
@@ -72,8 +73,9 @@ export function validQuestExtension(q: Record<string, unknown>) {
       (text(q.ownerId) &&
         !!q.ownerId &&
         integer(q.rewardCoins, 100) &&
-        q.xp ===
-          difficulties[String(q.difficulty) as keyof typeof difficulties] &&
+        (q.xp ===
+          difficulties[String(q.difficulty) as keyof typeof difficulties] ||
+          q.xp === legacyDifficultyXp[String(q.difficulty)]) &&
         (!q.done || (q.rewardClaimed === true && date(q.rewardClaimedAt))))) &&
     (!q.rewardClaimed || q.done === true)
   );

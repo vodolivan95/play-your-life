@@ -121,7 +121,7 @@ try {
   await inbox.getByText('Купить билеты').waitFor();
   if (process.env.SHOT) {
     for (const theme of ['dark','light']) {
-      await page.evaluate(t=>{document.documentElement.dataset.theme=t;},theme);
+      await page.evaluate(t=>{document.documentElement.dataset.theme=t;document.body.style.background=t==='dark'?'#0a0f20':'#eef3fb';document.querySelectorAll('.ticktick-inbox').forEach(e=>{e.parentElement.style.background='transparent'});},theme);
       await page.waitForTimeout(300);
       await inbox.screenshot({path:`/tmp/inbox-${theme}.png`});
     }

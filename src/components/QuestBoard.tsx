@@ -20,6 +20,7 @@ import type { Habit } from "../personalQuests";
 import { sphereProgress } from "../sphereProgress";
 import { SphereBuilding } from "./SphereCity";
 import QuestWizard from "./QuestWizard";
+import TasksCalendar from "./TasksCalendar";
 import TickTickInbox from "./TickTickInbox";
 import { cityAssets, sphereAssets } from "../sphereAssets";
 const hero = cityAssets.preview;
@@ -86,7 +87,8 @@ export default function QuestBoard({
   onCreate: (q?: Partial<Quest>) => void;
   notify: (s: string) => void;
 }) {
-  const [tab, setTab] = useState(0),
+  const [mode, setMode] = useState<"list" | "calendar">("list"),
+    [tab, setTab] = useState(0),
     [sphere, setSphere] = useState(""),
     [filter, setFilter] = useState("all"),
     [search, setSearch] = useState(""),
@@ -225,7 +227,26 @@ export default function QuestBoard({
           })}
         </div>
       </section>
-      <div className="pyl-quest-navigation">
+      <div className="pyl-quest-modes" role="group" aria-label="Вид страницы">
+        {(["list", "calendar"] as const).map((id) => (
+          <button
+            key={id}
+            type="button"
+            aria-pressed={mode === id}
+            onClick={() => setMode(id)}
+          >
+            {id === "list" ? "Список" : "Календарь"}
+          </button>
+        ))}
+      </div>
+      {mode === "calendar" && (
+        <TasksCalendar
+          quests={quests}
+          today={today}
+          onOpen={(q) => setForm({ quest: q, habitMode: false })}
+        />
+      )}
+      <div className="pyl-quest-navigation" hidden={mode === "calendar"}>
         <nav aria-label="Разделы задач">
           {nav.map((name, i) => (
             <button
@@ -242,7 +263,7 @@ export default function QuestBoard({
           ＋ Создать задачу
         </button>
       </div>
-      <div className="pyl-quest-columns">
+      <div className="pyl-quest-columns" hidden={mode === "calendar"}>
         <main>
           <TickTickInbox state={state} onChange={onChange} />
           {(tab === 0 || tab === 1) && (

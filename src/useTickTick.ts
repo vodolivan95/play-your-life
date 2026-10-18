@@ -160,7 +160,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
       // Подгружаем только новое: уже известные задачи остаются как есть, исчезнувшие из TickTick убираются.
       const known = new Set(latest.current.incoming.map(i => i.remote.id));
       setInboxNew(fresh.filter(i => !known.has(i.remote.id)).length);
-      setIncoming(fresh.map(i => latest.current.incoming.find(o => o.remote.id === i.remote.id) ?? i));
+      setIncoming(fresh);
     } catch (error) {
       if (error instanceof Error && error.message.endsWith('(401)')) setConnected(false);
       setInboxError(error instanceof Error ? error.message : 'Не удалось получить новые задачи TickTick.');
@@ -219,6 +219,13 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
       setStatus('TickTick отключён. Задачи и прогресс в обоих приложениях сохранены.');
     } finally { working.current = false; setBusy(false); }
   }
+  // Счётчик «на сегодня» в меню зависит от входящих: подгружаем их при подключении, не дожидаясь открытия вкладки.
+  useEffect(() => {
+    if (!connected || dirty) return;
+    const timer = setTimeout(() => void loadIncoming(), 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected]);
   const mappingKey = JSON.stringify(connection?.sphereLists ?? {});
   useEffect(() => {
     if (!connection?.auto || !connected || dirty || state.profile.mode === 'demo') return;

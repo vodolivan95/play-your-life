@@ -68,6 +68,24 @@ try {
   // Задача открывается из подробностей.
   await cell.first().locator(".tcal-chip").first().click();
   await calendar.locator(".tcal-detail").waitFor();
+  // Окно задачи: награда, сложность и срок меняются и сохраняются.
+  await calendar.getByRole("button", { name: "Открыть задачу" }).click();
+  const win = page.locator(".twin");
+  await win.waitFor();
+  assert.match(await win.locator(".twin-ring").innerText(), /\+20/);
+  assert.equal(await win.getByRole("button", { name: /^Сложная/ }).isDisabled(), true);
+  await win.getByRole("button", { name: "Завтра", exact: true }).click();
+  await win.getByRole("button", { name: "Выбрать дату" }).click();
+  await win.locator("input[type=date]").waitFor();
+  assert.equal(await win.getByRole("switch").isDisabled(), true);
+  const tomorrow = await page.evaluate(async () => {
+    const { dateKey } = await import("/src/game.ts");
+    const d = new Date(); d.setDate(d.getDate() + 1); return dateKey(d);
+  });
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("play-your-life-v1")).quests.filter((q) => q.dueAt));
+  assert.ok(saved.some((q) => q.dueAt === tomorrow));
+  await win.getByRole("button", { name: "Готово" }).click();
+  await win.waitFor({ state: "detached" });
   assert.deepEqual(errors, []);
   console.log("tasks-calendar-ui: ok");
 } finally {

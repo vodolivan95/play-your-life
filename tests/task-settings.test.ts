@@ -1,0 +1,49 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { dueFor, duePreset, taskContribution, updateTaskSettings } from '../src/taskSettings.ts';
+import type { GameState, Quest } from '../src/game.ts';
+
+const quest = (over: Partial<Quest>): Quest => ({
+  id: 'q1', name: 'Пробежка', sphere: 'sport', xp: 20, done: false, difficulty: 'Medium',
+  sourceType: 'USER_CREATED', goalId: 'g1', stageId: 's1', ...over,
+});
+const state = (quests: Quest[]) => ({
+  quests,
+  goals: [{ id: 'g1', name: 'Марафон', sphere: 'sport', stages: [{ id: 's1', name: 'База' }, { id: 's2', name: 'Темп' }] }],
+}) as unknown as GameState;
+
+test('срок: быстрые варианты и распознавание', () => {
+  assert.equal(dueFor('today', '2026-10-18'), '2026-10-18');
+  assert.equal(dueFor('tomorrow', '2026-10-18'), '2026-10-19');
+  assert.equal(dueFor('week', '2026-10-14'), '2026-10-18');
+  assert.equal(dueFor('none', '2026-10-18'), null);
+  assert.equal(duePreset('2026-10-19', '2026-10-18'), 'tomorrow');
+  assert.equal(duePreset('2026-12-01', '2026-10-18'), 'date');
+  assert.equal(duePreset(undefined, '2026-10-18'), 'none');
+});
+test('настройки: сложность меняет XP, этап и срок сохраняются', () => {
+  const next = updateTaskSettings(state([quest({})]), 'q1', { difficulty: 'Hard', stageId: 's2', dueAt: '2026-11-02', name: ' Бег ' });
+  const q = next.quests[0];
+  assert.equal(q.xp, 35);
+  assert.equal(q.stageId, 's2');
+  assert.equal(q.dueAt, '2026-11-02');
+  assert.equal(q.name, 'Бег');
+  assert.equal(updateTaskSettings(next, 'q1', { dueAt: null }).quests[0].dueAt, undefined);
+});
+test('настройки: отказы', () => {
+  const s = state([quest({}), quest({ id: 'q2', done: true }), quest({ id: 'q3', sourceType: 'SYSTEM' }), quest({ id: 'q4', goalId: undefined, stageId: undefined })]);
+  assert.throws(() => updateTaskSettings(s, 'q2', { name: 'x' }));
+  assert.throws(() => updateTaskSettings(s, 'q3', { difficulty: 'Hard' }));
+  assert.throws(() => updateTaskSettings(s, 'q1', { stageId: 'нет' }));
+  assert.throws(() => updateTaskSettings(s, 'q1', { dueAt: '31.12' }));
+  assert.throws(() => updateTaskSettings(s, 'q4', { shared: true }));
+});
+test('вклад: доля в цели и синхронизация', () => {
+  const s = state([quest({}), quest({ id: 'q5' })]);
+  const c = taskContribution(s, s.quests[0]);
+  assert.equal(c.goalShare, 50);
+  assert.equal(c.xp, 20);
+  const shared = updateTaskSettings(s, 'q1', { shared: true }).quests[0];
+  assert.ok(shared.tickTickSharedAt);
+  assert.equal(updateTaskSettings(updateTaskSettings(s, 'q1', { shared: true }), 'q1', { shared: false }).quests[0].tickTickSharedAt, undefined);
+});

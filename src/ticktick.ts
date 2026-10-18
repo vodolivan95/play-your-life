@@ -1,4 +1,4 @@
-import { completeQuest, spheres } from './game.ts';
+import { completeQuest, removeQuest, spheres } from './game.ts';
 import type { GameState, Quest } from './game.ts';
 import { isGoalTask, saveTask } from './planning.ts';
 import type { TickTickLink } from './ticktickSettings.ts';
@@ -49,7 +49,7 @@ export function newConnection(url: string): TickTickConnection {
     projectId: '',
     sphereLists: {},
     auto: true,
-    deleteRemote: false,
+    deleteRemote: true,
     links: {},
     dismissed: [],
   };
@@ -98,6 +98,13 @@ export function hasTickTickTargets(connection: TickTickConnection) {
     Object.values(connection.links).some(
       (link) => link.projectId || connection.projectId,
     )
+  );
+}
+/** Передаются задачи целей и свои задачи игрока (одиночные, без цели); системные и привычки — нет. */
+export function canSyncTask(state: GameState, task: Quest): boolean {
+  return (
+    task.tickTickSync !== false &&
+    (isGoalTask(state, task) || task.sourceType === 'USER_CREATED')
   );
 }
 function taskProject(connection: TickTickConnection, task: Quest) {
@@ -226,6 +233,8 @@ export type TickTickResult = {
     remote: RemoteTask;
     previousRemote?: string;
   }[];
+  /** Локальные задачи, удалённые в TickTick. */
+  removed: string[];
   warnings: string[];
 };
 async function syncTickTickProject(
@@ -250,6 +259,7 @@ async function syncTickTickProject(
       dismissed: [...connection.dismissed],
     },
     changes: [],
+    removed: [],
     warnings: [],
   };
   const remoteTasks = new Map(data.tasks.map((t) => [t.id, t]));
@@ -257,7 +267,7 @@ async function syncTickTickProject(
     const local = state.quests.find((q) => q.id === localId);
     const path = `/api/project/${project}/task/${encodeURIComponent(link.remoteId)}`;
     if (!local) {
-      if (connection.deleteRemote && link.goalId) {
+      if (connection.deleteRemote) {
         try {
           await request(path, 'DELETE');
         } catch (error) {
@@ -273,7 +283,7 @@ async function syncTickTickProject(
       continue;
     }
     // Existing standalone/imported tasks remain untouched when narrowing the scope.
-    if (!isGoalTask(state, local) || local.tickTickSync === false) {
+    if (!canSyncTask(state, local)) {
       result.connection.dismissed.push(link.remoteId);
       delete result.connection.links[localId];
       continue;
@@ -285,6 +295,13 @@ async function syncTickTickProject(
       try {
         remote = await request<RemoteTask>(path);
       } catch (error) {
+        // Задача удалена в TickTick: убираем и здесь (выполненные остаются в истории).
+        if (error instanceof Error && error.message.endsWith('(404)') && !local.done) {
+          result.removed.push(localId);
+          result.connection.dismissed.push(link.remoteId);
+          delete result.connection.links[localId];
+          continue;
+        }
         result.warnings.push(
           `${local.name}: ${error instanceof Error ? error.message : 'не удалось получить задачу'}. Выполнение и удаление не подтверждены.`,
         );
@@ -343,8 +360,7 @@ async function syncTickTickProject(
     (q) =>
       !q.done &&
       (!taskIds || taskIds.includes(q.id)) &&
-      isGoalTask(state, q) &&
-      q.tickTickSync !== false &&
+      canSyncTask(state, q) &&
       !allLinks[q.id] &&
       taskProject(connection, q) === connection.projectId,
   )) {
@@ -389,6 +405,7 @@ export async function syncTickTick(
       dismissed: [...connection.dismissed],
     },
     changes: [],
+    removed: [],
     warnings: [],
   };
   const projects = new Set<string>();
@@ -396,8 +413,7 @@ export async function syncTickTick(
     if (
       (taskIds && !taskIds.includes(task.id)) ||
       task.done ||
-      !isGoalTask(state, task) ||
-      task.tickTickSync === false ||
+      !canSyncTask(state, task) ||
       connection.links[task.id]
     )
       continue;
@@ -438,6 +454,7 @@ export async function syncTickTick(
         ]),
       ];
       result.changes.push(...batch.changes);
+      result.removed.push(...batch.removed);
       result.warnings.push(...batch.warnings);
     } catch (error) {
       result.warnings.push(
@@ -450,11 +467,12 @@ export async function syncTickTick(
 }
 export function applyTickTickResult(state: GameState, result: TickTickResult) {
   let next = state;
+  for (const id of result.removed ?? []) if (next.quests.some((q) => q.id === id && !q.done)) next = removeQuest(next, id);
   const warnings = [...result.warnings];
   const rejected = new Map<string, string>();
   for (const change of result.changes) {
     const local = next.quests.find((q) => q.id === change.id);
-    if (!local || !isGoalTask(next, local)) continue;
+    if (!local || !canSyncTask(next, local)) continue;
     if (!local.done && localFingerprint(local, next) === change.snapshot) {
       try {
         next = saveTask(next, { ...local, ...remoteFields(change.remote) });

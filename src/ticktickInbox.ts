@@ -19,7 +19,7 @@ export type IncomingTask = {
 };
 export type IncomingChoice = {
   sphere: string;
-  /** Пустая строка — одиночная задача без цели (в TickTick не синхронизируется). */
+  /** Пустая строка — одиночная задача без цели (синхронизируется так же). */
   goalId: string;
   stageId?: string;
 };
@@ -176,7 +176,7 @@ export function acceptIncomingTask(
   };
 }
 
-/** Одиночная задача: попадает в игру без цели и этапа, в TickTick ничего не меняется и обратно не синхронизируется. */
+/** Одиночная задача без цели: тоже связывается с TickTick и синхронизируется. */
 function acceptSingleTask(
   state: GameState,
   connection: TickTickConnection,
@@ -189,10 +189,23 @@ function acceptSingleTask(
   const fields = remoteFields(incoming.remote);
   const name = fields.name.trim().slice(0, maxTaskName);
   if (!name) throw new Error('У задачи TickTick нет названия.');
-  const next = saveTask(state, { ...fields, id: taskId, name, sphere: choice.sphere, difficulty: 'Medium', goalId: undefined, stageId: undefined, tickTickSync: false });
+  const next = saveTask(state, { ...fields, id: taskId, name, sphere: choice.sphere, difficulty: 'Medium', sourceType: 'USER_CREATED' });
   const task = next.quests.find((q) => q.id === taskId);
   if (!task) throw new Error('Не удалось добавить задачу.');
-  return { state: next, task, remoteUpdate: null, connection: dismissIncomingTask(connection, incoming.remote.id) };
+  const scoped = { ...connection, projectId: incoming.projectId };
+  const payload = remotePayload(task, next, scoped);
+  return {
+    state: next,
+    task,
+    remoteUpdate: { id: incoming.remote.id, projectId: incoming.projectId, title: incoming.remote.title, content: payload.content },
+    connection: {
+      ...connection,
+      links: {
+        ...connection.links,
+        [task.id]: { remoteId: incoming.remote.id, local: localFingerprint(task, next), remote: remoteFingerprint(incoming.remote), projectId: incoming.projectId },
+      },
+    },
+  };
 }
 
 export function dismissIncomingTask(

@@ -1,6 +1,6 @@
 # Ключевые итоги
 
-Раздел под «Профилем» (пункт «Ключевые итоги», страницы `statistics` и `monthly`). Холст Claude Design: https://claude.ai/artifact/DdVq8kTFNM6jXXyRqkVZgH (ПК и телефон; данные на холсте выдуманы). Версия: 0.35.0.
+Раздел под «Профилем» (пункт «Ключевые итоги», страницы `statistics` и `monthly`). Холст Claude Design: https://claude.ai/artifact/DdVq8kTFNM6jXXyRqkVZgH (ПК и телефон; данные на холсте выдуманы). Версия: 0.36.0.
 
 ## Вкладки
 

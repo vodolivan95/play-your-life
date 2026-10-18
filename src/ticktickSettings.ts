@@ -18,7 +18,7 @@ export type TickTickSettings = {
 };
 export const tickTickSphereIds = ['health', 'sport', 'growth', 'english', 'finance', 'together', 'driving', 'tasks', 'hobby'];
 export function emptyTickTickSettings(revision = 0): TickTickSettings {
-  return { sphereLists: {}, auto: true, deleteRemote: false, links: {}, dismissed: [], revision };
+  return { sphereLists: {}, auto: true, deleteRemote: true, links: {}, dismissed: [], revision };
 }
 export function validateTickTickSettings(value: unknown): TickTickSettings {
   const invalid = () => { throw new Error('Некорректные настройки TickTick.'); };

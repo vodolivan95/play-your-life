@@ -84,7 +84,7 @@ try {
   await win.getByRole("button", { name: "Завтра", exact: true }).click();
   await win.getByRole("button", { name: "Выбрать дату" }).click();
   await win.locator("input[type=date]").waitFor();
-  assert.equal(await win.getByRole("switch").isDisabled(), true);
+  assert.equal(await win.getByRole("switch").isDisabled(), false);
   const tomorrow = await page.evaluate(async () => {
     const { dateKey } = await import("/src/game.ts");
     const d = new Date(); d.setDate(d.getDate() + 1); return dateKey(d);

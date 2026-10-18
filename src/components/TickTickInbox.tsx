@@ -79,7 +79,7 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onChange }: {
           <button className="text-button" type="button" onClick={() => { setAddingGoal(false); setGoalDraft(''); }}>Отмена</button>
         </form>}
       </div>
-      {single && <p className="muted ticktick-inbox-hint">Одиночная задача живёт только в игре: в TickTick она не меняется и не синхронизируется.</p>}
+      {single && <p className="muted ticktick-inbox-hint">Одиночная задача без цели тоже синхронизируется с TickTick: название, срок, заметка, выполнение и удаление.</p>}
       {goal && <>
         <span className="ticktick-inbox-label" id={`stage-${item.remote.id}`}>Этап</span>
         <div className="ticktick-inbox-chips" role="group" aria-labelledby={`stage-${item.remote.id}`}>
@@ -133,9 +133,10 @@ export default function TickTickInbox({ state, onChange }: { state: GameState; o
   return <section className="ticktick-inbox" aria-label="Входящие из TickTick">
     <div className="ticktick-heading">
       <div><div className="eyebrow">TICKTICK</div><h3>Входящие из TickTick</h3></div>
-      <button className="secondary-button" disabled={manager.busy} onClick={() => void manager.loadIncoming()}>{manager.inboxBusy ? 'Проверяем…' : 'Обновить'}</button>
+      <button className="secondary-button" disabled={manager.busy} onClick={() => void manager.refreshAll()}>{manager.inboxBusy ? 'Проверяем…' : 'Обновить'}</button>
     </div>
     <p className="muted">Новые задачи из ваших списков TickTick. В игру они попадают только после выбора сферы, цели и этапа; дальше синхронизируются как обычные задачи цели.</p>
+    {manager.inboxNew > 0 && <p className="muted">Новых задач с прошлого обновления: {manager.inboxNew}.</p>}
     {manager.inboxError && <p className="transfer-message" role="alert">{manager.inboxError}</p>}
     {!items.length && !manager.inboxError && <p className="empty">Новых задач в сопоставленных списках нет.</p>}
     {items.length > 0 && <ul className="ticktick-inbox-list">

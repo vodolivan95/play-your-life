@@ -36,7 +36,8 @@ test('настройки: отказы', () => {
   assert.throws(() => updateTaskSettings(s, 'q3', { difficulty: 'Hard' }));
   assert.throws(() => updateTaskSettings(s, 'q1', { stageId: 'нет' }));
   assert.throws(() => updateTaskSettings(s, 'q1', { dueAt: '31.12' }));
-  assert.throws(() => updateTaskSettings(s, 'q4', { sync: false }));
+  // Одиночные задачи тоже можно отключать от TickTick.
+  assert.equal(updateTaskSettings(s, 'q4', { sync: false }).quests.find((q) => q.id === 'q4')?.tickTickSync, false);
 });
 test('вклад: доля в цели и синхронизация', () => {
   const s = state([quest({}), quest({ id: 'q5' })]);

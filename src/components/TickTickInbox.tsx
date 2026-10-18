@@ -26,11 +26,14 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onChange }: {
   const [goalId, setGoalId] = useState('');
   const [stageId, setStageId] = useState('');
   const [error, setError] = useState('');
+  const [open, setOpen] = useState(false);
+  const [single, setSingle] = useState(false);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState('');
   const [addingGoal, setAddingGoal] = useState(false);
   const [goalDraft, setGoalDraft] = useState('');
   const goals = goalsForSphere(state, sphere);
+  const canAccept = single || Boolean(goalId);
   const goal = goals.find((g) => g.id === goalId);
   const stages = openStages(goal);
   const start = formatDate(item.remote.startDate);
@@ -44,16 +47,22 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onChange }: {
       <strong>{item.remote.title}</strong>
       <small>Список TickTick: {listName}{start ? ` · начало ${start}` : ''}{due ? ` · срок ${due}` : ''}</small>
     </div>
-    <div className="ticktick-inbox-choice">
+    {!open && <div className="ticktick-inbox-actions">
+      <button className="primary-button" disabled={busy} onClick={() => setOpen(true)}>Разобрать</button>
+      <button className="text-button" disabled={busy} onClick={() => void run(onDismiss)}>Пропустить</button>
+    </div>}
+    {open && <div className="ticktick-inbox-choice">
       <span className="ticktick-inbox-label" id={`sphere-${item.remote.id}`}>Сфера</span>
       <div className="ticktick-inbox-chips" role="group" aria-labelledby={`sphere-${item.remote.id}`}>
         {spheres.map((s) => <button key={s.id} type="button" className="ticktick-chip" aria-pressed={sphere === s.id} disabled={busy}
-          onClick={() => { setSphere(s.id); setGoalId(''); setStageId(''); setAdding(false); }}>{s.icon} {s.name}</button>)}
+          onClick={() => { setSphere(s.id); setGoalId(''); setStageId(''); setSingle(false); setAdding(false); }}>{s.icon} {s.name}</button>)}
       </div>
       <span className="ticktick-inbox-label" id={`goal-${item.remote.id}`}>Цель</span>
       <div className="ticktick-inbox-chips" role="group" aria-labelledby={`goal-${item.remote.id}`}>
+        <button type="button" className="ticktick-chip" aria-pressed={single} disabled={busy}
+          onClick={() => { setSingle(true); setGoalId(''); setStageId(''); setAdding(false); }}>Без цели</button>
         {goals.map((g) => <button key={g.id} type="button" className="ticktick-chip" aria-pressed={goalId === g.id} disabled={busy}
-          onClick={() => { setGoalId(g.id); setStageId(''); setAdding(false); }}>{g.name}</button>)}
+          onClick={() => { setSingle(false); setGoalId(g.id); setStageId(''); setAdding(false); }}>{g.name}</button>)}
         {!addingGoal && <button type="button" className="ticktick-chip ticktick-chip-add" disabled={busy} onClick={() => setAddingGoal(true)}>＋ Новая цель</button>}
         {addingGoal && <form className="ticktick-stage-form" onSubmit={(e) => {
           e.preventDefault();
@@ -61,7 +70,7 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onChange }: {
             const next = saveGoal(state, { name: goalDraft, sphere, target: 100, reward: 100, progressMode: 'tasks' });
             const created = next.goals.find((g) => !state.goals.some((o) => o.id === g.id));
             onChange(next);
-            if (created) { setGoalId(created.id); setStageId(''); }
+            if (created) { setSingle(false); setGoalId(created.id); setStageId(''); }
             setGoalDraft(''); setAddingGoal(false);
           });
         }}>
@@ -69,8 +78,8 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onChange }: {
           <button className="primary-button" type="submit" disabled={busy || !goalDraft.trim()}>Создать цель</button>
           <button className="text-button" type="button" onClick={() => { setAddingGoal(false); setGoalDraft(''); }}>Отмена</button>
         </form>}
-        {!goals.length && <span className="muted">В этой сфере нет целей.</span>}
       </div>
+      {single && <p className="muted ticktick-inbox-hint">Одиночная задача живёт только в игре: в TickTick она не меняется и не синхронизируется.</p>}
       {goal && <>
         <span className="ticktick-inbox-label" id={`stage-${item.remote.id}`}>Этап</span>
         <div className="ticktick-inbox-chips" role="group" aria-labelledby={`stage-${item.remote.id}`}>
@@ -93,13 +102,14 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onChange }: {
           </form>}
         </div>
       </>}
-    </div>
-    {!goals.length && <p className="score-note">Задача из TickTick добавляется в цель. Создайте цель в этой сфере или выберите другую сферу.</p>}
+    </div>}
+    {open && <>
     <p className="muted ticktick-inbox-hint">Награда придёт один раз — при выполнении задачи.</p>
     <div className="ticktick-inbox-actions">
-      <button className="primary-button" disabled={busy || !goalId} onClick={() => void run(() => onAccept({ sphere, goalId, stageId: stageId || undefined }))}>Принять в игру</button>
+      <button className="primary-button" disabled={busy || !canAccept} onClick={() => void run(() => onAccept({ sphere, goalId: single ? '' : goalId, stageId: stageId || undefined }))}>Принять в игру</button>
+      <button className="text-button" disabled={busy} onClick={() => setOpen(false)}>Свернуть</button>
       <button className="text-button" disabled={busy} onClick={() => void run(onDismiss)}>Пропустить</button>
-    </div>
+    </div></>}
     {error && <p className="transfer-message" role="alert">{error}</p>}
   </li>;
 }

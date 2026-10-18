@@ -184,6 +184,19 @@ test('сфера задачи определяется целью: можно п
   assert.equal(accepted.connection.links['task-2'].projectId, 'life');
 });
 
+test('одиночная задача без цели: в игре есть, в TickTick не меняется и не синхронизируется', () => {
+  const { state, connection } = setup();
+  const incoming = findIncomingTasks(connection, byProject([remote('s1')]))[0];
+  const accepted = acceptIncomingTask(state, connection, incoming, { sphere: 'english', goalId: '' }, 'single-1');
+  assert.equal(accepted.task.goalId, undefined);
+  assert.equal(accepted.task.sphere, 'english');
+  assert.equal(accepted.task.tickTickSync, false);
+  assert.equal(accepted.remoteUpdate, null);
+  assert.equal(accepted.connection.links['single-1'], undefined);
+  assert.ok(accepted.connection.dismissed.includes('s1'));
+  assert.equal(findIncomingTasks(accepted.connection, byProject([remote('s1')])).length, 0);
+});
+
 test('ошибки выбора не меняют состояние', () => {
   const { state, connection, enId } = setup();
   const incoming = findIncomingTasks(connection, byProject([remote('t3')]))[0];
@@ -191,7 +204,7 @@ test('ошибки выбора не меняют состояние', () => {
     () =>
       acceptIncomingTask(state, connection, incoming, {
         sphere: 'english',
-        goalId: '',
+        goalId: 'нет-такой-цели',
       }),
     /цель/i,
   );

@@ -130,7 +130,8 @@ try {
     await page
       .getByRole("button", { name: "Сохранить прогресс", exact: true })
       .click();
-    await card.getByRole("button", { name: "Изменить" }).click();
+    await card.getByRole("button", { name: "Настройки" }).click();
+    await page.getByRole("dialog", { name: /Пробежать 10 км/ }).getByRole("button", { name: "Расширенные настройки" }).click();
     d = page.locator(".pyl-quest-dialog");
     for (let i = 0; i < 4; i++)
       await d.getByRole("button", { name: "Далее →" }).click();

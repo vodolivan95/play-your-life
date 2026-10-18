@@ -20,6 +20,7 @@ import type { Habit } from "../personalQuests";
 import { sphereProgress } from "../sphereProgress";
 import { SphereBuilding } from "./SphereCity";
 import QuestWizard from "./QuestWizard";
+import TaskWindow from "./TaskWindow";
 import TasksCalendar from "./TasksCalendar";
 import TickTickInbox from "./TickTickInbox";
 import { cityAssets, sphereAssets } from "../sphereAssets";
@@ -98,6 +99,7 @@ export default function QuestBoard({
       habit?: Habit;
       habitMode: boolean;
     } | null>(null),
+    [openTask, setOpenTask] = useState<string | null>(null),
     [progress, setProgress] = useState<Quest | null>(null),
     [progressValue, setProgressValue] = useState(0),
     [celebrate, setCelebrate] = useState("");
@@ -243,7 +245,7 @@ export default function QuestBoard({
         <TasksCalendar
           quests={quests}
           today={today}
-          onOpen={(q) => setForm({ quest: q, habitMode: false })}
+          onOpen={(q) => setOpenTask(q.id)}
         />
       )}
       <div className="pyl-quest-navigation" hidden={mode === "calendar"}>
@@ -503,12 +505,8 @@ export default function QuestBoard({
                         </button>
                         <div className="pyl-card-edit">
                           {!q.done && (
-                            <button
-                              onClick={() =>
-                                setForm({ quest: q, habitMode: false })
-                              }
-                            >
-                              Изменить
+                            <button onClick={() => setOpenTask(q.id)}>
+                              Настройки
                             </button>
                           )}
                           <button onClick={() => deleteQuest(q)}>
@@ -646,6 +644,17 @@ export default function QuestBoard({
           onHabit={(h) =>
             apply((s) => saveHabit(s, h, ownerId), "Привычка сохранена")
           }
+        />
+      )}
+      {openTask && (
+        <TaskWindow
+          taskId={openTask}
+          state={state}
+          today={today}
+          onChange={onChange}
+          notify={notify}
+          onClose={() => setOpenTask(null)}
+          onAdvanced={(q) => setForm({ quest: q, habitMode: false })}
         />
       )}
       {progress && (

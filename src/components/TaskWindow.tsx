@@ -21,13 +21,15 @@ const duePresets: [Exclude<DuePreset, 'date'>, string][] = [
   ['week', 'На неделе'],
   ['none', 'Без срока'],
 ];
-export default function TaskWindow({ taskId, state, today, onChange, onClose, onAdvanced, notify }: {
+export default function TaskWindow({ taskId, state, today, onChange, onClose, onAdvanced, onProgress, onDelete, notify }: {
   taskId: string;
   state: GameState;
   today: string;
   onChange: Dispatch<SetStateAction<GameState>>;
   onClose: () => void;
   onAdvanced?: (q: Quest) => void;
+  onProgress?: (q: Quest) => void;
+  onDelete?: (q: Quest) => void;
   notify: (s: string) => void;
 }) {
   const task = state.quests.find((q) => q.id === taskId);
@@ -173,6 +175,8 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
           {task.sourceType === 'USER_CREATED' && onAdvanced && (
             <button type="button" className="text-button" onClick={() => { onClose(); onAdvanced(task); }}>Расширенные настройки</button>
           )}
+          {onDelete && <button type="button" className="text-button" onClick={() => onDelete(task)}>Удалить</button>}
+          {onProgress && !task.done && <button type="button" className="secondary-button" onClick={() => onProgress(task)}>Продолжить</button>}
           <button type="button" className="primary-button" onClick={onClose}>Готово</button>
         </footer>
       </section>

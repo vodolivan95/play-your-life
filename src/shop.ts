@@ -291,7 +291,7 @@ export function buyItem(
     throw new Error('Эта рамка уже твоя.');
   if (state.coins < item.price)
     throw new Error(
-      'Недостаточно монет. Выполняй квесты, чтобы заработать ещё.',
+      'Недостаточно монет. Выполняй задачи, чтобы заработать ещё.',
     );
   return {
     ...state,

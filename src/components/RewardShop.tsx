@@ -121,7 +121,7 @@ export default function RewardShop({
         <div>
           <span>Баланс</span>
           <strong>{state.coins.toLocaleString('ru')}</strong>
-          <small>Монеты за выполненные квесты</small>
+          <small>Монеты за выполненные задачи</small>
         </div>
       </section>
       <p className="shop-explanation">

@@ -153,7 +153,7 @@ export default function Statistics({
         </div>
         {!total && (
           <p className="chart-empty">
-            Выполни квест — здесь появится твой прогресс.
+            Выполни задачу — здесь появится твой прогресс.
           </p>
         )}
       </section>
@@ -161,7 +161,7 @@ export default function Statistics({
         <>
           <div className="statistics-summary">
             <section className="panel">
-              <small>Выполнено квестов</small>
+              <small>Выполнено задач</small>
               <h2>
                 {events.filter((e) => e.kind === 'quest').length} <span>✓</span>
               </h2>

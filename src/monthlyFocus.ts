@@ -32,7 +32,7 @@ export function monthlyFocusGoals(state: GameState, now: Date = new Date()): Goa
     .filter((g): g is Goal => Boolean(g));
 }
 
-/** Добавляет или убирает цель из главных квестов месяца (не больше трёх). */
+/** Добавляет или убирает цель из главных целей месяца (не больше трёх). */
 export function toggleMonthlyFocus(state: GameState, goalId: string, now: Date = new Date()): GameState {
   if (!state.goals.some((g) => g.id === goalId)) throw new Error('Такой цели нет.');
   const month = monthKey(now);
@@ -40,6 +40,6 @@ export function toggleMonthlyFocus(state: GameState, goalId: string, now: Date =
   if (current.includes(goalId)) {
     return { ...state, monthlyFocus: { month, goalIds: current.filter((id) => id !== goalId) } };
   }
-  if (current.length >= MAX_MONTHLY_FOCUS) throw new Error('Можно выбрать не больше трёх главных квестов месяца.');
+  if (current.length >= MAX_MONTHLY_FOCUS) throw new Error('Можно выбрать не больше трёх главных целей месяца.');
   return { ...state, monthlyFocus: { month, goalIds: [...current, goalId] } };
 }

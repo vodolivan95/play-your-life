@@ -82,7 +82,7 @@ try {
     await openTasks(page, mobile);
     assert.equal(await page.locator(".pyl-quest-spheres>button").count(), 9);
     await page
-      .getByRole("button", { name: "＋ Создать квест" })
+      .getByRole("button", { name: "＋ Создать задачу" })
       .first()
       .click();
     let d = page.locator(".pyl-quest-dialog");
@@ -121,7 +121,7 @@ try {
     await d.getByLabel("Life Coins").fill("100");
     await d.getByLabel("Виртуальная награда").selectOption("plant_basic");
     await d.getByRole("button", { name: "Далее →" }).click();
-    await d.getByRole("button", { name: "Создать квест", exact: true }).click();
+    await d.getByRole("button", { name: "Создать задачу", exact: true }).click();
     const card = page
       .locator(".pyl-custom-card")
       .filter({ hasText: "Пробежать 10 км" });
@@ -180,9 +180,9 @@ try {
     assert.equal(state.completed, 1);
     assert.equal(state.habitCompletions.length, 1);
     assert.equal(state.rewardInventory[0].placedIn, "sport");
-    await page.getByPlaceholder("Поиск квестов...").fill("нет такой цели");
+    await page.getByPlaceholder("Поиск задач...").fill("нет такой цели");
     assert.equal(await page.locator(".pyl-custom-card").count(), 0);
-    await page.getByPlaceholder("Поиск квестов...").fill("");
+    await page.getByPlaceholder("Поиск задач...").fill("");
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > window.innerWidth,
     );

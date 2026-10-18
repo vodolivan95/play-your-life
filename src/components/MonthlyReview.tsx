@@ -146,7 +146,7 @@ export default function MonthlyReview({
       </section>
       {summary.partial && (
         <p className="month-coverage">
-          ⓘ Показана сохранённая история. Подробный учёт квестов, целей и Life
+          ⓘ Показана сохранённая история. Подробный учёт задач, целей и Life
           Score{' '}
           {summary.trackingSince
             ? `ведётся с ${new Date(summary.trackingSince).toLocaleDateString('ru-RU')}`
@@ -165,7 +165,7 @@ export default function MonthlyReview({
           {
             icon: '✓',
             value: summary.quests,
-            label: 'Квестов выполнено',
+            label: 'Задач выполнено',
             hint: 'С подробным учётом',
           },
           {
@@ -178,7 +178,7 @@ export default function MonthlyReview({
             icon: '🔥',
             value: summary.activeDays,
             label: 'Активных дней',
-            hint: 'Дни с выполненным квестом',
+            hint: 'Дни с выполненной задачей',
           },
         ].map((stat) => (
           <section className="panel month-stat" key={stat.label}>
@@ -217,8 +217,8 @@ export default function MonthlyReview({
                 key={day.key}
                 role="img"
                 className={`calendar-day ${day.active ? 'active' : day.xp > 0 ? 'earned' : ''} ${day.future ? 'future' : ''}`}
-                title={`${day.number}: ${day.xp} XP, ${day.quests} квестов`}
-                aria-label={`${day.number} ${monthLabel(month)}: ${day.xp} XP, ${day.active ? 'активный день' : 'без выполненных квестов'}`}
+                title={`${day.number}: ${day.xp} XP, ${day.quests} задач`}
+                aria-label={`${day.number} ${monthLabel(month)}: ${day.xp} XP, ${day.active ? 'активный день' : 'без выполненных задач'}`}
               >
                 <span>{day.number}</span>
                 {day.active && <i />}
@@ -227,7 +227,7 @@ export default function MonthlyReview({
           </div>
           <div className="calendar-legend">
             <span>
-              <i /> Выполнен квест
+              <i /> Выполнена задача
             </span>
             <span>
               <i /> Другой XP

@@ -137,7 +137,7 @@ export function monthlySummary(
     },
   );
   const breakdown = [
-    { kind: 'quest', label: 'Квесты', xp: 0 },
+    { kind: 'quest', label: 'Задачи', xp: 0 },
     { kind: 'score', label: 'Архивные награды', xp: 0 },
     { kind: 'goal', label: 'Большие цели', xp: 0 },
     { kind: 'streak', label: 'Награды за серии', xp: 0 },

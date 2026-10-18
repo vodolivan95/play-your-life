@@ -26,9 +26,9 @@ const hero = cityAssets.preview;
 import "./QuestBoard.css";
 
 const nav = [
-  "Все квесты",
+  "Все задачи",
   "Ежедневные (привычки)",
-  "Мои квесты",
+  "Созданные мной",
   "По сферам",
   "Основные",
   "Сложные",
@@ -136,7 +136,7 @@ export default function QuestBoard({
         const item = virtualRewards.find((i) => i.id === q.virtualRewardId);
         setCelebrate(
           state.completed === 0
-            ? "🏆 Первый шаг! Твой первый квест выполнен!"
+            ? "🏆 Первый шаг! Твоя первая задача выполнена!"
             : `✓ +${next.xp - state.xp} XP · +${questCoins(q)} Life Coins${item ? " · " + item.icon + " " + item.name : ""}`,
         );
       } else notify("Прогресс сохранён");
@@ -169,10 +169,10 @@ export default function QuestBoard({
   function deleteQuest(q: Quest) {
     if (
       window.confirm(
-        "Удалить квест? История и текущий прогресс этого квеста будут удалены.",
+        "Удалить задачу? История и текущий прогресс этой задачи будут удалены.",
       )
     )
-      apply((s) => removeQuest(s, q.id), "Квест удалён");
+      apply((s) => removeQuest(s, q.id), "Задача удалена");
   }
   return (
     <div className="pyl-quest-board">
@@ -183,14 +183,14 @@ export default function QuestBoard({
         }}
       >
         <div>
-          <h1>Квесты</h1>
+          <h1>Задачи</h1>
           <h2>Твоя жизнь — это множество приключений</h2>
           <p>Реальные цели, маленькие шаги и награды за твой прогресс.</p>
         </div>
         <div className="pyl-hero-progress">
           <b>{percent}%</b>
           <span>
-            Общий прогресс квестов
+            Общий прогресс задач
             <strong>
               {completed} из {total}
             </strong>
@@ -226,7 +226,7 @@ export default function QuestBoard({
         </div>
       </section>
       <div className="pyl-quest-navigation">
-        <nav aria-label="Разделы квестов">
+        <nav aria-label="Разделы задач">
           {nav.map((name, i) => (
             <button
               key={name}
@@ -239,7 +239,7 @@ export default function QuestBoard({
           ))}
         </nav>
         <button className="primary-button" onClick={() => onCreate()}>
-          ＋ Создать квест
+          ＋ Создать задачу
         </button>
       </div>
       <div className="pyl-quest-columns">
@@ -249,7 +249,7 @@ export default function QuestBoard({
             <section className="pyl-habit-section">
               <div className="pyl-section-title">
                 <h2>
-                  ✨ Ежедневные мини-квесты <small>(привычки)</small>
+                  ✨ Ежедневные мини-задачи <small>(привычки)</small>
                 </h2>
                 <button onClick={() => setForm({ habitMode: true })}>
                   ＋ Добавить привычку
@@ -354,10 +354,10 @@ export default function QuestBoard({
               <div className="pyl-section-title">
                 <h2>
                   {tab === 5
-                    ? "Сложные квесты"
+                    ? "Сложные задачи"
                     : tab === 4
-                      ? "Основные квесты"
-                      : "Мои квесты"}
+                      ? "Основные задачи"
+                      : "Созданные мной"}
                 </h2>
                 <span>{visible.length}</span>
               </div>
@@ -392,10 +392,10 @@ export default function QuestBoard({
                   </select>
                 </label>
                 <label>
-                  <span className="sr-only">Поиск квестов</span>
+                  <span className="sr-only">Поиск задач</span>
                   <input
                     type="search"
-                    placeholder="Поиск квестов..."
+                    placeholder="Поиск задач..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
@@ -502,8 +502,8 @@ export default function QuestBoard({
               {!visible.length && (
                 <div className="pyl-empty">
                   <strong>Каждое приключение начинается с первого шага</strong>
-                  <p>Создай свой квест или измени фильтры.</p>
-                  <button onClick={() => onCreate()}>＋ Создать квест</button>
+                  <p>Создай свою задачу или измени фильтры.</p>
+                  <button onClick={() => onCreate()}>＋ Создать задачу</button>
                 </div>
               )}
             </section>
@@ -512,16 +512,16 @@ export default function QuestBoard({
             <section className="pyl-empty">
               <h2>Коллекции</h2>
               <p>
-                Здесь появятся подборки квестов. Пока выбирай личные цели и
+                Здесь появятся подборки задач. Пока выбирай личные цели и
                 рекомендации.
               </p>
             </section>
           )}
           {(tab === 0 || tab === 2) && (
             <section className="pyl-recommendations">
-              <h2>Рекомендуемые квесты для тебя</h2>
+              <h2>Рекомендуемые задачи для тебя</h2>
               <p>
-                Идеи системы. Они станут твоими квестами только после создания.
+                Идеи системы. Они станут твоими задачами только после создания.
               </p>
               <div>
                 {recommendations.map((q) => (
@@ -537,7 +537,7 @@ export default function QuestBoard({
         </main>
         <aside className="pyl-quest-aside">
           <section>
-            <h3>Сегодняшние квесты</h3>
+            <h3>Сегодняшние задачи</h3>
             <strong>
               {doneToday} из {daily.length} выполнено
             </strong>
@@ -588,7 +588,7 @@ export default function QuestBoard({
                 })}
             </div>
             {!items.length && (
-              <p>Выбери виртуальный предмет при создании квеста.</p>
+              <p>Выбери виртуальный предмет при создании задачи.</p>
             )}
             {items.some((i) => i.itemId !== "plant_basic") && (
               <small>3D-модели остальных предметов готовятся.</small>
@@ -601,13 +601,13 @@ export default function QuestBoard({
             <p>Личный ориентир: 10 выполнений за неделю.</p>
           </section>
           <section>
-            <h3>Достижения за квесты</h3>
+            <h3>Достижения за задачи</h3>
             <p>
               {state.completed >= 1 ? "⭐" : "🔒"} Первый шаг{" "}
               {state.completed >= 1 ? "✓" : ""}
             </p>
-            <small>Выполни первый квест</small>
-            {["Квестомастер", "Постоянство", "Легенда квестов"].map((name) => (
+            <small>Выполни первую задачу</small>
+            {["Мастер задач", "Постоянство", "Легенда задач"].map((name) => (
               <p key={name}>
                 🔒 {name} <small>Скоро</small>
               </p>
@@ -620,7 +620,7 @@ export default function QuestBoard({
           {...form}
           onClose={() => setForm(null)}
           onQuest={(q) =>
-            apply((s) => saveCustomQuest(s, q, ownerId), "Квест сохранён")
+            apply((s) => saveCustomQuest(s, q, ownerId), "Задача сохранена")
           }
           onHabit={(h) =>
             apply((s) => saveHabit(s, h, ownerId), "Привычка сохранена")

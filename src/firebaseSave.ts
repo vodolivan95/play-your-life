@@ -170,7 +170,7 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
       clean(state, now);
       for (const q of state.quests)
         if (q.ownerId && q.ownerId !== userId)
-          throw new Error("Квест принадлежит другому пользователю.");
+          throw new Error("Задача принадлежит другому пользователю.");
       for (const h of state.habits ?? [])
         if (h.ownerId !== userId)
           throw new Error("Привычка принадлежит другому пользователю.");

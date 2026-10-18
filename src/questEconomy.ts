@@ -127,7 +127,7 @@ export function validateIncome(
     );
   if (next.coins > previous.coins + delta)
     throw new Error(
-      "Баланс не соответствует однократным наградам квестов и привычек.",
+      "Баланс не соответствует однократным наградам задач и привычек.",
     );
   return wanted;
 }

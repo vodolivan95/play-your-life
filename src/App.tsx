@@ -387,7 +387,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                   hidden={sphereTab !== 'quests'}
                 >
                   <div className="section-heading">
-                    <h2>Активные квесты</h2>
+                    <h2>Активные задачи</h2>
                     <button className="text-button" onClick={newQuest}>
                       + Добавить
                     </button>
@@ -399,7 +399,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                     ))}
                   {!active.some((q) => q.sphere === sphere.id) && (
                     <p className="muted">
-                      Все квесты выполнены. Можно начать новый!
+                      Все задачи выполнены. Можно начать новый!
                     </p>
                   )}
                 </section>
@@ -682,7 +682,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
         <dialog
           aria-label={
             modal === 'quest'
-              ? 'Создание квеста'
+              ? 'Создание задачи'
               : modal === 'goal'
                 ? 'Создание цели'
                 : modal === 'profile'
@@ -758,7 +758,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                   Текущая серия: <b>{streak(state.activeDates)} дней</b>
                 </p>
                 <p className="muted">
-                  Выполняй хотя бы один квест в день. За каждый рубеж серии
+                  Выполняй хотя бы одну задачу в день. За каждый рубеж серии
                   получай бонус XP.
                 </p>
                 <div className="streak-rewards">
@@ -777,7 +777,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
             ) : null}
           </div>
         </dialog>
-        {modal === 'quest' && <QuestWizard initial={{ sphere: questSphere, ...questTemplate }} onClose={closeModal} onQuest={q => { const next = saveCustomQuest(state, q, userId ?? 'local'); setState(next); notify('Новый квест готов. Вперёд!'); }} onHabit={h => setState(saveHabit(state, h, userId ?? 'local'))} />}
+        {modal === 'quest' && <QuestWizard initial={{ sphere: questSphere, ...questTemplate }} onClose={closeModal} onQuest={q => { const next = saveCustomQuest(state, q, userId ?? 'local'); setState(next); notify('Новая задача готова. Вперёд!'); }} onHabit={h => setState(saveHabit(state, h, userId ?? 'local'))} />}
         {quickSphere && (
           <SphereQuickView
             state={state}

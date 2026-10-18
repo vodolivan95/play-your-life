@@ -88,12 +88,12 @@ export function upgradeBuilding(
   if (b.tier >= 3) throw new Error('Максимальное улучшение уже достигнуто.');
   if (sphereProgress(state.spheres[id].xp).level < b.tier + 1)
     throw new Error(
-      `Для улучшения нужен уровень сферы ${b.tier + 1}. Выполняй квесты этой сферы.`,
+      `Для улучшения нужен уровень сферы ${b.tier + 1}. Выполняй задачи этой сферы.`,
     );
   const price = b.tier === 1 ? 60 : 120;
   if (state.coins < price)
     throw new Error(
-      'Недостаточно монет. Выполняй квесты, чтобы заработать ещё.',
+      'Недостаточно монет. Выполняй задачи, чтобы заработать ещё.',
     );
   return update(state, id, { ...b, tier: b.tier + 1 }, state.coins - price);
 }

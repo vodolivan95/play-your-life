@@ -41,10 +41,30 @@ export function mappedProjectIds(connection: TickTickConnection) {
   ];
 }
 
+/** Во входящие попадают задачи со сроком не дальше этого числа месяцев от сегодня. */
+export const inboxHorizonMonths = 4;
+
+/** Граница «далёкого будущего»: сегодня плюс четыре месяца. */
+export function inboxHorizon(now: Date = new Date()): Date {
+  const limit = new Date(now);
+  limit.setMonth(limit.getMonth() + inboxHorizonMonths);
+  return limit;
+}
+
+/** true, если срок задачи (или, без него, её начало) дальше границы. Задачи без дат остаются. */
+function beyondHorizon(remote: RemoteTask, limit: Date): boolean {
+  const value = remote.dueDate || remote.startDate;
+  if (!value) return false;
+  const date = new Date(value);
+  return !Number.isNaN(date.getTime()) && date.getTime() > limit.getTime();
+}
+
 export function findIncomingTasks(
   connection: TickTickConnection,
   remoteByProject: Record<string, RemoteTask[]>,
+  now: Date = new Date(),
 ): IncomingTask[] {
+  const limit = inboxHorizon(now);
   const linked = new Set(
     Object.values(connection.links).map((link) => link.remoteId),
   );
@@ -67,7 +87,9 @@ export function findIncomingTasks(
         // Выполненные и отменённые задачи не предлагаем.
         (remote.status ?? 0) !== 0 ||
         // Задачи, созданные самой игрой, уже имеют связь или восстановятся сервером.
-        (remote.content ?? '').includes('[PYL:')
+        (remote.content ?? '').includes('[PYL:') ||
+        // Повторяющиеся задачи с датами в 2027 году и дальше не подтягиваем.
+        beyondHorizon(remote, limit)
       )
         continue;
       seen.add(remote.id);

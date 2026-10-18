@@ -320,7 +320,6 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 onChange={setState}
                 ownerId={userId ?? 'local'}
                 notify={notify}
-                storageError={storageError}
               />
             )}
             {page === 'home' && <HomeDashboard state={state} onChange={setState} onSphere={(id) => { setSelected(id); setSphereTab('overview'); setPage('spheres'); }} onQuests={() => navigate('tasks')} onGoal={() => navigate('goals')} onShop={() => navigate('shop')} onProfile={() => navigate('profile')} onIntegration={() => navigate('profile')} onCreate={newQuest} onNewGoal={() => setModal('goal')} onStart={() => setModal('start')} renderQuest={q => <QuestRow key={q.id} quest={q} />} />}
@@ -459,7 +458,6 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 onChange={setState}
                 ownerId={userId ?? 'local'}
                 notify={notify}
-                storageError={storageError}
               />
             )}
             {page === 'profile' && (

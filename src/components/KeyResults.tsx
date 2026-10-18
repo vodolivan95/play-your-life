@@ -4,10 +4,11 @@ import type { GameState } from '../game';
 import { filledSpheres, reviewOf } from '../keyResults';
 import { monthKey } from '../monthly';
 import { spheres } from '../game';
-import MonthlyReview from './MonthlyReview';
+import MonthReport from './MonthReport';
 import MyResults from './MyResults';
 import Statistics from './Statistics';
 import './MyResults.css';
+import './MonthReport.css';
 
 type Tab = 'report' | 'mine' | 'dynamics';
 
@@ -17,14 +18,12 @@ export default function KeyResults({
   onChange,
   ownerId,
   notify,
-  storageError,
   initialTab = 'report',
 }: {
   state: GameState;
   onChange: Dispatch<SetStateAction<GameState>>;
   ownerId: string;
   notify: (text: string) => void;
-  storageError: boolean;
   initialTab?: Tab;
 }) {
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -45,7 +44,7 @@ export default function KeyResults({
         ))}
       </div>
       {tab === 'report' && (
-        <MonthlyReview state={state} onChange={onChange} storageError={storageError} onSaved={() => notify('Итоги месяца сохранены')} />
+        <MonthReport state={state} onChange={onChange} onOpenMine={() => setTab('mine')} />
       )}
       {tab === 'mine' && <MyResults state={state} onChange={onChange} ownerId={ownerId} notify={notify} />}
       {tab === 'dynamics' && <Statistics state={state} onMonthly={() => setTab('report')} />}

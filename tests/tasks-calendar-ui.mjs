@@ -45,6 +45,13 @@ try {
   });
   await page.getByRole("button", { name: "Продолжить игру на этом устройстве" }).click();
   await page.locator(".sidebar").getByRole("button", { name: /^Мои задачи/ }).click();
+  // Список: сводка и блок «Задачи по целям и этапам» с фильтром.
+  assert.equal(await page.locator(".tsum > div").count(), 6);
+  const gtl = page.locator(".gtl");
+  await gtl.waitFor();
+  assert.equal(await gtl.getByRole("button", { name: "TickTick", exact: true }).count(), 1);
+  await gtl.getByRole("button", { name: "Игра", exact: true }).click();
+  assert.equal(await gtl.getByRole("button", { name: "Игра", exact: true }).getAttribute("aria-pressed"), "true");
   await page.getByRole("button", { name: "Календарь", exact: true }).click();
   const calendar = page.locator(".tcal");
   await calendar.waitFor();

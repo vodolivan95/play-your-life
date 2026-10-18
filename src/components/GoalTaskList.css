@@ -1,0 +1,29 @@
+.gtl{display:grid;gap:12px;font-family:Manrope,system-ui,sans-serif;color:#14233a}
+.gtl-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.gtl-head h2{margin:0;font-size:20px}
+.gtl-filter{display:flex;gap:4px;padding:4px;border-radius:999px;background:#ffffffb0;border:1px solid #d6deeb}
+.gtl-filter button{font:inherit;font-size:13px;font-weight:700;border:0;border-radius:999px;padding:6px 14px;background:none;color:#5b6b82;cursor:pointer}
+.gtl-filter button[aria-pressed='true']{background:linear-gradient(135deg,#2f7de1,#7c5cff);color:#fff}
+.gtl-goal{display:grid;gap:10px;padding:14px 16px;border-radius:20px;background:#ffffffcc;border:1px solid #d6deeb;backdrop-filter:blur(18px) saturate(1.4);box-shadow:0 8px 24px #1a3a6a14}
+.gtl-goal h3{margin:0;font-size:17px}
+.gtl-stage h4{margin:0 0 6px;font-size:13px;color:#5b6b82;display:flex;gap:8px;align-items:center}
+.gtl-stage small{background:#2f7de11f;color:#2f7de1;border-radius:999px;padding:1px 8px}
+.gtl-stage ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.gtl-row{width:100%;display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;text-align:left;font:inherit;padding:9px 12px;border-radius:12px;border:1px solid #d6deeb;background:#f1f5fb;color:inherit;cursor:pointer}
+.gtl-row:hover{border-color:#2f7de1}
+.gtl-name{font-weight:700;overflow:hidden;text-overflow:ellipsis}
+.gtl-due{font-size:12px;color:#5b6b82}.gtl-due.is-late{color:#e5484d;font-weight:700}
+.gtl-xp{font-size:12px;font-weight:800;color:#7c5cff}
+.gtl-empty{margin:0;padding:14px;border-radius:16px;border:1px dashed #b9c6da;color:#5b6b82}
+:root[data-theme='dark'] .gtl{color:#eef3ff}
+:root[data-theme='dark'] .gtl-filter{background:#ffffff10;border-color:#ffffff22}
+:root[data-theme='dark'] .gtl-filter button,:root[data-theme='dark'] .gtl-stage h4,:root[data-theme='dark'] .gtl-due,:root[data-theme='dark'] .gtl-empty{color:#9fb0cc}
+:root[data-theme='dark'] .gtl-goal{background:#ffffff10;border-color:#ffffff22;box-shadow:none}
+:root[data-theme='dark'] .gtl-row{background:#ffffff0d;border-color:#ffffff1f}
+:root[data-theme='dark'] .gtl-stage small{background:#5aa2ff2b;color:#5aa2ff}
+:root[data-theme='dark'] .gtl-xp{color:#a994ff}
+:root[data-theme='dark'] .gtl-empty{border-color:#ffffff33}
+:root[data-theme='dark'] .gtl-due.is-late{color:#ff7a80}
+/* Единый стиль страницы «Мои задачи»: шрифт и стеклянные карточки */
+.pyl-quest-board{font-family:Manrope,system-ui,sans-serif}
+.pyl-quest-board .pyl-habit-section,.pyl-quest-board .pyl-quest-aside>*{backdrop-filter:blur(18px) saturate(1.3);border-radius:20px}

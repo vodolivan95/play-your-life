@@ -1,0 +1,175 @@
+/* Календарь задач: стекло, светлая и тёмная тема (холст «Мои задачи — с TickTick», docs/TASKS-DESIGN.md). */
+.tcal {
+  --t-card: rgba(255, 255, 255, 0.78);
+  --t-line: rgba(20, 33, 61, 0.14);
+  --t-text: #14213d;
+  --t-muted: #44577a;
+  --t-soft: #2a3b60;
+  --t-accent: #1f5fd6;
+  --t-gold: #7a4e00;
+  --t-track: rgba(118, 118, 128, 0.12);
+  --t-pill: #fff;
+  --t-pill-text: #14213d;
+  --t-pill-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 3px 1px rgba(0, 0, 0, 0.04);
+  --t-shadow: 0 12px 32px rgba(31, 55, 110, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --t-weekend: rgba(20, 33, 61, 0.03);
+  --t-today: rgba(31, 95, 214, 0.1);
+  --t-alpha: 0.26;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  color: var(--t-text);
+  font-variant-numeric: tabular-nums;
+}
+:root[data-theme='dark'] .tcal {
+  --t-card: rgba(255, 255, 255, 0.07);
+  --t-line: rgba(255, 255, 255, 0.14);
+  --t-text: #fff;
+  --t-muted: #9aa8c8;
+  --t-soft: #c3cee8;
+  --t-accent: #8ab4ff;
+  --t-gold: #fbd36b;
+  --t-track: rgba(118, 118, 128, 0.24);
+  --t-pill: #636366;
+  --t-pill-text: #fff;
+  --t-pill-shadow: 0 3px 8px rgba(0, 0, 0, 0.3), 0 3px 1px rgba(0, 0, 0, 0.08), inset 0 0 0 0.5px rgba(255, 255, 255, 0.1);
+  --t-shadow: 0 12px 32px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --t-weekend: rgba(255, 255, 255, 0.03);
+  --t-today: rgba(138, 180, 255, 0.14);
+  --t-alpha: 0.4;
+}
+.tcal button { font: inherit; cursor: pointer; }
+.tcal button:focus-visible { outline: 3px solid #8ab4ff; outline-offset: 2px; }
+.tcal-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.tcal-title { display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px; }
+.tcal-title h2 {
+  margin: 0; font-size: 38px; font-weight: 800; letter-spacing: -0.04em; line-height: 1.05;
+  background: linear-gradient(120deg, #14213d, #2f6fe0); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+:root[data-theme='dark'] .tcal-title h2 { background: linear-gradient(120deg, #fff, #9fc2ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.tcal-title span { font-size: 14px; font-weight: 600; color: var(--t-muted); }
+.tcal-controls { display: flex; flex-wrap: wrap; gap: 10px; }
+.tcal-seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 13px; background: var(--t-track); box-shadow: inset 0 0 0 0.5px rgba(128, 128, 128, 0.12); }
+.tcal-seg button {
+  min-height: 44px; padding: 0 16px; border: 0; border-radius: 10px; background: transparent; color: var(--t-soft);
+  font-size: 14px; font-weight: 500; letter-spacing: -0.01em; transition: background-color 0.28s, box-shadow 0.28s;
+}
+.tcal-seg button[aria-pressed='true'] { background: var(--t-pill); color: var(--t-pill-text); font-weight: 600; box-shadow: var(--t-pill-shadow); }
+.tcal-nav button { min-width: 44px; padding: 0 12px; color: var(--t-text); }
+.tcal-insights { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.tcal-card, .tcal-panel, .tcal-detail {
+  border-radius: 24px; background: var(--t-card); border: 1px solid var(--t-line); box-shadow: var(--t-shadow);
+  -webkit-backdrop-filter: blur(26px) saturate(170%); backdrop-filter: blur(26px) saturate(170%);
+}
+.tcal-card { display: grid; align-content: center; gap: 8px; padding: 18px 20px; }
+.tcal-card small { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--t-muted); }
+.tcal-card strong { font-size: 20px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.2; }
+.tcal-today { display: flex; align-items: center; gap: 16px; }
+.tcal-today > div { display: grid; gap: 3px; }
+.tcal-today span { font-size: 13px; font-weight: 600; color: var(--t-soft); }
+.tcal-ring-track { fill: none; stroke: var(--t-line); stroke-width: 9; }
+.tcal-ring { fill: none; stroke-width: 9; stroke-linecap: round; }
+.tcal-today svg text { font-size: 24px; font-weight: 800; fill: var(--t-text); }
+.tcal-when { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--t-soft); }
+.tcal-when i { width: 10px; height: 10px; border-radius: 50%; }
+.tcal-load { display: flex; align-items: flex-end; gap: 8px; height: 74px; }
+.tcal-load div { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 5px; height: 100%; }
+.tcal-load i { display: block; width: 100%; border-radius: 9px; background: linear-gradient(180deg, rgba(138, 180, 255, 0.6), rgba(138, 180, 255, 0.2)); }
+.tcal-load .is-today i { background: linear-gradient(180deg, #8fb8ff, #a78bfa); box-shadow: 0 6px 18px rgba(138, 180, 255, 0.5); }
+.tcal-load span { font-size: 11px; font-weight: 700; color: var(--t-muted); }
+.tcal-load .is-today span { color: var(--t-text); }
+.tcal-legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; font-weight: 700; color: var(--t-soft); }
+.tcal-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.tcal-legend i { width: 10px; height: 10px; border-radius: 3px; }
+.tcal-legend .tcal-sync { color: var(--t-accent); }
+.tcal-panel { overflow: hidden; }
+.tcal-weekdays, .tcal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.tcal-weekdays { border-bottom: 1px solid var(--t-line); }
+.tcal-weekdays div { padding: 10px 8px; text-align: center; font-size: 12px; font-weight: 700; color: var(--t-muted); }
+.tcal-cell { min-width: 0; min-height: 118px; padding: 6px 5px 8px; border-right: 1px solid var(--t-line); border-bottom: 1px solid var(--t-line); display: flex; flex-direction: column; gap: 4px; transition: background 0.28s; }
+.tcal-cell.is-weekend { background: var(--t-weekend); }
+.tcal-cell.is-today { background: linear-gradient(180deg, var(--t-today), transparent); }
+.tcal-cell.is-other .tcal-num { color: var(--t-muted); }
+.tcal-cell.is-focus { background: linear-gradient(180deg, rgba(106, 166, 255, 0.16), rgba(167, 139, 250, 0.08)); box-shadow: inset 0 0 0 1.5px rgba(138, 180, 255, 0.55); }
+.tcal-num {
+  align-self: flex-start; min-width: 30px; min-height: 30px; padding: 0 7px; border: 0; border-radius: 999px; background: transparent;
+  color: var(--t-text); font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; transition: background-color 0.28s, box-shadow 0.28s;
+}
+.tcal-cell.is-today .tcal-num { background: linear-gradient(135deg, #6aa6ff, #a78bfa); color: #fff; box-shadow: 0 4px 14px rgba(106, 166, 255, 0.6); }
+.tcal-cell.is-focus .tcal-num {
+  align-self: stretch; justify-content: flex-start; min-height: 34px; padding: 0 12px; border-radius: 12px; color: var(--t-text);
+  background: linear-gradient(135deg, rgba(106, 166, 255, 0.38), rgba(167, 139, 250, 0.28)); box-shadow: inset 0 0 0 1.5px rgba(138, 180, 255, 0.85), 0 6px 18px rgba(106, 166, 255, 0.3);
+}
+.tcal-list { display: flex; flex-direction: column; gap: 3px; min-height: 0; }
+.tcal-list.is-scroll { max-height: 170px; overflow-y: auto; overscroll-behavior: contain; padding-right: 3px; scrollbar-width: thin; scrollbar-color: rgba(138, 180, 255, 0.5) transparent; }
+.tcal-list.is-scroll.is-tall { max-height: 280px; }
+.tcal-more { padding: 0 6px; font-size: 11px; font-weight: 700; color: var(--t-muted); }
+.tcal-hint { padding: 2px 6px 0; font-size: 11px; font-weight: 700; color: var(--t-accent); }
+.tcal-chip {
+  display: block; width: 100%; min-height: 24px; padding: 2px 6px; border: 0; border-left: 3px solid var(--c); border-radius: 10px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--c) calc(var(--t-alpha) * 100%), transparent), color-mix(in srgb, var(--c) calc(var(--t-alpha) * 45%), transparent));
+  color: var(--t-text); font-size: 12px; font-weight: 600; line-height: 1.25; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--c) 26%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.2s;
+}
+.tcal-chip:hover { transform: translateY(-1px) scale(1.01); filter: saturate(1.25) brightness(1.06); }
+.tcal-chip.is-done { opacity: 0.55; text-decoration: line-through; }
+.tcal-chip.is-selected { box-shadow: 0 0 0 2px var(--t-text), 0 4px 14px color-mix(in srgb, var(--c) 26%, transparent); }
+.tcal-timed-wrap { overflow-x: auto; }
+.tcal-timed { --cols: 7; }
+.tcal-timed-head, .tcal-allday, .tcal-hours { display: grid; grid-template-columns: 56px repeat(var(--cols), minmax(0, 1fr)); }
+.tcal-timed-head { border-bottom: 1px solid var(--t-line); }
+.tcal-timed-head > div { padding: 10px 6px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; border-left: 1px solid var(--t-line); }
+.tcal-timed-head > div:first-child { border-left: 0; }
+.tcal-timed-head small { font-size: 12px; font-weight: 700; color: var(--t-muted); }
+.tcal-timed-head b { min-width: 32px; height: 32px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; }
+.tcal-timed-head .is-today b { background: linear-gradient(135deg, #6aa6ff, #a78bfa); color: #fff; box-shadow: 0 4px 14px rgba(106, 166, 255, 0.6); }
+.tcal-allday { border-bottom: 1px solid var(--t-line); }
+.tcal-allday small { padding: 8px 6px; text-align: right; font-size: 11px; font-weight: 700; color: var(--t-muted); }
+.tcal-allday > div { min-width: 0; min-height: 40px; padding: 6px 4px; border-left: 1px solid var(--t-line); display: flex; flex-direction: column; gap: 3px; }
+.tcal-hours { position: relative; max-height: 640px; overflow-y: auto; }
+.tcal-hour-labels { position: relative; }
+.tcal-hour-labels span { position: absolute; right: 8px; font-size: 11px; font-weight: 700; color: var(--t-muted); }
+.tcal-col { position: relative; border-left: 1px solid var(--t-line); background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 47px, var(--t-line) 47px, var(--t-line) 48px); }
+.tcal-col.is-today { background-color: var(--t-today); }
+.tcal-event {
+  position: absolute; left: 3px; right: 3px; box-sizing: border-box; padding: 5px 8px; border: 0; border-left: 3px solid var(--c); border-radius: 12px; overflow: hidden;
+  display: flex; flex-direction: column; gap: 2px; text-align: left; color: var(--t-text);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--c) calc(var(--t-alpha) * 100%), transparent), color-mix(in srgb, var(--c) calc(var(--t-alpha) * 45%), transparent));
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--c) 26%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+.tcal-event b { font-size: 12px; font-weight: 700; line-height: 1.25; }
+.tcal-event span { font-size: 11px; font-weight: 600; color: var(--t-muted); }
+.tcal-event.is-done { opacity: 0.55; }
+.tcal-event.is-selected { box-shadow: 0 0 0 2px var(--t-text); }
+.tcal-detail { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 16px 20px; }
+.tcal-detail-bar { width: 6px; align-self: stretch; border-radius: 3px; background: var(--c); }
+.tcal-detail > div { flex: 1 1 260px; min-width: 0; display: grid; gap: 4px; }
+.tcal-detail strong { font-size: 17px; font-weight: 800; letter-spacing: -0.015em; }
+.tcal-detail div span { font-size: 13px; font-weight: 600; color: var(--t-muted); }
+.tcal-detail b { font-size: 14px; font-weight: 800; color: var(--t-gold); }
+.tcal-detail button { min-height: 44px; padding: 0 18px; border-radius: 12px; border: 1.5px solid var(--t-accent); background: transparent; color: var(--t-accent); font-size: 13px; font-weight: 800; }
+.tcal-empty { margin: 0; font-size: 13px; color: var(--t-muted); }
+@media (max-width: 720px) {
+  .tcal-title h2 { font-size: 30px; }
+  .tcal-cell { min-height: 96px; padding: 4px 3px 6px; }
+  .tcal-chip { font-size: 11px; padding: 2px 4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tcal-chip, .tcal-seg button, .tcal-num { transition: none; }
+}
+/* Переключатель «Список / Календарь» на странице «Мои задачи» */
+.pyl-quest-board [hidden] { display: none !important; }
+.pyl-quest-modes { display: inline-flex; justify-self: start; gap: 2px; padding: 3px; border-radius: 13px; background: rgba(118, 118, 128, 0.12); box-shadow: inset 0 0 0 0.5px rgba(128, 128, 128, 0.12); }
+.pyl-quest-modes button { min-height: 44px; padding: 0 20px; border: 0; border-radius: 10px; background: transparent; color: #2a3b60; font: inherit; font-size: 14px; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: background-color 0.28s, box-shadow 0.28s; }
+.pyl-quest-modes button[aria-pressed='true'] { background: #fff; color: #14213d; font-weight: 600; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 3px 1px rgba(0, 0, 0, 0.04); }
+.pyl-quest-modes button:focus-visible { outline: 3px solid #8ab4ff; outline-offset: 2px; }
+:root[data-theme='dark'] .pyl-quest-modes { background: rgba(118, 118, 128, 0.24); box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.06); }
+:root[data-theme='dark'] .pyl-quest-modes button { color: rgba(255, 255, 255, 0.92); }
+:root[data-theme='dark'] .pyl-quest-modes button[aria-pressed='true'] { background: #636366; color: #fff; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3), 0 3px 1px rgba(0, 0, 0, 0.08), inset 0 0 0 0.5px rgba(255, 255, 255, 0.1); }
+.tcal .tcal-chip { font-size: 12px; font-weight: 600; }
+.tcal .tcal-num { font-size: 13px; }
+.tcal .tcal-event b { font-size: 12px; }
+.tcal .tcal-seg button { font-size: 14px; }
+@media (max-width: 720px) { .tcal .tcal-chip { font-size: 11px; } }
+.tcal-hour-labels span:first-child { margin-top: 7px; }

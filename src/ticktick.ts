@@ -273,7 +273,7 @@ async function syncTickTickProject(
       continue;
     }
     // Existing standalone/imported tasks remain untouched when narrowing the scope.
-    if (!isGoalTask(state, local)) {
+    if (!isGoalTask(state, local) || local.tickTickSync === false) {
       result.connection.dismissed.push(link.remoteId);
       delete result.connection.links[localId];
       continue;
@@ -344,6 +344,7 @@ async function syncTickTickProject(
       !q.done &&
       (!taskIds || taskIds.includes(q.id)) &&
       isGoalTask(state, q) &&
+      q.tickTickSync !== false &&
       !allLinks[q.id] &&
       taskProject(connection, q) === connection.projectId,
   )) {
@@ -396,6 +397,7 @@ export async function syncTickTick(
       (taskIds && !taskIds.includes(task.id)) ||
       task.done ||
       !isGoalTask(state, task) ||
+      task.tickTickSync === false ||
       connection.links[task.id]
     )
       continue;

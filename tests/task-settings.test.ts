@@ -24,7 +24,7 @@ test('срок: быстрые варианты и распознавание', 
 test('настройки: сложность меняет XP, этап и срок сохраняются', () => {
   const next = updateTaskSettings(state([quest({})]), 'q1', { difficulty: 'Hard', stageId: 's2', dueAt: '2026-11-02', name: ' Бег ' });
   const q = next.quests[0];
-  assert.equal(q.xp, 35);
+  assert.equal(q.xp, 40);
   assert.equal(q.stageId, 's2');
   assert.equal(q.dueAt, '2026-11-02');
   assert.equal(q.name, 'Бег');
@@ -36,16 +36,16 @@ test('настройки: отказы', () => {
   assert.throws(() => updateTaskSettings(s, 'q3', { difficulty: 'Hard' }));
   assert.throws(() => updateTaskSettings(s, 'q1', { stageId: 'нет' }));
   assert.throws(() => updateTaskSettings(s, 'q1', { dueAt: '31.12' }));
-  assert.throws(() => updateTaskSettings(s, 'q4', { shared: true }));
+  assert.throws(() => updateTaskSettings(s, 'q4', { sync: false }));
 });
 test('вклад: доля в цели и синхронизация', () => {
   const s = state([quest({}), quest({ id: 'q5' })]);
   const c = taskContribution(s, s.quests[0]);
   assert.equal(c.goalShare, 50);
   assert.equal(c.xp, 20);
-  const shared = updateTaskSettings(s, 'q1', { shared: true }).quests[0];
-  assert.ok(shared.tickTickSharedAt);
-  assert.equal(updateTaskSettings(updateTaskSettings(s, 'q1', { shared: true }), 'q1', { shared: false }).quests[0].tickTickSharedAt, undefined);
+  const off = updateTaskSettings(s, 'q1', { sync: false }).quests[0];
+  assert.equal(off.tickTickSync, false);
+  assert.equal(updateTaskSettings(updateTaskSettings(s, 'q1', { sync: false }), 'q1', { sync: true }).quests[0].tickTickSync, undefined);
 });
 
 import { nextRepeatDay, completeQuest } from '../src/game.ts';
@@ -73,4 +73,14 @@ test('повтор и подзадачи проходят проверку со�
   const bad = JSON.parse(JSON.stringify(s));
   bad.quests[0].repeat = 'hourly';
   assert.throws(() => validateState(bad));
+});
+import { migrateState, difficulties } from '../src/game.ts';
+test('очки сложности: новые значения и переход старых сохранений', () => {
+  assert.deepEqual(Object.values(difficulties), [5, 10, 20, 40, 80]);
+  const s = newAccountGame('И');
+  s.quests = [{ id: 'o', name: 'Старая', sphere: 'sport', xp: 35, done: false, difficulty: 'Hard', sourceType: 'USER_CREATED', ownerId: 'u', rewardCoins: 0 }];
+  assert.doesNotThrow(() => validateState(JSON.parse(JSON.stringify(s))));
+  assert.equal(migrateState(s).quests[0].xp, 40);
+  s.quests[0].xp = 41;
+  assert.throws(() => validateState(JSON.parse(JSON.stringify(s))));
 });

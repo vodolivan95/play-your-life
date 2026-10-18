@@ -130,6 +130,8 @@ export type Quest = {
   notes?: string;
   priority?: 'low' | 'normal' | 'high';
   tickTickSharedAt?: string;
+  repeat?: 'daily' | 'weekdays' | 'weekly' | 'monthly';
+  subtasks?: { id: string; title: string; done: boolean }[];
 };
 export type GoalStage = {
   id: string;
@@ -550,7 +552,39 @@ export function completeQuest(state: GameState, id: string): GameState {
         : e);
     }
   }
+  if (quest.repeat) {
+    const day = nextRepeatDay(quest.dueAt?.slice(0, 10) ?? today, quest.repeat, today);
+    const copy = Object.fromEntries(Object.entries({
+      ...quest,
+      id: crypto.randomUUID(),
+      done: false,
+      completedAt: undefined,
+      currentValue: 0,
+      rewardClaimed: false,
+      rewardClaimedAt: undefined,
+      rewardLocked: false,
+      tickTickSharedAt: undefined,
+      startsAt: undefined,
+      dueAt: day,
+      subtasks: quest.subtasks?.map((t) => ({ ...t, id: crypto.randomUUID(), done: false })),
+    }).filter(([, v]) => v !== undefined)) as Quest;
+    next = { ...next, quests: [...next.quests, copy] };
+    if (quest.goalId) next = syncGoalTasks(next, quest.goalId);
+  }
   return next;
+}
+export function nextRepeatDay(base: string, repeat: NonNullable<Quest['repeat']>, today: string): string {
+  const date = new Date(`${base}T12:00:00`);
+  let guard = 0;
+  do {
+    if (repeat === 'monthly') date.setMonth(date.getMonth() + 1);
+    else if (repeat === 'weekly') date.setDate(date.getDate() + 7);
+    else {
+      date.setDate(date.getDate() + 1);
+      if (repeat === 'weekdays') while (date.getDay() === 0 || date.getDay() === 6) date.setDate(date.getDate() + 1);
+    }
+  } while (dateKey(date) <= today && ++guard < 400);
+  return dateKey(date);
 }
 export function syncGoalTasks(
   state: GameState,

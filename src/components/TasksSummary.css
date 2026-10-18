@@ -1,0 +1,9 @@
+.tsum{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;font-family:Manrope,system-ui,sans-serif}
+.tsum>div{display:grid;gap:2px;padding:12px 14px;border-radius:18px;background:#ffffffcc;border:1px solid #d6deeb;color:#14233a;backdrop-filter:blur(18px) saturate(1.4);box-shadow:0 8px 24px #1a3a6a14}
+.tsum small{font-size:12px;font-weight:700;color:#5b6b82}
+.tsum b{font-size:26px;line-height:1.1;background:linear-gradient(135deg,#2f7de1,#7c5cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tsum span{font-size:12px;color:#5b6b82}
+:root[data-theme='dark'] .tsum>div{background:#ffffff10;border-color:#ffffff22;color:#eef3ff;box-shadow:none}
+:root[data-theme='dark'] .tsum small,:root[data-theme='dark'] .tsum span{color:#9fb0cc}
+@media(max-width:900px){.tsum{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:520px){.tsum{grid-template-columns:repeat(2,1fr)}}

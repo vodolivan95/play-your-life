@@ -21,6 +21,7 @@ import { sphereProgress } from "../sphereProgress";
 import { SphereBuilding } from "./SphereCity";
 import QuestWizard from "./QuestWizard";
 import TaskWindow from "./TaskWindow";
+import TasksSummary from "./TasksSummary";
 import TasksCalendar from "./TasksCalendar";
 import TickTickInbox from "./TickTickInbox";
 import { cityAssets, sphereAssets } from "../sphereAssets";
@@ -201,6 +202,7 @@ export default function QuestBoard({
           </span>
         </div>
       </section>
+      <TasksSummary quests={quests} today={today} />
       <section>
         <div className="pyl-section-title">
           <h2>Мои сферы</h2>

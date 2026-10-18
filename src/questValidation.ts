@@ -51,6 +51,20 @@ export function validQuestExtension(q: Record<string, unknown>) {
     (q.rewardCoins === undefined || integer(q.rewardCoins, 100)) &&
     (q.virtualRewardId === undefined ||
       virtualRewards.some((i) => i.id === q.virtualRewardId)) &&
+    (q.repeat === undefined ||
+      ["daily", "weekdays", "weekly", "monthly"].includes(String(q.repeat))) &&
+    (q.subtasks === undefined ||
+      (Array.isArray(q.subtasks) &&
+        q.subtasks.length <= 30 &&
+        q.subtasks.every(
+          (t) =>
+            record(t) &&
+            text(t.id) &&
+            !!t.id &&
+            text(t.title) &&
+            String(t.title).length <= 100 &&
+            bool(t.done),
+        ))) &&
     (q.rewardClaimed === undefined || bool(q.rewardClaimed)) &&
     (q.rewardLocked === undefined || bool(q.rewardLocked)) &&
     (q.rewardClaimedAt === undefined || date(q.rewardClaimedAt)) &&

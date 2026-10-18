@@ -47,3 +47,30 @@ test('вклад: доля в цели и синхронизация', () => {
   assert.ok(shared.tickTickSharedAt);
   assert.equal(updateTaskSettings(updateTaskSettings(s, 'q1', { shared: true }), 'q1', { shared: false }).quests[0].tickTickSharedAt, undefined);
 });
+
+import { nextRepeatDay, completeQuest } from '../src/game.ts';
+import { newAccountGame } from '../src/accountGame.ts';
+import { validateState } from '../src/stateValidation.ts';
+
+test('повтор: следующая дата и новая задача после выполнения', () => {
+  assert.equal(nextRepeatDay('2026-10-16', 'weekdays', '2026-10-15'), '2026-10-19');
+  assert.equal(nextRepeatDay('2026-10-01', 'daily', '2026-10-18'), '2026-10-19');
+  assert.equal(nextRepeatDay('2026-01-31', 'monthly', '2026-01-01').slice(0, 7), '2026-03');
+  const s = newAccountGame('И');
+  s.quests = [{ id: 'r1', name: 'Зарядка', sphere: 'health', xp: 20, done: false, difficulty: 'Medium', dueAt: '2026-10-18', repeat: 'daily', subtasks: [{ id: 'a', title: 'Шаг', done: true }] }];
+  const next = completeQuest(s, 'r1');
+  assert.equal(next.quests.length, 2);
+  const copy = next.quests[1];
+  assert.equal(copy.done, false);
+  assert.equal(copy.repeat, 'daily');
+  assert.equal(copy.subtasks?.[0].done, false);
+  assert.ok(copy.dueAt && copy.dueAt > '2026-10-18');
+});
+test('повтор и подзадачи проходят проверку сохранения', () => {
+  const s = newAccountGame('И');
+  s.quests = [{ id: 'r2', name: 'Чтение', sphere: 'health', xp: 20, done: false, difficulty: 'Medium', repeat: 'weekly', subtasks: [{ id: 'a', title: 'Глава', done: false }] }];
+  assert.doesNotThrow(() => validateState(JSON.parse(JSON.stringify(s))));
+  const bad = JSON.parse(JSON.stringify(s));
+  bad.quests[0].repeat = 'hourly';
+  assert.throws(() => validateState(bad));
+});

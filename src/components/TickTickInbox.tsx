@@ -2,7 +2,7 @@ import { useContext, useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { spheres } from '../game';
 import type { GameState } from '../game';
-import { saveStage } from '../planning';
+import { saveGoal, saveStage } from '../planning';
 import { TickTickContext } from '../tickTickContext';
 import { goalsForSphere, openStages } from '../ticktickInbox';
 import type { IncomingChoice, IncomingTask } from '../ticktickInbox';
@@ -28,6 +28,8 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onChange }: {
   const [error, setError] = useState('');
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState('');
+  const [addingGoal, setAddingGoal] = useState(false);
+  const [goalDraft, setGoalDraft] = useState('');
   const goals = goalsForSphere(state, sphere);
   const goal = goals.find((g) => g.id === goalId);
   const stages = openStages(goal);
@@ -52,6 +54,21 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onChange }: {
       <div className="ticktick-inbox-chips" role="group" aria-labelledby={`goal-${item.remote.id}`}>
         {goals.map((g) => <button key={g.id} type="button" className="ticktick-chip" aria-pressed={goalId === g.id} disabled={busy}
           onClick={() => { setGoalId(g.id); setStageId(''); setAdding(false); }}>{g.name}</button>)}
+        {!addingGoal && <button type="button" className="ticktick-chip ticktick-chip-add" disabled={busy} onClick={() => setAddingGoal(true)}>＋ Новая цель</button>}
+        {addingGoal && <form className="ticktick-stage-form" onSubmit={(e) => {
+          e.preventDefault();
+          void run(async () => {
+            const next = saveGoal(state, { name: goalDraft, sphere, target: 100, reward: 100, progressMode: 'tasks' });
+            const created = next.goals.find((g) => !state.goals.some((o) => o.id === g.id));
+            onChange(next);
+            if (created) { setGoalId(created.id); setStageId(''); }
+            setGoalDraft(''); setAddingGoal(false);
+          });
+        }}>
+          <input value={goalDraft} maxLength={100} autoFocus placeholder="Название цели" aria-label="Название новой цели" onChange={(e) => setGoalDraft(e.target.value)} />
+          <button className="primary-button" type="submit" disabled={busy || !goalDraft.trim()}>Создать цель</button>
+          <button className="text-button" type="button" onClick={() => { setAddingGoal(false); setGoalDraft(''); }}>Отмена</button>
+        </form>}
         {!goals.length && <span className="muted">В этой сфере нет целей.</span>}
       </div>
       {goal && <>

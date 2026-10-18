@@ -8,6 +8,7 @@ import {
   difficultyLabels,
   dueFor,
   duePreset,
+  repeatLabels,
   taskContribution,
   updateTaskSettings,
 } from '../taskSettings';
@@ -34,7 +35,8 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
     [notes, setNotes] = useState(task?.notes ?? ''),
     [adding, setAdding] = useState(false),
     [draft, setDraft] = useState(''),
-    [picking, setPicking] = useState(false);
+    [picking, setPicking] = useState(false),
+    [sub, setSub] = useState('');
   if (!task) return null;
   const c = taskContribution(state, task),
     sphere = spheres.find((s) => s.id === task.sphere),
@@ -128,6 +130,30 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
               <input type="date" aria-label="Дата выполнения" value={task.dueAt?.slice(0, 10) ?? ''}
                 onChange={(e) => e.target.value && patch({ dueAt: e.target.value })} />
             )}
+          </div>
+          <div className="twin-field" role="group" aria-label="Повтор">
+            <span>Повтор</span>
+            <div className="twin-chips">
+              {repeatLabels.map(([id, label]) => (
+                <button key={label} type="button" aria-pressed={(task.repeat ?? null) === id} onClick={() => patch({ repeat: id })}>{label}</button>
+              ))}
+            </div>
+            {task.repeat && <small>После выполнения появится следующая задача с новым сроком.</small>}
+          </div>
+          <div className="twin-field" role="group" aria-label="Подзадачи">
+            <span>Подзадачи{task.subtasks?.length ? ` · ${task.subtasks.filter((t) => t.done).length} из ${task.subtasks.length}` : ''}</span>
+            <ul className="twin-subs">
+              {(task.subtasks ?? []).map((t) => (
+                <li key={t.id}>
+                  <label><input type="checkbox" checked={t.done} onChange={() => patch({ subtasks: task.subtasks!.map((x) => (x.id === t.id ? { ...x, done: !x.done } : x)) })} /> <span className={t.done ? 'is-done' : ''}>{t.title}</span></label>
+                  <button type="button" aria-label={`Удалить подзадачу ${t.title}`} onClick={() => patch({ subtasks: task.subtasks!.filter((x) => x.id !== t.id) })}>✕</button>
+                </li>
+              ))}
+            </ul>
+            <form className="twin-inline" onSubmit={(e) => { e.preventDefault(); if (!sub.trim()) return; patch({ subtasks: [...(task.subtasks ?? []), { id: crypto.randomUUID(), title: sub, done: false }] }); setSub(''); }}>
+              <input value={sub} maxLength={100} placeholder="Новая подзадача" aria-label="Новая подзадача" onChange={(e) => setSub(e.target.value)} />
+              <button className="secondary-button" disabled={!sub.trim()}>＋ Добавить</button>
+            </form>
           </div>
           <label className="twin-field">Заметка
             <textarea rows={3} value={notes} maxLength={2000} disabled={locked} onChange={(e) => setNotes(e.target.value)}

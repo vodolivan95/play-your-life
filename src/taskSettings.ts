@@ -11,7 +11,16 @@ export type TaskPatch = {
   dueAt?: string | null;
   stageId?: string | null;
   shared?: boolean;
+  repeat?: Quest['repeat'] | null;
+  subtasks?: NonNullable<Quest['subtasks']>;
 };
+export const repeatLabels: [Quest['repeat'] | null, string][] = [
+  [null, 'Не повторять'],
+  ['daily', 'Каждый день'],
+  ['weekdays', 'По будням'],
+  ['weekly', 'Каждую неделю'],
+  ['monthly', 'Каждый месяц'],
+];
 export const difficultyLabels: Record<string, string> = {
   Micro: 'Микро',
   Simple: 'Лёгкая',
@@ -86,6 +95,12 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
   if (patch.shared !== undefined) {
     if (patch.shared && !isGoalTask(state, old)) throw new Error('В TickTick передаются задачи внутри целей.');
     q.tickTickSharedAt = patch.shared ? old.tickTickSharedAt ?? new Date().toISOString() : undefined;
+  }
+  if (patch.repeat !== undefined) q.repeat = patch.repeat ?? undefined;
+  if (patch.subtasks !== undefined) {
+    if (patch.subtasks.length > 30 || patch.subtasks.some((t) => !t.title.trim() || t.title.length > 100))
+      throw new Error('Проверь подзадачи: не больше 30, название до 100 символов.');
+    q.subtasks = patch.subtasks.length ? patch.subtasks.map((t) => ({ ...t, title: t.title.trim() })) : undefined;
   }
   const clean = Object.fromEntries(Object.entries(q).filter(([, v]) => v !== undefined)) as Quest;
   return { ...state, quests: state.quests.map((item) => (item.id === id ? clean : item)) };

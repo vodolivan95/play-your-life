@@ -84,6 +84,13 @@ try {
   });
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("play-your-life-v1")).quests.filter((q) => q.dueAt));
   assert.ok(saved.some((q) => q.dueAt === tomorrow));
+  await win.getByRole("button", { name: "Каждый день" }).click();
+  await win.getByLabel("Новая подзадача").fill("Первый шаг");
+  await win.getByRole("button", { name: "＋ Добавить" }).click();
+  await win.getByRole("checkbox").check();
+  const rep = await page.evaluate(() => JSON.parse(localStorage.getItem("play-your-life-v1")).quests.filter((q) => q.repeat === "daily"));
+  assert.equal(rep.length, 1);
+  assert.deepEqual(rep[0].subtasks.map((t) => [t.title, t.done]), [["Первый шаг", true]]);
   await win.getByRole("button", { name: "Готово" }).click();
   await win.waitFor({ state: "detached" });
   assert.deepEqual(errors, []);

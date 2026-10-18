@@ -13,6 +13,7 @@ import {
   acceptIncomingTask,
   dismissIncomingTask,
   findIncomingTasks,
+  inboxHorizon,
   goalsForSphere,
   openStages,
 } from '../src/ticktickInbox.ts';
@@ -226,6 +227,7 @@ test('сроки задачи из TickTick проверяются по срок
   const incoming = findIncomingTasks(
     connection,
     byProject([remote('late', { dueDate: '2027-06-01T10:00:00+0000' })]),
+    new Date('2027-03-01T00:00:00Z'),
   )[0];
   assert.throws(
     () =>
@@ -238,6 +240,7 @@ test('сроки задачи из TickTick проверяются по срок
   const ok = findIncomingTasks(
     connection,
     byProject([remote('fit', { dueDate: '2027-01-15T10:00:00+0000' })]),
+    new Date('2027-03-01T00:00:00Z'),
   )[0];
   const accepted = acceptIncomingTask(state, connection, ok, {
     sphere: 'english',
@@ -344,4 +347,26 @@ test('выбор целей и этапов: только незавершённ
     [stageId],
   );
   assert.deepEqual(openStages(undefined), []);
+});
+
+test('входящие: берутся задачи на ближайшие 4 месяца, далёкое будущее не подтягивается', () => {
+  const { connection } = setup();
+  const now = new Date('2026-10-18T10:00:00Z');
+  assert.equal(inboxHorizon(now).toISOString().slice(0, 10), '2027-02-18');
+  const found = findIncomingTasks(
+    connection,
+    byProject([
+      remote('no-date'),
+      remote('overdue', { dueDate: '2026-09-01T09:00:00+0000' }),
+      remote('near', { dueDate: '2027-02-10T09:00:00+0000' }),
+      remote('far-due', { dueDate: '2027-06-01T09:00:00+0000' }),
+      remote('far-start', { startDate: '2028-01-05T09:00:00+0000' }),
+      remote('start-near-due-far', { startDate: '2026-11-01T09:00:00+0000', dueDate: '2027-09-01T09:00:00+0000' }),
+    ]),
+    now,
+  );
+  assert.deepEqual(
+    found.map((item) => item.remote.id).sort(),
+    ['near', 'no-date', 'overdue'],
+  );
 });

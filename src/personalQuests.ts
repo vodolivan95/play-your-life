@@ -106,9 +106,9 @@ export function saveCustomQuest(
     ? state.quests.find((q) => q.id === input.id)
     : undefined;
   if (old?.ownerId && old.ownerId !== ownerId)
-    throw new Error("Это квест другого пользователя.");
-  if (input.id && !old) throw new Error("Квест не найден.");
-  if (old?.done) throw new Error("Выполненный квест нельзя менять.");
+    throw new Error("Это задача другого пользователя.");
+  if (input.id && !old) throw new Error("Задача не найдена.");
+  if (old?.done) throw new Error("Выполненную задачу нельзя менять.");
   const name = input.name.trim();
   if (!name || name.length > 100 || (input.notes?.length ?? 0) > 2000)
     throw new Error("Проверь название и описание.");
@@ -196,9 +196,9 @@ export function progressQuest(
   const q = state.quests.find((item) => item.id === id);
   if (!q || q.done || q.rewardClaimed) return state;
   if (q.ownerId && q.ownerId !== ownerId)
-    throw new Error("Это квест другого пользователя.");
+    throw new Error("Это задача другого пользователя.");
   if (q.startsAt && Date.parse(q.startsAt) > Date.now())
-    throw new Error("Квест ещё не начался.");
+    throw new Error("Задача ещё не началась.");
   const goal = state.goals.find(g => g.id === q.goalId), stage = goal?.stages?.find(s => s.id === q.stageId);
   if (goal && stage && (stageAccess(state, goal, stage) || stage.status === 'paused')) throw new Error(stageAccess(state, goal, stage) || 'Этап приостановлен.');
   if (value === (q.currentValue ?? 0)) return state;

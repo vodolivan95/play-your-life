@@ -199,7 +199,7 @@ export default function Onboarding({
           Твой персонаж развивается вместе с тобой.
         </p>
         <div className="welcome-features">
-          <span>⚡ Квесты и XP</span>
+          <span>⚡ Задачи и XP</span>
           <span>🌱 9 сфер жизни</span>
           <span>🎯 Твои цели</span>
         </div>
@@ -317,7 +317,7 @@ export default function Onboarding({
           {profile.onboardingComplete && (
             <label className="reset-consent">
               <input type="checkbox" required />
-              Начать с нуля. Текущие демо-квесты, XP, цели и история будут
+              Начать с нуля. Текущие демо-задачи, XP, цели и история будут
               заменены моей новой игрой.
             </label>
           )}

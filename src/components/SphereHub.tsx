@@ -363,8 +363,8 @@ export function SphereOverview({ state, id, renderQuest, onOpenGoal, onProjects,
           )}
         </section>
 
-        <section className="sph-panel sph-daily" aria-label="Квесты дня">
-          <div className="sph-panel-head"><h2>Квесты дня</h2><span className="sph-muted small">{done} из {d.tasksToday.length}</span></div>
+        <section className="sph-panel sph-daily" aria-label="Задачи дня">
+          <div className="sph-panel-head"><h2>Задачи дня</h2><span className="sph-muted small">{done} из {d.tasksToday.length}</span></div>
           {d.tasksToday.length ? (
             <>
               <div className="sph-segments" aria-hidden="true">{d.tasksToday.map((q) => <i key={q.id} className={q.done ? 'on' : ''} />)}</div>

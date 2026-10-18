@@ -54,7 +54,7 @@ export default function TickTickConnection({ demo }: { demo: boolean }) {
           if (e.target.checked && !window.confirm('Удалённые здесь связанные задачи также будут удаляться в TickTick. Включить?')) return;
           manager.update({ deleteRemote: e.target.checked });
         }} />Удалять в TickTick связанные задачи, удалённые здесь</label>
-        <p className="score-note">Передаются конкретные задачи ваших целей. Уже связанные задачи сохраняют свой список: новый выбор применяется к новым задачам. Новые задачи из выбранных списков TickTick появляются на странице «Мои задачи» в блоке «Входящие из TickTick»: сферу, цель и этап вы выбираете сами, и только принятые задачи попадают в игру. Самостоятельные квесты и привычки не передаются. Цели и этапы остаются в PLAY YOUR LIFE.</p>
+        <p className="score-note">Передаются конкретные задачи ваших целей. Уже связанные задачи сохраняют свой список: новый выбор применяется к новым задачам. Новые задачи из выбранных списков TickTick появляются на странице «Мои задачи» в блоке «Входящие из TickTick»: сферу, цель и этап вы выбираете сами, и только принятые задачи попадают в игру. Самостоятельные задачи и привычки не передаются. Цели и этапы остаются в PLAY YOUR LIFE.</p>
         {manager.dirty && <p className="ticktick-unsaved" role="status">Есть несохранённые настройки. Обмен приостановлен до сохранения.</p>}
         <div className="account-buttons">
           <button className="primary-button" disabled={manager.busy || !manager.dirty || spheres.some(s => c.sphereLists?.[s.id] && !manager.projects.some(p => p.id === c.sphereLists?.[s.id]))} onClick={() => void action(manager.save)}>Сохранить настройки</button>

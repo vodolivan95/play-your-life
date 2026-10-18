@@ -98,7 +98,7 @@ export default function LifeScoreChart({ state }: { state: GameState }) {
         <div>
           <h2>{level.title}</h2>
           <p>
-            Всего {state.xp.toLocaleString('ru')} XP · {state.completed} квестов
+            Всего {state.xp.toLocaleString('ru')} XP · {state.completed} задач
             · {achievements.filter((a) => a.unlocked(state)).length} достижений
           </p>
         </div>

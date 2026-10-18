@@ -13,6 +13,6 @@ export default function BuildingInterior({ id, state, onChange, onBack, onSphere
     <button className="text-button" onClick={onBack}>← Вернуться в город</button>
     <h2>{spheres.find(sphere => sphere.id === id)?.name}</h2>
     <p>3D-интерьер этой сферы готовится. 3D-интерьеры есть у всех девяти зданий города.</p>
-    {onSphere && <button className="secondary-button" onClick={onSphere}>Сфера и квесты →</button>}
+    {onSphere && <button className="secondary-button" onClick={onSphere}>Сфера и задачи →</button>}
   </section>;
 }

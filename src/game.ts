@@ -718,7 +718,7 @@ export const achievements = [
   {
     name: 'Первый шаг',
     icon: '👟',
-    description: 'Выполни свой первый квест',
+    description: 'Выполни свою первую задачу',
     unlocked: (s: GameState) => s.completed >= 1,
     progress: (s: GameState) => Math.min(1, s.completed),
   },
@@ -732,7 +732,7 @@ export const achievements = [
   {
     name: 'На волне',
     icon: '⚡',
-    description: 'Выполни 10 квестов',
+    description: 'Выполни 10 задач',
     unlocked: (s: GameState) => s.completed >= 10,
     progress: (s: GameState) => Math.min(1, s.completed / 10),
   },

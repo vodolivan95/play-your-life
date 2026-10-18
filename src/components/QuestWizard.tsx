@@ -223,8 +223,8 @@ export default function QuestWizard({
               ? "Изменить привычку"
               : "Добавить привычку"
             : quest
-              ? "Изменить квест"
-              : "Создать квест"}
+              ? "Изменить задачу"
+              : "Создать задачу"}
         </h2>
         <h3>{labels[step]}</h3>
         <div className="pyl-meter">
@@ -562,7 +562,7 @@ export default function QuestWizard({
                 ? "Сохранить"
                 : habitMode
                   ? "Создать привычку"
-                  : "Создать квест"
+                  : "Создать задачу"
               : "Далее →"}
           </button>
         </footer>

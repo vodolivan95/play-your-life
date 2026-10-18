@@ -220,7 +220,11 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     } finally { working.current = false; setBusy(false); }
   }
   // Счётчик «на сегодня» в меню зависит от входящих: подгружаем их при подключении, не дожидаясь открытия вкладки.
-  useEffect(() => { if (connected && !dirty) void loadIncoming(); // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!connected || dirty) return;
+    const timer = setTimeout(() => void loadIncoming(), 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connected]);
   const mappingKey = JSON.stringify(connection?.sphereLists ?? {});
   useEffect(() => {

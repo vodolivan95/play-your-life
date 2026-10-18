@@ -49,6 +49,8 @@ jobs:
       - run: npm run test:spheres-ui
       - name: Verify account TickTick settings with isolated mock services
         run: node tests/ticktick-ui.mjs
+      - name: Verify TickTick inbox and two-way sync flow in the browser (mock services)
+        run: node tests/ticktick-flow-ui.mjs
       - run: npm run build
       - run: node tests/logo-ui.mjs
       - name: Save mobile and desktop previews

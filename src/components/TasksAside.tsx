@@ -48,7 +48,7 @@ export default function TasksAside({ quests, connected, onSettings }: { quests: 
         <p>Берём задачи на ближайшие 4 месяца. Повторяющиеся задачи далёкого будущего не подтягиваются.</p>
         {connected && (
           <div className="tas-actions">
-            <button type="button" disabled={manager?.busy || manager?.inboxBusy} onClick={() => { void manager?.refresh(); void manager?.loadIncoming(); }}>Обновить</button>
+            <button type="button" disabled={manager?.busy || manager?.inboxBusy} onClick={() => { void manager?.refreshAll(); }}>Обновить</button>
             {onSettings && <button type="button" onClick={onSettings}>Настроить</button>}
           </div>
         )}

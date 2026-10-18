@@ -21,6 +21,8 @@ export type TickTickManager = {
   inboxBusy: boolean;
   inboxError: string;
   loadIncoming: () => Promise<void>;
+  refreshAll: () => Promise<void>;
+  inboxNew: number;
   acceptIncoming: (remoteId: string, choice: IncomingChoice) => Promise<string>;
   dismissIncoming: (remoteId: string) => Promise<void>;
 };

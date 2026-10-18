@@ -1,6 +1,5 @@
 import { difficulties } from './game.ts';
 import type { GameState, Quest } from './game.ts';
-import { isGoalTask } from './planning.ts';
 import { questCoins } from './personalQuests.ts';
 import { addDays, mondayOf } from './tasksCalendar.ts';
 
@@ -93,7 +92,6 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
     }
   }
   if (patch.sync !== undefined) {
-    if (!isGoalTask(state, old)) throw new Error('В TickTick передаются задачи внутри целей.');
     q.tickTickSync = patch.sync ? undefined : false;
   }
   if (patch.repeat !== undefined) q.repeat = patch.repeat ?? undefined;

@@ -164,9 +164,9 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
           <div className="twin-sync">
             <div>
               <b>Синхронизация с TickTick</b>
-              <small>{inGoal ? 'Включено по умолчанию: название, срок, заметка и отметка о выполнении идут в обе стороны, когда TickTick подключён.' : 'Передаются задачи внутри целей: добавь задачу в цель.'}</small>
+              <small>Включено по умолчанию: название, срок, заметка, выполнение и удаление идут в обе стороны, когда TickTick подключён.</small>
             </div>
-            <button type="button" role="switch" aria-checked={inGoal && task.tickTickSync !== false} disabled={!inGoal}
+            <button type="button" role="switch" aria-checked={task.tickTickSync !== false}
               aria-label="Синхронизация с TickTick"
               onClick={() => patch({ sync: task.tickTickSync === false })}><i /></button>
           </div>

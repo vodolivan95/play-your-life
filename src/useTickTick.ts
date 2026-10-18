@@ -219,6 +219,9 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
       setStatus('TickTick отключён. Задачи и прогресс в обоих приложениях сохранены.');
     } finally { working.current = false; setBusy(false); }
   }
+  // Счётчик «на сегодня» в меню зависит от входящих: подгружаем их при подключении, не дожидаясь открытия вкладки.
+  useEffect(() => { if (connected && !dirty) void loadIncoming(); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected]);
   const mappingKey = JSON.stringify(connection?.sphereLists ?? {});
   useEffect(() => {
     if (!connection?.auto || !connected || dirty || state.profile.mode === 'demo') return;

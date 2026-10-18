@@ -11,6 +11,7 @@ import {
 import type { RemoteTask } from '../src/ticktick.ts';
 import {
   acceptIncomingTask,
+  incomingForToday,
   dismissIncomingTask,
   findIncomingTasks,
   inboxHorizon,
@@ -194,6 +195,17 @@ test('одиночная задача без цели: в игре есть и �
   assert.equal((accepted.remoteUpdate as { id: string }).id, 's1');
   assert.equal(accepted.connection.links['single-1'].remoteId, 's1');
   assert.equal(findIncomingTasks(accepted.connection, byProject([remote('s1')])).length, 0);
+});
+test('входящие на сегодня: срок сегодня или раньше, без даты не считаются', () => {
+  const { connection } = setup();
+  const now = new Date('2026-10-18T12:00:00');
+  const items = findIncomingTasks(connection, byProject([
+    remote('d0', { dueDate: '2026-10-18T09:00:00+0300' }),
+    remote('d-', { dueDate: '2026-10-10T09:00:00+0300' }),
+    remote('d+', { dueDate: '2026-10-25T09:00:00+0300' }),
+    remote('d?', {}),
+  ]), now);
+  assert.deepEqual(incomingForToday(items, now).map((i) => i.remote.id).sort(), ['d-', 'd0']);
 });
 test('ошибки выбора не меняют состояние', () => {
   const { state, connection, enId } = setup();

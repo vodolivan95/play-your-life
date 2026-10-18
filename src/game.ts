@@ -201,6 +201,8 @@ export type MonthReflection = {
   mood: number | null;
   status: 'draft' | 'completed';
   updatedAt: string;
+  /** «Мои итоги» (0.35.0): итоги по сферам, планы, благодарность, фокусы. */
+  review?: import('./keyResults').MonthReview;
 };
 export type GameState = {
   habits?: import('./personalQuests').Habit[];
@@ -230,6 +232,8 @@ export type GameState = {
   hasCompletedGoal?: boolean;
   monthlyTracking?: { since: string; scores: Record<string, number> };
   monthlyReflections?: Record<string, MonthReflection>;
+  /** Быстрые отметки «как ты сейчас»: дата → настроение и энергия 1–5. */
+  moodCheckins?: Record<string, { mood: number; energy: number }>;
   /** Только в облачном документе: подписи архивных месяцев (см. cloudSplit.ts). */
   historyIndex?: Record<string, string>;
   /** Только в облачном документе: обложки, вынесенные в отдельные документы. */

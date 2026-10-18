@@ -21,7 +21,7 @@ import type { SphereTab } from './components/SphereHub';
 import Statistics from './components/Statistics';
 import RewardShop from './components/RewardShop';
 import Onboarding, { ProfileEditor } from './components/Onboarding';
-import MonthlyReview from './components/MonthlyReview';
+import KeyResults from './components/KeyResults';
 import GoalsBoard from './components/GoalsBoard';
 import SkillTree from './components/SkillTree';
 import LifePlanner from './components/LifePlanner';
@@ -315,17 +315,12 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
               </div>
             )}
             {page === 'monthly' && (
-              <MonthlyReview
+              <KeyResults
                 state={state}
                 onChange={setState}
+                ownerId={userId ?? 'local'}
+                notify={notify}
                 storageError={storageError}
-                onSaved={() =>
-                  notify(
-                    storageError
-                      ? 'Итоги сохранены на этой странице'
-                      : 'Итоги месяца сохранены',
-                  )
-                }
               />
             )}
             {page === 'home' && <HomeDashboard state={state} onChange={setState} onSphere={(id) => { setSelected(id); setSphereTab('overview'); setPage('spheres'); }} onQuests={() => navigate('tasks')} onGoal={() => navigate('goals')} onShop={() => navigate('shop')} onProfile={() => navigate('profile')} onIntegration={() => navigate('profile')} onCreate={newQuest} onNewGoal={() => setModal('goal')} onStart={() => setModal('start')} renderQuest={q => <QuestRow key={q.id} quest={q} />} />}
@@ -459,7 +454,13 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
               <RewardShop state={state} onChange={setState} notify={notify} />
             )}
             {page === 'statistics' && (
-              <Statistics state={state} onMonthly={() => navigate('monthly')} />
+              <KeyResults
+                state={state}
+                onChange={setState}
+                ownerId={userId ?? 'local'}
+                notify={notify}
+                storageError={storageError}
+              />
             )}
             {page === 'profile' && (
               <div className="profile-page">

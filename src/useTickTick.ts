@@ -49,7 +49,11 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
   const [connected, setConnected] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
-  const [incoming, setIncoming] = useState<IncomingTask[]>([]);
+  const inboxKey = `${storageKey}:inbox`;
+  const [incoming, setIncoming] = useState<IncomingTask[]>(() => {
+    try { const raw = JSON.parse(localStorage.getItem(inboxKey) ?? '[]'); return Array.isArray(raw) ? raw as IncomingTask[] : []; } catch { return []; }
+  });
+  useEffect(() => { try { localStorage.setItem(inboxKey, JSON.stringify(incoming)); } catch { /* кэш необязателен */ } }, [incoming, inboxKey]);
   const [inboxBusy, setInboxBusy] = useState(false);
   const [inboxError, setInboxError] = useState('');
   const working = useRef(false);
@@ -204,7 +208,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     working.current = true; setBusy(true);
     try {
       await request(c, '/disconnect', 'POST');
-      setConnection(null); setProjects([]); setConnected(false); setDirty(false);
+      setConnection(null); setProjects([]); setIncoming([]); setConnected(false); setDirty(false);
       setStatus('TickTick отключён. Задачи и прогресс в обоих приложениях сохранены.');
     } finally { working.current = false; setBusy(false); }
   }

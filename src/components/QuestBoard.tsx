@@ -15,9 +15,11 @@ import GoalTaskList from "./GoalTaskList";
 import TaskWindow from "./TaskWindow";
 import TasksSummary from "./TasksSummary";
 import TasksCalendar from "./TasksCalendar";
+import TasksAside from "./TasksAside";
 import TickTickInbox from "./TickTickInbox";
 import { TickTickContext } from "../tickTickContext";
 import "./QuestBoard.css";
+import "./TasksAside.css";
 
 type Mode = "inbox" | "list" | "calendar";
 const modes: [Mode, string][] = [
@@ -114,6 +116,8 @@ export default function QuestBoard({
         </button>
       </header>
       <TasksSummary quests={quests} today={today} />
+      <div className="pyl-tasks-layout">
+      <div className="pyl-tasks-main">
       {mode === "inbox" &&
         (connected ? (
           <TickTickInbox state={state} onChange={onChange} />
@@ -135,6 +139,9 @@ export default function QuestBoard({
       {mode === "calendar" && (
         <TasksCalendar quests={quests} today={today} onOpen={(q) => setOpenTask(q.id)} />
       )}
+      </div>
+      <TasksAside quests={quests} connected={connected} />
+      </div>
       {form && (
         <QuestWizard
           {...form}

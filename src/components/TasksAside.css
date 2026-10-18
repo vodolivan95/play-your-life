@@ -1,0 +1,28 @@
+.pyl-tasks-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:22px;align-items:start}
+.pyl-tasks-main{display:grid;gap:18px;min-width:0}
+@media(max-width:1100px){.pyl-tasks-layout{grid-template-columns:1fr}}
+.tas{display:grid;gap:16px;font-family:'Manrope',system-ui,sans-serif}
+.tas-card{display:grid;gap:12px;padding:20px;border-radius:22px;background:rgba(255,255,255,.7);border:1.5px solid #d6e0ef;color:#14213d}
+.tas-card strong{font-size:17px;font-weight:800}
+.tas-card p{margin:0;font-size:12px;line-height:1.5;color:#5b6b82}
+.tas-card ol{margin:0;padding-left:20px;display:grid;gap:8px;font-size:13px;line-height:1.5;color:#3d4d68}
+.tas-progress{grid-auto-flow:column;grid-template-columns:auto 1fr;align-items:center;gap:18px}
+.tas-progress div{display:grid;gap:4px}.tas-progress span{font-size:14px;color:#5b6b82}
+.tas-ring-bg{fill:none;stroke:#d6e0ef;stroke-width:10}
+.tas-ring{fill:none;stroke:#34c759;stroke-width:10;stroke-linecap:round}
+.tas-progress text{font-size:22px;font-weight:900;fill:#14213d}
+.tas-row{display:flex;justify-content:space-between;align-items:center}
+.tas-row b{font-size:12px;font-weight:800;color:#8a97ab}.tas-row b.is-ok{color:#34c759}
+.tas-list{display:flex;justify-content:space-between;gap:10px;font-size:13px;min-height:30px;align-items:center}
+.tas-list span{color:#3d4d68;font-weight:700}
+.tas-stats{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin:0;padding:12px;border-radius:14px;background:rgba(47,125,225,.08);font-size:12px}
+.tas-stats dt{color:#5b6b82}.tas-stats dd{margin:0;font-weight:800}
+.tas-actions{display:flex;gap:8px;flex-wrap:wrap}
+.tas-actions button{min-height:44px;padding:0 16px;border-radius:12px;border:1.5px solid #d6e0ef;background:transparent;color:inherit;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+:root[data-theme='dark'] .tas-card{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);color:#f2f6ff}
+:root[data-theme='dark'] .tas-card p,:root[data-theme='dark'] .tas-progress span,:root[data-theme='dark'] .tas-stats dt{color:#9fb0cc}
+:root[data-theme='dark'] .tas-card ol,:root[data-theme='dark'] .tas-list span{color:#c5d2ea}
+:root[data-theme='dark'] .tas-ring-bg{stroke:rgba(255,255,255,.14)}
+:root[data-theme='dark'] .tas-progress text{fill:#f2f6ff}
+:root[data-theme='dark'] .tas-stats{background:rgba(255,255,255,.07)}
+:root[data-theme='dark'] .tas-actions button{border-color:rgba(255,255,255,.18)}

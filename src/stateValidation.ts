@@ -7,6 +7,7 @@ import { validProjectImage } from './projectImage.ts';
 import { validSkillTrees } from './skillTree.ts';
 import { validMonthlyFocus } from './monthlyFocus.ts';
 import { validKeySpheres } from './lifePlanMap.ts';
+import { validReview, validMoodCheckins } from './keyResults.ts';
 import type { GameState } from './game.ts';
 import { imageDocPattern, imageRefPattern, monthPattern } from './cloudSplit.ts';
 
@@ -352,8 +353,10 @@ export function validateState(value: unknown): asserts value is SavedState {
               (r.mood as number) >= 1 &&
               (r.mood as number) <= 5)) &&
           ['draft', 'completed'].includes(r.status as string) &&
-          date(r.updatedAt),
+          date(r.updatedAt) &&
+          (r.review === undefined || validReview(r.review)),
       ))
   )
     return fail();
+  if (!validMoodCheckins(value.moodCheckins)) return fail();
 }

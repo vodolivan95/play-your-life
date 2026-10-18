@@ -121,7 +121,7 @@ try {
     await panel(page).getByText('Доступ к TickTick подтверждён.',{exact:false}).waitFor();
     assert.equal(await page.getByRole('button',{name:'Восстановить из файла'}).isDisabled(),true,'confirmed connections protect restored plans from automatic export');
     assert.equal(await panel(page).locator('select').count(),9);
-    assert.equal(await panel(page).getByLabel('Обновлять автоматически, пока приложение открыто').isChecked(),false);
+    assert.equal(await panel(page).getByLabel('Обновлять автоматически, пока приложение открыто').isChecked(),true);
     assert.equal(await panel(page).getByLabel('Список TickTick: Английский').locator('option').filter({hasText:'Заметки'}).count(),0);
     await panel(page).getByLabel('Список TickTick: Английский').selectOption('english');
     await panel(page).getByLabel('Список TickTick: Спорт').selectOption('fitness');
@@ -148,8 +148,7 @@ try {
     await panel(page).getByRole('button',{name:'Обновить подключение'}).click();
     await panel(page).getByText('Доступ к TickTick подтверждён.',{exact:false}).waitFor();
     await panel(page).getByLabel('Обновлять автоматически, пока приложение открыто').check();
-    await panel(page).getByRole('button',{name:'Сохранить настройки'}).click();
-    await panel(page).getByText('Настройки сохранены в вашем аккаунте.',{exact:false}).waitFor();
+    assert.equal(await panel(page).getByLabel('Обновлять автоматически, пока приложение открыто').isChecked(),true,'auto-update is on by default');
     await ctx.setOffline(true);
     account(uid).tasks.get('remote-task-'+uid).status=2;
     await panel(page).getByRole('button',{name:'Синхронизировать сейчас'}).click();

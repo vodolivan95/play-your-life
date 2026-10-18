@@ -1,0 +1,88 @@
+/*
+ * Светлая тема «Небесное стекло» для всего приложения (версия 0.38.0).
+ * Только светлая тема: тёмная описана в theme-dark.generated.css и theme-dark.css.
+ * Идея: мягкий градиент «утреннее небо» (голубой → лавандовый → персиковый) на всей странице,
+ * а карточки и меню — белое полупрозрачное стекло с размытием и тонкой белой кромкой.
+ * Подключается последним; :where() держит специфичность низкой, чтобы состояния
+ * («выбрано», «ошибка») и акценты в компонентах продолжали работать.
+ */
+:root:not([data-theme="dark"]) {
+  --sky-a: #cfe3ff;
+  --sky-b: #e4dcff;
+  --sky-c: #ffe6da;
+  --glass: rgba(255, 255, 255, 0.62);
+  --glass-strong: rgba(255, 255, 255, 0.78);
+  --glass-line: rgba(255, 255, 255, 0.92);
+  --glass-shadow: 0 10px 30px rgba(80, 110, 200, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  background: var(--sky-a);
+}
+:root:not([data-theme="dark"]) body {
+  background:
+    radial-gradient(60% 50% at 8% 0%, rgba(160, 205, 255, 0.55), transparent 70%),
+    radial-gradient(55% 55% at 100% 15%, rgba(205, 190, 255, 0.5), transparent 70%),
+    radial-gradient(60% 50% at 55% 100%, rgba(255, 215, 195, 0.55), transparent 70%),
+    linear-gradient(135deg, var(--sky-a) 0%, var(--sky-b) 52%, var(--sky-c) 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+/* Большие поверхности: карточки, панели, плитки страниц. */
+:where(:root:not([data-theme="dark"])) :is(
+  .panel, .sphere-card, .goal-highlight, .player-card, .stat-card, .planning-stats > div,
+  .account-card, .gl-card, .gl-side, .gl-tile, .city-district-card, .mrep-card, .mrep-sphere,
+  .mrep-kpis > div, .myr-card, .myr-sphere, .myr-facts div, .shop-card, .sphere-list-row,
+  .tas-card, .pyl-custom-card, .home-dashboard .home-panel, .building-editor, .ticktick-inbox-item
+) {
+  background: var(--glass);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(20px) saturate(170%);
+  backdrop-filter: blur(20px) saturate(170%);
+}
+/* Меню и верхняя панель — чуть плотнее, чтобы текст читался на любом фоне. */
+:where(:root:not([data-theme="dark"])) :is(.sidebar, .topbar) {
+  background: var(--glass-strong);
+  border-color: var(--glass-line);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+}
+/* Всплывающие окна и уведомления. */
+:where(:root:not([data-theme="dark"])) :is(.toast, .pyl-overlay form, .gw-banner-tools details > div) {
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-line);
+  box-shadow: 0 18px 50px rgba(60, 80, 160, 0.22), inset 0 1px 0 #fff;
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+  backdrop-filter: blur(26px) saturate(180%);
+}
+/* Главная кнопка действия — голубая с мягкой тенью, как «Разобрать». */
+:where(:root:not([data-theme="dark"])) .primary-button {
+  background: linear-gradient(180deg, #4a9bff, #1f6feb);
+  color: #fff;
+  border: 0;
+  box-shadow: 0 6px 16px rgba(31, 111, 235, 0.32);
+}
+/* Входящие TickTick: небесное стекло (вариант 1 холста). */
+:root:not([data-theme="dark"]) .ticktick-inbox {
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.95);
+  --glass-item: rgba(255, 255, 255, 0.68);
+  --glass-item-border: rgba(255, 255, 255, 0.95);
+  --glass-pill: rgba(60, 90, 150, 0.1);
+}
+:root:not([data-theme="dark"]) .ticktick-sort-button,
+:root:not([data-theme="dark"]) .ticktick-inbox .ticktick-inbox-actions .primary-button {
+  background: linear-gradient(180deg, #4a9bff, #1f6feb);
+  color: #fff;
+  border: 0;
+  box-shadow: 0 6px 16px rgba(31, 111, 235, 0.35);
+}
+@media (max-width: 720px) {
+  /* На телефоне размытие дороже: чуть меньше радиус. */
+  :where(:root:not([data-theme="dark"])) :is(.panel, .sphere-card, .gl-card, .mrep-card, .myr-card, .shop-card, .tas-card) {
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    backdrop-filter: blur(12px) saturate(160%);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :where(:root:not([data-theme="dark"])) * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  :root:not([data-theme="dark"]) { --glass: rgba(255, 255, 255, 0.92); --glass-strong: #fff; }
+}

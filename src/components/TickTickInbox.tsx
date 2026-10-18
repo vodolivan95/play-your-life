@@ -1,3 +1,4 @@
+import './TickTickInbox.css';
 import { useContext, useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { spheres } from '../game';
@@ -11,7 +12,7 @@ const pageSize = 20;
 function formatDate(value?: string | null) {
   if (!value) return '';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('ru-RU');
+  return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 }
 function Row({ item, state, busy, listName, onAccept, onDismiss, onChange }: {
   item: IncomingTask;
@@ -45,10 +46,13 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onChange }: {
   return <li className="ticktick-inbox-item">
     <div className="ticktick-inbox-title">
       <strong>{item.remote.title}</strong>
-      <small>Список TickTick: {listName}{start ? ` · начало ${start}` : ''}{due ? ` · срок ${due}` : ''}</small>
+      <div className="ticktick-inbox-meta">
+        <span className="ticktick-pill">Список: {listName}</span>
+        <span className="ticktick-pill">{due ? `до ${due}` : start ? `с ${start}` : 'Без срока'}</span>
+      </div>
     </div>
     {!open && <div className="ticktick-inbox-actions">
-      <button className="primary-button" disabled={busy} onClick={() => setOpen(true)}>Разобрать</button>
+      <button className="ticktick-sort-button" disabled={busy} onClick={() => setOpen(true)}>Разобрать</button>
       <button className="text-button" disabled={busy} onClick={() => void run(onDismiss)}>Пропустить</button>
     </div>}
     {open && <div className="ticktick-inbox-choice">
@@ -131,12 +135,11 @@ export default function TickTickInbox({ state, onChange }: { state: GameState; o
   const names = new Map(manager.projects.map((p) => [p.id, p.name]));
   const items = manager.incoming;
   return <section className="ticktick-inbox" aria-label="Входящие из TickTick">
-    <div className="ticktick-heading">
-      <div><div className="eyebrow">TICKTICK</div><h3>Входящие из TickTick</h3></div>
-      <button className="secondary-button" disabled={manager.busy} onClick={() => void manager.refreshAll()}>{manager.inboxBusy ? 'Проверяем…' : 'Обновить'}</button>
+    <div className="ticktick-inbox-head">
+      <h3>Входящие из TickTick{items.length > 0 && <span className="ticktick-badge-count" aria-label={`Задач: ${items.length}`}>{items.length}</span>}</h3>
+      <span className="ticktick-inbox-note">Задачи на ближайшие 4 месяца{manager.inboxNew > 0 ? ` · новых: ${manager.inboxNew}` : ''}</span>
+      <button className="ticktick-refresh" disabled={manager.busy} onClick={() => void manager.refreshAll()}>{manager.inboxBusy ? 'Проверяем…' : 'Обновить'}</button>
     </div>
-    <p className="muted">Новые задачи из ваших списков TickTick. В игру они попадают только после выбора сферы, цели и этапа; дальше синхронизируются как обычные задачи цели.</p>
-    {manager.inboxNew > 0 && <p className="muted">Новых задач с прошлого обновления: {manager.inboxNew}.</p>}
     {manager.inboxError && <p className="transfer-message" role="alert">{manager.inboxError}</p>}
     {!items.length && !manager.inboxError && <p className="empty">Новых задач в сопоставленных списках нет.</p>}
     {items.length > 0 && <ul className="ticktick-inbox-list">

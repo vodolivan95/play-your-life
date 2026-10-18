@@ -13,7 +13,14 @@
   --glass: rgba(255, 255, 255, 0.62);
   --glass-strong: rgba(255, 255, 255, 0.78);
   --glass-line: rgba(255, 255, 255, 0.92);
-  --glass-shadow: 0 10px 30px rgba(80, 110, 200, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  /* Объём: светлая кромка сверху, мягкая тень внутри снизу, двухслойная тень снаружи. */
+  --glass-shadow:
+    0 2px 4px rgba(80, 110, 200, 0.08),
+    0 16px 36px rgba(80, 110, 200, 0.2),
+    inset 0 1.5px 0 #fff,
+    inset 0 -10px 18px rgba(150, 180, 240, 0.22),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  --glass-volume: linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0.58) 55%, rgba(235, 242, 255, 0.5) 100%);
   background: var(--sky-a);
 }
 :root:not([data-theme="dark"]) body {
@@ -32,7 +39,7 @@
   .mrep-kpis > div, .myr-card, .myr-sphere, .myr-facts div, .shop-card, .sphere-list-row,
   .tas-card, .pyl-custom-card, .home-dashboard .home-panel, .building-editor, .ticktick-inbox-item
 ) {
-  background: var(--glass);
+  background: var(--glass-volume);
   border: 1px solid var(--glass-line);
   box-shadow: var(--glass-shadow);
   -webkit-backdrop-filter: blur(20px) saturate(170%);
@@ -42,6 +49,7 @@
 :where(:root:not([data-theme="dark"])) :is(.sidebar, .topbar) {
   background: var(--glass-strong);
   border-color: var(--glass-line);
+  box-shadow: 0 10px 30px rgba(80, 110, 200, 0.16), inset 0 1.5px 0 #fff, inset 0 -8px 16px rgba(150, 180, 240, 0.18);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   backdrop-filter: blur(24px) saturate(180%);
 }

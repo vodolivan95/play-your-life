@@ -225,6 +225,7 @@ export function validateState(value: unknown): asserts value is SavedState {
         typeof q.done === 'boolean' &&
         optionalDate(q.startsAt) &&
         optionalDate(q.dueAt) &&
+        optionalDate(q.deadlineAt) &&
         optionalDate(q.completedAt) &&
         (q.estimateMinutes === undefined ||
           (number(q.estimateMinutes) &&

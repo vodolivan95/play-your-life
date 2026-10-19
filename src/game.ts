@@ -128,6 +128,8 @@ export type Quest = {
   weight?: number;
   startsAt?: string;
   dueAt?: string;
+  /** Дедлайн игрока: только в игре, не синхронизируется с TickTick. Отдельно от startsAt/dueAt — плановой даты задачи. */
+  deadlineAt?: string;
   estimateMinutes?: number;
   notes?: string;
   priority?: 'low' | 'normal' | 'high';
@@ -587,6 +589,8 @@ export function completeQuest(state: GameState, id: string): GameState {
       tickTickSharedAt: undefined,
       startsAt: undefined,
       dueAt: day,
+      // Дедлайн относился к прошлому повтору — для нового переносить не нужно.
+      deadlineAt: undefined,
       subtasks: quest.subtasks?.map((t) => ({ ...t, id: crypto.randomUUID(), done: false })),
     }).filter(([, v]) => v !== undefined)) as Quest;
     next = { ...next, quests: [...next.quests, copy] };

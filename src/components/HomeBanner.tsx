@@ -1,32 +1,33 @@
 import { useId } from 'react';
 import type { ReactNode } from 'react';
-import heroLight from '../assets/home-peak-light.webp';
+import heroPeak from '../assets/home-peak.svg';
 import type { NextPeak } from '../nextPeak';
 import './HomeBanner.css';
 
-/** Размер картинки гор: слой с живыми звёздами использует те же координаты. */
-const ART_W = 6048;
-const ART_H = 2724;
-/** Золотые звёзды маршрута на картинке (координаты в пикселях исходника). */
+/** Размер рисунка гор (вектор): слой с живыми звёздами использует те же координаты. */
+const ART_W = 2000;
+const ART_H = 888;
+/** Золотые звёзды маршрута на рисунке (координаты рисунка). */
 const STARS = [
-  { x: 3700, y: 931, delay: 0 },
-  { x: 3417, y: 1410, delay: 1.1 },
-  { x: 2971, y: 1766, delay: 2.2 },
-  { x: 2824, y: 2167, delay: 3.3 },
+  { x: 1350, y: 320, delay: 0 },
+  { x: 1265, y: 440, delay: 1.1 },
+  { x: 1125, y: 590, delay: 2.2 },
+  { x: 1085, y: 700, delay: 3.3 },
 ];
-/** Тропа к вершине, по которой плывёт световая частица. */
+/** Тропа к вершине, по которой плывёт световая частица (та же, что нарисована на рисунке). */
 const TRAIL =
-  'M1966 2441 C2300 2440 2600 2400 2824 2167 C2900 2080 2930 1900 2971 1766 C3050 1650 3200 1560 3417 1410 C3520 1330 3540 1200 3700 931 C3770 800 3820 700 3867 540';
+  'M830 792 C858 787,957 777,1000 762 C1042 747,1064 729,1085 700 C1106 671,1108 622,1125 590 C1142 557,1170 525,1185 505 C1200 485,1202 479,1215 468 C1228 457,1249 455,1265 440 C1281 425,1296 400,1310 380 C1324 360,1337 342,1350 320 C1362 297,1376 269,1385 245 C1394 221,1399 189,1402 178';
 
 /** Фон: картинка гор и отдельный слой звёзд и облаков. Это только оформление, текста здесь нет. */
 function BannerArt() {
   const glow = useId().replace(/:/g, '');
   return (
     <div className="peak-art" aria-hidden="true">
-      <img src={heroLight} alt="" width={ART_W} height={ART_H} decoding="async" fetchPriority="high" />
+      <div className="peak-art-frame">
+      <img src={heroPeak} alt="" width={ART_W} height={ART_H} decoding="async" fetchPriority="high" />
       <i className="peak-cloud peak-cloud-a" />
       <i className="peak-cloud peak-cloud-b" />
-      <svg className="peak-glow" viewBox={`0 0 ${ART_W} ${ART_H}`} preserveAspectRatio="xMidYMin slice" focusable="false">
+      <svg className="peak-glow" viewBox={`170 0 ${ART_W} ${ART_H}`} preserveAspectRatio="none" focusable="false">
         <defs>
           <radialGradient id={glow}>
             <stop offset="0" stopColor="#fff6c8" stopOpacity="0.95" />
@@ -35,13 +36,14 @@ function BannerArt() {
           </radialGradient>
         </defs>
         {STARS.map((s) => (
-          <circle key={s.y} className="peak-star" cx={s.x} cy={s.y} r={190} fill={`url(#${glow})`} style={{ animationDelay: `${s.delay}s`, transformOrigin: `${s.x}px ${s.y}px` }} />
+          <circle key={s.y} className="peak-star" cx={s.x} cy={s.y} r={56} fill={`url(#${glow})`} style={{ animationDelay: `${s.delay}s`, transformOrigin: `${s.x}px ${s.y}px` }} />
         ))}
-        <circle className="peak-spark" r="46" fill="#fffbe6">
+        <circle className="peak-spark" r="20" fill="#fffbe6">
           <animateMotion dur="9s" repeatCount="indefinite" path={TRAIL} />
           <animate attributeName="opacity" values="0;0.95;0.95;0" keyTimes="0;0.12;0.88;1" dur="9s" repeatCount="indefinite" />
         </circle>
       </svg>
+      </div>
     </div>
   );
 }

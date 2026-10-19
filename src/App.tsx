@@ -128,6 +128,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   const [toast, setToast] = useState('');
   const [storageError, setStorageError] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pendingTask, setPendingTask] = useState<string | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (userId || getStorageProblem()) return;
@@ -333,7 +334,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 notify={notify}
               />
             )}
-            {page === 'home' && <HomeDashboard state={state} onChange={setState} onSphere={(id) => { setSelected(id); setSphereTab('overview'); setPage('spheres'); }} onQuests={() => navigate('tasks')} onGoal={() => navigate('goals')} onShop={() => navigate('shop')} onProfile={() => navigate('profile')} onIntegration={() => navigate('profile')} onCreate={newQuest} onNewGoal={() => setModal('goal')} onStart={() => setModal('start')} renderQuest={q => <QuestRow key={q.id} quest={q} />} />}
+            {page === 'home' && <HomeDashboard state={state} onChange={setState} onSphere={(id) => { setSelected(id); setSphereTab('overview'); setPage('spheres'); }} onQuests={() => navigate('tasks')} onGoal={() => navigate('goals')} onShop={() => navigate('shop')} onProfile={() => navigate('profile')} onIntegration={() => navigate('profile')} onCreate={newQuest} onNewGoal={() => setModal('goal')} onStart={() => setModal('start')} onNavigate={navigate} onOpenTask={id => { setPendingTask(id); navigate('tasks'); }} onOpenGoal={id => { navigate('goals'); openGoal(id); }} renderQuest={q => <QuestRow key={q.id} quest={q} />} />}
             {page === 'spheres' && !sphere && <SpheresOverview state={state} onSelect={(id) => { setSelected(id); setSphereTab('overview'); window.scrollTo({ top: 0 }); }} onQuick={setQuickSphere} onQuest={(id) => { setQuestTemplate(null); setQuestSphere(id); setModal('quest'); }} onQuests={() => navigate('tasks')} renderQuest={(q) => <QuestRow key={q.id} quest={q} />} onAddRecommendation={(idea) => { setState(current => current.goals.some(g => g.sphere === idea.sphereId && g.name === idea.title && g.current < g.target) ? current : saveGoal(current, { name: idea.title, description: idea.description, sphere: idea.sphereId, target: 100, reward: 100, progressMode: 'tasks' })); notify('Проект добавлен в план. Открой его и добавь этапы и задачи.'); }} />}
             {sphere && (
               <>
@@ -568,7 +569,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
               </div>
             )}
             {page === 'quests' && <HabitsPage state={state} onChange={setState} ownerId={userId ?? 'local'} today={today} notify={notify} />}
-            {page === 'tasks' && <QuestBoard state={state} onChange={setState} ownerId={userId ?? 'local'} today={today} notify={notify} onCreate={q => { setQuestTemplate(q ?? null); setQuestSphere(q?.sphere ?? 'health'); setModal('quest'); }} />}
+            {page === 'tasks' && <QuestBoard initialTaskId={pendingTask} onInitialTaskOpened={() => setPendingTask(null)} state={state} onChange={setState} ownerId={userId ?? 'local'} today={today} notify={notify} onCreate={q => { setQuestTemplate(q ?? null); setQuestSphere(q?.sphere ?? 'health'); setModal('quest'); }} />}
             {page === 'goals' && (
               <GoalsBoard
                 ownerId={userId ?? 'local'}

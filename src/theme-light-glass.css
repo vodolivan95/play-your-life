@@ -87,47 +87,6 @@
   border: 0;
   box-shadow: 0 6px 16px rgba(31, 111, 235, 0.35);
 }
-/* Шапка главной: фото вершины на рассвете (холст «Светлая тема — Небесное стекло»). */
-:root:not([data-theme="dark"]) .home-dashboard .home-welcome {
-  background: linear-gradient(180deg, #a9cdfb 0%, #dcd8fa 55%, #fde2d0 100%) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 0 18px 44px rgba(80, 110, 200, 0.25), inset 0 1px 0 #fff;
-  min-height: 250px;
-}
-:root:not([data-theme="dark"]) .home-welcome::before {
-  inset: 0 0 0 auto;
-  width: 66%;
-  background: var(--hero-light) right center / cover no-repeat;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 45%);
-  mask-image: linear-gradient(90deg, transparent 0%, #000 45%);
-}
-:root:not([data-theme="dark"]) .home-greeting { color: rgba(61, 82, 128, 0.78); text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8); }
-:root:not([data-theme="dark"]) .home-greeting b { color: rgba(20, 33, 61, 0.9); }
-:root:not([data-theme="dark"]) .home-welcome h1 {
-  color: transparent;
-  background: linear-gradient(90deg, rgba(20, 33, 61, 0.97) 0%, rgba(38, 78, 176, 0.92) 55%, rgba(60, 110, 240, 0.9) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.85)) drop-shadow(0 6px 14px rgba(80, 110, 200, 0.28));
-}
-:root:not([data-theme="dark"]) .home-welcome-main > p { color: rgba(61, 77, 104, 0.85); text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8); }
-:root:not([data-theme="dark"]) .home-dashboard .home-continue {
-  background: linear-gradient(180deg, #4a9bff, #1f6feb);
-  color: #fff;
-  box-shadow: 0 8px 20px rgba(31, 111, 235, 0.35);
-}
-:root:not([data-theme="dark"]) .home-continue > span { background: #fff; color: #1f6feb; }
-@media (max-width: 760px) {
-  /* Телефон: картина сверху с плавным затуханием вниз, текст лежит на чистом небе под ней. */
-  :root:not([data-theme="dark"]) .home-dashboard .home-welcome { padding-top: 168px; min-height: 0; }
-  :root:not([data-theme="dark"]) .home-welcome::before {
-    inset: 0 0 auto 0; width: 100%; height: 215px;
-    background-position: 70% 30%;
-    -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
-    mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
-  }
-}
-
 @media (max-width: 720px) {
   /* На телефоне размытие дороже: чуть меньше радиус. */
   :where(:root:not([data-theme="dark"])) :is(.panel, .sphere-card, .gl-card, .mrep-card, .myr-card, .shop-card, .tas-card) {
@@ -138,22 +97,4 @@
 @media (prefers-reduced-transparency: reduce) {
   :where(:root:not([data-theme="dark"])) * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
   :root:not([data-theme="dark"]) { --glass: rgba(255, 255, 255, 0.92); --glass-strong: #fff; }
-}
-
-/* Шапка главной: внутренний блок без стеклянной плашки, чтобы заголовок не бледнел. */
-:root:not([data-theme="dark"]) .home-dashboard .home-welcome .home-welcome-main {
-  background: none !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
-:root:not([data-theme="dark"]) .home-dashboard .home-welcome > .home-demo-start {
-  inset: auto auto 6px 25px;
-  width: auto;
-  height: auto;
-  min-height: 0;
-}
-@media (max-width: 760px) {
-  :root:not([data-theme="dark"]) .home-dashboard .home-welcome > .home-demo-start { inset: auto 17px 77px auto; }
 }

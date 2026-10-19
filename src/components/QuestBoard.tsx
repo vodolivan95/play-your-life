@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { removeQuest } from "../game";
 import type { GameState, Quest } from "../game";
@@ -35,6 +35,8 @@ export default function QuestBoard({
   today,
   onCreate,
   notify,
+  initialTaskId = null,
+  onInitialTaskOpened,
 }: {
   state: GameState;
   onChange: Dispatch<SetStateAction<GameState>>;
@@ -42,6 +44,9 @@ export default function QuestBoard({
   today: string;
   onCreate: (q?: Partial<Quest>) => void;
   notify: (s: string) => void;
+  /** Задача, которую нужно открыть сразу (например, с кнопки «Показать задачу» на главной). */
+  initialTaskId?: string | null;
+  onInitialTaskOpened?: () => void;
 }) {
   const manager = useContext(TickTickContext);
   const [mode, setMode] = useState<Mode>("list"),
@@ -50,10 +55,15 @@ export default function QuestBoard({
       habit?: Habit;
       habitMode: boolean;
     } | null>(null),
-    [openTask, setOpenTask] = useState<string | null>(null),
+    [openTask, setOpenTask] = useState<string | null>(initialTaskId),
     [progress, setProgress] = useState<Quest | null>(null),
     [progressValue, setProgressValue] = useState(0),
     [celebrate, setCelebrate] = useState("");
+  useEffect(() => {
+    if (initialTaskId) onInitialTaskOpened?.();
+    // Один раз при открытии страницы: задача уже передана в начальное состояние.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const quests = state.quests.filter((q) => !q.ownerId || q.ownerId === ownerId);
   const connected = Boolean(
     manager?.connection && manager.connected && state.profile.mode !== "demo",

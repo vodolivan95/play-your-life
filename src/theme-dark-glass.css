@@ -30,8 +30,3 @@
 :root[data-theme="dark"] :is(.quest-row, .home-today .quest-row, .hb-row) {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 -4px 8px rgba(0, 0, 0, 0.2);
 }
-/* Кнопка «Демо» в шапке главной не должна растягиваться на весь баннер (видна только в демо-режиме). */
-:root[data-theme="dark"] .home-dashboard .home-welcome > .home-demo-start { inset: auto auto 6px 25px; width: auto; height: auto; min-height: 0; }
-@media (max-width: 760px) {
-  :root[data-theme="dark"] .home-dashboard .home-welcome > .home-demo-start { inset: auto 17px 77px auto; }
-}

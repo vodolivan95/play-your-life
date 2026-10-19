@@ -1,0 +1,112 @@
+/* Главный баннер «Ты творец своей истории» (0.41.0). Компоновка зависит от ширины самого баннера, а не экрана: слева меню занимает место. */
+.home-dashboard > .peak-banner { grid-column: 1 / -1; display: block; padding: 0; background: none; border: 0; box-shadow: none; }
+.peak-banner { container: peak / inline-size; position: relative; color: #14213d; }
+.peak-stage {
+  position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch;
+  gap: clamp(16px, 3cqi, 40px); min-height: clamp(430px, 33cqi, 560px); padding: clamp(24px, 3.2cqi, 46px);
+  border-radius: 26px; border: 1.5px solid rgba(255, 255, 255, 0.95);
+  background: linear-gradient(115deg, #d4e6ff 0%, #e8eefc 38%, #fbe9e2 100%);
+  box-shadow: 0 18px 44px rgba(70, 100, 190, 0.26), inset 0 1px 0 #fff;
+}
+
+/* Фон: картинка гор, затухающая слева, живые звёзды и облака. */
+.peak-art { position: absolute; inset: 0 0 0 14%; z-index: -2; pointer-events: none; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 30%); mask-image: linear-gradient(90deg, transparent 0, #000 30%); }
+.peak-art > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; }
+.peak-glow { position: absolute; inset: 0; width: 100%; height: 100%; }
+.peak-star { animation: peak-pulse 4.2s ease-in-out infinite; opacity: 0.35; transform-box: fill-box; }
+.peak-spark { filter: drop-shadow(0 0 16px #ffe08a); }
+.peak-cloud { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0)); filter: blur(10px); will-change: transform; }
+.peak-cloud-a { left: 4%; top: 6%; width: 38%; height: 26%; animation: peak-drift 80s ease-in-out infinite alternate; }
+.peak-cloud-b { right: 2%; top: 30%; width: 32%; height: 22%; opacity: 0.75; animation: peak-drift 105s ease-in-out -30s infinite alternate-reverse; }
+/* Светлая вуаль слева: под текстом чистое небо, как на эталоне. */
+.peak-veil { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg, rgba(244, 248, 255, 0.97) 0%, rgba(240, 246, 255, 0.9) 26%, rgba(236, 244, 255, 0.5) 44%, rgba(236, 244, 255, 0) 62%); }
+
+/* Левая колонка. */
+.peak-main { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: clamp(8px, 1.4cqi, 14px); min-width: 0; max-width: 560px; }
+.peak-brand { font-size: clamp(11px, 1.5cqi, 15px); font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: rgba(40, 62, 112, 0.75); }
+.home-dashboard .peak-banner h1 { margin: 0; font-size: clamp(32px, 6cqi, 70px); line-height: 1.02; letter-spacing: -0.02em; font-weight: 800; color: #14214d; max-width: none; }
+.peak-banner h1 span { display: block; }
+.peak-banner h1 span:last-child { background: linear-gradient(90deg, #1b3f9e 0%, #2f6bf0 100%); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; padding-bottom: 0.06em; }
+.peak-sub { margin: 0; font-size: clamp(14px, 1.9cqi, 20px); color: rgba(61, 77, 104, 0.9); }
+.home-dashboard .peak-cta {
+  display: inline-flex; align-items: center; gap: 14px; margin-top: clamp(4px, 1cqi, 12px); padding: 8px 22px 8px 8px; border: 0; border-radius: 999px; text-align: left; color: #fff;
+  background: linear-gradient(180deg, #4f9eff, #1d5fe0); box-shadow: 0 12px 28px rgba(31, 111, 235, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.peak-cta-play { display: grid; place-items: center; width: clamp(40px, 5.2cqi, 56px); aspect-ratio: 1; border-radius: 50%; background: #fff; color: #1d5fe0; padding-left: 3px; flex: none; }
+.peak-cta-text { display: flex; flex-direction: column; gap: 2px; }
+.peak-cta-text strong { font-size: clamp(14px, 2cqi, 20px); font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; }
+.peak-cta-text small { font-size: clamp(11px, 1.4cqi, 14px); opacity: 0.88; }
+.peak-cta-arrow { margin-left: 6px; opacity: 0.9; transition: transform 0.18s ease; flex: none; }
+.home-dashboard .peak-cta:hover { transform: translateY(-2px); box-shadow: 0 18px 34px rgba(31, 111, 235, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+.peak-cta:hover .peak-cta-arrow { transform: translateX(4px); }
+.home-dashboard .peak-cta:active { transform: translateY(0) scale(0.97); }
+.home-dashboard .peak-banner button:focus-visible { outline: 3px solid #f5c451; outline-offset: 3px; }
+
+/* Четыре возможности игры. */
+.peak-features { list-style: none; margin: auto 0 0; padding: clamp(12px, 2cqi, 22px) 0 0; display: flex; flex-wrap: wrap; gap: clamp(10px, 1.6cqi, 22px); }
+.home-dashboard .peak-features button { display: flex; align-items: center; gap: 10px; padding: 0; border: 0; background: none; color: rgba(40, 56, 92, 0.92); text-align: left; border-radius: 16px; }
+.peak-feature-icon { display: grid; place-items: center; flex: none; width: clamp(40px, 4.6cqi, 56px); aspect-ratio: 1; padding: clamp(7px, 0.9cqi, 10px); border-radius: 18px; background: rgba(255, 255, 255, 0.72); box-shadow: 0 6px 16px rgba(80, 110, 190, 0.18), inset 0 1px 0 #fff; transition: transform 0.18s ease, box-shadow 0.18s ease; }
+.peak-feature-icon svg { width: 100%; height: 100%; }
+.peak-features button:hover .peak-feature-icon { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(80, 110, 190, 0.26), inset 0 1px 0 #fff; }
+.peak-feature-text { font-size: clamp(11px, 1.35cqi, 14px); line-height: 1.3; max-width: 11em; }
+
+/* Карточка «Следующая вершина». */
+.peak-card {
+  align-self: end; width: clamp(290px, 34cqi, 430px); display: flex; flex-direction: column; gap: 10px; padding: clamp(14px, 1.8cqi, 22px); border-radius: 24px; color: #fff;
+  background: rgba(10, 22, 54, 0.78); border: 1.5px solid rgba(245, 196, 81, 0.6); box-shadow: 0 18px 40px rgba(8, 18, 48, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%);
+  animation: peak-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .peak-card { background: rgba(10, 22, 54, 0.94); } }
+.peak-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.home-dashboard .peak-card h2 { margin: 0; font-size: clamp(12px, 1.5cqi, 16px); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #f5c451; }
+.peak-card-count { padding: 5px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.14); color: #ffe08a; font-size: 14px; font-weight: 800; white-space: nowrap; }
+.peak-card-goal { margin: 0; font-size: clamp(16px, 2cqi, 22px); line-height: 1.25; font-weight: 800; color: #fff; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.peak-card-detail { margin: -4px 0 0; font-size: 13px; color: #b9c8e8; overflow-wrap: anywhere; }
+.peak-card-bar { height: 6px; border-radius: 99px; background: rgba(255, 255, 255, 0.18); overflow: hidden; }
+.peak-card-bar > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #f5c451, #ffe9a6); transition: width 0.6s ease; }
+.peak-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px 14px; flex-wrap: wrap; margin-top: 4px; }
+.peak-card-hint { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #c9d6f2; }
+.peak-card-hint svg { color: #9fb6e6; flex: none; }
+.home-dashboard .peak-card-button { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 14px; border: 1.5px solid rgba(245, 196, 81, 0.85); background: rgba(10, 22, 54, 0.3); color: #ffe08a; font-size: 14px; font-weight: 800; transition: box-shadow 0.18s ease, background 0.18s ease; }
+.home-dashboard .peak-card-button:hover { background: rgba(245, 196, 81, 0.14); box-shadow: 0 0 18px rgba(245, 196, 81, 0.35); }
+.peak-demo { position: absolute; top: 14px; right: 14px; z-index: 2; border: 0; border-radius: 12px; padding: 7px 11px; background: rgba(255, 255, 255, 0.92); color: #245686; font-size: 11px; font-weight: 700; }
+
+@keyframes peak-pulse { 0%, 100% { opacity: 0.3; transform: scale(0.92); } 50% { opacity: 0.95; transform: scale(1.12); } }
+@keyframes peak-drift { from { transform: translateX(-3%); } to { transform: translateX(5%); } }
+@keyframes peak-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* Средняя ширина (планшет): карточка уходит под основной текст. */
+@container peak (max-width: 879px) {
+  .peak-stage { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .peak-art { inset: 0 0 0 20%; }
+  .peak-veil { background: linear-gradient(90deg, rgba(244, 248, 255, 0.97) 0%, rgba(240, 246, 255, 0.88) 34%, rgba(236, 244, 255, 0.4) 58%, rgba(236, 244, 255, 0) 78%); }
+  .peak-main { max-width: 62%; }
+  .peak-features { margin-top: 8px; }
+  .peak-card { align-self: start; width: min(100%, 460px); }
+  .peak-features { order: 3; }
+}
+/* Телефон: картина сверху, текст на чистом небе под ней, карточка и возможности по ширине. */
+@container peak (max-width: 599px) {
+  .peak-stage { padding: 196px 16px 18px; border-radius: 22px; gap: 14px; }
+  .peak-art { inset: 0 0 auto 0; height: 250px; -webkit-mask-image: linear-gradient(180deg, #000 58%, transparent 100%); mask-image: linear-gradient(180deg, #000 58%, transparent 100%); }
+  .peak-art > img { object-position: 64% 0; }
+  .peak-glow { display: none; }
+  .peak-veil { background: linear-gradient(180deg, rgba(244, 248, 255, 0) 0, rgba(244, 248, 255, 0) 150px, rgba(244, 248, 255, 0.92) 250px, rgba(244, 248, 255, 0.97) 100%); }
+  .peak-main { max-width: none; width: 100%; gap: 8px; }
+  .home-dashboard .peak-banner h1 { font-size: clamp(30px, 10.5cqi, 44px); }
+  .home-dashboard .peak-cta { width: 100%; justify-content: flex-start; }
+  .peak-cta-arrow { margin-left: auto; }
+  .peak-card { width: 100%; }
+  .peak-features { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin-top: 4px; padding-top: 10px; }
+  .peak-feature-text { max-width: none; }
+  .peak-demo { top: 12px; right: 12px; }
+}
+@container peak (min-width: 1500px) { .peak-stage { min-height: 520px; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .peak-banner *, .peak-banner *::before { animation: none !important; transition: none !important; }
+  .peak-star { opacity: 0.7; transform: none; }
+  .peak-spark { display: none; }
+}

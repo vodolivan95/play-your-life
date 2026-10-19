@@ -1,6 +1,7 @@
 import { StrictMode, lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import AccountRoot from './AccountRoot';
+import ErrorBoundary from './components/ErrorBoundary';
 import { preloadCityAssets } from './cityLive/preload';
 import './styles.css';
 import './interface.css';
@@ -10,7 +11,7 @@ const SportRoomDemo = lazy(() => import('./components/room3d/SportRoomDemo'));
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {new URLSearchParams(location.search).get('room-demo') === 'sport' ? <Suspense fallback={<p>Загружаем 3D-спортзал…</p>}><SportRoomDemo /></Suspense> : <AccountRoot />}
+    {new URLSearchParams(location.search).get('room-demo') === 'sport' ? <Suspense fallback={<p>Загружаем 3D-спортзал…</p>}><SportRoomDemo /></Suspense> : <ErrorBoundary scope="app"><AccountRoot /></ErrorBoundary>}
   </StrictMode>,
 );
 

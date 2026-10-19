@@ -83,3 +83,27 @@ jobs:
         with:
           name: live-city-previews
           path: work/live-city/
+
+  sections-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Walk through every section on desktop and phone (no errors, no blank screens)
+        run: npm run test:smoke-ui
+      - run: npm run test:key-results-ui
+      - run: npm run test:month-report-ui
+      - name: Save section previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sections-previews
+          path: |
+            work/smoke/
+            work/key-results/
+            work/month-report/

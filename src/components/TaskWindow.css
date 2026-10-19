@@ -1,7 +1,7 @@
 .twin{--tw-bg:#ffffffee;--tw-card:#f1f5fb;--tw-ink:#14233a;--tw-mute:#5b6b82;--tw-line:#d6deeb;--tw-acc:#2f7de1;--tw-acc2:#7c5cff;
   width:min(640px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;border-radius:24px;padding:20px;
   background:var(--tw-bg);color:var(--tw-ink);border:1px solid var(--tw-line);box-shadow:0 30px 80px #0a1b3a44;
-  backdrop-filter:blur(24px) saturate(1.4);font-family:Manrope,system-ui,sans-serif;display:grid;gap:16px}
+  backdrop-filter:blur(24px) saturate(1.4);font-family:var(--font);display:grid;gap:16px}
 :root[data-theme='dark'] .twin{--tw-bg:#111a2cee;--tw-card:#ffffff10;--tw-ink:#eef3ff;--tw-mute:#9fb0cc;--tw-line:#ffffff22;--tw-acc:#5aa2ff;box-shadow:0 30px 80px #000a}
 .twin-overlay{display:grid;place-items:center}
 .twin-head{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center}

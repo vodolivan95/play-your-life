@@ -147,7 +147,7 @@
 
 /* форма */
 .hb-overlay { position: fixed; inset: 0; z-index: 80; background: rgba(6, 12, 28, .62); backdrop-filter: blur(6px); display: flex; align-items: flex-start; justify-content: center; padding: 28px 16px; overflow-y: auto; }
-.hb-form { width: 100%; max-width: 560px; box-sizing: border-box; padding: 18px 24px 26px; border-radius: 32px; background: rgba(28, 37, 64, .96); color: #fff; border: 1px solid rgba(255, 255, 255, .12); box-shadow: 0 30px 80px rgba(0, 0, 0, .5); display: grid; gap: 18px; font-family: -apple-system, 'SF Pro Display', system-ui, 'Segoe UI', sans-serif; }
+.hb-form { width: 100%; max-width: 560px; box-sizing: border-box; padding: 18px 24px 26px; border-radius: 32px; background: rgba(28, 37, 64, .96); color: #fff; border: 1px solid rgba(255, 255, 255, .12); box-shadow: 0 30px 80px rgba(0, 0, 0, .5); display: grid; gap: 18px; font-family: var(--font); }
 :root[data-theme='light'] .hb-form { background: rgba(255, 255, 255, .98); color: #163556; border-color: #dbe3f1; }
 .hb-form-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .hb-form-top strong { font-size: 17px; }

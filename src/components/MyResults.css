@@ -1,4 +1,4 @@
-.key-results{display:grid;gap:18px;font-family:'Manrope',system-ui,sans-serif}
+.key-results{display:grid;gap:18px;font-family:var(--font)}
 .myr-tabs{display:flex;gap:6px;padding:4px;align-self:start;justify-self:start;max-width:100%;overflow-x:auto;background:#eef3fb;border:1.5px solid #d6e0ef;border-radius:18px}
 .myr-tabs button{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 20px;border:0;border-radius:14px;background:transparent;color:#3d4d68;font:inherit;font-weight:800;cursor:pointer;white-space:nowrap}
 .myr-tabs button[aria-selected=true]{background:#fff;color:#14213d;box-shadow:0 2px 8px rgba(20,33,61,.12)}

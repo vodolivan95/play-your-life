@@ -8,7 +8,6 @@ export function monthKey(now: Date = new Date()): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
     year: 'numeric',
     month: '2-digit',
-    timeZone: 'Europe/Moscow',
   }).formatToParts(now);
   const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
   return `${get('year')}-${get('month')}`;

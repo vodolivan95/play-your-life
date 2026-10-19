@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
-import { completeQuest, dateKey, spheres } from '../game';
+import { completeQuest, dateKey, isOverdue, spheres } from '../game';
 import type { GameState, Quest } from '../game';
 import {
   formatDate,
@@ -108,7 +108,7 @@ export default function LifePlanner({
           <small>
             {formatDate(task.startsAt ?? task.dueAt)}
             {task.estimateMinutes ? ` · ${task.estimateMinutes} мин` : ''}
-            {task.dueAt && !task.done && new Date(task.dueAt) < new Date()
+            {!task.done && isOverdue(task.dueAt)
               ? ' · Срок прошёл'
               : ''}
           </small>

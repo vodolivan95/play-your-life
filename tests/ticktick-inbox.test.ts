@@ -272,6 +272,21 @@ test('сроки задачи из TickTick проверяются по срок
   assert.equal(accepted.task.dueAt, '2027-01-15T10:00:00.000Z');
 });
 
+test('приём задачи TickTick без цели не падает на «срок окончания раньше начала», когда startDate равен dueDate', () => {
+  const { state, connection } = setup();
+  const incoming = findIncomingTasks(
+    connection,
+    byProject([remote('same-day', {
+      startDate: '2026-10-20T00:00:00+0000',
+      dueDate: '2026-10-20T00:00:00+0000',
+    })]),
+    new Date('2026-10-19T00:00:00Z'),
+  )[0];
+  const accepted = acceptIncomingTask(state, connection, incoming, { sphere: 'health' });
+  assert.equal(accepted.task.dueAt, '2026-10-20T00:00:00.000Z');
+  assert.equal(accepted.task.startsAt, undefined);
+});
+
 test('длинное название обрезается до 100 символов', () => {
   const { state, connection, enId } = setup();
   const long = findIncomingTasks(

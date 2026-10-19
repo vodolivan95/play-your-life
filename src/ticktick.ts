@@ -175,11 +175,17 @@ export function localFingerprint(task: Quest, state?: GameState) {
   ]);
 }
 export function remoteFields(remote: RemoteTask) {
+  const dueAt = iso(remote.dueDate);
+  let startsAt = iso(remote.startDate);
+  // TickTick часто присылает startDate, равный dueDate, для обычной задачи с одним сроком
+  // (без настоящего диапазона). Такое «начало» не несёт смысла и ломает проверку диапазона дат.
+  if (startsAt && dueAt && new Date(startsAt).getTime() >= new Date(dueAt).getTime())
+    startsAt = undefined;
   return {
     name: remote.title,
     notes: notes(remote.content),
-    startsAt: iso(remote.startDate),
-    dueAt: iso(remote.dueDate),
+    startsAt,
+    dueAt,
     priority: (remote.priority === 5
       ? 'high'
       : remote.priority === 1

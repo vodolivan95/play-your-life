@@ -287,6 +287,10 @@
 :root[data-theme="dark"] .month-score-panel { background: #151d33; }
 :root[data-theme="dark"] .profile-hero strong { color: #a4b5dc; }
 :root[data-theme="dark"] .profile-hero small { color: #8ec7eb; }
+:root[data-theme="dark"] .profile-tip { background: #141b30; border: 1px solid #3d2f6a; }
+:root[data-theme="dark"] .profile-tip-icon { background: #241a40; }
+:root[data-theme="dark"] .streak-dot { background: #11182a; }
+:root[data-theme="dark"] .profile-quick-tile { background: #151d33; color: #abbbdf; }
 :root[data-theme="dark"] .profile-menu button { border-bottom: 1px solid #273251; color: #a3b4dc; }
 :root[data-theme="dark"] .profile-menu strong { color: #abbbdf; }
 :root[data-theme="dark"] .xp-chart-card > small { color: #a2b3dc; }
@@ -345,6 +349,7 @@
 :root[data-theme="dark"] .detail-goal p { color: #9ac6df; }
 :root[data-theme="dark"] .achievement-icon { background: linear-gradient(155deg, #3b3418, #ffc943); }
 :root[data-theme="dark"] .profile-menu button { background: #151d33; border: 1px solid #283353; }
+:root[data-theme="dark"] .profile-quick-tile { background: #151d33; border: 1px solid #283353; }
 @media (max-width: 760px) {
   :root[data-theme="dark"] .personal-banner strong { color: #a2b3dc; }
   :root[data-theme="dark"] .quest-creation-dialog { background: #141c31; }

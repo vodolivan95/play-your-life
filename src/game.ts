@@ -381,6 +381,17 @@ export function migrateState(
 export function dateKey(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
+/** Срок только датой ('YYYY-MM-DD') действует до конца этого дня; со временем — до этого момента. */
+export function isOverdue(dueAt: string | undefined, now = new Date()) {
+  if (!dueAt) return false;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dueAt)) return dueAt < dateKey(now);
+  const time = new Date(dueAt).getTime();
+  return Number.isFinite(time) && time < now.getTime();
+}
+/** У значения есть время суток, а не только дата. */
+export function hasClockTime(value: string | undefined) {
+  return !!value && !/^\d{4}-\d{2}-\d{2}$/.test(value);
+}
 export function streak(dates: string[], now = new Date()) {
   const cursor = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   if (!dates.includes(dateKey(cursor))) cursor.setDate(cursor.getDate() - 1);

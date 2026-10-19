@@ -40,3 +40,14 @@ export function restoreBackup(text: string): GameState {
   validateState(parsed);
   return migrateState(parsed);
 }
+
+/** Копия из другого аккаунта становится личной игрой текущего: чужие владельцы заменяются, иначе облачное сохранение откажет. */
+export function adoptBackupOwner(state: GameState, userId: string): GameState {
+  return {
+    ...state,
+    quests: state.quests.map((q) => (q.ownerId ? { ...q, ownerId: userId } : q)),
+    habits: state.habits?.map((h) => ({ ...h, ownerId: userId })),
+    habitCompletions: state.habitCompletions?.map((c) => ({ ...c, ownerId: userId })),
+    coinTransactions: state.coinTransactions?.map((t) => (t.userId && t.userId !== 'local' ? { ...t, userId } : t)),
+  };
+}

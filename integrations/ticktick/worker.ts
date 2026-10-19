@@ -24,9 +24,12 @@ export interface Env {
 }
 export class BridgeError extends Error {
   status: number;
-  constructor(message: string, status = 502) {
+  /** Код ответа TickTick, если ошибка пришла от него. */
+  upstream?: number;
+  constructor(message: string, status = 502, upstream?: number) {
     super(message);
     this.status = status;
+    this.upstream = upstream;
   }
 }
 function json(data: unknown, status = 200) {
@@ -161,6 +164,7 @@ export class TickTickAccount {
             ? 'TickTick просит подождать. Повтори синхронизацию позже.'
             : 'TickTick отклонил запрос. Изменения не подтверждены.',
         response.status === 401 ? 401 : response.status === 429 ? 429 : 502,
+        response.status,
       );
     return response;
   }
@@ -266,6 +270,7 @@ export class TickTickAccount {
       const previous = await this.storage.get<{
         id?: string;
         pending?: boolean;
+        at?: number;
       }>(key);
       if (previous?.id) {
         const existing = await this.api(
@@ -290,16 +295,30 @@ export class TickTickAccount {
         await this.storage.put(key, { id: recovered.id });
         return json(recovered);
       }
-      if (previous?.pending)
+      // Метка без времени (старая) или старше 10 минут больше не блокирует: список выше уже проверен.
+      if (previous?.pending && previous.at && Date.now() - previous.at < 600000)
         throw new BridgeError(
           'TickTick не подтвердил создание задачи. Проверь список TickTick перед повторной передачей — повторное создание остановлено.',
           409,
         );
-      await this.storage.put(key, { pending: true });
+      await this.storage.put(key, { pending: true, at: Date.now() });
       const { localId: ignored, ...task } = data;
       void ignored;
       task.content = `${String(data.content).replace(/\n?\[PYL:[\w-]+\]/g, '')}\n${marker}`;
-      const created = await this.api('/task', 'POST', task);
+      let created: Response;
+      try {
+        created = await this.api('/task', 'POST', task);
+      } catch (error) {
+        // Ответ 4xx значит, что TickTick задачу не создал: повтор безопасен. Сетевой сбой или 5xx — исход неизвестен.
+        if (
+          error instanceof BridgeError &&
+          error.upstream !== undefined &&
+          error.upstream >= 400 &&
+          error.upstream < 500
+        )
+          await this.storage.delete(key);
+        throw error;
+      }
       if (!created.ok)
         throw new BridgeError('Создание задачи не подтверждено.', 502);
       const value = (await created.json()) as { id?: string };

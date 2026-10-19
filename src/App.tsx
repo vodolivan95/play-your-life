@@ -14,7 +14,7 @@ import LifeCity from './components/LifeCity';
 import GameArt from './components/GameArt';
 import Avatar from './components/Avatar';
 import DataBackup from './components/DataBackup';
-import { stateStorageKey, recoveryStorageKey } from './backup';
+import { stateStorageKey, recoveryStorageKey, adoptBackupOwner } from './backup';
 import { SphereProjects } from './components/SphereCity';
 import { SphereOverview, SphereQuickView, SphereScene, SphereSkills } from './components/SphereHub';
 import type { SphereTab } from './components/SphereHub';
@@ -44,6 +44,8 @@ import {
   streakRewards,
   removeQuest,
   questsForToday,
+  isOverdue,
+  hasClockTime,
 } from './game';
 import type { Quest, GameState } from './game';
 import QuestBoard from './components/QuestBoard';
@@ -178,6 +180,10 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   function finish(q: Quest) {
     if (q.done) return;
     const next = completeQuest(state, q.id);
+    if (next === state || next.xp <= state.xp) {
+      notify('Эту задачу пока нельзя выполнить: проверь этап и время начала.');
+      return;
+    }
     setState(next);
     notify(`+${next.xp - state.xp} XP · Отличная работа!`);
   }
@@ -217,20 +223,22 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
           <small>{info.name}</small>
           {(quest.dueAt || quest.startsAt) && (
             <small
-              className={`quest-deadline ${!quest.done && quest.dueAt && new Date(quest.dueAt) < new Date() ? 'is-overdue' : ''}`}
+              className={`quest-deadline ${!quest.done && isOverdue(quest.dueAt) ? 'is-overdue' : ''}`}
             >
-              {!quest.done && quest.dueAt && new Date(quest.dueAt) < new Date()
+              {!quest.done && isOverdue(quest.dueAt)
                 ? 'Срок прошёл · '
                 : ''}
-              {new Date(quest.dueAt ?? quest.startsAt!).toLocaleString(
-                'ru-RU',
-                {
-                  day: 'numeric',
-                  month: 'short',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                },
-              )}
+              {new Date(
+                (quest.dueAt ?? quest.startsAt!).length === 10
+                  ? `${quest.dueAt ?? quest.startsAt}T12:00:00`
+                  : (quest.dueAt ?? quest.startsAt!),
+              ).toLocaleString('ru-RU', {
+                day: 'numeric',
+                month: 'short',
+                ...(hasClockTime(quest.dueAt ?? quest.startsAt)
+                  ? { hour: '2-digit', minute: '2-digit' }
+                  : {}),
+              })}
             </small>
           )}
         </div>
@@ -534,7 +542,8 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                   connected={tickTick.restoreBlocked}
                   userId={userId}
                   onNotify={notify}
-                  onRestore={(next) => {
+                  onRestore={(restored) => {
+                    const next = userId ? adoptBackupOwner(restored, userId) : restored;
                     if (tickTick.restoreBlocked)
                       throw new Error('Сначала отключи TickTick');
                     if (userId && next.profile.mode !== 'personal') throw new Error('В аккаунт можно восстановить только личную игру.');

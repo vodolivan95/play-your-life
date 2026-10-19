@@ -35,7 +35,7 @@ export default function YandexLyubertsyWeather() {
     return () => { active = false; clearInterval(interval); document.removeEventListener('visibilitychange', wake); controller?.abort(); };
   }, []);
   const view = weather ? describeWeather(weather.code, weather.day) : null;
-  const updated = weather ? new Date(weather.time * 1000).toLocaleTimeString('ru-RU', { timeZone: 'Europe/Moscow', hour: '2-digit', minute: '2-digit' }) : '';
+  const updated = weather ? new Date(weather.time * 1000).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '';
   return (
     <a
       className="home-weather"

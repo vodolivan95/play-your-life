@@ -6,6 +6,7 @@ import { monthKey, monthLabel, monthlySummary, moveMonth } from '../monthly';
 import {
   CONFIDENCE_OK,
   MAX_FOCUSES,
+  TASKS_DONE_MAX,
   addMoodCheckin,
   createPlanTasks,
   filledSpheres,
@@ -38,14 +39,6 @@ const trends: { id: SphereTrend; label: string }[] = [
   { id: 'down', label: 'Просадка' },
 ];
 const moodLabels = ['Тяжело', 'Так себе', 'Нормально', 'Хорошо', 'Отлично'];
-function questsWord(n: number) {
-  const last = n % 10;
-  const teen = n % 100;
-  if (teen > 10 && teen < 20) return 'задач';
-  if (last === 1) return 'задача';
-  if (last >= 2 && last <= 4) return 'задачи';
-  return 'задач';
-}
 
 function readHints() {
   try {
@@ -258,10 +251,9 @@ export default function MyResults({
             {spheres.map((s) => {
               const r = sphereReviewOf(review, s.id);
               const lowConfidence = needsSmallerStep(r.task);
-              const sphereQuests = summary.sphereResults.find((x) => x.id === s.id)?.quests ?? 0;
               return (
                 <section className="myr-sphere" key={s.id} style={{ ['--sphere' as string]: s.color }}>
-                  <h4><i /> {s.name} <span className="myr-sphere-quests">{sphereQuests} {questsWord(sphereQuests)} за месяц</span></h4>
+                  <h4><i /> {s.name}</h4>
                   <div className="myr-three">
                     <label>
                       <span>Что удалось достичь</span>
@@ -299,6 +291,25 @@ export default function MyResults({
                       ))}
                     </div>
                   </div>
+                  <label className="myr-tasks-done">
+                    <span>Задач закрыто за месяц</span>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={TASKS_DONE_MAX}
+                      aria-label={`Задач закрыто за месяц в сфере ${s.name}`}
+                      value={r.tasksDone ?? ''}
+                      placeholder="например, по TickTick"
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (!raw) return patchSphere(s.id, { tasksDone: null });
+                        const n = Number(raw);
+                        if (Number.isInteger(n) && n >= 0 && n <= TASKS_DONE_MAX) patchSphere(s.id, { tasksDone: n });
+                      }}
+                    />
+                    <Hint on={hints}>Вписываешь сам — например, сколько задач сферы закрыл в TickTick. В игре это число не считается и не влияет на XP.</Hint>
+                  </label>
                   {r.task ? (
                     <div className="myr-task">
                       <div className="myr-task-head">

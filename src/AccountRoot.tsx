@@ -9,6 +9,7 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import type { User } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
 import App from './App';
 import BrandLogo from './components/BrandLogo';
 import { auth, database } from './firebaseClient';
@@ -265,11 +266,26 @@ function CloudGame({ user }: { user: User }) {
       if (document.visibilityState === 'hidden') leave();
       else sync();
     };
+    // Живая подписка: изменение с другого устройства приходит сразу, без ожидания минутного опроса.
+    // Свои записи не вызывают лишних чтений: их номер версии движок уже знает.
+    const live = onSnapshot(
+      doc(database, 'players', user.uid),
+      (snap) => {
+        if (snap.metadata.fromCache || snap.metadata.hasPendingWrites) return;
+        const revision = snap.get('revision');
+        if (typeof revision === 'number' && revision > engine.knownRevision)
+          void engine.refresh();
+      },
+      () => {
+        /* Нет сети или доступа: сохранение продолжает работать по таймеру и при возврате на вкладку. */
+      },
+    );
     const timer = setInterval(sync, 60000);
     window.addEventListener('online', sync);
     window.addEventListener('pagehide', leave);
     document.addEventListener('visibilitychange', visibility);
     return () => {
+      live();
       clearInterval(timer);
       window.removeEventListener('online', sync);
       window.removeEventListener('pagehide', leave);

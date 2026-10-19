@@ -8,6 +8,7 @@ export type TaskPatch = {
   notes?: string;
   difficulty?: string;
   dueAt?: string | null;
+  deadlineAt?: string | null;
   stageId?: string | null;
   sync?: boolean;
   repeat?: Quest['repeat'] | null;
@@ -81,6 +82,13 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
       if (!/^\d{4}-\d{2}-\d{2}$/.test(patch.dueAt) || !Number.isFinite(Date.parse(patch.dueAt))) throw new Error('Проверь дату.');
       if (old.startsAt && patch.dueAt < old.startsAt.slice(0, 10)) throw new Error('Срок не может быть раньше начала.');
       q.dueAt = patch.dueAt;
+    }
+  }
+  if (patch.deadlineAt !== undefined) {
+    if (patch.deadlineAt === null) q.deadlineAt = undefined;
+    else {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(patch.deadlineAt) || !Number.isFinite(Date.parse(patch.deadlineAt))) throw new Error('Проверь дату дедлайна.');
+      q.deadlineAt = patch.deadlineAt;
     }
   }
   if (patch.stageId !== undefined) {

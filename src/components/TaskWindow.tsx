@@ -21,6 +21,12 @@ const duePresets: [Exclude<DuePreset, 'date'>, string][] = [
   ['week', 'На неделе'],
   ['none', 'Без срока'],
 ];
+function fmtDate(value?: string) {
+  if (!value) return '';
+  const d = new Date(`${value.slice(0, 10)}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+}
 export default function TaskWindow({ taskId, state, today, onChange, onClose, onAdvanced, onProgress, onDelete, notify }: {
   taskId: string;
   state: GameState;
@@ -44,6 +50,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
     sphere = spheres.find((s) => s.id === task.sphere),
     inGoal = isGoalTask(state, task),
     preset = duePreset(task.dueAt, today),
+    linked = !!task.tickTickSharedAt,
     locked = task.done;
   function patch(p: TaskPatch, message?: string) {
     try {
@@ -119,19 +126,42 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
             </div>
             {!canChangeDifficulty(task) && <small>Сложность зафиксирована: задача начата или создана системой.</small>}
           </div>
-          <div className="twin-field" role="group" aria-label="Срок">
-            <span>Срок</span>
-            <div className="twin-chips">
-              {duePresets.map(([id, label]) => (
-                <button key={id} type="button" aria-pressed={preset === id && !picking}
-                  onClick={() => { setPicking(false); patch({ dueAt: dueFor(id, today) }); }}>{label}</button>
-              ))}
-              <button type="button" aria-pressed={preset === 'date' || picking} onClick={() => setPicking(true)}>Выбрать дату</button>
+          {linked ? (
+            <div className="twin-field" role="group" aria-label="Плановая дата">
+              <span>Плановая дата</span>
+              <p>
+                {task.startsAt && task.dueAt && task.startsAt.slice(0, 10) !== task.dueAt.slice(0, 10)
+                  ? `${fmtDate(task.startsAt)} — ${fmtDate(task.dueAt)}`
+                  : task.dueAt ? fmtDate(task.dueAt) : 'Без даты в TickTick'}
+              </p>
+              <small>Берётся из TickTick при каждом обмене; поменять можно только там.</small>
             </div>
-            {(picking || preset === 'date') && (
-              <input type="date" aria-label="Дата выполнения" value={task.dueAt?.slice(0, 10) ?? ''}
-                onChange={(e) => e.target.value && patch({ dueAt: e.target.value })} />
-            )}
+          ) : (
+            <div className="twin-field" role="group" aria-label="Срок">
+              <span>Срок</span>
+              <div className="twin-chips">
+                {duePresets.map(([id, label]) => (
+                  <button key={id} type="button" aria-pressed={preset === id && !picking}
+                    onClick={() => { setPicking(false); patch({ dueAt: dueFor(id, today) }); }}>{label}</button>
+                ))}
+                <button type="button" aria-pressed={preset === 'date' || picking} onClick={() => setPicking(true)}>Выбрать дату</button>
+              </div>
+              {(picking || preset === 'date') && (
+                <input type="date" aria-label="Дата выполнения" value={task.dueAt?.slice(0, 10) ?? ''}
+                  onChange={(e) => e.target.value && patch({ dueAt: e.target.value })} />
+              )}
+            </div>
+          )}
+          <div className="twin-field" role="group" aria-label="Дедлайн">
+            <span>Дедлайн</span>
+            <div className="twin-chips">
+              <input type="date" aria-label="Дата дедлайна" value={task.deadlineAt?.slice(0, 10) ?? ''}
+                onChange={(e) => patch({ deadlineAt: e.target.value || null })} />
+              {task.deadlineAt && (
+                <button type="button" onClick={() => patch({ deadlineAt: null })}>Убрать дедлайн</button>
+              )}
+            </div>
+            <small>Свой срок в игре — не связан с TickTick.</small>
           </div>
           <div className="twin-field" role="group" aria-label="Повтор">
             <span>Повтор</span>

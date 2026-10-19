@@ -225,6 +225,18 @@ export function remotePayload(
     priority: task.priority === 'high' ? 5 : task.priority === 'low' ? 1 : 3,
   };
 }
+/** Столько удалений в одну сторону за один обмен считаются массовыми: без подтверждения они не выполняются. */
+export const MASS_REMOVAL_MIN = 4;
+export type SyncOptions = {
+  /** Ответ на вопрос о массовом удалении: 'confirm' — выполнить, 'keep' — оставить задачи и разорвать связь. */
+  removals?: 'confirm' | 'keep';
+};
+export type HeldRemovals = {
+  /** Задачи, которых больше нет в игре: в TickTick будет удалено столько же. */
+  inTickTick: { id: string; name: string }[];
+  /** Задачи, которых больше нет в TickTick: в игре будет удалено столько же. */
+  inGame: { id: string; name: string }[];
+};
 export type TickTickResult = {
   connection: TickTickConnection;
   changes: {
@@ -236,22 +248,91 @@ export type TickTickResult = {
   /** Локальные задачи, удалённые в TickTick. */
   removed: string[];
   warnings: string[];
+  /** Массовые удаления, которые ждут подтверждения пользователя; связи с этими задачами не тронуты. */
+  held?: HeldRemovals;
+  /** Обмен прерван (нет сети, доступ истёк, лимит запросов); всё сделанное до этого сохранено в результате. */
+  stopped?: string;
 };
+function errorText(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+function isNotFound(error: unknown) {
+  return error instanceof Error && error.message.endsWith('(404)');
+}
+/** Ошибки, при которых нет смысла продолжать остальные задачи: сеть, доступ, лимит запросов, сбой сервера. */
+export function stopsWholeSync(error: unknown) {
+  if (error instanceof TypeError) return true;
+  const name = (error as { name?: unknown } | null)?.name;
+  if (name === 'TimeoutError' || name === 'AbortError') return true;
+  return (
+    error instanceof Error && /\((401|403|429|5\d\d)\)$/.test(error.message)
+  );
+}
+type Pending = {
+  localId: string;
+  link: TickTickLink;
+  projectId: string;
+  name: string;
+};
+/** Общие сведения одного обмена: удаления откладываются до проверки на массовость. */
+type Plan = {
+  deletions: Pending[];
+  orphans: Pending[];
+  /** Где найдена каждая задача TickTick среди сопоставленных списков (перенос между списками — не удаление). */
+  elsewhere: Map<string, string>;
+  stopped: unknown;
+};
+function plural(count: number) {
+  const tail = count % 100;
+  if (tail > 10 && tail < 15) return `${count} задач`;
+  if (count % 10 === 1) return `${count} задача`;
+  if (count % 10 > 1 && count % 10 < 5) return `${count} задачи`;
+  return `${count} задач`;
+}
+function names(items: { name: string }[]) {
+  const shown = items
+    .slice(0, 3)
+    .map((item) => `«${item.name}»`)
+    .join(', ');
+  return items.length > 3 ? `${shown} и ещё ${items.length - 3}` : shown;
+}
+/** Короткая строка для статуса, когда вопрос не задаётся сразу (автоматический обмен). */
+export function summarizeHeldRemovals(held: HeldRemovals) {
+  const parts = [
+    held.inTickTick.length && `в TickTick — ${plural(held.inTickTick.length)}`,
+    held.inGame.length && `в игре — ${plural(held.inGame.length)}`,
+  ].filter(Boolean);
+  return `Обмен остановил массовое удаление (${parts.join(', ')}). Нажмите «Обновить», чтобы подтвердить или отменить.`;
+}
+export function describeHeldRemovals(held: HeldRemovals) {
+  const lines = [
+    'Обмен с TickTick остановил массовое удаление, чтобы задачи не пропали по ошибке.',
+  ];
+  if (held.inTickTick.length)
+    lines.push(
+      `В игре пропало ${plural(held.inTickTick.length)}: ${names(held.inTickTick)}. Удалить их и в TickTick?`,
+    );
+  if (held.inGame.length)
+    lines.push(
+      `В TickTick не найдено ${plural(held.inGame.length)}: ${names(held.inGame)}. Удалить их и в игре?`,
+    );
+  lines.push(
+    '«ОК» — удалить. «Отмена» — оставить всё на месте: удалённое в игре останется в TickTick, а исчезнувшее из TickTick будет создано там заново.',
+  );
+  return lines.join('\n');
+}
 async function syncTickTickProject(
   state: GameState,
   connection: TickTickConnection,
   request: <T>(path: string, method?: string, body?: unknown) => Promise<T>,
   allLinks: TickTickConnection['links'],
-  taskIds?: readonly string[],
+  taskIds: readonly string[] | undefined,
+  tasks: RemoteTask[],
+  plan: Plan,
 ): Promise<TickTickResult> {
   if (!connection.projectId)
     throw new Error('Выбери список TickTick для синхронизации.');
   const project = encodeURIComponent(connection.projectId);
-  const data = await request<{ tasks?: RemoteTask[] }>(
-    `/api/project/${project}/data`,
-  );
-  if (!Array.isArray(data.tasks))
-    throw new Error('TickTick не вернул список задач.');
   const result: TickTickResult = {
     connection: {
       ...connection,
@@ -262,50 +343,54 @@ async function syncTickTickProject(
     removed: [],
     warnings: [],
   };
-  const remoteTasks = new Map(data.tasks.map((t) => [t.id, t]));
-  for (const [localId, link] of Object.entries(connection.links)) {
+  const remoteTasks = new Map(tasks.map((t) => [t.id, t]));
+  const syncLink = async (localId: string, link: TickTickLink) => {
     const local = state.quests.find((q) => q.id === localId);
     const path = `/api/project/${project}/task/${encodeURIComponent(link.remoteId)}`;
     if (!local) {
-      if (connection.deleteRemote) {
-        try {
-          await request(path, 'DELETE');
-        } catch (error) {
-          if (!(error instanceof Error && error.message.endsWith('(404)')))
-            throw error;
-          result.warnings.push(
-            'Удаление в TickTick не подтверждено: задача недоступна.',
-          );
-          result.connection.dismissed.push(link.remoteId);
-        }
-      } else result.connection.dismissed.push(link.remoteId);
-      delete result.connection.links[localId];
-      continue;
+      // Удаление откладывается: решение о массовости принимается по всем спискам сразу.
+      plan.deletions.push({
+        localId,
+        link,
+        projectId: connection.projectId,
+        name: remoteTasks.get(link.remoteId)?.title ?? 'Задача TickTick',
+      });
+      return;
     }
     // Existing standalone/imported tasks remain untouched when narrowing the scope.
     if (!canSyncTask(state, local)) {
       result.connection.dismissed.push(link.remoteId);
       delete result.connection.links[localId];
-      continue;
+      return;
     }
     // Closed actions remain immutable. Avoid one request per historical quest each minute.
-    if (local.done && link.done && !remoteTasks.has(link.remoteId)) continue;
+    if (local.done && link.done && !remoteTasks.has(link.remoteId)) return;
     let remote = remoteTasks.get(link.remoteId);
     if (!remote) {
+      const moved = plan.elsewhere.get(link.remoteId);
+      if (moved && moved !== connection.projectId) {
+        // Задачу перенесли в другой сопоставленный список: это не удаление, связь следует за ней.
+        result.connection.links[localId] = { ...link, projectId: moved };
+        return;
+      }
       try {
         remote = await request<RemoteTask>(path);
       } catch (error) {
         // Задача удалена в TickTick: убираем и здесь (выполненные остаются в истории).
-        if (error instanceof Error && error.message.endsWith('(404)') && !local.done) {
-          result.removed.push(localId);
-          result.connection.dismissed.push(link.remoteId);
-          delete result.connection.links[localId];
-          continue;
+        if (isNotFound(error) && !local.done) {
+          plan.orphans.push({
+            localId,
+            link,
+            projectId: connection.projectId,
+            name: local.name,
+          });
+          return;
         }
+        if (stopsWholeSync(error)) throw error;
         result.warnings.push(
-          `${local.name}: ${error instanceof Error ? error.message : 'не удалось получить задачу'}. Выполнение и удаление не подтверждены.`,
+          `${local.name}: ${errorText(error, 'не удалось получить задачу')}. Выполнение и удаление не подтверждены.`,
         );
-        continue;
+        return;
       }
     }
     if (!remote.id)
@@ -337,7 +422,7 @@ async function syncTickTickProject(
     }
     // Completion wins; reopening an already rewarded action never creates new XP.
     const wasCompleted =
-      data.tasks.find((t) => t.id === link.remoteId)?.status === 2 ||
+      tasks.find((t) => t.id === link.remoteId)?.status === 2 ||
       remote.status === 2 ||
       remoteWasCompleted;
     if (remoteChanged || wasCompleted)
@@ -355,6 +440,22 @@ async function syncTickTickProject(
       goalId: local.goalId,
       projectId: connection.projectId,
     };
+  };
+  for (const [localId, link] of Object.entries(connection.links)) {
+    if (plan.stopped) break;
+    try {
+      await syncLink(localId, link);
+    } catch (error) {
+      if (stopsWholeSync(error)) {
+        plan.stopped = error;
+        break;
+      }
+      // Сбой одной задачи не отменяет уже выполненный обмен остальными.
+      const name = state.quests.find((q) => q.id === localId)?.name ?? 'Задача';
+      result.warnings.push(
+        `${name}: ${errorText(error, 'не удалось обменяться')}. Эта задача будет передана при следующем обмене.`,
+      );
+    }
   }
   for (const local of state.quests.filter(
     (q) =>
@@ -364,24 +465,36 @@ async function syncTickTickProject(
       !allLinks[q.id] &&
       taskProject(connection, q) === connection.projectId,
   )) {
-    const remote = await request<RemoteTask>('/create', 'POST', {
-      ...remotePayload(local, state, connection),
-      localId: local.id,
-    });
-    if (!remote.id) throw new Error('TickTick не подтвердил создание задачи.');
-    result.connection.links[local.id] = {
-      remoteId: remote.id,
-      local: localFingerprint(local, state),
-      remote: remoteFingerprint(remote),
-      goalId: local.goalId,
-      projectId: connection.projectId,
-    };
-    if (remote.status === 2)
-      result.changes.push({
-        id: local.id,
-        snapshot: localFingerprint(local, state),
-        remote,
+    if (plan.stopped) break;
+    try {
+      const remote = await request<RemoteTask>('/create', 'POST', {
+        ...remotePayload(local, state, connection),
+        localId: local.id,
       });
+      if (!remote.id)
+        throw new Error('TickTick не подтвердил создание задачи.');
+      result.connection.links[local.id] = {
+        remoteId: remote.id,
+        local: localFingerprint(local, state),
+        remote: remoteFingerprint(remote),
+        goalId: local.goalId,
+        projectId: connection.projectId,
+      };
+      if (remote.status === 2)
+        result.changes.push({
+          id: local.id,
+          snapshot: localFingerprint(local, state),
+          remote,
+        });
+    } catch (error) {
+      if (stopsWholeSync(error)) {
+        plan.stopped = error;
+        break;
+      }
+      result.warnings.push(
+        `${local.name}: ${errorText(error, 'не удалось создать задачу')}. Повтор — при следующем обмене.`,
+      );
+    }
   }
   result.connection.lastSync = new Date().toISOString();
   return result;
@@ -395,6 +508,7 @@ export async function syncTickTick(
     body,
   ) => bridgeRequest(connection, path, method, body),
   taskIds?: readonly string[],
+  options: SyncOptions = {},
 ): Promise<TickTickResult> {
   if (!hasTickTickTargets(connection))
     throw new Error('Сопоставь сферу жизни со списком TickTick.');
@@ -429,7 +543,35 @@ export async function syncTickTick(
     const project = link.projectId || connection.projectId;
     if (project) projects.add(project);
   }
+  const plan: Plan = {
+    deletions: [],
+    orphans: [],
+    elsewhere: new Map(),
+    stopped: null,
+  };
+  // Сначала читаем все списки: так видно, что задача не удалена, а перенесена в другой список.
+  const listings = new Map<string, RemoteTask[]>();
   for (const projectId of projects) {
+    try {
+      const data = await request<{ tasks?: RemoteTask[] }>(
+        `/api/project/${encodeURIComponent(projectId)}/data`,
+      );
+      if (!Array.isArray(data?.tasks))
+        throw new Error('TickTick не вернул список задач.');
+      listings.set(projectId, data.tasks);
+      for (const task of data.tasks) plan.elsewhere.set(task.id, projectId);
+    } catch (error) {
+      result.warnings.push(
+        `Список TickTick ${projectId}: ${errorText(error, 'не удалось обновить задачи')}`,
+      );
+      if (stopsWholeSync(error)) {
+        plan.stopped = error;
+        break;
+      }
+    }
+  }
+  for (const [projectId, tasks] of listings) {
+    if (plan.stopped) break;
     const links = Object.fromEntries(
       Object.entries(connection.links).filter(
         ([id, link]) =>
@@ -444,6 +586,8 @@ export async function syncTickTick(
         request,
         connection.links,
         taskIds,
+        tasks,
+        plan,
       );
       for (const id of Object.keys(links)) delete result.connection.links[id];
       Object.assign(result.connection.links, batch.connection.links);
@@ -458,9 +602,97 @@ export async function syncTickTick(
       result.warnings.push(...batch.warnings);
     } catch (error) {
       result.warnings.push(
-        `Список TickTick ${projectId}: ${error instanceof Error ? error.message : 'не удалось обновить задачи'}`,
+        `Список TickTick ${projectId}: ${errorText(error, 'не удалось обновить задачи')}`,
       );
     }
+  }
+  // Задачу, не найденную в своём списке, могли перенести в другой сопоставленный список: это не удаление.
+  if (plan.orphans.length && !plan.stopped) {
+    const mapped = new Set<string>(
+      [
+        connection.projectId,
+        ...Object.values(connection.sphereLists ?? {}),
+        ...Object.values(connection.links).map((link) => link.projectId ?? ''),
+      ].filter(Boolean),
+    );
+    for (const projectId of mapped) {
+      if (listings.has(projectId)) continue;
+      try {
+        const data = await request<{ tasks?: RemoteTask[] }>(
+          `/api/project/${encodeURIComponent(projectId)}/data`,
+        );
+        if (!Array.isArray(data?.tasks)) continue;
+        listings.set(projectId, data.tasks);
+        for (const task of data.tasks) plan.elsewhere.set(task.id, projectId);
+      } catch (error) {
+        if (stopsWholeSync(error)) {
+          plan.stopped = error;
+          break;
+        }
+      }
+    }
+    plan.orphans = plan.orphans.filter((item) => {
+      const moved = plan.elsewhere.get(item.link.remoteId);
+      if (!moved || moved === item.projectId) return true;
+      result.connection.links[item.localId] = { ...item.link, projectId: moved };
+      return false;
+    });
+  }
+  // Удаления выполняются после всех обменов: массовое удаление требует подтверждения.
+  const held: HeldRemovals = { inTickTick: [], inGame: [] };
+  const massDeletions = plan.deletions.length >= MASS_REMOVAL_MIN;
+  for (const item of plan.deletions) {
+    if (plan.stopped) break;
+    if (massDeletions && !options.removals) {
+      held.inTickTick.push({ id: item.localId, name: item.name });
+      continue;
+    }
+    if (!connection.deleteRemote || (massDeletions && options.removals === 'keep')) {
+      result.connection.dismissed.push(item.link.remoteId);
+      delete result.connection.links[item.localId];
+      continue;
+    }
+    try {
+      await request(
+        `/api/project/${encodeURIComponent(item.projectId)}/task/${encodeURIComponent(item.link.remoteId)}`,
+        'DELETE',
+      );
+      delete result.connection.links[item.localId];
+    } catch (error) {
+      if (isNotFound(error)) {
+        result.warnings.push(
+          'Удаление в TickTick не подтверждено: задача недоступна.',
+        );
+        result.connection.dismissed.push(item.link.remoteId);
+        delete result.connection.links[item.localId];
+      } else if (stopsWholeSync(error)) plan.stopped = error;
+      else
+        result.warnings.push(
+          `${item.name}: ${errorText(error, 'не удалось удалить')}. Удаление будет повторено при следующем обмене.`,
+        );
+    }
+  }
+  const massOrphans = plan.orphans.length >= MASS_REMOVAL_MIN;
+  for (const item of plan.orphans) {
+    if (massOrphans && !options.removals) {
+      held.inGame.push({ id: item.localId, name: item.name });
+      continue;
+    }
+    if (massOrphans && options.removals === 'keep') {
+      // Связь разрывается, задача остаётся в игре и при следующем обмене создаётся в TickTick заново.
+      delete result.connection.links[item.localId];
+      continue;
+    }
+    result.removed.push(item.localId);
+    result.connection.dismissed.push(item.link.remoteId);
+    delete result.connection.links[item.localId];
+  }
+  if (held.inTickTick.length || held.inGame.length) result.held = held;
+  if (plan.stopped) {
+    result.stopped = errorText(plan.stopped, 'Обмен прерван.');
+    result.warnings.push(
+      `Обмен прерван: ${result.stopped}. Выполненное сохранено, остальное будет передано позже.`,
+    );
   }
   result.connection.lastSync = new Date().toISOString();
   return result;

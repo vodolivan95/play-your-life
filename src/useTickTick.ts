@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { GameState } from './game';
-import type { RemoteTask } from './ticktick';
-import { applyTickTickResult, bridgeRequest, connectionStorageKey, newConnection, hasTickTickTargets, matchSphereLists, syncTickTick } from './ticktick';
+import type { HeldRemovals, RemoteTask, SyncOptions } from './ticktick';
+import { applyTickTickResult, bridgeRequest, connectionStorageKey, describeHeldRemovals, newConnection, hasTickTickTargets, matchSphereLists, summarizeHeldRemovals, syncTickTick } from './ticktick';
 import type { TickTickConnection } from './ticktick';
 import { emptyTickTickSettings, validateTickTickSettings } from './ticktickSettings';
 import type { TickTickSettings } from './ticktickSettings';
@@ -118,27 +118,33 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
       setStatus(error instanceof Error ? error.message : 'Не удалось сохранить настройки.');
     } finally { working.current = false; setBusy(false); }
   }
-  async function sync(taskIds?: readonly string[], automatic = false) {
+  async function sync(taskIds?: readonly string[], automatic = false, removals?: SyncOptions['removals']) {
     const current = latest.current;
     if (working.current || !current.connection || !current.connected || current.dirty || current.state.profile.mode === 'demo') return;
     if (!navigator.onLine) { setStatus('Нет сети. Изменения задач сохранены в игре; обмен продолжится после подключения.'); return; }
     working.current = true; setBusy(true);
+    let held: HeldRemovals | undefined;
     try {
       let c = current.connection;
       if (c.auth === 'firebase') c = { ...c, ...validateTickTickSettings(await request(c, '/settings')) };
       setConnection(c);
       if ((automatic && !c.auto) || !hasTickTickTargets(c)) return;
-      const result = await syncTickTick(latest.current.state, c, (path, method, data) => request(c, path, method, data), taskIds);
+      const result = await syncTickTick(latest.current.state, c, (path, method, data) => request(c, path, method, data), taskIds, { removals });
       const applied = applyTickTickResult(latest.current.state, result);
       const next = c.auth === 'firebase' ? validateTickTickSettings(await request(c, '/settings', 'PUT', settings(applied.connection))) : settings(applied.connection);
       // Preserve edits made while requests were in flight.
       onChange(state => applyTickTickResult(state, result).state);
       setConnection({ ...c, ...next });
-      setStatus(applied.warnings.length ? applied.warnings.join('\n') : 'Связанные задачи целей синхронизированы.');
+      if (result.stopped?.endsWith('(401)')) setConnected(false);
+      held = result.held;
+      const lines = [...(held && automatic ? [summarizeHeldRemovals(held)] : []), ...applied.warnings];
+      setStatus(lines.length ? lines.join('\n') : 'Связанные задачи целей синхронизированы.');
     } catch (error) {
       if (error instanceof Error && error.message.endsWith('(401)')) setConnected(false);
       setStatus(error instanceof Error ? error.message : 'Не удалось синхронизировать.');
     } finally { working.current = false; setBusy(false); }
+    // Массовое удаление без явного согласия не выполняется: при ручном обмене спрашиваем, при автоматическом только сообщаем.
+    if (held && !automatic) await sync(taskIds, false, window.confirm(describeHeldRemovals(held)) ? 'confirm' : 'keep');
   }
   // Входящие: новые задачи сопоставленных списков. В игру они попадают только после выбора сферы, цели и этапа.
   async function loadIncoming() {

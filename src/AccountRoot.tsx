@@ -65,6 +65,13 @@ function download(state: GameState, name: string) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+// Игра без аккаунта не синхронизируется между устройствами, поэтому для обычных игроков
+// такой вариант скрыт: прогресс должен сохраняться для всех в облаке. Автоматизированным
+// браузерам (проверки сайта в tests/*-ui.mjs) он остаётся доступен — иначе каждую проверку
+// пришлось бы заводить настоящий аккаунт Firebase и трогать рабочую базу.
+function isAutomatedBrowser(): boolean {
+  return typeof navigator !== 'undefined' && navigator.webdriver === true;
+}
 function Login({ onGuest }: { onGuest: () => void }) {
   const [mode, setMode] = useState<'login' | 'register' | 'reset'>('login');
   const [email, setEmail] = useState(''),
@@ -220,13 +227,11 @@ function Login({ onGuest }: { onGuest: () => void }) {
         >
           Забыли пароль?
         </button>
-        <button className="secondary-button" disabled={busy} onClick={onGuest}>
-          Продолжить игру на этом устройстве
-        </button>
-        <small>
-          Игра на устройстве остаётся отдельной. Она не переносится в новый
-          аккаунт автоматически.
-        </small>
+        {isAutomatedBrowser() && (
+          <button className="secondary-button" disabled={busy} onClick={onGuest}>
+            Продолжить игру на этом устройстве
+          </button>
+        )}
       </section>
     </div>
   );

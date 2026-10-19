@@ -85,6 +85,8 @@ test('каждый тест подключён: юнит-тесты в npm test,
       return !Object.entries(scripts).some(([script, command]) => command.includes(`tests/${name}`) && ci.includes(`npm run ${script}`));
     });
   assert.deepEqual(forgotten, [], 'эти UI-тесты не запускаются в CI');
+  assert.match(ci, /npm run check:budgets/, 'вес сборки проверяется в CI');
+  assert.match(ci, /npm run test:smoke-ui/, 'обход разделов запускается в CI');
 });
 
 test('в коде приложения нет отладочных остатков', () => {

@@ -98,7 +98,7 @@ export default function LiveCityCanvas(props:Props) {
     optional.forEach(img=>{img.decode().catch(()=>undefined);});
     background.decode().then(()=>{ready=true;resize();resume();}).catch(()=>{node.dataset.error='city-assets-unavailable';if(!disposed)setLoadError(true);});
     return ()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();intersection.disconnect();document.removeEventListener('visibilitychange',resume);};
-  },[routes,mode,profile]);
+  },[routes,mode,profile,MAP_WIDTH,MAP_HEIGHT]);
   return <>
     <canvas ref={canvas} className={`live-city-canvas${props.editing?' is-editing':''}`} aria-label={props.editing?'Редактор маршрутов города':'Живое окружение города'}
       data-layer="live-city" onClick={e=>{

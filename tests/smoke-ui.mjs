@@ -159,6 +159,37 @@ try {
     await context.close();
   }
   assert.deepEqual([...new Set(problems)], [], 'Обход сайта нашёл проблемы');
+
+  // Защита от белого экрана: «ломаем» один раздел и проверяем, что остальной сайт жив (только dev-сервер:
+  // в сборке файлы разделов получают случайные имена).
+  if (!preview) {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, timezoneId: 'Europe/Moscow' });
+    await context.route('**/*', (route) => (sameOrigin(route.request().url()) ? route.continue() : route.abort()));
+    await context.route('**/src/components/HabitsPage.tsx*', (route) =>
+      route.fulfill({ contentType: 'text/javascript', body: 'export default function Broken() { throw new Error("проверка защиты раздела"); }' }));
+    await context.addInitScript((json) => {
+      try { if (!localStorage.getItem('play-your-life-v1')) localStorage.setItem('play-your-life-v1', json); } catch { /* хранилище недоступно */ }
+    }, seedJson);
+    const page = await context.newPage();
+    const uncaught = [];
+    page.on('pageerror', (error) => uncaught.push(error.message));
+    await page.goto(url);
+    await page.getByRole('button', { name: 'Продолжить игру на этом устройстве' }).click();
+    const menu = page.locator('.sidebar');
+    await menu.getByRole('button', { name: /^Привычки/ }).click();
+    await page.locator('.error-boundary').waitFor({ timeout: 5000 });
+    assert.match(await page.locator('.error-boundary').innerText(), /Этот раздел не открылся/);
+    assert.equal(await menu.isVisible(), true, 'Меню осталось на месте');
+    await page.screenshot({ path: 'work/smoke/desktop-broken-section.png' });
+    await page.getByRole('button', { name: 'Попробовать снова' }).click();
+    await page.locator('.error-boundary').waitFor({ timeout: 5000 });
+    await menu.getByRole('button', { name: /^Цели/ }).click();
+    await page.waitForFunction(() => !document.querySelector('.error-boundary') && (document.querySelector('main h1')?.textContent ?? '').startsWith('Цели'), null, { timeout: 5000 });
+    await menu.getByRole('button', { name: /^Главная/ }).click();
+    await page.waitForFunction(() => (document.querySelector('main h1')?.textContent ?? '').startsWith('Привет'), null, { timeout: 5000 });
+    assert.deepEqual(uncaught, [], 'Ошибка раздела не должна становиться необработанной');
+    await context.close();
+  }
   console.log(`Обход сайта (${preview ? 'сборка' : 'dev'}): ПК и телефон — все разделы открываются без ошибок`);
 } finally {
   await browser?.close();

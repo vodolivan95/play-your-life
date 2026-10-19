@@ -28,9 +28,7 @@ function CityWorld({ state, onOpen, weather, time, quality, paused, speed, reduc
   const runtime = useRef(initialWeather()), { gl, camera, size } = useThree(), scratch = useRef(new Vector3());
   const portrait = size.width < size.height;
   // Resize/preset updates affect the real camera, preserving subsequent user orbit/zoom.
-  /* eslint-disable react-hooks/immutability */
   useEffect(() => { camera.position.set(...(portrait && !overview ? [-4, 40, 50] as [number, number, number] : overview ? [10, 64, 78] as [number, number, number] : [10, 46, 58] as [number, number, number])); }, [camera, portrait, overview]);
-  /* eslint-enable react-hooks/immutability */
   // Imperative Three.js updates are intentionally mutable; React state is untouched.
   /* eslint-disable react-hooks/immutability */
   useFrame(() => {

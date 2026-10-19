@@ -44,7 +44,6 @@ function Skyline({ roomId, time }: { roomId: RoomId; time: RoomTime }) {
   }, [roomId]);
   const [back, side] = useTexture([views.back, views.side]);
   // Three textures are imperative GPU resources, not React state.
-  // eslint-disable-next-line react-hooks/immutability
   useEffect(() => { for (const texture of [back, side]) { texture.colorSpace = SRGBColorSpace; texture.needsUpdate = true; } }, [back, side]);
   const tint = time === 'night' ? '#50628c' : time === 'sunset' ? '#ecc5a2' : '#ffffff';
   const height = 48, width = views.width;

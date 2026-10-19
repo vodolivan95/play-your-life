@@ -1,7 +1,7 @@
 {
   "name": "play-your-life",
   "private": true,
-  "version": "0.39.0",
+  "version": "0.40.0",
   "type": "module",
   "engines": {
     "node": ">=24 <25"
@@ -11,7 +11,7 @@
     "build": "node scripts/build-city-models.mjs && node scripts/build-dark-theme.mjs && tsc -b && tsc -p integrations/ticktick/tsconfig.json && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "tsc -b && tsc -p integrations/ticktick/tsconfig.json",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "check": "npm run lint && npm run build",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "city:models": "node scripts/build-city-models.mjs",
@@ -24,7 +24,8 @@
     "test:spheres-ui": "node tests/spheres-ui.mjs",
     "test:key-results-ui": "node tests/key-results-ui.mjs",
     "test:month-report-ui": "node tests/month-report-ui.mjs",
-    "test:smoke-ui": "node --experimental-strip-types --no-warnings tests/smoke-ui.mjs"
+    "test:smoke-ui": "node --experimental-strip-types --no-warnings tests/smoke-ui.mjs",
+    "check:budgets": "node scripts/check-budgets.mjs"
   },
   "dependencies": {
     "firebase": "12.19.0",

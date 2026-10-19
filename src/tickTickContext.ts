@@ -25,5 +25,9 @@ export type TickTickManager = {
   inboxNew: number;
   acceptIncoming: (remoteId: string, choice: IncomingChoice) => Promise<string>;
   dismissIncoming: (remoteId: string) => Promise<void>;
+  /** Запрос к серверу подключения от имени текущего аккаунта. Токены TickTick браузеру не передаются. */
+  request: <T>(path: string, method?: string, data?: unknown) => Promise<T>;
 };
 export const TickTickContext = createContext<TickTickManager | null>(null);
+export type TickTickHabitsManager = import('./useTickTickHabits').TickTickHabitsApi;
+export const TickTickHabitsContext = createContext<TickTickHabitsManager | null>(null);

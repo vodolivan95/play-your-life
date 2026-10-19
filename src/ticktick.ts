@@ -131,13 +131,16 @@ export async function bridgeRequest<T>(
   });
   if (!response.ok) {
     let message = 'Сервер TickTick недоступен.';
+    let code: string | undefined;
     try {
-      const error = (await response.json()) as { error?: string };
+      const error = (await response.json()) as { error?: string; code?: string };
       message = error.error ?? message;
+      if (typeof error.code === 'string' && /^[A-Z_]{3,60}$/.test(error.code)) code = error.code;
     } catch {
       /* Empty upstream errors do not prove success. */
     }
-    throw new Error(`${message} (${response.status})`);
+    // Код для диагностики не меняет текст и окончание сообщения: другие проверки опираются на «(статус)».
+    throw Object.assign(new Error(`${message} (${response.status})`), { code });
   }
   const text = await response.text();
   return (text ? JSON.parse(text) : null) as T;

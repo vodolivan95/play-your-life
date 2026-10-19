@@ -27,7 +27,7 @@ import {
 } from "./questEconomy.ts";
 import type { EconomyRecords } from "./questEconomy.ts";
 import { validateState } from "./stateValidation.ts";
-import type { SaveDriver, SaveRow } from "./accountPersistence.ts";
+import type { SaveDriver, SaveProgress, SaveRow } from "./accountPersistence.ts";
 function decode(data: Record<string, unknown>): SaveRow {
   if (!Number.isSafeInteger(data.revision) || Number(data.revision) < 1)
     throw new Error("Некорректная версия сохранения.");
@@ -146,7 +146,7 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
       });
       return row.state === state ? row : assemble(row);
     },
-    async save(state, revision) {
+    async save(state, revision, progress?: SaveProgress) {
       state = {
         ...state,
         quests: state.quests.map((q) => ({
@@ -272,6 +272,8 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
             }
           }
         }
+        if (progress?.({ state: savedState, revision: expected + 1 }, false) === false)
+          throw new Error("Сохранение остановлено: игру закрыли.");
         const row = await runTransaction(database, async (transaction) => {
           const snapshot = await transaction.get(ref);
           if (!snapshot.exists() || snapshot.data().revision !== expected)
@@ -290,6 +292,9 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
         currentRevision = row;
         records = nextRecords;
         lastCommittedState = savedState;
+        // Запись идёт несколькими коммитами: после каждого сообщаем, что облако уже изменилось,
+        // чтобы при обрыве связи это не выглядело как правка с другого устройства.
+        progress?.({ state: savedState, revision: row }, true);
         return true;
       }
       // Keep each reward transaction within the Security Rules expression limit.

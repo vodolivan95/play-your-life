@@ -1,11 +1,23 @@
 import type { GameState } from './game.ts';
 import { restoreBackup } from './backup.ts';
 import { saveError } from './saveError.ts';
+import { fingerprint } from './stateFingerprint.ts';
 export type SaveRow = { state: GameState; revision: number };
+/**
+ * Запись в облако может состоять из нескольких коммитов. Драйвер сообщает о каждом:
+ * `committed = false` — сразу перед отправкой (версия, которая может оказаться в облаке,
+ * даже если ответ потеряется), `committed = true` — после подтверждения.
+ * Ответ `false` перед отправкой означает «хватит»: игру закрыли, следующий шаг не отправляется.
+ */
+export type SaveProgress = (row: SaveRow, committed: boolean) => boolean | void;
 export interface SaveDriver {
   load(): Promise<SaveRow | null>;
   create(state: GameState): Promise<SaveRow>;
-  save(state: GameState, revision: number): Promise<SaveRow | null>;
+  save(
+    state: GameState,
+    revision: number,
+    progress?: SaveProgress,
+  ): Promise<SaveRow | null>;
 }
 export type SaveStatus =
   | 'loading'
@@ -22,17 +34,50 @@ export type SaveSnapshot = {
   remote: SaveRow | null;
   localSaved: boolean;
 };
-type Draft = SaveRow & { userId: string; savedAt: number };
+/** Пауза после последней правки перед отправкой. */
+const DEBOUNCE_MS = 650;
+/** Как долго можно откладывать отправку при непрерывных правках. */
+const MAX_WAIT_MS = 5000;
+/** Сколько отпечатков «наших» версий хранить в черновике. */
+const SENT_LIMIT = 24;
+/** Сколько раз подряд можно пересесть на новую версию облака, если там лежит наша же запись. */
+const REBASE_LIMIT = 3;
+/** Сколько страховочных копий каждого вида оставлять. */
+const RECOVERY_KEEP = 3;
+const SAVED_TEXT = 'Прогресс сохранён в аккаунте';
+type Draft = SaveRow & { userId: string; savedAt: number; sent: number[] };
+type DraftCopy = { draft: Draft; key: string; raw: string };
+type RecoveryKind = 'recovery' | 'retired';
+/**
+ * Отпечатки версии: как есть и в виде, в котором её вернёт облако
+ * (облако чинит и дополняет игру при чтении, поэтому видимая версия может отличаться).
+ */
+function marks(state: GameState): number[] {
+  const own = fingerprint(state);
+  try {
+    const stored = fingerprint(restoreBackup(JSON.stringify(state)));
+    return stored === own ? [own] : [own, stored];
+  } catch {
+    return [own];
+  }
+}
 export class AccountSave {
   private driver: SaveDriver;
   private storage: Storage;
   private userId: string;
   private cacheKey: string;
   private draftKey: string;
-  private adopted: { key: string; raw: string } | null = null;
+  /** Черновики, найденные при запуске: самый новый первым. После сохранения они убираются. */
+  private copies: DraftCopy[] = [];
   private revision = 0;
+  /** Отпечатки версий, про которые известно, что их записали мы (или они были в облаке до наших правок). */
+  private sent: number[] = [];
   private dirty = false;
   private edit = 0;
+  private firstDirtyAt = 0;
+  private copyCounter = 0;
+  /** Часы черновиков: только растут, даже если системное время сдвинули назад или две правки в одну миллисекунду. */
+  private clock = 0;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private active = true;
   private inFlight: Promise<void> | null = null;
@@ -59,6 +104,14 @@ export class AccountSave {
   get current() {
     return this.snapshot;
   }
+  /** Есть изменения, которые ещё не подтверждены облаком. */
+  get pending() {
+    return (
+      this.active &&
+      this.snapshot.status !== 'conflict' &&
+      (this.dirty || this.inFlight !== null)
+    );
+  }
   subscribe(listener: (snapshot: SaveSnapshot) => void) {
     this.listeners.add(listener);
     return () => {
@@ -82,11 +135,15 @@ export class AccountSave {
         return null;
       const state = restoreBackup(JSON.stringify(d.state));
       if (state.profile.mode !== 'personal') return null;
+      const sent: number[] = Array.isArray(d.sent)
+        ? d.sent.filter((n: unknown) => typeof n === 'number' && Number.isFinite(n))
+        : [];
       return {
         userId: this.userId,
         state,
         revision: d.revision,
         savedAt: d.savedAt,
+        sent: sent.slice(-SENT_LIMIT),
       };
     } catch {
       return null;
@@ -99,8 +156,9 @@ export class AccountSave {
       return null;
     }
   }
-  private readDraft() {
-    const copies: { draft: Draft; key: string; raw: string }[] = [];
+  /** Все читаемые черновики этого пользователя, самый новый первым. */
+  private readDrafts(): DraftCopy[] {
+    const copies: DraftCopy[] = [];
     try {
       for (let i = 0; i < this.storage.length; i++) {
         const key = this.storage.key(i);
@@ -113,20 +171,28 @@ export class AccountSave {
     } catch {
       /* Cloud data remains available without local storage. */
     }
-    return copies.sort((a, b) => b.draft.savedAt - a.draft.savedAt)[0] ?? null;
+    return copies.sort((a, b) => b.draft.savedAt - a.draft.savedAt);
   }
   private persistDraft() {
     if (!this.snapshot.state) return;
+    this.clock = Math.max(this.clock + 1, Date.now());
+    const text = JSON.stringify({
+      userId: this.userId,
+      revision: this.revision,
+      state: this.snapshot.state,
+      savedAt: this.clock,
+      sent: this.sent,
+    });
     try {
-      this.storage.setItem(
-        this.draftKey,
-        JSON.stringify({
-          userId: this.userId,
-          revision: this.revision,
-          state: this.snapshot.state,
-          savedAt: Date.now(),
-        }),
-      );
+      this.storage.setItem(this.draftKey, text);
+      this.emit({ localSaved: true });
+      return;
+    } catch {
+      /* Не хватило места: копия последнего облачного состояния менее ценна, чем неотправленные правки. */
+    }
+    try {
+      this.storage.removeItem(this.cacheKey);
+      this.storage.setItem(this.draftKey, text);
       this.emit({ localSaved: true });
     } catch {
       this.emit({ localSaved: false });
@@ -144,83 +210,146 @@ export class AccountSave {
       /* A confirmed cloud save is still durable without this cache. */
     }
   }
-  private removeAdopted() {
-    if (!this.adopted) return;
-    try {
-      if (this.storage.getItem(this.adopted.key) === this.adopted.raw)
-        this.storage.removeItem(this.adopted.key);
-    } catch {
-      /* Retain copy when storage is unavailable. */
-    }
-    this.adopted = null;
+  /** Запоминает версию как «нашу»: если она окажется в облаке, это не чужая запись. */
+  private remember(state: GameState) {
+    for (const mark of marks(state))
+      if (!this.sent.includes(mark)) this.sent.push(mark);
+    if (this.sent.length > SENT_LIMIT)
+      this.sent.splice(0, this.sent.length - SENT_LIMIT);
   }
-  private finishDraft() {
+  private known(row: SaveRow) {
+    return this.sent.includes(fingerprint(row.state));
+  }
+  /** Принимает облачную строку как новую опорную точку: номер версии, копия, отпечатки. */
+  private adopt(row: SaveRow) {
+    this.revision = row.revision;
+    this.cache(row);
+    this.remember(row.state);
+  }
+  /** Сохраняет прежнюю версию в отдельную копию; хранятся только самые свежие. */
+  private keepRecovery(state: GameState | null, kind: RecoveryKind) {
+    if (!state) return true;
+    const prefix = `${this.cacheKey}:${kind}:`;
+    try {
+      this.storage.setItem(
+        `${prefix}${Date.now()}-${++this.copyCounter}`,
+        JSON.stringify(state),
+      );
+    } catch {
+      return false;
+    }
+    try {
+      const order = (key: string) =>
+        key
+          .slice(prefix.length)
+          .split('-')
+          .map((part) => Number(part) || 0);
+      const keys: string[] = [];
+      for (let i = 0; i < this.storage.length; i++) {
+        const key = this.storage.key(i);
+        if (key?.startsWith(prefix)) keys.push(key);
+      }
+      keys.sort((a, b) => {
+        const [at, ac] = order(a),
+          [bt, bc] = order(b);
+        return at - bt || ac - bc;
+      });
+      for (const key of keys.slice(0, Math.max(0, keys.length - RECOVERY_KEEP)))
+        this.storage.removeItem(key);
+    } catch {
+      /* Лишние копии не мешают работе. */
+    }
+    return true;
+  }
+  /**
+   * Версия подтверждена облаком: черновики больше не нужны. Более старые черновики
+   * других вкладок не пропадают молча, а уходят в страховочные копии.
+   */
+  private finishDraft(saved: GameState | null) {
     try {
       this.storage.removeItem(this.draftKey);
     } catch {
       /* Confirmed data also remains in the cloud. */
     }
-    this.removeAdopted();
+    const [newest, ...older] = this.copies;
+    this.copies = [];
+    const savedMarks = saved ? marks(saved) : [];
+    for (const copy of [newest, ...older]) {
+      if (!copy) continue;
+      try {
+        if (this.storage.getItem(copy.key) !== copy.raw) continue;
+        const same = savedMarks.includes(fingerprint(copy.draft.state));
+        if (copy !== newest && !same) this.keepRecovery(copy.draft.state, 'retired');
+        this.storage.removeItem(copy.key);
+      } catch {
+        /* Retain copy when storage is unavailable. */
+      }
+    }
   }
   async start(create: () => GameState) {
-    const cache = this.readCache(),
-      recovered = this.readDraft();
-    this.adopted = recovered
-      ? { key: recovered.key, raw: recovered.raw }
-      : null;
+    const cache = this.readCache();
+    this.copies = this.readDrafts();
+    const recovered = this.copies[0]?.draft ?? null;
+    this.clock = Math.max(this.clock, recovered?.savedAt ?? 0, cache?.savedAt ?? 0);
+    this.sent = recovered ? [...recovered.sent] : [];
+    this.dirty = false;
     try {
       let remote = await this.driver.load();
       if (!this.active) return;
       if (!remote)
         remote = await this.driver.create(
-          recovered?.draft.state ?? cache?.state ?? create(),
+          recovered?.state ?? cache?.state ?? create(),
         );
       if (!this.active) return;
-      this.revision = remote.revision;
-      this.cache(remote);
-      if (
-        recovered &&
-        JSON.stringify(recovered.draft.state) === JSON.stringify(remote.state)
-      ) {
+      if (!recovered) {
+        this.adopt(remote);
+        this.emit({
+          state: remote.state,
+          status: 'saved',
+          message: SAVED_TEXT,
+          remote: null,
+        });
+        return;
+      }
+      if (marks(recovered.state).includes(fingerprint(remote.state))) {
+        this.adopt(remote);
         this.dirty = false;
-        this.finishDraft();
+        this.finishDraft(remote.state);
         this.emit({
           state: remote.state,
           status: 'saved',
           remote: null,
-          message: 'Прогресс сохранён в аккаунте',
+          message: SAVED_TEXT,
         });
-      } else if (recovered) {
-        this.dirty = true;
-        this.emit({ state: recovered.draft.state, localSaved: true });
-        if (recovered.draft.revision !== remote.revision) {
-          this.emit({
-            status: 'conflict',
-            remote,
-            message:
-              'На другом устройстве сохранена более новая версия. Обе копии сохранены.',
-          });
-          return;
-        }
+        return;
+      }
+      this.dirty = true;
+      this.emit({ state: recovered.state, localSaved: true });
+      // Облако изменено другим устройством, только если там лежит не наша запись.
+      if (recovered.revision !== remote.revision && !this.known(remote)) {
+        this.cache(remote);
         this.emit({
-          status: 'pending',
-          message: 'Отправляем сохранённые изменения…',
+          status: 'conflict',
+          remote,
+          message:
+            'На другом устройстве сохранена более новая версия. Обе копии сохранены.',
         });
-        this.persistDraft();
-        void this.flush();
-      } else
-        this.emit({
-          state: remote.state,
-          status: 'saved',
-          message: 'Прогресс сохранён в аккаунте',
-          remote: null,
-        });
+        return;
+      }
+      this.adopt(remote);
+      this.emit({
+        status: 'pending',
+        message: 'Отправляем сохранённые изменения…',
+      });
+      this.persistDraft();
+      void this.flush();
     } catch (error) {
       if (!this.active) return;
-      const local = recovered?.draft ?? cache;
+      const local = recovered ?? cache;
       if (local) {
         this.revision = local.revision;
         this.dirty = !!recovered;
+        if (!recovered && cache) this.remember(cache.state);
         this.emit({
           state: local.state,
           status: 'offline',
@@ -236,12 +365,17 @@ export class AccountSave {
       !this.snapshot.state
     )
       return;
+    if (!this.dirty) this.firstDirtyAt = Date.now();
     this.edit++;
     this.dirty = true;
     this.emit({ state, status: 'pending', message: 'Сохраняем изменения…' });
     this.persistDraft();
     clearTimeout(this.timer);
-    this.timer = setTimeout(() => void this.flush(), 650);
+    const wait = Math.max(
+      0,
+      Math.min(DEBOUNCE_MS, this.firstDirtyAt + MAX_WAIT_MS - Date.now()),
+    );
+    this.timer = setTimeout(() => void this.flush(), wait);
   }
   async refresh() {
     if (
@@ -264,15 +398,13 @@ export class AccountSave {
         return;
       }
       if (row.revision > this.revision) {
-        this.revision = row.revision;
-        this.cache(row);
+        this.adopt(row);
         this.emit({
           state: row.state,
           status: 'saved',
           message: 'Загружен прогресс из аккаунта',
         });
-      } else
-        this.emit({ status: 'saved', message: 'Прогресс сохранён в аккаунте' });
+      } else this.emit({ status: 'saved', message: SAVED_TEXT });
     } catch (error) {
       if (this.active)
         this.emit({ status: 'offline', message: saveError(error) });
@@ -289,7 +421,27 @@ export class AccountSave {
     });
     return this.inFlight;
   }
+  /** Шаг многошаговой записи: версия, которую мы вот-вот отправим или уже отправили. */
+  private progress(step: SaveRow, committed: boolean) {
+    if (!this.active) return false;
+    const before = this.sent.length;
+    this.remember(step.state);
+    if (committed) this.revision = step.revision;
+    // Отпечаток и номер версии должны пережить закрытие страницы посреди записи.
+    if (committed || this.sent.length !== before) this.persistDraft();
+    return true;
+  }
+  /** Облако подтвердило именно эту версию. */
+  private confirm(row: SaveRow, edit: number) {
+    this.adopt(row);
+    if (edit === this.edit) {
+      this.dirty = false;
+      this.finishDraft(row.state);
+      this.emit({ status: 'saved', message: SAVED_TEXT, remote: null });
+    } else this.persistDraft();
+  }
   private async run() {
+    let rebases = 0;
     while (
       this.active &&
       this.dirty &&
@@ -299,33 +451,40 @@ export class AccountSave {
       const state = this.snapshot.state,
         edit = this.edit,
         revision = this.revision;
+      // Отпечаток записывается до отправки: потерянный ответ не должен выглядеть как чужая запись.
+      this.remember(state);
+      this.persistDraft();
       this.emit({ status: 'saving', message: 'Сохраняем в аккаунте…' });
       try {
-        const row = await this.driver.save(state, revision);
+        const row = await this.driver.save(state, revision, (step, committed) =>
+          this.progress(step, committed),
+        );
         if (!this.active) return;
-        if (!row) {
-          const remote = await this.driver.load();
-          if (!this.active) return;
-          this.emit({
-            status: 'conflict',
-            remote,
-            message:
-              'Прогресс изменён на другом устройстве. Ваши изменения не перезаписаны.',
-          });
-          this.persistDraft();
-          return;
+        if (row) {
+          this.confirm(row, edit);
+          continue;
         }
-        this.revision = row.revision;
-        this.cache(row);
-        if (edit === this.edit) {
-          this.dirty = false;
-          this.finishDraft();
-          this.emit({
-            status: 'saved',
-            message: 'Прогресс сохранён в аккаунте',
-            remote: null,
-          });
-        } else this.persistDraft();
+        const remote = await this.driver.load();
+        if (!this.active) return;
+        if (remote && marks(state).includes(fingerprint(remote.state))) {
+          // Запись дошла, а ответ потерялся: в облаке уже именно эта версия.
+          this.confirm(remote, edit);
+          continue;
+        }
+        if (remote && this.known(remote) && rebases < REBASE_LIMIT) {
+          // В облаке наша прежняя запись: продолжаем поверх неё, ничего чужого не затираем.
+          rebases++;
+          this.adopt(remote);
+          continue;
+        }
+        this.emit({
+          status: 'conflict',
+          remote,
+          message:
+            'Прогресс изменён на другом устройстве. Ваши изменения не перезаписаны.',
+        });
+        this.persistDraft();
+        return;
       } catch (error) {
         if (this.active) {
           this.persistDraft();
@@ -339,19 +498,12 @@ export class AccountSave {
     const remote = this.snapshot.remote;
     if (!remote)
       throw new Error('Облачная версия недоступна. Повторите загрузку.');
-    try {
-      this.storage.setItem(
-        `${this.cacheKey}:recovery:${Date.now()}`,
-        JSON.stringify(this.snapshot.state),
-      );
-    } catch {
-      if (!backupDownloaded)
-        throw new Error('Сначала скачайте резервную копию своих изменений.');
-    }
-    this.revision = remote.revision;
+    if (!this.keepRecovery(this.snapshot.state, 'recovery') && !backupDownloaded)
+      throw new Error('Сначала скачайте резервную копию своих изменений.');
+    this.sent = [];
+    this.adopt(remote);
     this.dirty = false;
-    this.finishDraft();
-    this.cache(remote);
+    this.finishDraft(remote.state);
     this.emit({
       state: remote.state,
       status: 'saved',
@@ -360,9 +512,12 @@ export class AccountSave {
     });
   }
   async chooseLocal() {
-    if (!this.snapshot.remote)
+    const remote = this.snapshot.remote;
+    if (!remote)
       throw new Error('Облачная версия недоступна. Повторите загрузку.');
-    this.revision = this.snapshot.remote.revision;
+    // Облачная версия будет заменена: оставляем её копию на случай, если выбор окажется ошибкой.
+    this.keepRecovery(remote.state, 'recovery');
+    this.adopt(remote);
     this.dirty = true;
     this.emit({
       status: 'pending',

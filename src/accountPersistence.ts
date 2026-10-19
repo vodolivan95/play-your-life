@@ -104,6 +104,10 @@ export class AccountSave {
   get current() {
     return this.snapshot;
   }
+  /** Номер облачной версии, которую движок считает последней известной. */
+  get knownRevision() {
+    return this.revision;
+  }
   /** Есть изменения, которые ещё не подтверждены облаком. */
   get pending() {
     return (

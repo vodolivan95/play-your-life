@@ -1,4 +1,4 @@
-.mrep{display:grid;gap:26px;color:#14213d;font-family:'Manrope',system-ui,sans-serif}
+.mrep{display:grid;gap:26px;color:#14213d;font-family:var(--font)}
 .mrep button:focus-visible{outline:2px solid #2f7de1;outline-offset:2px}
 .mrep-bar{display:flex;flex-wrap:wrap;gap:12px}
 .mrep-nav{display:flex;align-items:center;gap:10px}.mrep-nav b{min-width:150px;text-align:center;text-transform:capitalize}

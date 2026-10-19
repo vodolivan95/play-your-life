@@ -1,4 +1,4 @@
-.gtl{display:grid;gap:12px;font-family:Manrope,system-ui,sans-serif;color:#14233a}
+.gtl{display:grid;gap:12px;font-family:var(--font);color:#14233a}
 .gtl-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .gtl-head h2{margin:0;font-size:20px}
 .gtl-filter{display:flex;gap:4px;padding:4px;border-radius:999px;background:#ffffffb0;border:1px solid #d6deeb}
@@ -25,7 +25,7 @@
 :root[data-theme='dark'] .gtl-empty{border-color:#ffffff33}
 :root[data-theme='dark'] .gtl-due.is-late{color:#ff7a80}
 /* Единый стиль страницы «Мои задачи»: шрифт и стеклянные карточки */
-.pyl-quest-board{font-family:Manrope,system-ui,sans-serif}
+.pyl-quest-board{font-family:var(--font)}
 .pyl-quest-board .pyl-habit-section,.pyl-quest-board .pyl-quest-aside>*{backdrop-filter:blur(18px) saturate(1.3);border-radius:20px}
 .gtl-tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .gtl-done{font-size:13px;font-weight:700;color:#5b6b82;display:flex;gap:6px;align-items:center}

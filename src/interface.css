@@ -5,11 +5,7 @@
   --border: #eaf2f7;
   color: #23394d;
   background: #f0f8fc;
-  font-family:
-    'Segoe UI',
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
+  font-family: var(--font);
 }
 body {
   background: radial-gradient(ellipse at 70% 0, #e5f5ff, #f4f9fc 60%);

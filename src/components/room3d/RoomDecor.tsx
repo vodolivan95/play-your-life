@@ -48,7 +48,7 @@ function Neon({ text, color, level, position }: { text: string; color: string; l
   const texture = useMemo(() => {
     const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 256;
     const ctx = canvas.getContext('2d')!;
-    ctx.font = 'italic 900 150px Manrope, "Arial Black", sans-serif';
+    ctx.font = 'italic 900 150px "Manrope Variable", Manrope, "Arial Black", sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     for (const [blur, alpha] of [[48, 0.6], [22, 0.8], [6, 1]] as const) {
       ctx.shadowColor = color; ctx.shadowBlur = blur; ctx.globalAlpha = alpha;
@@ -145,7 +145,7 @@ function Hologram({ position, reduced }: { position: Vec3; reduced?: boolean }) 
     // сканлинии
     ctx.fillStyle = 'rgba(0,10,30,0.25)';
     for (let y = (t * 120) % 6; y < 512; y += 6) ctx.fillRect(0, y, 320, 2);
-    ctx.fillStyle = 'rgba(140,220,255,0.9)'; ctx.font = 'bold 22px Manrope, sans-serif'; ctx.fillText('RUN · 12.4 KM/H', 22, 480);
+    ctx.fillStyle = 'rgba(140,220,255,0.9)'; ctx.font = 'bold 22px "Manrope Variable", Manrope, sans-serif'; ctx.fillText('RUN · 12.4 KM/H', 22, 480);
     // Текстура — ресурс GPU: новый кадр отмечается через материал, а не через значение React.
     const map = screen.current?.map;
     if (map) map.needsUpdate = true;

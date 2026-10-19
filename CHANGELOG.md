@@ -1,5 +1,9 @@
 # Актуальная версия PLAY YOUR LIFE
 
+## 0.40.3 — 19 октября 2026
+
+Чистка репозитория без изменений в приложении: удалены кэш Python (`scripts/blend2glb/__pycache__`) и документы прежних версий без ссылок на них (`docs/CITY-WEATHER.md`, `docs/CITY-MODELS.md`, `docs/HEALTHCHECK.md`, `docs/SPORT-VISUAL.md`); `.gitignore` не пропускает `__pycache__`.
+
 ## 0.40.2 — 19 октября 2026
 
 Исправления по аудиту 0.40.0 (B1–B7). Дизайн и экономика не менялись; тесты — `tests/audit-fixes.test.ts`.

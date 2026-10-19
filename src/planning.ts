@@ -279,7 +279,16 @@ export function removeStage(
     ...state,
     goals: state.goals.map((g) =>
       g.id === goalId
-        ? { ...g, stages: (g.stages ?? []).filter((s) => s.id !== stageId) }
+        ? {
+            ...g,
+            stages: (g.stages ?? [])
+              .filter((s) => s.id !== stageId)
+              .map((s) =>
+                s.prerequisiteId === stageId
+                  ? { ...s, prerequisiteId: undefined }
+                  : s,
+              ),
+          }
         : g,
     ),
     quests: state.quests.map((q) =>

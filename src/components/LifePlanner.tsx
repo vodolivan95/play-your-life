@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
-import { completeQuest, dateKey, spheres } from '../game';
+import { completeQuest, dateKey, isOverdue, spheres } from '../game';
 import type { GameState, Quest } from '../game';
 import {
   formatDate,
@@ -62,6 +62,10 @@ export default function LifePlanner({
     setAnchor(dateKey(date));
   }
   function download() {
+    if (!period.tasks.length) {
+      onNotify('В выбранном периоде нет задач для календаря');
+      return;
+    }
     const blob = new Blob([planCalendar(period.tasks, state)], {
       type: 'text/calendar;charset=utf-8',
     });
@@ -69,7 +73,9 @@ export default function LifePlanner({
     const link = document.createElement('a');
     link.href = href;
     link.download = `play-your-life-${anchor}.ics`;
+    document.body.append(link);
     link.click();
+    link.remove();
     setTimeout(() => URL.revokeObjectURL(href), 1000);
     onNotify('План скачан для календаря');
   }
@@ -102,7 +108,7 @@ export default function LifePlanner({
           <small>
             {formatDate(task.startsAt ?? task.dueAt)}
             {task.estimateMinutes ? ` · ${task.estimateMinutes} мин` : ''}
-            {task.dueAt && !task.done && new Date(task.dueAt) < new Date()
+            {!task.done && isOverdue(task.dueAt)
               ? ' · Срок прошёл'
               : ''}
           </small>

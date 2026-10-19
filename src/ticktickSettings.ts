@@ -26,7 +26,7 @@ export function validateTickTickSettings(value: unknown): TickTickSettings {
   const id = (v: unknown) => typeof v === 'string' && /^[\w-]{1,100}$/.test(v);
   if (!object(value) || !object(value.sphereLists) || !object(value.links) || !Array.isArray(value.dismissed)) return invalid();
   if (typeof value.auto !== 'boolean' || typeof value.deleteRemote !== 'boolean' || !Number.isSafeInteger(value.revision) || Number(value.revision) < 0) return invalid();
-  if (Object.keys(value.links).length > 1000 || value.dismissed.length > 2000) return invalid();
+  if (Object.keys(value.links).length > 20000 || value.dismissed.length > 20000) return invalid();
   if (Object.entries(value.sphereLists).some(([sphere, list]) => !tickTickSphereIds.includes(sphere) || (list !== '' && !id(list)))) return invalid();
   for (const [localId, link] of Object.entries(value.links)) {
     if (!id(localId) || !object(link) || !id(link.remoteId) || typeof link.local !== 'string' || typeof link.remote !== 'string' || link.local.length > 10000 || link.remote.length > 10000) return invalid();
@@ -34,14 +34,21 @@ export function validateTickTickSettings(value: unknown): TickTickSettings {
   }
   if (value.dismissed.some(v => !id(v)) || (value.lastSync !== undefined && (typeof value.lastSync !== 'string' || !Number.isFinite(Date.parse(value.lastSync))))) return invalid();
   // Pick known fields: never persist arbitrary credentials supplied in a request.
+  // Переполнение чистится, а не отклоняется: сначала уходят связи выполненных задач, у отклонённых — самые старые.
+  let entries = Object.entries(value.links);
+  if (entries.length > 1000) {
+    let extra = entries.length - 1000;
+    entries = entries.filter(([, link]) => !(extra > 0 && (link as TickTickLink).done === true && extra--));
+    if (entries.length > 1000) return invalid();
+  }
   return {
     sphereLists: { ...value.sphereLists } as Record<string, string>,
     auto: value.auto, deleteRemote: value.deleteRemote,
-    links: Object.fromEntries(Object.entries(value.links).map(([key, link]) => {
+    links: Object.fromEntries(entries.map(([key, link]) => {
       const v = link as TickTickLink;
       return [key, { remoteId: v.remoteId, local: v.local, remote: v.remote, done: v.done, goalId: v.goalId, projectId: v.projectId }];
     })),
-    dismissed: [...value.dismissed] as string[], lastSync: value.lastSync as string | undefined,
+    dismissed: (value.dismissed as string[]).slice(-2000), lastSync: value.lastSync as string | undefined,
     revision: Number(value.revision),
   };
 }

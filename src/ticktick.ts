@@ -524,8 +524,16 @@ export async function syncTickTick(
     changes: [],
     removed: [],
     warnings: [],
-  };
+  }
   const projects = new Set<string>();
+  // Читаем все списки, выбранные для сфер: связанная задача могла быть
+  // перенесена в другой сопоставленный список, и это не должно выглядеть
+  // как удаление в TickTick.
+  if (!taskIds && Object.keys(connection.links).length) {
+    for (const projectId of Object.values(connection.sphereLists ?? {})) {
+      if (projectId) projects.add(projectId);
+    }
+  }
   for (const task of state.quests) {
     if (
       (taskIds && !taskIds.includes(task.id)) ||

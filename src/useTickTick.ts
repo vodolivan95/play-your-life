@@ -10,6 +10,9 @@ import type { TickTickManager } from './tickTickContext';
 import { acceptIncomingTask, dismissIncomingTask, findIncomingTasks, mappedProjectIds } from './ticktickInbox';
 import type { IncomingChoice, IncomingTask } from './ticktickInbox';
 
+/** Частота фоновой проверки изменений в TickTick, пока вкладка видима. */
+const TICKTICK_SYNC_INTERVAL_MS = 15_000;
+
 function readConnection(storageKey: string): TickTickConnection | null {
   try {
     const data = JSON.parse(localStorage.getItem(storageKey) ?? 'null');
@@ -247,13 +250,20 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
       if (!current.connected && recoveryPending.current) void refresh();
       else if (current.connection.auto) void sync(undefined, true);
     };
-    const timer = setInterval(poll, 60000);
-    document.addEventListener('visibilitychange', poll); window.addEventListener('online', poll);
+    const timer = setInterval(poll, TICKTICK_SYNC_INTERVAL_MS);
+    document.addEventListener('visibilitychange', poll);
+    window.addEventListener('focus', poll);
+    window.addEventListener('online', poll);
     const outcome = location.hash;
     if (outcome.startsWith('#ticktick=')) history.replaceState(null, '', location.pathname + location.search + '#profile');
     if (outcome === '#ticktick=cancelled' || outcome === '#ticktick=failed') queueMicrotask(() => setStatus(outcome.endsWith('cancelled') ? 'Подключение TickTick отменено.' : 'TickTick не подтвердил подключение. Попробуйте снова.'));
     else if (latest.current.connection) void refresh();
-    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', poll); window.removeEventListener('online', poll); };
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', poll);
+      window.removeEventListener('focus', poll);
+      window.removeEventListener('online', poll);
+    };
     // Each App instance is keyed by the authenticated Firebase UID.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -15,6 +15,7 @@ import LiveCityCanvas from './LiveCityCanvas';
 import { sphereCards } from '../sphereDetails';
 import './CoastalCity.css';
 import { useCityZoom } from '../cityLive/useCityZoom';
+import { isNativeApp } from '../platform';
 
 const weatherOptions = [
   ['clear','Ясно'],['partlyCloudy','Переменная облачность'],['cloudy','Облачно'],
@@ -47,6 +48,7 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
 }) {
   const {zoom,setZoom,scroll}=useCityZoom();
   const wide=useWide();
+  const nativeApp=isNativeApp();
   const cards=useMemo(()=>sphereCards(state),[state]);
   const [picked,setPicked]=useState<string|null>(null);
   const current=cards.find(c=>c.id===picked)??null;
@@ -72,7 +74,7 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
     const url=URL.createObjectURL(new Blob([JSON.stringify(routes,null,2)],{type:'application/json'}));
     const link=document.createElement('a');link.href=url;link.download='play-your-life-city-routes.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   };
-  return <div className="coastal-city">
+  return <div className={`coastal-city${nativeApp?' coastal-city--app':''}`}>
     <div className="coastal-controls" aria-label="Вид города">
       <label>Время <select aria-label="Время города" value={preferences.time} onChange={e=>setPreferences({...preferences,time:e.target.value as CityTime})}>
         <option value="auto">Авто · цикл дня</option><option value="day">День</option><option value="sunset">Закат</option><option value="night">Ночь</option><option value="sunrise">Рассвет</option>
@@ -115,7 +117,7 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
       </div>
       <p role="status">{message||`${draft.length} точек · SAVE сохраняет только маршруты; прогресс игры не изменяется.`}</p>
     </details>}
-    <p className="coastal-hint" id="coastal-hint">{editing?'Нажимай на карту, чтобы добавить точки маршрута.':'Нажми на здание, чтобы войти. Подпись района или список — карточка района. Приближай колёсиком мыши или двойным щелчком к курсору, листай перетаскиванием; на телефоне — двумя пальцами.'}</p>
+    <p className="coastal-hint" id="coastal-hint">{editing?'Нажимай на карту, чтобы добавить точки маршрута.':nativeApp?'Нажми на здание, чтобы войти. Своди и разводи пальцы, чтобы приблизить, перетаскивай карту одним пальцем.':'Нажми на здание, чтобы войти. Подпись района или список — карточка района. Приближай колёсиком мыши или двойным щелчком к курсору, листай перетаскиванием; на телефоне — двумя пальцами.'}</p>
     <div className="coastal-frame">
     <div ref={scroll} className="coastal-scroll" aria-label="Прибрежная карта" aria-describedby="coastal-hint">
       <div className="coastal-stage" style={wide?{width:`${zoom*100}%`}:undefined}>

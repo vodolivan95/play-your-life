@@ -94,3 +94,10 @@
 .coastal-scroll { cursor:grab; }
 .coastal-scroll[data-dragging=true] { cursor:grabbing; }
 .coastal-scroll[data-dragging=true] .coastal-building { pointer-events:none; }
+
+/* 0.49.0 — установленное приложение: крупнее под палец, подписи зданий видны без наведения. */
+.coastal-city--app .coastal-building { min-width:48px; min-height:48px; }
+.coastal-city--app .coastal-building > span { opacity:1; bottom:-26%; font-size:clamp(10px,2.6vw,13px); padding:5px 10px; }
+.coastal-city--app .coastal-chips button { min-height:48px; padding:0 16px; font-size:14px; }
+.coastal-city--app .coastal-zoom button { min-width:48px; min-height:48px; font-size:22px; }
+.coastal-city--app .coastal-hint { font-size:12px; }

@@ -99,7 +99,8 @@ function HabitForm({ value, onClose, onSave }: { value: FormValue; onClose: () =
           <span className="hb-form-icon" style={{ background: `linear-gradient(180deg, ${sp.color}, ${sp.color}cc)` }} aria-hidden="true">{iconOf(v.iconId)}</span>
           <label className="hb-field">
             <span>Название</span>
-            <input type="text" value={v.title} maxLength={100} placeholder="Например, «Читать 20 страниц»" onChange={(e) => set({ title: e.target.value })} autoFocus />
+            <input type="text" value={v.title} maxLength={100} required aria-required="true" aria-invalid={!v.title.trim()} placeholder="Например, «Читать 20 страниц»" onChange={(e) => set({ title: e.target.value })} autoFocus />
+            {!v.title.trim() && <small className="hb-note" role="status">Введите название привычки.</small>}
           </label>
         </div>
         <fieldset className="hb-group"><legend>Иконка</legend>
@@ -136,6 +137,7 @@ function HabitForm({ value, onClose, onSave }: { value: FormValue; onClose: () =
           </div>
           <p className="hb-note">Каждое выполнение даёт ещё 5 XP в выбранную сферу.</p>
         </fieldset>
+        {v.title.trim() && !ok && <p className="hb-note" role="status">{v.weekdays.length === 0 ? 'Выберите хотя бы один день расписания.' : 'Цель за день должна быть больше нуля.'}</p>}
         <button type="submit" className="hb-create" disabled={!ok}>{v.id ? 'Сохранить привычку' : 'Создать привычку'}</button>
       </form>
     </div>

@@ -62,6 +62,10 @@ export default function LifePlanner({
     setAnchor(dateKey(date));
   }
   function download() {
+    if (!period.tasks.length) {
+      onNotify('В выбранном периоде нет задач для календаря');
+      return;
+    }
     const blob = new Blob([planCalendar(period.tasks, state)], {
       type: 'text/calendar;charset=utf-8',
     });
@@ -69,7 +73,9 @@ export default function LifePlanner({
     const link = document.createElement('a');
     link.href = href;
     link.download = `play-your-life-${anchor}.ics`;
+    document.body.append(link);
     link.click();
+    link.remove();
     setTimeout(() => URL.revokeObjectURL(href), 1000);
     onNotify('План скачан для календаря');
   }

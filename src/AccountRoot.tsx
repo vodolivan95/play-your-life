@@ -245,13 +245,23 @@ function CloudGame({ user }: { user: User }) {
     const sync = () => {
       if (document.visibilityState !== 'hidden') void engine.flush();
     };
+    // Свернули вкладку или закрыли страницу: неотправленное уходит сразу, не ожидая паузы.
+    const leave = () => {
+      if (engine.pending) void engine.flush();
+    };
+    const visibility = () => {
+      if (document.visibilityState === 'hidden') leave();
+      else sync();
+    };
     const timer = setInterval(sync, 60000);
     window.addEventListener('online', sync);
-    document.addEventListener('visibilitychange', sync);
+    window.addEventListener('pagehide', leave);
+    document.addEventListener('visibilitychange', visibility);
     return () => {
       clearInterval(timer);
       window.removeEventListener('online', sync);
-      document.removeEventListener('visibilitychange', sync);
+      window.removeEventListener('pagehide', leave);
+      document.removeEventListener('visibilitychange', visibility);
       unsubscribe();
       engine.dispose();
     };

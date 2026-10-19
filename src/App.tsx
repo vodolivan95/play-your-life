@@ -48,6 +48,7 @@ import {
 import type { Quest, GameState } from './game';
 import QuestBoard from './components/QuestBoard';
 import HabitsPage from './components/HabitsPage';
+import ErrorBoundary from './components/ErrorBoundary';
 import QuestWizard from './components/QuestWizard';
 import { saveCustomQuest, saveHabit } from './personalQuests';
 
@@ -315,6 +316,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 закрытия страницы.
               </div>
             )}
+            <ErrorBoundary resetKey={`${page}:${sphere?.id ?? ''}`}>
             {page === 'monthly' && (
               <KeyResults
                 state={state}
@@ -673,6 +675,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 </div>
               </>
             )}
+            </ErrorBoundary>
             <MobileCityFooter />
           <footer className="footer">
               PLAY YOUR LIFE <span>✦</span> Маленькие шаги делают большую жизнь.

@@ -108,6 +108,7 @@ export default function Icon({
         <path d="M5 17h14l-2-4V9a5 5 0 0 0-10 0v4zM10 21h4" />
       </>
     ),
+    bolt: <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" />,
   };
   return (
     <svg

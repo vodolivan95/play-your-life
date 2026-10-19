@@ -105,6 +105,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   const [focusedGoalId, setFocusedGoalId] = useState<string | null>(() => readGoalRoute()?.goalId ?? null);
   const [goalLocation, setGoalLocation] = useState(readGoalRoute);
   const [selected, setSelected] = useState<string | null>(null);
+  const [profileTipDismissed, setProfileTipDismissed] = useState(false);
   const [modal, setModal] = useState<
     'quest' | 'goal' | 'streak' | 'start' | 'profile' | null
   >(() => (state.profile.onboardingComplete ? null : 'start'));
@@ -504,6 +505,22 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                     <Icon name="settings" />
                   </button>
                 </section>
+                {state.xp === 0 && !profileTipDismissed && (
+                  <section className="panel profile-tip">
+                    <span className="profile-tip-icon">
+                      <Icon name="bolt" size={18} />
+                    </span>
+                    <p>Выполни первое задание — получи первые XP и монеты.</p>
+                    <button
+                      type="button"
+                      className="icon-button profile-tip-dismiss"
+                      aria-label="Скрыть подсказку"
+                      onClick={() => setProfileTipDismissed(true)}
+                    >
+                      <Icon name="close" size={14} />
+                    </button>
+                  </section>
+                )}
                 <div className="player-rewards profile-rewards">
                   <span>
                     <b>
@@ -516,6 +533,14 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                       <GameArt kind="fire" /> {streak(state.activeDates)}
                     </b>
                     <small>Серия</small>
+                    <span className="streak-dots" aria-hidden="true">
+                      {Array.from({ length: 7 }, (_, i) => {
+                        const d = new Date();
+                        d.setDate(d.getDate() - (6 - i));
+                        const active = state.activeDates.includes(dateKey(d));
+                        return <span key={i} className={active ? 'streak-dot active' : 'streak-dot'} />;
+                      })}
+                    </span>
                   </button>
                   <button onClick={() => navigate('achievements')}>
                     <b>
@@ -524,22 +549,69 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                     <small>Достижения</small>
                   </button>
                 </div>
-                <section className="panel profile-menu">
-                  {navigation
-                    .filter((n) => !['home', 'profile'].includes(n.id))
-                    .map((n) => (
-                      <button key={n.id} onClick={() => navigate(n.id)}>
-                        <Icon name={n.icon} />
-                        <strong>{n.label}</strong>
-                        <Icon name="arrow" size={17} />
-                      </button>
-                    ))}
-                  <button onClick={() => setModal('profile')}>
-                    <Icon name="settings" />
-                    <strong>Настройки персонажа</strong>
-                    <Icon name="arrow" size={17} />
-                  </button>
-                </section>
+                {(() => {
+                  const taskBadge = questsForToday(state).filter((q) => !q.done).length + incomingForToday(tickTick.incoming).length;
+                  const byId = (id: string) => navigation.find((n) => n.id === id)!;
+                  const quickIds = ['tasks', 'quests', 'goals', 'spheres'];
+                  const progressIds = ['plan', 'tree', 'achievements', 'statistics'];
+                  const systemIds = ['shop', 'city'];
+                  return (
+                    <>
+                      <div className="profile-section">
+                        <span className="profile-section-label">Быстрый доступ</span>
+                        <div className="profile-quick-grid">
+                          {quickIds.map((id) => {
+                            const n = byId(id);
+                            return (
+                              <button key={id} className="profile-quick-tile" onClick={() => navigate(n.id)}>
+                                <Icon name={n.icon} />
+                                <span>{n.label}</span>
+                                {id === 'tasks' && taskBadge > 0 && (
+                                  <span className="profile-quick-badge">{taskBadge}</span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div className="profile-section">
+                        <span className="profile-section-label">Прогресс</span>
+                        <section className="panel profile-menu">
+                          {progressIds.map((id) => {
+                            const n = byId(id);
+                            return (
+                              <button key={id} onClick={() => navigate(n.id)}>
+                                <Icon name={n.icon} />
+                                <strong>{n.label}</strong>
+                                <Icon name="arrow" size={17} />
+                              </button>
+                            );
+                          })}
+                        </section>
+                      </div>
+                      <div className="profile-section">
+                        <span className="profile-section-label">Система</span>
+                        <section className="panel profile-menu">
+                          {systemIds.map((id) => {
+                            const n = byId(id);
+                            return (
+                              <button key={id} onClick={() => navigate(n.id)}>
+                                <Icon name={n.icon} />
+                                <strong>{n.label}</strong>
+                                <Icon name="arrow" size={17} />
+                              </button>
+                            );
+                          })}
+                          <button onClick={() => setModal('profile')}>
+                            <Icon name="settings" />
+                            <strong>Настройки персонажа</strong>
+                            <Icon name="arrow" size={17} />
+                          </button>
+                        </section>
+                      </div>
+                    </>
+                  );
+                })()}
                 <section className="panel profile-ticktick"><TickTickConnection demo={state.profile.mode === 'demo'} /></section>
                 <DataBackup
                   state={state}

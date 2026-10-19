@@ -113,7 +113,6 @@ export function monthlySummary(
     return {
       levelBefore, levelAfter, levelDelta: levelBefore === null || levelAfter === null ? null : levelAfter - levelBefore,
       ...s,
-      quests: events.filter((e) => e.sphere === s.id && e.kind === 'quest').length,
       xp: events
         .filter((e) => e.sphere === s.id)
         .reduce((total, e) => total + e.xp, 0),

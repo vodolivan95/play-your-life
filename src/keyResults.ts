@@ -16,6 +16,8 @@ export type SphereReview = {
   score: number | null;
   trend: SphereTrend | null;
   task: PlannedTask | null;
+  /** Сколько задач закрыто за месяц в этой сфере: вписывает сам игрок (например, по TickTick), в игре не считается. */
+  tasksDone: number | null;
 };
 export type MonthReview = {
   /** Как вышли планы прошлого месяца: id сферы → исход. */
@@ -41,8 +43,10 @@ const SHORT_LIMIT = 200;
 const sphereIds = () => spheres.map((s) => s.id);
 
 export function blankSphereReview(): SphereReview {
-  return { achieved: '', failed: '', next: '', ifWhen: '', ifThen: '', score: null, trend: null, task: null };
+  return { achieved: '', failed: '', next: '', ifWhen: '', ifThen: '', score: null, trend: null, task: null, tasksDone: null };
 }
+/** Верхняя граница для ручного ввода числа задач за месяц: защита от опечаток, не экономический лимит. */
+export const TASKS_DONE_MAX = 999;
 export function blankReview(): MonthReview {
   return {
     plans: {},
@@ -81,7 +85,8 @@ export function validSphereReview(value: unknown): boolean {
     [value.ifWhen, value.ifThen].every((t) => str(t, SHORT_LIMIT)) &&
     (value.score === null || (typeof value.score === 'number' && Number.isInteger(value.score) && value.score >= 1 && value.score <= 10)) &&
     (value.trend === null || ['up', 'stable', 'down'].includes(value.trend as string)) &&
-    (value.task === null || validPlannedTask(value.task))
+    (value.task === null || validPlannedTask(value.task)) &&
+    (value.tasksDone === null || value.tasksDone === undefined || (typeof value.tasksDone === 'number' && Number.isInteger(value.tasksDone) && value.tasksDone >= 0 && value.tasksDone <= TASKS_DONE_MAX))
   );
 }
 export function validReview(value: unknown): boolean {
@@ -129,6 +134,9 @@ function clean(review: MonthReview): MonthReview {
       ifWhen: r.ifWhen.slice(0, SHORT_LIMIT),
       ifThen: r.ifThen.slice(0, SHORT_LIMIT),
       task: r.task ? { ...r.task, title: r.task.title.slice(0, 100) } : null,
+      // Как и score: не подчищаем значение здесь — неверное (дробное, отрицательное, слишком большое)
+      // отклоняет validSphereReview, и saveReview вернёт состояние без изменений.
+      tasksDone: r.tasksDone ?? null,
     };
   }
   return next;

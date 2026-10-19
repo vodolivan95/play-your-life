@@ -37,6 +37,19 @@ test('итоги сферы сохраняются и проходят пров�
   assert.ok(validReview(review));
   assert.ok(validState(state));
 });
+test('количество задач по сфере вписывается вручную (например, по TickTick), а не считается в игре', () => {
+  let state = initialState();
+  state = patchSphereReview(state, '2026-10', 'health', { tasksDone: 5 }, now);
+  assert.equal(reviewOf(state, '2026-10').spheres.health.tasksDone, 5);
+  assert.ok(validState(state));
+  // Пустое значение возвращает к null; дробные, отрицательные и слишком большие игнорируются (patch не проходит проверку).
+  state = patchSphereReview(state, '2026-10', 'health', { tasksDone: null }, now);
+  assert.equal(reviewOf(state, '2026-10').spheres.health.tasksDone, null);
+  const before = state;
+  assert.equal(patchSphereReview(state, '2026-10', 'health', { tasksDone: -1 }, now), before);
+  assert.equal(patchSphereReview(state, '2026-10', 'health', { tasksDone: 1.5 }, now), before);
+  assert.equal(patchSphereReview(state, '2026-10', 'health', { tasksDone: 1000 }, now), before);
+});
 
 test('будущий месяц и неверная сфера игнорируются', () => {
   const state = initialState();

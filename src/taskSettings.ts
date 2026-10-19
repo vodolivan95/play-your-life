@@ -9,6 +9,8 @@ export type TaskPatch = {
   difficulty?: string;
   dueAt?: string | null;
   deadlineAt?: string | null;
+  /** Перенос задачи в календаре перетаскиванием: сдвигает срок (и начало, если есть) на столько дней, время суток сохраняется. */
+  shiftDays?: number;
   stageId?: string | null;
   sync?: boolean;
   repeat?: Quest['repeat'] | null;
@@ -42,6 +44,14 @@ export function duePreset(dueAt: string | undefined, today: string): DuePreset {
   if (day === addDays(today, 1)) return 'tomorrow';
   if (day === addDays(mondayOf(today), 6)) return 'week';
   return 'date';
+}
+/** Сдвигает дату (обычную 'YYYY-MM-DD' или ISO со временем) на N дней, сохраняя время суток. */
+function shiftDate(value: string, days: number): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return addDays(value, days);
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  date.setDate(date.getDate() + days);
+  return date.toISOString();
 }
 export function canChangeDifficulty(q: Quest) {
   return q.sourceType === 'USER_CREATED' && !q.rewardLocked && !(q.currentValue ?? 0);
@@ -83,6 +93,13 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
       if (old.startsAt && patch.dueAt < old.startsAt.slice(0, 10)) throw new Error('Срок не может быть раньше начала.');
       q.dueAt = patch.dueAt;
     }
+  }
+  if (patch.shiftDays !== undefined) {
+    if (old.tickTickSharedAt) throw new Error('Плановая дата берётся из TickTick: перенести задачу в календаре нельзя, поменяйте её там.');
+    if (!old.dueAt && !old.startsAt) throw new Error('У задачи нет срока, которую можно перенести.');
+    if (!Number.isInteger(patch.shiftDays) || !patch.shiftDays) throw new Error('Нечего переносить.');
+    if (old.dueAt) q.dueAt = shiftDate(old.dueAt, patch.shiftDays);
+    if (old.startsAt) q.startsAt = shiftDate(old.startsAt, patch.shiftDays);
   }
   if (patch.deadlineAt !== undefined) {
     if (patch.deadlineAt === null) q.deadlineAt = undefined;

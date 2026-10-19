@@ -135,6 +135,10 @@ try {
     await panel(page).getByRole('button',{name:'Синхронизировать сейчас'}).click();
     await panel(page).getByText('Связанные задачи целей синхронизированы.',{exact:true}).waitFor();
     assert.equal(account(uid).creates,1); assert.equal((await stateOf(page,uid)).quests.length,1);
+    // Изменение задачи в TickTick подхватывается фоновым обменом без ручного клика.
+    account(uid).tasks.get('remote-task-'+uid).title='Изменено в TickTick';
+    await page.clock.runFor(16000);
+    await page.waitForFunction(uid => JSON.parse(localStorage.getItem('ticktick-fixture-game:'+uid)).quests[0].name === 'Изменено в TickTick', uid);
     const nextCtx=await context(width); const nextPage=await nextCtx.newPage();
     await nextPage.goto(harness(uid)+'#profile');
     await panel(nextPage).getByText('Доступ к TickTick подтверждён.',{exact:false}).waitFor();

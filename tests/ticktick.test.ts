@@ -107,6 +107,25 @@ test('создание и повторная синхронизация не с�
   assert.equal(api.calls.filter((c) => c.path === '/create').length, 1);
   assert.equal(result.state.xp, 2450);
 });
+test('перенос связанной задачи в другой сопоставленный список не считается удалением', async () => {
+  const { state, connection } = setup();
+  connection.sphereLists = { english: 'life', health: 'health-list' };
+  const api = upstream();
+  const first = applyTickTickResult(
+    state,
+    await syncTickTick(state, connection, api.request),
+  );
+  const id = state.quests[0].id;
+  const remoteId = first.connection.links[id].remoteId;
+  api.tasks.set(remoteId, { ...api.tasks.get(remoteId)!, projectId: 'health-list' });
+  const result = applyTickTickResult(
+    first.state,
+    await syncTickTick(first.state, first.connection, api.request),
+  );
+  assert.equal(result.state.quests.length, 1);
+  assert.equal(result.connection.links[id].projectId, 'health-list');
+  assert.ok(api.calls.some(c => c.path === '/api/project/health-list/data'));
+});
 test('редактирование в обе стороны, выполнение и повторное открытие не фармят XP', async () => {
   let { state, connection } = setup();
   const api = upstream();

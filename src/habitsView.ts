@@ -23,8 +23,9 @@ export function lastDays(today: string, n: number): string[] {
   return Array.from({ length: n }, (_, i) => addDays(today, i - n + 1));
 }
 
-export function doneDays(h: Habit, history: HabitCompletion[]): Set<string> {
-  return new Set(history.filter((c) => c.habitId === h.id && c.rewardClaimed).map((c) => c.day));
+/** Дни выполнения привычки. `external` — дни, импортированные из TickTick: они показываются в календаре и сериях, но не дают наград. */
+export function doneDays(h: Habit, history: HabitCompletion[], external?: Iterable<string>): Set<string> {
+  return new Set([...history.filter((c) => c.habitId === h.id && c.rewardClaimed).map((c) => c.day), ...(external ?? [])]);
 }
 function createdDay(h: Habit): string {
   return habitDay(h, new Date(h.createdAt));
@@ -69,8 +70,9 @@ export type HabitStats = {
 };
 
 /** Статистика за последние `days` дней (по умолчанию 90) и по неделям (последние 8). */
-export function habitStats(h: Habit, history: HabitCompletion[], today: string, days = 90): HabitStats {
-  const done = doneDays(h, history);
+export function habitStats(h: Habit, history: HabitCompletion[], today: string, days = 90, external?: Iterable<string>): HabitStats {
+  const done = doneDays(h, history, external);
+  const earned = doneDays(h, history);
   const sched = [0, 0, 0, 0, 0, 0, 0];
   const ok = [0, 0, 0, 0, 0, 0, 0];
   let scheduled = 0;
@@ -109,16 +111,17 @@ export function habitStats(h: Habit, history: HabitCompletion[], today: string, 
     bestWeekday: max > 0 ? weekdayPercent.indexOf(max) : -1,
     weekdayPercent,
     weeks,
-    xp: completed * h.rewardXp,
+    // XP только за локальные отметки: импортированные из TickTick дни награды не дают.
+    xp: lastDays(today, days).filter((day) => earned.has(day) && (isScheduled(h, day) || done.has(day))).length * h.rewardXp,
   };
 }
 
 /** Процент выполнения запланированных дней за последние 7 дней по всем привычкам. */
-export function weekPercent(habits: Habit[], history: HabitCompletion[], today: string): number {
+export function weekPercent(habits: Habit[], history: HabitCompletion[], today: string, external?: ReadonlyMap<string, Iterable<string>>): number {
   let s = 0;
   let d = 0;
   for (const h of habits) {
-    const done = doneDays(h, history);
+    const done = doneDays(h, history, external?.get(h.id));
     for (const day of lastDays(today, 7)) {
       if (!isScheduled(h, day) && !done.has(day)) continue;
       s++;

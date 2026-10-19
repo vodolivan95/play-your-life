@@ -29,7 +29,8 @@ import { GoalForm } from './components/PlanningForms';
 import { saveGoal } from './planning';
 import useTickTick from './useTickTick';
 import TickTickConnection from './components/TickTickConnection';
-import { TickTickContext } from './tickTickContext';
+import { TickTickContext, TickTickHabitsContext } from './tickTickContext';
+import useTickTickHabits from './useTickTickHabits';
 import { incomingForToday } from './ticktickInbox';
 import {
   achievements,
@@ -100,6 +101,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   );
   const [goalOrigin, setGoalOrigin] = useState<string | null>(null);
   const [today, setToday] = useState(dateKey);
+  const tickTickHabits = useTickTickHabits(tickTick, state, setState, userId ?? 'local', today);
   const [focusedGoalId, setFocusedGoalId] = useState<string | null>(() => readGoalRoute()?.goalId ?? null);
   const [goalLocation, setGoalLocation] = useState(readGoalRoute);
   const [selected, setSelected] = useState<string | null>(null);
@@ -266,6 +268,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   }
   return (
     <TickTickContext.Provider value={tickTick}>
+      <TickTickHabitsContext.Provider value={tickTickHabits}>
       <CityAppearanceContext.Provider value={state.city}>
       <div
         className={`app-shell pyl-shell app-page-${page} ${modal === 'quest' ? 'quest-dialog-open' : ''}`}
@@ -811,6 +814,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
         )}
       </div>
     </CityAppearanceContext.Provider>
+      </TickTickHabitsContext.Provider>
     </TickTickContext.Provider>
   );
 }

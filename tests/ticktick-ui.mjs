@@ -61,6 +61,8 @@ async function context(width) {
     calls.push({uid,path,method});
     let status = 200, result;
     if(path === '/status') result = {connected:a.connected};
+    else if(path === '/habits') result = {items:[],sections:[]};
+    else if(path === '/habits/links') result = {revision:0,links:{},sectionMap:{},lookbackDays:90,imported:[]};
     else if(path === '/authorize') result = {url:'https://ticktick.com/oauth/authorize?state=' + uid};
     else if(path === '/settings' && method === 'GET') result = a.settings;
     else if(path === '/settings' && method === 'PUT') {

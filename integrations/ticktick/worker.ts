@@ -1,6 +1,8 @@
 /** OAuth bridge for TickTick Open API v1. Provider tokens stay on the server. */
 import { firebaseIdentity } from './firebaseIdentity.ts';
 import { emptyTickTickSettings, validateTickTickSettings } from '../../src/ticktickSettings.ts';
+import { emptyHabitLinks, normalizeCheckins, normalizeHabits, normalizeSections, stampOf, validRange, validateHabitLinks } from '../../src/ticktickHabits.ts';
+import type { HabitLinksState, HabitSection } from '../../src/ticktickHabits.ts';
 export interface Storage {
   get<T>(key: string): Promise<T | undefined>;
   put<T>(key: string, value: T): Promise<void>;
@@ -14,6 +16,8 @@ export interface Env {
   TICKTICK_CLIENT_SECRET: string;
   APP_URL: string;
   FIREBASE_PROJECT_ID?: string;
+  /** Адрес официального MCP-сервера TickTick; по умолчанию https://mcp.ticktick.com/. Нужен тестам. */
+  TICKTICK_MCP_URL?: string;
   ACCOUNTS: {
     idFromName(name: string): { toString(): string };
     idFromString(id: string): { toString(): string };
@@ -26,10 +30,13 @@ export class BridgeError extends Error {
   status: number;
   /** Код ответа TickTick, если ошибка пришла от него. */
   upstream?: number;
-  constructor(message: string, status = 502, upstream?: number) {
+  /** Безопасный код для диагностики, например TICKTICK_AUTH_REQUIRED. */
+  code?: string;
+  constructor(message: string, status = 502, upstream?: number, code?: string) {
     super(message);
     this.status = status;
     this.upstream = upstream;
+    this.code = code;
   }
 }
 function json(data: unknown, status = 200) {
@@ -69,6 +76,8 @@ export class TickTickAccount {
   private storage: Storage;
   private env: Env;
   private serial: Promise<unknown> = Promise.resolve();
+  /** Время последних запросов к маршрутам привычек: простой лимит, чтобы синхронизация не перегружала TickTick. */
+  private habitHits: number[] = [];
   constructor(state: ObjectState, env: Env) {
     this.storage = state.storage;
     this.env = env;
@@ -83,6 +92,7 @@ export class TickTickAccount {
               error instanceof BridgeError
                 ? error.message
                 : 'Не удалось обработать запрос TickTick.',
+            ...(error instanceof BridgeError && error.code ? { code: error.code } : {}),
           },
           error instanceof BridgeError ? error.status : 500,
         ),
@@ -168,6 +178,72 @@ export class TickTickAccount {
       );
     return response;
   }
+  /** Один вызов инструмента официального MCP-сервера TickTick (Streamable HTTP, JSON-RPC). Токен остаётся на сервере. */
+  private async mcp(tool: string, args: Record<string, unknown>): Promise<unknown> {
+    const base = this.env.TICKTICK_MCP_URL || 'https://mcp.ticktick.com/';
+    const token = await this.token();
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json, text/event-stream',
+    };
+    const post = async (payload: unknown, session?: string) => {
+      let response: Response;
+      try {
+        response = await fetch(base, {
+          method: 'POST',
+          headers: session ? { ...headers, 'Mcp-Session-Id': session } : headers,
+          body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(20000),
+        });
+      } catch {
+        throw new BridgeError('TickTick сейчас недоступен. Повтори позже.', 502, undefined, 'TICKTICK_UNAVAILABLE');
+      }
+      if (response.status === 401)
+        throw new BridgeError('Доступ TickTick истёк. Подключи аккаунт заново.', 401, 401, 'TICKTICK_AUTH_REQUIRED');
+      if (response.status === 403)
+        throw new BridgeError('TickTick не разрешил доступ к привычкам. Подключи аккаунт заново и разреши доступ.', 403, 403, 'TICKTICK_HABIT_SCOPE_DENIED');
+      if (response.status === 429)
+        throw new BridgeError('TickTick просит подождать. Повтори синхронизацию позже.', 429, 429, 'TICKTICK_RATE_LIMIT');
+      if (!response.ok)
+        throw new BridgeError('TickTick отклонил запрос. Изменения не подтверждены.', 502, response.status, 'TICKTICK_REQUEST_FAILED');
+      return response;
+    };
+    const parse = async (response: Response, id: number): Promise<Record<string, unknown> | undefined> => {
+      const raw = await response.text();
+      if (!raw.trim()) return undefined;
+      const candidates = (response.headers.get('content-type') ?? '').includes('text/event-stream')
+        ? raw.split('\n').filter((line) => line.startsWith('data:')).map((line) => line.slice(5).trim())
+        : [raw];
+      for (const item of candidates.reverse()) {
+        try {
+          const value = JSON.parse(item);
+          if (value && typeof value === 'object' && !Array.isArray(value) && (value as { id?: number }).id === id) return value as Record<string, unknown>;
+        } catch { /* некорректная строка потока пропускается */ }
+      }
+      return undefined;
+    };
+    const init = await post({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'play-your-life', version: '1' } } });
+    const session = init.headers.get('Mcp-Session-Id') ?? undefined;
+    await init.text();
+    await (await post({ jsonrpc: '2.0', method: 'notifications/initialized' }, session)).text();
+    const response = await post({ jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: tool, arguments: args } }, session);
+    const message = await parse(response, 2);
+    const failed = () => new BridgeError('TickTick вернул ошибку при работе с привычками.', 502, undefined, 'TICKTICK_HABITS_ERROR');
+    if (!message || message.error) throw failed();
+    const result = message.result as { isError?: boolean; structuredContent?: unknown; content?: { type?: string; text?: string }[] } | undefined;
+    if (!result || result.isError) throw failed();
+    if (result.structuredContent !== undefined) return result.structuredContent;
+    const textPart = result.content?.find((part) => part.type === 'text')?.text;
+    if (textPart === undefined) return {};
+    try { return JSON.parse(textPart); } catch { throw failed(); }
+  }
+  private async habitSections(): Promise<HabitSection[]> {
+    return normalizeSections(await this.mcp('list_habit_sections', {}));
+  }
+  private async habitLinks(): Promise<HabitLinksState> {
+    return (await this.storage.get<HabitLinksState>('habitLinks')) ?? emptyHabitLinks();
+  }
   private async handle(request: Request): Promise<Response> {
     const url = new URL(request.url);
     if (url.pathname === '/authorize' && request.method === 'POST') {
@@ -224,6 +300,9 @@ export class TickTickAccount {
       const settings = await this.storage.get<ReturnType<typeof emptyTickTickSettings>>('settings');
       await this.storage.put('settings', emptyTickTickSettings((settings?.revision ?? 0) + 1));
       await this.storage.put('epoch', (await this.storage.get<number>('epoch') ?? 0) + 1);
+      // Другой аккаунт TickTick: связи привычек и ключи отметок прежнего не переносятся.
+      await this.storage.put('habitLinks', emptyHabitLinks(((await this.storage.get<HabitLinksState>('habitLinks'))?.revision ?? 0) + 1));
+      await this.storage.delete('habitKeys');
       return Response.redirect(`${this.env.APP_URL}#ticktick=connected`, 302);
     }
     if (url.pathname === '/disconnect' && request.method === 'POST') {
@@ -232,6 +311,8 @@ export class TickTickAccount {
       const settings = await this.storage.get<ReturnType<typeof emptyTickTickSettings>>('settings');
       await this.storage.put('settings', emptyTickTickSettings((settings?.revision ?? 0) + 1));
       await this.storage.put('epoch', (await this.storage.get<number>('epoch') ?? 0) + 1);
+      await this.storage.put('habitLinks', emptyHabitLinks(((await this.storage.get<HabitLinksState>('habitLinks'))?.revision ?? 0) + 1));
+      await this.storage.delete('habitKeys');
       return json({ connected: false });
     }
     if (url.pathname === '/status' && request.method === 'GET') {
@@ -327,6 +408,73 @@ export class TickTickAccount {
       await this.storage.put(key, { id: value.id });
       return json(value);
     }
+    if (url.pathname === '/habits' || url.pathname.startsWith('/habits/')) {
+      const now = Date.now();
+      this.habitHits = this.habitHits.filter((time) => now - time < 60000);
+      if (this.habitHits.length >= 60)
+        throw new BridgeError('Слишком много запросов привычек. Повтори через минуту.', 429, undefined, 'RATE_LIMITED');
+      this.habitHits.push(now);
+    }
+    if (url.pathname === '/habits' && request.method === 'GET') {
+      if (!await this.storage.get('token')) throw new BridgeError('Подключи аккаунт TickTick.', 401, undefined, 'TICKTICK_AUTH_REQUIRED');
+      const sections = await this.habitSections();
+      const items = normalizeHabits(await this.mcp('list_habits', {}), sections).slice(0, 500);
+      return json({ items, sections });
+    }
+    if (url.pathname === '/habits/checkins' && request.method === 'GET') {
+      if (!await this.storage.get('token')) throw new BridgeError('Подключи аккаунт TickTick.', 401, undefined, 'TICKTICK_AUTH_REQUIRED');
+      let range: { from: string; to: string };
+      try { range = validRange(url.searchParams.get('from') ?? '', url.searchParams.get('to') ?? ''); }
+      catch { throw new BridgeError('Проверь период истории.', 400, undefined, 'INVALID_RANGE'); }
+      const ids = (url.searchParams.get('habitIds') ?? '').split(',').map((v) => v.trim()).filter(Boolean);
+      if (!ids.length || ids.length > 200 || ids.some((v) => !/^[\w-]{1,100}$/.test(v)))
+        throw new BridgeError('Проверь список привычек.', 400, undefined, 'INVALID_HABITS');
+      const items = [];
+      // Запросы пачками: список и период ограничены, чтобы не перегружать TickTick.
+      for (let i = 0; i < ids.length; i += 20)
+        items.push(...normalizeCheckins(await this.mcp('get_habit_checkins', { habit_ids: ids.slice(i, i + 20), from_stamp: stampOf(range.from), to_stamp: stampOf(range.to) })));
+      return json({ items, from: range.from, to: range.to });
+    }
+    if (url.pathname === '/habits/checkin' && request.method === 'POST') {
+      if (!await this.storage.get('token')) throw new BridgeError('Подключи аккаунт TickTick.', 401, undefined, 'TICKTICK_AUTH_REQUIRED');
+      const data = await body(request, 4000);
+      const habitId = data.ticktickHabitId;
+      const date = data.date;
+      const key = data.idempotencyKey;
+      const value = data.value ?? 1;
+      const goal = data.goal ?? 1;
+      const completed = data.completed ?? true;
+      if (typeof habitId !== 'string' || !/^[\w-]{1,100}$/.test(habitId) || typeof date !== 'string' || typeof key !== 'string' || !/^[\w:.-]{8,200}$/.test(key)
+        || typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1000000
+        || typeof goal !== 'number' || !Number.isFinite(goal) || goal <= 0 || goal > 1000000 || typeof completed !== 'boolean')
+        throw new BridgeError('Проверь отметку привычки.', 400, undefined, 'INVALID_CHECKIN');
+      let stamp: number;
+      try { stamp = stampOf(date); } catch { throw new BridgeError('Проверь дату отметки.', 400, undefined, 'INVALID_CHECKIN'); }
+      if (date > new Date(Date.now() + 86400000 * 2).toISOString().slice(0, 10)) throw new BridgeError('Отметку нельзя поставить на будущий день.', 400, undefined, 'INVALID_CHECKIN');
+      // Повтор того же запроса безопасен: сохранённый результат возвращается без нового обращения к TickTick.
+      const seen = (await this.storage.get<{ key: string; result: unknown }[]>('habitKeys')) ?? [];
+      const previous = seen.find((item) => item.key === key);
+      if (previous) return json({ ...(previous.result as object), repeated: true });
+      const now = new Date().toISOString();
+      await this.mcp('upsert_habit_checkins', { habit_id: habitId, checkin_data: { stamp, value, goal, status: completed ? 2 : 0, time: now, opTime: now } });
+      const result = { status: 'synced', ticktickHabitId: habitId, date, value, goal, completed };
+      await this.storage.put('habitKeys', [...seen, { key, result }].slice(-500));
+      return json(result);
+    }
+    if (url.pathname === '/habits/links' && request.method === 'GET') {
+      return json(await this.habitLinks());
+    }
+    if (url.pathname === '/habits/links' && request.method === 'PUT') {
+      if (!await this.storage.get('token')) throw new BridgeError('Сначала подключи аккаунт TickTick.', 401, undefined, 'TICKTICK_AUTH_REQUIRED');
+      let next: HabitLinksState;
+      try { next = validateHabitLinks(await body(request, 900000)); }
+      catch { throw new BridgeError('Некорректные связи привычек.', 400, undefined, 'INVALID_HABIT_LINKS'); }
+      const current = await this.habitLinks();
+      if (next.revision !== current.revision) throw new BridgeError('Связи привычек изменены на другом устройстве. Обнови подключение перед сохранением.', 409, undefined, 'HABIT_LINKS_CONFLICT');
+      const saved = { ...next, revision: current.revision + 1 };
+      await this.storage.put('habitLinks', saved);
+      return json(saved);
+    }
     const path = url.pathname.replace(/^\/api/, '');
     // Only the official task/project endpoints are exposed; no arbitrary upstream URLs.
     const allowed =
@@ -383,7 +531,7 @@ export default {
       if (!env.TICKTICK_CLIENT_ID || !env.TICKTICK_CLIENT_SECRET)
         throw new BridgeError('Сервер TickTick ещё не настроен.', 503);
       const key = request.headers.get('Authorization')?.replace(/^Bearer /, '');
-      if (!key) throw new BridgeError('Войдите в аккаунт PLAY YOUR LIFE.', 401);
+      if (!key) throw new BridgeError('Войдите в аккаунт PLAY YOUR LIFE.', 401, undefined, 'PLAY_LIFE_AUTH_REQUIRED');
       let name: string;
       if (/^[a-f0-9]{64}$/.test(key)) {
         // Compatibility with existing local connections; never shared with Firebase accounts.
@@ -404,7 +552,7 @@ export default {
         headers: { ...Object.fromEntries(response.headers), ...headers },
       });
     } catch (error) {
-      const response = json({ error: error instanceof BridgeError ? error.message : 'Сервер подключения временно недоступен.' }, error instanceof BridgeError ? error.status : 500);
+      const response = json({ error: error instanceof BridgeError ? error.message : 'Сервер подключения временно недоступен.', ...(error instanceof BridgeError && error.code ? { code: error.code } : {}) }, error instanceof BridgeError ? error.status : 500);
       return new Response(response.body, { status: response.status, headers: { ...Object.fromEntries(response.headers), ...headers } });
     }
   },

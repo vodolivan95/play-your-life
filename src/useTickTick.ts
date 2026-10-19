@@ -258,7 +258,11 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const restoreBlocked = connected || wasActivated(connection);
-  return { connection, status, busy, projects, connected, signedIn, dirty, restoreBlocked, configure, refresh, sync, save, disconnect, incoming, inboxBusy, inboxError, inboxNew, loadIncoming, refreshAll, acceptIncoming, dismissIncoming,
+  const bridge = <T,>(path: string, method = 'GET', data?: unknown): Promise<T> => {
+    const c = latest.current.connection;
+    return c ? request<T>(c, path, method, data) : Promise.reject(new Error('TickTick не подключён.'));
+  };
+  return { request: bridge, connection, status, busy, projects, connected, signedIn, dirty, restoreBlocked, configure, refresh, sync, save, disconnect, incoming, inboxBusy, inboxError, inboxNew, loadIncoming, refreshAll, acceptIncoming, dismissIncoming,
     update: patch => { if (!working.current) { setConnection(c => c ? { ...c, ...patch } : c); setDirty(true); } },
     suggest: () => { const c = latest.current.connection; if (c && !working.current) { setConnection({ ...c, sphereLists: matchSphereLists(projects, c.sphereLists) }); setDirty(true); } },
   };

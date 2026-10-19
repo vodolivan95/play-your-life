@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { spheres } from '../game';
 import type { GameState } from '../game';
@@ -17,6 +17,9 @@ import {
   weekRows,
 } from '../habitsView';
 import type { CalendarCell } from '../habitsView';
+import { TickTickHabitsContext } from '../tickTickContext';
+import TickTickHabits from './TickTickHabits';
+import { syncedText } from '../ticktickHabits';
 import './HabitsPage.css';
 
 const WEEK: [string, number][] = [['Пн', 1], ['Вт', 2], ['Ср', 3], ['Чт', 4], ['Пт', 5], ['Сб', 6], ['Вс', 0]];
@@ -151,13 +154,18 @@ export default function HabitsPage({ state, onChange, ownerId, today, notify }: 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const history: HabitCompletion[] = useMemo(() => state.habitCompletions ?? [], [state.habitCompletions]);
   const habits = useMemo(() => (state.habits ?? []).filter((h) => h.ownerId === ownerId && h.isActive), [state.habits, ownerId]);
-  const doneMap = useMemo(() => new Map(habits.map((h) => [h.id, doneDays(h, history)])), [habits, history]);
+  // Дни, импортированные из TickTick, видны в календаре и сериях, но наград не дают.
+  const tt = useContext(TickTickHabitsContext);
+  const external = tt?.external;
+  const [onlyTickTick, setOnlyTickTick] = useState(false);
+  const linkOf = (h: Habit) => tt?.links.links[h.id];
+  const doneMap = useMemo(() => new Map(habits.map((h) => [h.id, doneDays(h, history, external?.get(h.id))])), [habits, history, external]);
   const doneOf = (h: Habit) => doneMap.get(h.id) ?? new Set<string>();
   const dueToday = habits.filter((h) => isScheduled(h, today));
   const doneToday = dueToday.filter((h) => doneOf(h).has(today)).length;
   const streakOf = (h: Habit) => liveStreak(h, doneOf(h), today);
   const best = Math.max(0, ...habits.map(streakOf));
-  const percent = weekPercent(habits, history, today);
+  const percent = weekPercent(habits, history, today, external);
   const open = habits.find((h) => h.id === openId);
 
   const run = (make: () => GameState, message?: string) => {
@@ -210,7 +218,7 @@ export default function HabitsPage({ state, onChange, ownerId, today, notify }: 
   if (open) {
     const sp = sphereOf(open.sphere);
     const done = doneOf(open);
-    const stats = habitStats(open, history, today);
+    const stats = habitStats(open, history, today, 90, external?.get(open.id));
     const streak = streakOf(open);
     const monthDone = monthCells(today).filter((c) => !c.blank && done.has(c.day)).length;
     const monthSoFar = monthCells(today).filter((c) => !c.blank && !c.future && isScheduled(open, c.day)).length;
@@ -224,7 +232,8 @@ export default function HabitsPage({ state, onChange, ownerId, today, notify }: 
         </button>
         <header className="hb-d-head">
           <span className="hb-d-icon" style={{ background: `linear-gradient(180deg, ${sp.color}, ${sp.color}cc)` }} aria-hidden="true">{iconOf(open.iconId)}</span>
-          <div className="hb-d-title"><h1>{open.title}</h1><span><i style={{ background: sp.color }} />{sp.name} · {sched} · цель {open.targetValue} {open.unit}</span></div>
+          <div className="hb-d-title"><h1>{open.title}</h1><span><i style={{ background: sp.color }} />{sp.name} · {sched} · цель {open.targetValue} {open.unit}</span>
+            {linkOf(open) && <span className="tth-synced">Источник: TickTick{tt?.lastSyncAt ? ` · Синхронизировано: ${syncedText(tt.lastSyncAt)}` : ''}</span>}</div>
           <button type="button" className={`hb-d-check${doneNow ? ' is-done' : ''}`} aria-pressed={doneNow} disabled={doneNow || !due} onClick={() => complete(open)}>
             <Check size={22} />{doneNow ? 'Выполнено сегодня' : due ? 'Отметить сегодня' : 'Сегодня не по расписанию'}
           </button>
@@ -301,13 +310,15 @@ export default function HabitsPage({ state, onChange, ownerId, today, notify }: 
         <div className="hb-sum is-flame"><Flame /><div><strong>{best} {daysWord(best)}</strong><span>Лучшая серия сейчас</span></div></div>
         <div className="hb-sum"><span className="hb-sum-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3.5" /><path d="M8 3v4M16 3v4M3.5 10h17" /><path d="M8.5 15l2.3 2.3 4.7-5" /></svg></span><div><strong>{percent}%</strong><span>Выполнено за неделю</span></div></div>
       </section>
+      <TickTickHabits habits={habits} onArchive={(id) => { const h = (state.habits ?? []).find((x) => x.id === id); if (h) run(() => saveHabit(state, { ...h, isActive: false }, ownerId), 'Привычка скрыта'); }} />
       {!habits.length ? (
         <section className="hb-empty"><h2>Привычек пока нет</h2><p>Создай первую: выбери сферу, дни и награду, а игра будет считать серии и показывать календарь.</p><button type="button" className="hb-add" onClick={() => setForm(emptyForm())}>＋ Новая привычка</button></section>
       ) : (
         <div className="hb-body">
           <section className="hb-list" aria-label="Привычки">
             <div className="hb-list-head"><span>Привычка</span><span>7 дней</span><span>Серия</span><span /></div>
-            {habits.map((h) => {
+            {tt && Object.keys(tt.links.links).length > 0 && <button type="button" className="tth-filter" aria-pressed={onlyTickTick} onClick={() => setOnlyTickTick(!onlyTickTick)}>Только TickTick</button>}
+            {habits.filter((h) => !onlyTickTick || linkOf(h)).map((h) => {
               const sp = sphereOf(h.sphere);
               const done = doneOf(h);
               const due = isScheduled(h, today);
@@ -317,7 +328,7 @@ export default function HabitsPage({ state, onChange, ownerId, today, notify }: 
                 <div key={h.id} className={`hb-row${doneNow ? ' is-done' : ''}`}>
                   <button type="button" className="hb-row-main" onClick={() => setOpenId(h.id)} aria-label={`Открыть: ${h.title}`}>
                     <span className="hb-row-icon" style={{ background: `linear-gradient(180deg, ${sp.color}, ${sp.color}cc)` }} aria-hidden="true">{iconOf(h.iconId)}</span>
-                    <span className="hb-row-text"><strong>{h.title}</strong><small><i style={{ background: sp.color }} />{sp.name}</small></span>
+                    <span className="hb-row-text"><strong>{h.title}{linkOf(h) && <span className="tth-source" title={tt?.lastSyncAt ? `Синхронизировано: ${syncedText(tt.lastSyncAt)}` : undefined}>TickTick</span>}</strong><small><i style={{ background: sp.color }} />{sp.name}</small></span>
                     <span className="hb-row-days" aria-hidden="true">{lastDays(today, 7).map((day) => <i key={day} className={`is-${dayStatus(h, done, day, today)}${day === today ? ' is-today' : ''}`} />)}</span>
                     <span className="hb-row-streak"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 2.5c.9 3.2 4.3 4.3 4.3 8.3a4.3 4.3 0 0 1-8.6 0c0-2.1 1-3.4 2.2-4.3 0 2 1 2.5 1.2 2.5.2-2.2-.9-3.7.9-6.5z" fill="currentColor" /></svg>{streak}</span>
                   </button>

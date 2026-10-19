@@ -1,0 +1,27 @@
+/* Панель TickTick на экране «Привычки». Использует переменные .hb-page. */
+.tth { display: grid; gap: 12px; padding: 16px 18px; border-radius: 20px; background: var(--hb-card); border: 1.5px solid var(--hb-line); min-width: 0; }
+.tth-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.tth-head > div { display: flex; align-items: center; gap: 10px; }
+.tth-head strong { font-size: 18px; font-weight: 900; }
+.tth-head small, .tth small { color: var(--hb-muted); font-size: 12px; }
+.tth-badge { padding: 3px 10px; border-radius: 999px; background: var(--hb-dot); font-size: 12px; font-weight: 800; }
+.tth-badge.is-on { background: var(--hb-green); color: #04210f; }
+.tth-actions, .tth-pair { display: flex; flex-wrap: wrap; gap: 8px; }
+.tth .hb-btn.is-primary { background: var(--hb-blue); color: #fff; border-color: transparent; }
+.tth .hb-btn:disabled { opacity: .5; cursor: not-allowed; }
+.tth-note, .tth-msg { font-size: 13px; color: var(--hb-soft); }
+.tth-warn { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: var(--hb-fire); }
+.tth-box { display: grid; gap: 10px; padding: 14px; border-radius: 16px; background: var(--hb-card-2); border: 1px solid var(--hb-line); }
+.tth-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.tth-item, .tth-conflict { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.tth-item > *, .tth-conflict > span { min-width: 0; }
+.tth-check { display: flex; align-items: flex-start; gap: 10px; flex: 1 1 220px; }
+.tth-check span, .tth-conflict > span { display: grid; gap: 2px; font-weight: 700; }
+.tth-select { display: grid; gap: 4px; font-size: 12px; color: var(--hb-muted); }
+.tth-select select { min-height: 40px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--hb-line); background: var(--hb-card); color: var(--hb-text); font: inherit; }
+.tth-map { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); align-items: center; }
+.tth-source { display: inline-flex; align-items: center; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--hb-blue); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .02em; }
+.tth-filter { min-height: 48px; padding: 0 16px; border-radius: 14px; border: 1.5px solid var(--hb-line); background: var(--hb-card); color: var(--hb-text); font-size: 14px; font-weight: 800; cursor: pointer; }
+.tth-filter[aria-pressed='true'] { background: var(--hb-blue); color: #fff; border-color: transparent; }
+.tth-synced { font-size: 12px; color: var(--hb-muted); }
+@media (max-width: 640px) { .tth { padding: 14px; } .tth-map { grid-template-columns: 1fr; } }

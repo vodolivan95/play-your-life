@@ -81,6 +81,10 @@ test('месяц суммирует все источники XP и считае
   assert.equal(result.days.find((d) => d.number === 5)?.xp, 35);
   assert.equal(result.days.find((d) => d.number === 25)?.xp, 0);
   assert.equal(result.days.find((d) => d.number === 25)?.future, true);
+  // Итоги по сферам: количество выполненных задач считается так же, как и общее «Задач» —
+  // только реальные квесты этого месяца этой сферы (не цели, не старые события без kind, не будущее).
+  assert.equal(result.sphereResults.find((s) => s.id === 'sport')?.quests, 1);
+  assert.equal(result.sphereResults.find((s) => s.id === 'health')?.quests, 0);
 });
 test('Life Score восстанавливает начало и конец месяца, включая снижение без штрафа XP', () => {
   const state = stateFixture();

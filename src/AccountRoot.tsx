@@ -25,11 +25,13 @@ function AccountBrand() {
   return <div className="account-brand"><BrandLogo size={44} decorative /><span>PLAY YOUR LIFE</span></div>;
 }
 
+function errorCode(error: unknown) {
+  return error && typeof error === 'object' && 'code' in error
+    ? String(error.code)
+    : '';
+}
 function errorText(error: unknown) {
-  const code =
-    error && typeof error === 'object' && 'code' in error
-      ? String(error.code)
-      : '';
+  const code = errorCode(error);
   if (
     code.includes('invalid-credential') ||
     code.includes('wrong-password') ||
@@ -46,6 +48,10 @@ function errorText(error: unknown) {
     return 'Слишком много попыток. Попробуйте позже.';
   if (code.includes('network-request-failed'))
     return 'Нет связи с сервером. Проверьте интернет.';
+  if (code.includes('unauthorized-domain') || code.includes('unauthorized-continue-uri'))
+    return 'Этот адрес сайта не разрешён в настройках входа Firebase.';
+  // Код нужен для диагностики; пароль и почта в него не попадают.
+  console.warn('Ошибка входа:', code || error);
   return 'Не удалось выполнить действие. Попробуйте снова.';
 }
 function download(state: GameState, name: string) {
@@ -76,7 +82,13 @@ function Login({ onGuest }: { onGuest: () => void }) {
     setBusy(true);
     try {
       if (mode === 'reset') {
-        await sendPasswordResetEmail(auth, email.trim());
+        try {
+          await sendPasswordResetEmail(auth, email.trim());
+        } catch (error) {
+          // Неизвестную почту не выдаём: ответ одинаков для любого корректного адреса.
+          const code = errorCode(error);
+          if (!code.includes('user-not-found')) throw error;
+        }
         setMessage(
           'Если аккаунт существует, на почту придёт ссылка для смены пароля.',
         );

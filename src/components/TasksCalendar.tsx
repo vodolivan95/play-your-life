@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, DragEvent } from 'react';
 import { spheres } from '../game';
 import type { Quest } from '../game';
 import {
@@ -33,15 +33,19 @@ const longDate = (key: string) => {
   return `${date.getDate()} ${monthGenitive[date.getMonth()]}`;
 };
 
-function Chip({ item, selected, onPick, label }: { item: CalendarItem; selected: boolean; onPick: () => void; label?: string }) {
+function Chip({ item, selected, onPick, label, onDragStart, onDragEnd, dragging }: { item: CalendarItem; selected: boolean; onPick: () => void; label?: string; onDragStart: (e: DragEvent) => void; onDragEnd: () => void; dragging: boolean }) {
   const { quest } = item;
+  const movable = !quest.done && !quest.tickTickSharedAt;
   return (
     <button
       type="button"
-      className={`tcal-chip${quest.done ? ' is-done' : ''}${selected ? ' is-selected' : ''}`}
+      className={`tcal-chip${quest.done ? ' is-done' : ''}${selected ? ' is-selected' : ''}${dragging ? ' is-dragging' : ''}`}
       style={{ '--c': colorOf(quest) } as CSSProperties}
       onClick={onPick}
-      title={quest.name}
+      draggable={movable}
+      onDragStart={movable ? onDragStart : undefined}
+      onDragEnd={onDragEnd}
+      title={movable ? quest.name : `${quest.name}${quest.tickTickSharedAt ? ' · плановая дата из TickTick, перенести здесь нельзя' : ''}`}
     >
       {label ?? `${item.start ? `${item.start} ` : ''}${quest.tickTickSharedAt ? '⟳ ' : ''}${quest.name}`}
     </button>
@@ -53,16 +57,45 @@ export default function TasksCalendar({
   quests,
   today,
   onOpen,
+  onMove,
 }: {
   quests: Quest[];
   today: string;
   onOpen: (quest: Quest) => void;
+  /** Перенос задачи на другой день перетаскиванием: столько дней сдвинуть срок. */
+  onMove?: (quest: Quest, days: number) => void;
 }) {
   const [view, setView] = useState<CalendarView>('month');
   const [anchor, setAnchor] = useState(today);
   const [focus, setFocus] = useState('');
   const [selectedId, setSelectedId] = useState('');
+  const [draggedId, setDraggedId] = useState('');
+  const [overDay, setOverDay] = useState('');
   const items = useMemo(() => calendarItems(quests), [quests]);
+  const startDrag = (item: CalendarItem) => (e: DragEvent) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', item.quest.id);
+    setDraggedId(item.quest.id);
+  };
+  const endDrag = () => {
+    setDraggedId('');
+    setOverDay('');
+  };
+  const allowDrop = (day: string) => (e: DragEvent) => {
+    if (!draggedId) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (overDay !== day) setOverDay(day);
+  };
+  const dropOnDay = (day: string) => (e: DragEvent) => {
+    e.preventDefault();
+    const id = e.dataTransfer.getData('text/plain') || draggedId;
+    endDrag();
+    const item = items.find((x) => x.quest.id === id);
+    if (!item || item.day === day || !onMove) return;
+    const days = Math.round((parseDay(day).getTime() - parseDay(item.day).getTime()) / 86400000);
+    if (days) onMove(item.quest, days);
+  };
   const days = calendarDays(view, anchor);
   const anchorDate = parseDay(anchor);
   const now = new Date(`${today}T${new Date().toTimeString().slice(0, 5)}:00`);
@@ -179,7 +212,13 @@ export default function TasksCalendar({
                 const other = view === 'month' && date.getMonth() !== anchorDate.getMonth();
                 const shown = focused ? list : list.slice(0, limit);
                 return (
-                  <div key={day} className={`tcal-cell${day === today ? ' is-today' : ''}${focused ? ' is-focus' : ''}${other ? ' is-other' : ''}${((date.getDay() + 6) % 7) > 4 ? ' is-weekend' : ''}`}>
+                  <div
+                    key={day}
+                    className={`tcal-cell${day === today ? ' is-today' : ''}${focused ? ' is-focus' : ''}${other ? ' is-other' : ''}${((date.getDay() + 6) % 7) > 4 ? ' is-weekend' : ''}${overDay === day ? ' is-drop' : ''}`}
+                    onDragOver={allowDrop(day)}
+                    onDragLeave={() => setOverDay((d) => (d === day ? '' : d))}
+                    onDrop={dropOnDay(day)}
+                  >
                     <button
                       type="button"
                       className="tcal-num"
@@ -191,7 +230,7 @@ export default function TasksCalendar({
                     </button>
                     <div className={`tcal-list${focused ? ' is-scroll' : ''}${view === 'twoWeeks' ? ' is-tall' : ''}`}>
                       {shown.map((item) => (
-                        <Chip key={item.quest.id} item={item} selected={selectedId === item.quest.id} onPick={() => setSelectedId(item.quest.id)} />
+                        <Chip key={item.quest.id} item={item} selected={selectedId === item.quest.id} onPick={() => setSelectedId(item.quest.id)} onDragStart={startDrag(item)} onDragEnd={endDrag} dragging={draggedId === item.quest.id} />
                       ))}
                     </div>
                     {!focused && list.length > limit && <span className="tcal-more">ещё {list.length - limit}</span>}
@@ -219,9 +258,9 @@ export default function TasksCalendar({
               <div className="tcal-allday">
                 <small>весь день</small>
                 {days.map((day) => (
-                  <div key={day}>
+                  <div key={day} className={overDay === day ? 'is-drop' : ''} onDragOver={allowDrop(day)} onDragLeave={() => setOverDay((d) => (d === day ? '' : d))} onDrop={dropOnDay(day)}>
                     {itemsForDay(items, day).filter((item) => !item.start).map((item) => (
-                      <Chip key={item.quest.id} item={item} selected={selectedId === item.quest.id} onPick={() => setSelectedId(item.quest.id)} label={`${item.quest.tickTickSharedAt ? '⟳ ' : ''}${item.quest.name}`} />
+                      <Chip key={item.quest.id} item={item} selected={selectedId === item.quest.id} onPick={() => setSelectedId(item.quest.id)} label={`${item.quest.tickTickSharedAt ? '⟳ ' : ''}${item.quest.name}`} onDragStart={startDrag(item)} onDragEnd={endDrag} dragging={draggedId === item.quest.id} />
                     ))}
                   </div>
                 ))}
@@ -233,17 +272,28 @@ export default function TasksCalendar({
                   ))}
                 </div>
                 {days.map((day) => (
-                  <div key={day} className={`tcal-col${day === today ? ' is-today' : ''}`}>
+                  <div
+                    key={day}
+                    className={`tcal-col${day === today ? ' is-today' : ''}${overDay === day ? ' is-drop' : ''}`}
+                    onDragOver={allowDrop(day)}
+                    onDragLeave={() => setOverDay((d) => (d === day ? '' : d))}
+                    onDrop={dropOnDay(day)}
+                  >
                     {itemsForDay(items, day).filter((item) => item.start && item.end).map((item) => {
                       const top = ((minutesOf(item.start!) - firstHour * 60) / 60) * hourHeight + 1;
                       const height = Math.max(26, ((minutesOf(item.end!) - minutesOf(item.start!)) / 60) * hourHeight - 3);
+                      const movable = !item.quest.done && !item.quest.tickTickSharedAt;
                       return (
                         <button
                           key={item.quest.id}
                           type="button"
-                          className={`tcal-event${item.quest.done ? ' is-done' : ''}${selectedId === item.quest.id ? ' is-selected' : ''}`}
+                          className={`tcal-event${item.quest.done ? ' is-done' : ''}${selectedId === item.quest.id ? ' is-selected' : ''}${draggedId === item.quest.id ? ' is-dragging' : ''}`}
                           style={{ '--c': colorOf(item.quest), top, height } as CSSProperties}
                           onClick={() => setSelectedId(item.quest.id)}
+                          draggable={movable}
+                          onDragStart={movable ? startDrag(item) : undefined}
+                          onDragEnd={endDrag}
+                          title={movable ? undefined : 'Плановая дата из TickTick, перенести здесь нельзя'}
                         >
                           <b>{item.quest.name}</b>
                           <span>{item.start} – {item.end}</span>

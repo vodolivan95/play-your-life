@@ -39,6 +39,23 @@ test('настройки: отказы', () => {
   // Одиночные задачи тоже можно отключать от TickTick.
   assert.equal(updateTaskSettings(s, 'q4', { sync: false }).quests.find((q) => q.id === 'q4')?.tickTickSync, false);
 });
+test('перенос в календаре: сдвигает срок (и начало) на N дней, время суток сохраняется', () => {
+  const s = state([quest({ dueAt: '2026-10-20T15:30:00.000Z', startsAt: '2026-10-20T13:00:00.000Z' })]);
+  const moved = updateTaskSettings(s, 'q1', { shiftDays: 2 }).quests[0];
+  assert.equal(moved.dueAt, '2026-10-22T15:30:00.000Z');
+  assert.equal(moved.startsAt, '2026-10-22T13:00:00.000Z');
+  // Дата без времени (как у «Срок» без выбора часа) сдвигается так же просто.
+  const plain = updateTaskSettings(state([quest({ dueAt: '2026-10-20' })]), 'q1', { shiftDays: -5 }).quests[0];
+  assert.equal(plain.dueAt, '2026-10-15');
+});
+test('перенос в календаре: связанную с TickTick задачу (плановую дату) перетащить нельзя', () => {
+  const s = state([quest({ dueAt: '2026-10-20', tickTickSharedAt: '2026-10-19T00:00:00.000Z' })]);
+  assert.throws(() => updateTaskSettings(s, 'q1', { shiftDays: 1 }), /TickTick/);
+});
+test('перенос в календаре: без срока или без смещения — отказ', () => {
+  assert.throws(() => updateTaskSettings(state([quest({})]), 'q1', { shiftDays: 1 }));
+  assert.throws(() => updateTaskSettings(state([quest({ dueAt: '2026-10-20' })]), 'q1', { shiftDays: 0 }));
+});
 test('вклад: доля в цели и синхронизация', () => {
   const s = state([quest({}), quest({ id: 'q5' })]);
   const c = taskContribution(s, s.quests[0]);

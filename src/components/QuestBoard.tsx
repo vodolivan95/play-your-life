@@ -10,6 +10,8 @@ import {
   virtualRewards,
 } from "../personalQuests";
 import type { Habit } from "../personalQuests";
+import { pluralDays } from "../goalsOverview";
+import { updateTaskSettings } from "../taskSettings";
 import QuestWizard from "./QuestWizard";
 import GoalTaskList from "./GoalTaskList";
 import TaskWindow from "./TaskWindow";
@@ -147,7 +149,19 @@ export default function QuestBoard({
         />
       )}
       {mode === "calendar" && (
-        <TasksCalendar quests={quests} today={today} onOpen={(q) => setOpenTask(q.id)} />
+        <TasksCalendar
+          quests={quests}
+          today={today}
+          onOpen={(q) => setOpenTask(q.id)}
+          onMove={(q, days) => {
+            try {
+              onChange(updateTaskSettings(state, q.id, { shiftDays: days }));
+              notify(`«${q.name}» перенесена на ${pluralDays(Math.abs(days))} ${days > 0 ? "вперёд" : "назад"}`);
+            } catch (e) {
+              notify((e as Error).message);
+            }
+          }}
+        />
       )}
       </div>
       <TasksAside quests={quests} connected={connected} />

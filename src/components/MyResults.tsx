@@ -38,6 +38,14 @@ const trends: { id: SphereTrend; label: string }[] = [
   { id: 'down', label: 'Просадка' },
 ];
 const moodLabels = ['Тяжело', 'Так себе', 'Нормально', 'Хорошо', 'Отлично'];
+function questsWord(n: number) {
+  const last = n % 10;
+  const teen = n % 100;
+  if (teen > 10 && teen < 20) return 'задач';
+  if (last === 1) return 'задача';
+  if (last >= 2 && last <= 4) return 'задачи';
+  return 'задач';
+}
 
 function readHints() {
   try {
@@ -250,9 +258,10 @@ export default function MyResults({
             {spheres.map((s) => {
               const r = sphereReviewOf(review, s.id);
               const lowConfidence = needsSmallerStep(r.task);
+              const sphereQuests = summary.sphereResults.find((x) => x.id === s.id)?.quests ?? 0;
               return (
                 <section className="myr-sphere" key={s.id} style={{ ['--sphere' as string]: s.color }}>
-                  <h4><i /> {s.name}</h4>
+                  <h4><i /> {s.name} <span className="myr-sphere-quests">{sphereQuests} {questsWord(sphereQuests)} за месяц</span></h4>
                   <div className="myr-three">
                     <label>
                       <span>Что удалось достичь</span>

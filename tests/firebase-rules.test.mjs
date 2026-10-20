@@ -39,6 +39,29 @@ test("владелец создаёт игру с 0 XP и обновляет т�
   await assertFails(updateDoc(ref, save(50, 2)));
   await assertFails(setDoc(doc(db, "players", "other"), save()));
 });
+test("создание аккаунта с уже накопленным локальным прогрессом (игрок успел сыграть до первой синхронизации) переносит прогресс, а не теряет его", async () => {
+  const db = env.authenticatedContext("alice").firestore(),
+    driver = firebaseSave(db, "alice");
+  let local = saveCustomQuest(
+    newAccountGame("Алиса"),
+    {
+      name: "Тест 1",
+      sphere: "health",
+      difficulty: "Very Hard",
+      rewardCoins: 0,
+    },
+    "alice",
+  );
+  local = completeQuest(local, local.quests[0].id);
+  assert.equal(local.xp, 80);
+  const created = await driver.create(local);
+  assert.equal(created.state.xp, 80);
+  assert.equal(created.state.quests[0].done, true);
+  assert.equal(created.state.coinTransactions.length, 1);
+  const loaded = await driver.load();
+  assert.equal(loaded.state.xp, 80);
+  assert.equal(loaded.state.coinTransactions.length, 1);
+});
 test("другой пользователь не читает и не меняет чужую игру", async () => {
   await assertSucceeds(
     setDoc(

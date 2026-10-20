@@ -101,3 +101,4 @@
 .coastal-city--app .coastal-chips button { min-height:48px; padding:0 16px; font-size:14px; }
 .coastal-city--app .coastal-zoom button { min-width:48px; min-height:48px; font-size:22px; }
 .coastal-city--app .coastal-hint { font-size:12px; }
+.city3d-loading { display:grid; place-items:center; min-height:40vh; border-radius:20px; background:#1a3a52; color:#cfe6f5; font-size:14px; }

@@ -5,6 +5,7 @@ import {
   questCoins,
   virtualRewards,
 } from "./personalQuests.ts";
+import { canonical } from "./stateFingerprint.ts";
 export type EconomyRecord = {
   type: "quest" | "habit";
   coins: number;
@@ -109,9 +110,17 @@ export function recordIncome(
     : Object.keys(next.claims).filter((day) => !old.claims[day]).length *
         old.coins;
 }
+/**
+ * Firestore не хранит порядок ключей объекта: после round-trip через сервер
+ * свежепрочитанная запись может иметь тот же набор полей в другом порядке,
+ * чем только что построенная клиентом. Прямой JSON.stringify считал бы это
+ * изменением и бесконечно пересылал бы уже сохранённую запись без доказательства
+ * награды — Firestore справедливо такую запись отклонял (permission-denied).
+ * canonical() сравнивает по значению, а не по порядку ключей.
+ */
 export function recordChanges(old: EconomyRecords, next: EconomyRecords) {
   return Object.keys(next).filter(
-    (id) => JSON.stringify(old[id]) !== JSON.stringify(next[id]),
+    (id) => canonical(old[id]) !== canonical(next[id]),
   );
 }
 /** Trust the stored balance and previously approved reward definitions, never a client balance increment. */

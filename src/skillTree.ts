@@ -7,6 +7,8 @@ export const SKILL_POINTS_PER_LEVEL = 2;
 export const MAX_SKILL_TIER = 6;
 export const MAX_SKILL_LEVELS = 10;
 export const MAX_SKILL_COST = 3;
+/** How far a node can sit sideways from the branch's centre line — lets a branch fork. */
+export const MAX_SKILL_LANE = 2;
 export const MAX_BRANCHES = 8;
 export const MAX_NODES = 60;
 export const MAX_SKILL_NAME = 40;
@@ -30,6 +32,8 @@ export type SkillNode = {
   name: string;
   icon: string;
   tier: number;
+  /** Sideways slot within the branch at this tier, -MAX_SKILL_LANE..MAX_SKILL_LANE; 0 is the trunk. Lets a branch fork into several nodes on the same tier. */
+  lane?: number;
   levels: number;
   level: number;
   cost: number;
@@ -45,6 +49,7 @@ export type SkillNodeInput = {
   name: string;
   icon: string;
   tier: number;
+  lane?: number;
   levels: number;
   cost: number;
   requiresId?: string;
@@ -287,6 +292,9 @@ export function saveNode(
       Number.isInteger(v) && v >= min && v <= max;
     if (!whole(input.tier, 1, MAX_SKILL_TIER))
       throw new Error(`Ярус — число от 1 до ${MAX_SKILL_TIER}.`);
+    const lane = input.lane ?? 0;
+    if (!whole(lane, -MAX_SKILL_LANE, MAX_SKILL_LANE))
+      throw new Error(`Боковое смещение — от -${MAX_SKILL_LANE} до ${MAX_SKILL_LANE}.`);
     if (!whole(input.levels, 1, MAX_SKILL_LEVELS))
       throw new Error(`Уровней — от 1 до ${MAX_SKILL_LEVELS}.`);
     if (!whole(input.cost, 1, MAX_SKILL_COST))
@@ -298,10 +306,11 @@ export function saveNode(
         (n) =>
           n.id !== input.id &&
           n.branchId === input.branchId &&
-          n.tier === input.tier,
+          n.tier === input.tier &&
+          (n.lane ?? 0) === lane,
       )
     )
-      throw new Error('В этой ветке на этом ярусе уже есть навык.');
+      throw new Error('Это место на ярусе уже занято — выбери другой боковой слот.');
     if (
       tree.nodes.some(
         (n) =>
@@ -332,6 +341,7 @@ export function saveNode(
       name,
       icon: input.icon,
       tier: input.tier,
+      ...(lane !== 0 ? { lane } : {}),
       levels: input.levels,
       level: input.goalId ? 0 : Math.min(old?.level ?? 0, input.levels),
       cost: input.cost,
@@ -464,6 +474,7 @@ export function validSkillTrees(value: unknown): value is SkillTrees {
         name(n.name) &&
         skillIconIds.includes(n.icon as (typeof skillIconIds)[number]) &&
         int(n.tier, 1, MAX_SKILL_TIER) &&
+        (n.lane === undefined || int(n.lane, -MAX_SKILL_LANE, MAX_SKILL_LANE)) &&
         int(n.levels, 1, MAX_SKILL_LEVELS) &&
         int(n.level, 0, MAX_SKILL_LEVELS) &&
         (n.level as number) <= (n.levels as number) &&
@@ -476,7 +487,8 @@ export function validSkillTrees(value: unknown): value is SkillTrees {
     const list = nodes as SkillNode[];
     if (new Set(list.map((n) => n.id)).size !== list.length) return false;
     if (
-      new Set(list.map((n) => `${n.branchId}:${n.tier}`)).size !== list.length
+      new Set(list.map((n) => `${n.branchId}:${n.tier}:${n.lane ?? 0}`)).size !==
+      list.length
     )
       return false;
     return list.every(

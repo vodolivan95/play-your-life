@@ -7,6 +7,8 @@ import {
   newConnection,
   syncTickTick,
   matchSphereLists,
+  remoteFields,
+  remotePayload,
 } from '../src/ticktick.ts';
 import type { RemoteTask } from '../src/ticktick.ts';
 function setup() {
@@ -739,8 +741,10 @@ test('передача выбранной конкретной задачи не
   const task = [...api.tasks.values()][0];
   assert.equal(task.title, 'Аудирование 1 час');
   assert.match(task.content!, /Этап: 100 часов аудирования/);
-  assert.equal(task.startDate, '2026-10-04T11:00:00+0000');
-  assert.equal(task.dueDate, '2026-10-04T12:00:00+0000');
+  // Момент должен быть ровно тем же, что и в игре — строка отдаётся в смещении часового пояса
+  // игрока (а не всегда в UTC), поэтому сравниваем сами моменты, а не буквальный текст.
+  assert.equal(new Date(task.startDate!).getTime(), new Date('2026-10-04T11:00:00Z').getTime());
+  assert.equal(new Date(task.dueDate!).getTime(), new Date('2026-10-04T12:00:00Z').getTime());
   assert.equal(result.connection.links.other, undefined);
   assert.equal(result.state.xp, state.xp);
   await syncTickTick(result.state, result.connection, api.request, [
@@ -771,4 +775,34 @@ test('ограниченная передача сохраняет связи о
   const calls = api.calls.length;
   await syncTickTick(state, connection, api.request, []);
   assert.equal(api.calls.length, calls);
+});
+// 20 октября 2026: TickTick шлёт дату-время в своём смещении (например +0300 для Москвы).
+// Полночь в этом смещении — это задача без конкретного времени, просто календарный день; его
+// нужно брать прямо из строки, а не пересчитывать в UTC — иначе день съезжает на соседние сутки
+// (полночь по Москве — это 21:00 предыдущих суток в UTC). Регрессия на баг с «Запишись к
+// стоматологу» (дата TickTick 28-е показывалась в игре как 27-е), см. AGENTS.md.
+test('remoteFields: полночь по смещению TickTick — календарный день без сдвига, время не теряется', () => {
+  assert.equal(
+    remoteFields({ id: 'r', projectId: 'p', title: 'Т', dueDate: '2026-10-28T00:00:00+0300' }).dueAt,
+    '2026-10-28',
+  );
+  assert.equal(
+    remoteFields({ id: 'r', projectId: 'p', title: 'Т', dueDate: '2026-10-28T19:30:00+0300' }).dueAt,
+    new Date('2026-10-28T19:30:00+0300').toISOString(),
+  );
+});
+test('remotePayload: срок без времени уходит в TickTick тем же днём и как весь день', () => {
+  const { state, connection } = setup();
+  const task = { ...state.quests[0], dueAt: '2026-10-28', startsAt: undefined };
+  const payload = remotePayload(task, state, connection);
+  assert.equal(payload.isAllDay, true);
+  assert.match(payload.dueDate!, /^2026-10-28T00:00:00[+-]\d{4}$/);
+});
+test('remotePayload: срок с конкретным временем уходит в TickTick с тем же временем и isAllDay=false', () => {
+  const { state, connection } = setup();
+  const dueAt = new Date('2026-10-28T19:30:00+0300').toISOString();
+  const task = { ...state.quests[0], dueAt, startsAt: undefined };
+  const payload = remotePayload(task, state, connection);
+  assert.equal(payload.isAllDay, false);
+  assert.equal(new Date(payload.dueDate!).getTime(), new Date(dueAt).getTime());
 });

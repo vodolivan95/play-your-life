@@ -265,7 +265,7 @@ export type TickTickResult = {
 function errorText(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
-function isNotFound(error: unknown) {
+export function isNotFound(error: unknown) {
   return error instanceof Error && error.message.endsWith('(404)');
 }
 /** Ошибки, при которых нет смысла продолжать остальные задачи: сеть, доступ, лимит запросов, сбой сервера. */

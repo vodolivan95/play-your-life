@@ -25,6 +25,8 @@ export type TickTickManager = {
   inboxNew: number;
   acceptIncoming: (remoteId: string, choice: IncomingChoice) => Promise<string>;
   dismissIncoming: (remoteId: string) => Promise<void>;
+  /** Удаляет входящую задачу и в TickTick: в отличие от «Пропустить», она не вернётся во входящие. */
+  deleteIncoming: (remoteId: string, projectId: string) => Promise<void>;
   /** Запрос к серверу подключения от имени текущего аккаунта. Токены TickTick браузеру не передаются. */
   request: <T>(path: string, method?: string, data?: unknown) => Promise<T>;
 };

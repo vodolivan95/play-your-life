@@ -19,6 +19,7 @@ import type { CloudSplit } from "./cloudSplit.ts";
 import type { Event } from "./game.ts";
 import { restoreBackup } from "./backup.ts";
 import type { GameState } from "./game.ts";
+import { newAccountGame } from "./accountGame.ts";
 import {
   economyRecords,
   recordChanges,
@@ -130,21 +131,31 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
     },
     async create(state) {
       const now = new Date();
-      const part = splitForCloud(state, now);
       const existing = await getDocFromServer(ref);
       if (existing.exists()) return assemble(decode(existing.data()));
-      await upload([part], null);
+      // Правила разрешают создание документа только при xp=0 и coins=0 (иначе игру
+      // можно было бы начать не с нуля). Если игрок успел что-то сделать до первой
+      // синхронизации (например, сразу после регистрации выполнил задачу), в state
+      // уже есть прогресс — тогда создаём аккаунт с пустой игрой, как при обычной
+      // регистрации, и сразу переносим реальный прогресс обычным save(), который
+      // проверяет каждую награду доказательством, как и при обычной игре.
+      const blank: GameState = {
+        ...newAccountGame(state.profile.name),
+        profile: state.profile,
+      };
+      await upload([splitForCloud(blank, now)], null);
       const row = await runTransaction(database, async (transaction) => {
         const snapshot = await transaction.get(ref);
         if (snapshot.exists()) return decode(snapshot.data());
         transaction.set(ref, {
-          state: clean(state, now),
+          state: clean(blank, now),
           revision: 1,
           updatedAt: serverTimestamp(),
         });
-        return { state, revision: 1 };
+        return { state: blank, revision: 1 };
       });
-      return row.state === state ? row : assemble(row);
+      if (row.state !== blank) return assemble(row);
+      return (await this.save(state, row.revision)) ?? row;
     },
     async save(state, revision, progress?: SaveProgress) {
       state = {

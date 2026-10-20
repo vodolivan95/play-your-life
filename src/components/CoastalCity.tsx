@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { spheres } from '../game';
 import type { GameState } from '../game';
@@ -16,8 +16,6 @@ import { sphereCards } from '../sphereDetails';
 import './CoastalCity.css';
 import { useCityZoom } from '../cityLive/useCityZoom';
 import { isNativeApp } from '../platform';
-// Ленивая загрузка: Three.js/@react-three грузятся отдельным чанком только в приложении, сайт их не скачивает.
-const CityIsland3D = lazy(() => import('./CityIsland3D'));
 
 const weatherOptions = [
   ['clear','Ясно'],['partlyCloudy','Переменная облачность'],['cloudy','Облачно'],
@@ -49,8 +47,8 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
   state:GameState;onOpen:(id:string)=>void;paused:boolean;speed:number;
 }) {
   const {zoom,setZoom,scroll}=useCityZoom();
-  const nativeApp=isNativeApp();
   const wide=useWide();
+  const nativeApp=isNativeApp();
   const cards=useMemo(()=>sphereCards(state),[state]);
   const [picked,setPicked]=useState<string|null>(null);
   const current=cards.find(c=>c.id===picked)??null;
@@ -76,9 +74,8 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
     const url=URL.createObjectURL(new Blob([JSON.stringify(routes,null,2)],{type:'application/json'}));
     const link=document.createElement('a');link.href=url;link.download='play-your-life-city-routes.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   };
-  const island3d=nativeApp&&new URLSearchParams(window.location.search).get('city-flat')!=='1';
   return <div className={`coastal-city${nativeApp?' coastal-city--app':''}`}>
-    {!island3d&&<div className="coastal-controls" aria-label="Вид города">
+    <div className="coastal-controls" aria-label="Вид города">
       <label>Время <select aria-label="Время города" value={preferences.time} onChange={e=>setPreferences({...preferences,time:e.target.value as CityTime})}>
         <option value="auto">Авто · цикл дня</option><option value="day">День</option><option value="sunset">Закат</option><option value="night">Ночь</option><option value="sunrise">Рассвет</option>
       </select></label>
@@ -93,7 +90,7 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
         <button onClick={()=>setZoom(1)}>Весь остров</button>
         <button aria-label="Увеличить карту" disabled={zoom>=3} onClick={()=>setZoom(Math.min(3,zoom+.5))}>+</button>
       </div>
-    </div>}
+    </div>
     {dev&&<details className="city-dev-tools">
       <summary>DEV MODE · маршруты и диагностика</summary>
       <div className="city-debug-flags">{(Object.keys(debug) as (keyof DebugFlags)[]).map(key=><label key={key}><input type="checkbox" checked={debug[key]} onChange={e=>setDebug({...debug,[key]:e.target.checked})}/>{debugLabels[key]}</label>)}</div>
@@ -120,9 +117,8 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
       </div>
       <p role="status">{message||`${draft.length} точек · SAVE сохраняет только маршруты; прогресс игры не изменяется.`}</p>
     </details>}
-    <p className="coastal-hint" id="coastal-hint">{editing?'Нажимай на карту, чтобы добавить точки маршрута.':island3d?'Нажми на здание, чтобы войти. Крути остров пальцем, своди и разводи, чтобы приблизить. Это первый набросок — детальные здания и жители ещё впереди.':nativeApp?'Нажми на здание, чтобы войти. Своди и разводи пальцы, чтобы приблизить, перетаскивай карту одним пальцем.':'Нажми на здание, чтобы войти. Подпись района или список — карточка района. Приближай колёсиком мыши или двойным щелчком к курсору, листай перетаскиванием; на телефоне — двумя пальцами.'}</p>
+    <p className="coastal-hint" id="coastal-hint">{editing?'Нажимай на карту, чтобы добавить точки маршрута.':nativeApp?'Нажми на здание, чтобы войти. Своди и разводи пальцы, чтобы приблизить, перетаскивай карту одним пальцем.':'Нажми на здание, чтобы войти. Подпись района или список — карточка района. Приближай колёсиком мыши или двойным щелчком к курсору, листай перетаскиванием; на телефоне — двумя пальцами.'}</p>
     <div className="coastal-frame">
-    {island3d?<Suspense fallback={<div className="city3d-loading" role="status">Загрузка 3D-острова…</div>}><CityIsland3D state={state} onOpen={onOpen}/></Suspense>:
     <div ref={scroll} className="coastal-scroll" aria-label="Прибрежная карта" aria-describedby="coastal-hint">
       <div className="coastal-stage" style={wide?{width:`${zoom*100}%`}:undefined}>
       <div className="coastal-map" data-time={preferences.time} data-weather={preferences.weather} data-paused={paused} data-editing={editing}
@@ -148,8 +144,8 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
         })}
       </div>
       </div>
-    </div>}
-    {wide&&!island3d&&<nav className="coastal-districts" aria-label="Районы острова">
+    </div>
+    {wide&&<nav className="coastal-districts" aria-label="Районы острова">
       <header><b>Районы</b><small>ур. района</small></header>
       {cards.map(card=><button key={card.id} aria-pressed={picked===card.id} onClick={()=>setPicked(picked===card.id?null:card.id)} style={{'--pin':card.color} as CSSProperties}>
         <span className="dot" aria-hidden="true"/><span className="name">{card.name}<span className="bar"><span style={{width:`${card.progress}%`}}/></span></span><b>{card.level}</b>

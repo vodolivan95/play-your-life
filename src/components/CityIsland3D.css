@@ -1,4 +1,0 @@
-.city3d-wrap { width: 100%; aspect-ratio: 4 / 3; max-height: 70vh; max-height: 70svh; border-radius: 20px; overflow: hidden; background: #1a3a52; touch-action: none; }
-.city3d-label { pointer-events: auto; border: 1px solid #ffc94a99; border-radius: 999px; padding: 6px 12px; background: #0b1428e6; color: #fff; font: inherit; font-size: 12px; font-weight: 800; white-space: nowrap; cursor: pointer; box-shadow: 0 6px 16px #00000066; }
-.city3d-label::after { content: ''; }
-.city3d-label[data-level]::before { content: attr(data-level); display: inline-block; margin-right: 6px; width: 16px; height: 16px; border-radius: 50%; background: #ffc94a; color: #2a1a00; font-size: 10px; line-height: 16px; }

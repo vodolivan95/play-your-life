@@ -15,6 +15,7 @@ import {
 } from "../src/personalQuests.ts";
 import {
   economyRecords,
+  recordChanges,
   recordIncome,
   stageRewards,
   validateIncome,
@@ -203,4 +204,31 @@ test("зафиксированные определения и баланс пр
   assert.equal(staged.quests[0].done, false);
   assert.equal(staged.coinTransactions!.length, 0);
   assert.equal(stageRewards(done, wanted, wanted).coins, 75);
+});
+// Firestore не хранит порядок ключей: запись, прочитанная с сервера (поля в
+// произвольном порядке), не должна считаться изменённой относительно точно
+// такой же записи, только что построенной клиентом — иначе игра бесконечно
+// пытается пересохранить уже сохранённую награду без доказательства и
+// получает permission-denied (баг от 20 октября 2026, см. AGENTS.md).
+test("recordChanges не зависит от порядка ключей записи", () => {
+  const s = quest(),
+    done = completeQuest(s, s.quests[0].id),
+    records = economyRecords(done, economyRecords(s));
+  const id = `quest:${s.quests[0].id}`;
+  const original = records[id];
+  const reorderedKeys = Object.keys(original).sort().reverse();
+  const reordered = {} as typeof original;
+  for (const key of reorderedKeys)
+    (reordered as Record<string, unknown>)[key] = (
+      original as unknown as Record<string, unknown>
+    )[key];
+  assert.notEqual(
+    JSON.stringify(reordered),
+    JSON.stringify(original),
+    "у тестовых объектов действительно разный порядок ключей",
+  );
+  assert.deepEqual(
+    recordChanges({ [id]: reordered }, { [id]: original }),
+    [],
+  );
 });

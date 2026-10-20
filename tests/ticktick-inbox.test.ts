@@ -283,7 +283,9 @@ test('приём задачи TickTick без цели не падает на «
     new Date('2026-10-19T00:00:00Z'),
   )[0];
   const accepted = acceptIncomingTask(state, connection, incoming, { sphere: 'health' });
-  assert.equal(accepted.task.dueAt, '2026-10-20T00:00:00.000Z');
+  // Полночь без конкретного времени — это просто календарный день (см. ticktick.ts, iso()),
+  // поэтому срок хранится обычной датой 'YYYY-MM-DD', а не моментом в UTC.
+  assert.equal(accepted.task.dueAt, '2026-10-20');
   assert.equal(accepted.task.startsAt, undefined);
 });
 

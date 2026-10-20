@@ -145,12 +145,22 @@ export async function bridgeRequest<T>(
   const text = await response.text();
   return (text ? JSON.parse(text) : null) as T;
 }
+/** Ровно полночь (с учётом смещения или без него) — это не конкретное время, а просто календарный день; то же правило использует hasTime() в tasksCalendar.ts для локальных дат. */
+const midnightAt = /T00:00(:00)?(\.\d+)?(Z|[+-]\d{2}:?\d{2})?$/;
 function iso(value?: string | null) {
   if (!value) return undefined;
   const date = new Date(value);
   if (Number.isNaN(date.getTime()))
     throw new Error('TickTick вернул некорректную дату.');
-  return date.toISOString();
+  // TickTick присылает дату-время уже в своём смещении (например +0300 для Москвы) — это и есть
+  // тот календарный день и час, который нужно показать игроку. Если это ровно полночь, задача
+  // без конкретного времени — берём календарный день прямо из строки, не переводя в UTC: иначе
+  // JS пересчитает момент в UTC и день сместится на соседние сутки (полночь по Москве — это
+  // 21:00 предыдущих суток в UTC). Это одна из причин ошибки «Firebase отклонил доступ» и
+  // неверно показанных дат из TickTick (20 октября 2026, см. AGENTS.md). Если время не полночь —
+  // это задача с настоящим временем выполнения, и момент переводим в UTC как обычно: так же
+  // хранятся локальные задачи со временем, и это даёт верный час при показе в любом часовом поясе.
+  return midnightAt.test(value) ? value.slice(0, 10) : date.toISOString();
 }
 function notes(content?: string) {
   return (content ?? '')
@@ -221,15 +231,38 @@ export function remotePayload(
   ]
     .filter((line, index) => line || index < 2)
     .join('\n');
-  const stamp = (value?: string) =>
-    value ? new Date(value).toISOString().replace(/\.\d{3}Z$/, '+0000') : null;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  // Смещение часового пояса этого конкретного момента (с учётом перехода на летнее/зимнее
+  // время), в формате TickTick: «+0300». Совпадает с тем, что присылает сам TickTick, и с
+  // timeZone ниже — иначе TickTick может неверно истолковать момент (см. комментарий к iso()).
+  const offset = (date: Date) => {
+    const minutes = -date.getTimezoneOffset();
+    const sign = minutes >= 0 ? '+' : '-';
+    const abs = Math.abs(minutes);
+    return `${sign}${pad(Math.floor(abs / 60))}${pad(abs % 60)}`;
+  };
+  // Срок без времени (обычная 'YYYY-MM-DD', как хранит игра для задач «на день») — это полночь
+  // по местному времени игрока, а не по UTC: иначе при сохранении в TickTick день может
+  // съехать на соседние сутки (та же причина, что и в iso()).
+  const localStamp = (date: Date) =>
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}${offset(date)}`;
+  const bareDate = (value?: string) => !!value && /^\d{4}-\d{2}-\d{2}$/.test(value);
+  const stamp = (value?: string) => {
+    if (!value) return null;
+    if (bareDate(value)) {
+      const [y, m, d] = value.split('-').map(Number);
+      return localStamp(new Date(y, m - 1, d, 0, 0, 0));
+    }
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : localStamp(date);
+  };
   return {
     title: task.name,
     content,
     projectId: connection.projectId,
     startDate: stamp(task.startsAt),
     dueDate: stamp(task.dueAt),
-    isAllDay: false,
+    isAllDay: bareDate(task.dueAt) && (!task.startsAt || bareDate(task.startsAt)),
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     priority: task.priority === 'high' ? 5 : task.priority === 'low' ? 1 : 3,
   };

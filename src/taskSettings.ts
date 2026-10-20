@@ -89,9 +89,16 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
   if (patch.dueAt !== undefined) {
     if (patch.dueAt === null) q.dueAt = undefined;
     else {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(patch.dueAt) || !Number.isFinite(Date.parse(patch.dueAt))) throw new Error('Проверь дату.');
-      if (old.startsAt && patch.dueAt < old.startsAt.slice(0, 10)) throw new Error('Срок не может быть раньше начала.');
-      q.dueAt = patch.dueAt;
+      // Срок — обычная дата 'YYYY-MM-DD' (без времени) или локальное время 'YYYY-MM-DDTЧЧ:ММ'
+      // (так отдаёт поле <input type="time"> в окне задачи) — тогда задача получает конкретное
+      // время выполнения: подтягивается из TickTick, переносится туда же и показывается в
+      // календаре интервалом, а не плашкой на весь день.
+      const bare = /^\d{4}-\d{2}-\d{2}$/.test(patch.dueAt);
+      const timed = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(patch.dueAt);
+      if ((!bare && !timed) || !Number.isFinite(Date.parse(patch.dueAt))) throw new Error('Проверь дату.');
+      const due = bare ? patch.dueAt : new Date(patch.dueAt).toISOString();
+      if (old.startsAt && new Date(due) < new Date(old.startsAt)) throw new Error('Срок не может быть раньше начала.');
+      q.dueAt = due;
     }
   }
   if (patch.shiftDays !== undefined) {

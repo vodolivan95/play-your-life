@@ -23,9 +23,35 @@ const duePresets: [Exclude<DuePreset, 'date'>, string][] = [
 ];
 function fmtDate(value?: string) {
   if (!value) return '';
-  const d = new Date(`${value.slice(0, 10)}T12:00:00`);
+  // Срок без времени ('YYYY-MM-DD') — просто дата, полдень нужен только чтобы не зацепить
+  // соседние сутки при разборе. Срок со временем — настоящий момент: берём его как есть и
+  // показываем в календарном дне браузера, а не вырезаем первые 10 символов строки UTC —
+  // иначе ночные часы могли бы показать соседние сутки (та же причина, что и в ticktick.ts).
+  const bare = /^\d{4}-\d{2}-\d{2}$/.test(value);
+  const d = bare ? new Date(`${value}T12:00:00`) : new Date(value);
   if (Number.isNaN(d.getTime())) return '';
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+/** Срок с конкретным временем выполнения (не просто 'YYYY-MM-DD') — часы:минуты, иначе пусто. */
+function clockOf(value?: string) {
+  if (!value || /^\d{4}-\d{2}-\d{2}$/.test(value)) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  const hh = String(d.getHours()).padStart(2, '0'), mm = String(d.getMinutes()).padStart(2, '0');
+  return hh === '00' && mm === '00' ? '' : `${hh}:${mm}`;
+}
+/** Календарный день срока (локальный), годится и для даты, и для момента со временем. */
+function dayOf(value?: string) {
+  if (!value) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+/** Задаёт время выполнения, сохраняя день срока; пустое время возвращает к обычной дате без времени. */
+function withTime(dueAt: string, time: string) {
+  const day = dayOf(dueAt);
+  return time ? `${day}T${time}` : day;
 }
 export default function TaskWindow({ taskId, state, today, onChange, onClose, onAdvanced, onProgress, onDelete, notify }: {
   taskId: string;
@@ -130,11 +156,18 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
             <div className="twin-field" role="group" aria-label="Плановая дата">
               <span>Плановая дата</span>
               <p>
-                {task.startsAt && task.dueAt && task.startsAt.slice(0, 10) !== task.dueAt.slice(0, 10)
+                {task.startsAt && task.dueAt && dayOf(task.startsAt) !== dayOf(task.dueAt)
                   ? `${fmtDate(task.startsAt)} — ${fmtDate(task.dueAt)}`
                   : task.dueAt ? fmtDate(task.dueAt) : 'Без даты в TickTick'}
               </p>
-              <small>Берётся из TickTick при каждом обмене; поменять можно только там.</small>
+              <small>Дата берётся из TickTick при каждом обмене; поменять можно только там.</small>
+              {task.dueAt && (
+                <label className="twin-time">Время выполнения
+                  <input type="time" aria-label="Время выполнения" value={clockOf(task.dueAt)}
+                    onChange={(e) => patch({ dueAt: withTime(task.dueAt!, e.target.value) })} />
+                </label>
+              )}
+              <small>Время — в обе стороны с TickTick; без времени задача показана на весь день.</small>
             </div>
           ) : (
             <div className="twin-field" role="group" aria-label="Срок">
@@ -147,8 +180,14 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
                 <button type="button" aria-pressed={preset === 'date' || picking} onClick={() => setPicking(true)}>Выбрать дату</button>
               </div>
               {(picking || preset === 'date') && (
-                <input type="date" aria-label="Дата выполнения" value={task.dueAt?.slice(0, 10) ?? ''}
-                  onChange={(e) => e.target.value && patch({ dueAt: e.target.value })} />
+                <>
+                  <input type="date" aria-label="Дата выполнения" value={dayOf(task.dueAt)}
+                    onChange={(e) => e.target.value && patch({ dueAt: withTime(e.target.value, clockOf(task.dueAt)) })} />
+                  <label className="twin-time">Время выполнения
+                    <input type="time" aria-label="Время выполнения" value={clockOf(task.dueAt)}
+                      onChange={(e) => task.dueAt && patch({ dueAt: withTime(task.dueAt, e.target.value) })} />
+                  </label>
+                </>
               )}
             </div>
           )}

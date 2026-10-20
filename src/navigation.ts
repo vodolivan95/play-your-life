@@ -8,7 +8,7 @@ export const navigation: { id: MenuIconId; label: string; icon: string }[] = [
   { id: 'quests', label: 'Привычки', icon: 'quests' },
   { id: 'goals', label: 'Цели', icon: 'goals' },
   { id: 'plan', label: 'План жизни', icon: 'plan' },
-  { id: 'tree', label: 'Skill Tree', icon: 'tree' },
+  { id: 'tree', label: 'Дерево навыков', icon: 'tree' },
   { id: 'achievements', label: 'Достижения', icon: 'trophy' },
   { id: 'shop', label: 'Магазин', icon: 'shop' },
   { id: 'city', label: 'Город', icon: 'city' },

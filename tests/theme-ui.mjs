@@ -8,7 +8,7 @@ await mkdir('work/theme', { recursive: true });
 const port = 5177;
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { stdio: ['ignore', 'pipe', 'pipe'] });
 const url = `http://127.0.0.1:${port}/`;
-const pages = ['Главная', 'Сферы жизни', 'Мои задачи', 'Привычки', 'Цели', 'План жизни', 'Skill Tree', 'Достижения', 'Магазин', 'Город', 'Профиль', 'Ключевые итоги'];
+const pages = ['Главная', 'Сферы жизни', 'Мои задачи', 'Привычки', 'Цели', 'План жизни', 'Дерево навыков', 'Достижения', 'Магазин', 'Город', 'Профиль', 'Ключевые итоги'];
 let browser;
 try {
   let ready = false;

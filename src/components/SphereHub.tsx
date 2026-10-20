@@ -265,7 +265,7 @@ export function SphereScene({ state, id, tab, onTab, onBack, onQuest, onCity }: 
 function SkillList({ state, id, limit }: { state: GameState; id: string; limit?: number }) {
   const nodes = skillTreeOf(state, id).nodes;
   const shown = limit ? nodes.slice(0, limit) : nodes;
-  if (!shown.length) return <p className="sph-muted">В дереве этой сферы пока нет навыков. Добавь ветку и первые навыки в Skill Tree.</p>;
+  if (!shown.length) return <p className="sph-muted">В дереве этой сферы пока нет навыков. Добавь ветку и первые навыки в «Дерево навыков».</p>;
   const words = { max: 'Освоен полностью', learning: 'Изучается', available: 'Доступен', locked: 'Закрыт' } as const;
   return (
     <div className="sph-skills">
@@ -286,7 +286,7 @@ function SkillList({ state, id, limit }: { state: GameState; id: string; limit?:
 export function SphereSkills({ state, id, onTree }: { state: GameState; id: string; onTree: () => void }) {
   return (
     <section className="sph-panel">
-      <div className="sph-panel-head"><h2>Навыки района</h2><button type="button" className="sph-link" onClick={onTree}>Открыть Skill Tree →</button></div>
+      <div className="sph-panel-head"><h2>Навыки района</h2><button type="button" className="sph-link" onClick={onTree}>Открыть «Дерево навыков» →</button></div>
       <SkillList state={state} id={id} />
     </section>
   );
@@ -379,7 +379,7 @@ export function SphereOverview({ state, id, renderQuest, onOpenGoal, onProjects,
         </section>
 
         <section className="sph-panel" aria-label="Ветки навыков">
-          <div className="sph-panel-head"><h2>Ветки навыков</h2><button type="button" className="sph-link" onClick={onTree}>Skill Tree →</button></div>
+          <div className="sph-panel-head"><h2>Ветки навыков</h2><button type="button" className="sph-link" onClick={onTree}>Дерево навыков →</button></div>
           <SkillList state={state} id={id} limit={3} />
         </section>
       </div>

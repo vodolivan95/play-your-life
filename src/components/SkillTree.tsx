@@ -6,6 +6,7 @@ import icons from '../assets/sphere-icons.png';
 import {
   MAX_BRANCHES,
   MAX_SKILL_COST,
+  MAX_SKILL_LANE,
   MAX_SKILL_LEVELS,
   MAX_SKILL_TIER,
   addBranch,
@@ -53,8 +54,21 @@ function SkillIcon({ id }: { id: string }) {
 
 type Selection =
   | { kind: 'node'; id: string }
-  | { kind: 'new'; branchId: string; tier: number }
+  | { kind: 'new'; branchId: string; tier: number; lane: number }
   | null;
+
+// Geometry of the free branch canvas: a fixed set of side slots per tier,
+// so a branch can fork into several nodes on the same row and the connector
+// lines between a node and whatever it requires can be drawn at any angle.
+const LANES = Array.from({ length: MAX_SKILL_LANE * 2 + 1 }, (_, i) => i - MAX_SKILL_LANE);
+const ROW_H = 150;
+const LANE_W = 112;
+const HEAD_H = 44;
+const NODE_W = 104;
+const NODE_H = 128;
+const BRANCH_W = LANES.length * LANE_W;
+const laneX = (lane: number) => BRANCH_W / 2 + lane * LANE_W;
+const tierY = (rowIndex: number) => HEAD_H + rowIndex * ROW_H + ROW_H / 2;
 
 function NodeEditor({
   state,
@@ -62,6 +76,7 @@ function NodeEditor({
   node,
   branchId,
   tier,
+  lane,
   onSave,
   onRemove,
 }: {
@@ -70,6 +85,7 @@ function NodeEditor({
   node?: SkillNode;
   branchId: string;
   tier: number;
+  lane: number;
   onSave: (input: Parameters<typeof saveNode>[2]) => void;
   onRemove: () => void;
 }) {
@@ -78,6 +94,7 @@ function NodeEditor({
   const [icon, setIcon] = useState(node?.icon ?? sphere);
   const [branch, setBranch] = useState(node?.branchId ?? branchId);
   const [tierValue, setTier] = useState(node?.tier ?? tier);
+  const [laneValue, setLane] = useState(node?.lane ?? lane);
   const [levels, setLevels] = useState(node?.levels ?? 5);
   const [cost, setCost] = useState(node?.cost ?? 1);
   const [requiresId, setRequiresId] = useState(node?.requiresId ?? '');
@@ -98,6 +115,7 @@ function NodeEditor({
           name,
           icon,
           tier: tierValue,
+          lane: laneValue,
           levels,
           cost,
           requiresId: requiresId || undefined,
@@ -142,6 +160,16 @@ function NodeEditor({
           <select value={tierValue} onChange={(e) => setTier(Number(e.target.value))}>
             {range(MAX_SKILL_TIER).map((t) => (
               <option key={t} value={t}>{t} · с ур. {skillGate(t)}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="skt-row">
+        <label>
+          <span>Боковой слот</span>
+          <select value={laneValue} onChange={(e) => setLane(Number(e.target.value))}>
+            {LANES.map((l) => (
+              <option key={l} value={l}>{l === 0 ? 'Центр (ствол)' : l > 0 ? `Вправо ${l}` : `Влево ${-l}`}</option>
             ))}
           </select>
         </label>
@@ -253,8 +281,18 @@ export default function SkillTree({
     setSelection(null);
   }
 
-  const nodeAt = (branchId: string, tier: number) =>
-    tree.nodes.find((n) => n.branchId === branchId && n.tier === tier);
+  const nodesAt = (branchId: string, tier: number) =>
+    tree.nodes.filter((n) => n.branchId === branchId && n.tier === tier);
+
+  function nodePos(node: SkillNode): CSSProperties {
+    const rowIndex = tiers.indexOf(node.tier);
+    return {
+      position: 'absolute',
+      left: laneX(node.lane ?? 0) - NODE_W / 2,
+      top: tierY(rowIndex) - NODE_H / 2,
+      width: NODE_W,
+    };
+  }
 
   function renderNode(node: SkillNode) {
     const status = nodeStatus(state, sphere, node);
@@ -263,7 +301,9 @@ export default function SkillTree({
     return (
       <button
         type="button"
+        key={node.id}
         className={`skt-node is-${status}${isSelected ? ' is-selected' : ''}`}
+        style={nodePos(node)}
         onClick={() => setSelection({ kind: 'node', id: node.id })}
         aria-label={`${node.name}, уровень ${current} из ${node.levels}`}
       >
@@ -284,6 +324,44 @@ export default function SkillTree({
     );
   }
 
+  /** Connector lines for one branch's canvas: any node whose "requires" points
+   * at another node of the same branch gets a line between them, at whatever
+   * angle and distance that takes — this is what lets a branch fork sideways
+   * and still show the link clearly. */
+  function renderEdges(branchId: string) {
+    return tree.nodes
+      .filter((n) => n.branchId === branchId && n.requiresId)
+      .map((node) => {
+        const req = tree.nodes.find((n) => n.id === node.requiresId);
+        if (!req || req.branchId !== branchId) return null;
+        const rowA = tiers.indexOf(req.tier);
+        const rowB = tiers.indexOf(node.tier);
+        if (rowA < 0 || rowB < 0) return null;
+        const x1 = laneX(req.lane ?? 0);
+        const y1 = tierY(rowA);
+        const x2 = laneX(node.lane ?? 0);
+        const y2 = tierY(rowB);
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const len = Math.hypot(dx, dy);
+        const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+        const lit = nodeLevel(state, req) >= (node.requiresLevel ?? 1);
+        return (
+          <span
+            key={`${node.id}:edge`}
+            aria-hidden="true"
+            className={`skt-edge${lit ? ' lit' : ''}`}
+            style={{
+              left: x1,
+              top: y1,
+              width: len,
+              transform: `rotate(${angle}deg)`,
+            }}
+          />
+        );
+      });
+  }
+
   const lock = selected ? nodeLock(state, sphere, selected) : undefined;
   const selectedLevel = selected ? nodeLevel(state, selected) : 0;
   const required = selected?.requiresId
@@ -297,7 +375,7 @@ export default function SkillTree({
     <section className="skt" data-theme={theme}>
       <header className="skt-head">
         <div>
-          <h2>Skill Tree</h2>
+          <h2>Дерево навыков</h2>
           <p>Планируй развитие каждой сферы: свои ветки, навыки и порядок их открытия.</p>
         </div>
         <div className="skt-theme" role="group" aria-label="Тема дерева навыков">
@@ -394,35 +472,44 @@ export default function SkillTree({
                         <strong>{branch.name}</strong>
                       )}
                     </div>
-                    {tiers.map((t) => {
-                      const node = nodeAt(branch.id, t);
-                      const below = nodeAt(branch.id, t - 1);
-                      const linked =
-                        node && below && node.requiresId === below.id;
-                      return (
-                        <div className="skt-cell" key={t}>
-                          {linked && (
-                            <span
-                              className={`skt-link${nodeLevel(state, below) >= (node.requiresLevel ?? 1) ? ' lit' : ''}`}
-                            />
-                          )}
-                          {node ? (
-                            renderNode(node)
-                          ) : planning ? (
+                    <div
+                      className="skt-canvas"
+                      style={{ width: BRANCH_W, height: tiers.length * ROW_H }}
+                    >
+                      {renderEdges(branch.id)}
+                      {tiers.map((t) => {
+                        const here = nodesAt(branch.id, t);
+                        if (!planning) return here.map(renderNode);
+                        const used = new Set(here.map((n) => n.lane ?? 0));
+                        // An empty tier only offers the trunk slot; once something
+                        // is already there, the lanes beside it open up too, so
+                        // "add a branch to the side" shows up right where it applies.
+                        const openLanes = (
+                          here.length === 0 ? [0] : LANES
+                        ).filter((l) => !used.has(l));
+                        const rowIndex = tiers.indexOf(t);
+                        return [
+                          ...here.map(renderNode),
+                          ...openLanes.map((l) => (
                             <button
                               type="button"
-                              className={`skt-add${selection?.kind === 'new' && selection.branchId === branch.id && selection.tier === t ? ' is-selected' : ''}`}
-                              onClick={() => setSelection({ kind: 'new', branchId: branch.id, tier: t })}
+                              key={`add-${branch.id}-${t}-${l}`}
+                              className={`skt-add${selection?.kind === 'new' && selection.branchId === branch.id && selection.tier === t && selection.lane === l ? ' is-selected' : ''}`}
+                              style={{
+                                position: 'absolute',
+                                left: laneX(l) - NODE_W / 2,
+                                top: tierY(rowIndex) - NODE_H / 2,
+                                width: NODE_W,
+                              }}
+                              onClick={() => setSelection({ kind: 'new', branchId: branch.id, tier: t, lane: l })}
                             >
                               <span className="skt-diamond"><b>+</b></span>
-                              <small>Добавить навык</small>
+                              <small>{l === 0 ? 'Добавить навык' : 'Ветка в сторону'}</small>
                             </button>
-                          ) : (
-                            <span className="skt-gap" aria-hidden="true" />
-                          )}
-                        </div>
-                      );
-                    })}
+                          )),
+                        ];
+                      })}
+                    </div>
                     {planning && (
                       <div className="skt-branch-foot">
                         <button type="button" onClick={() => run((s) => resetBranch(s, sphere, branch.id), 'Очки ветки возвращены.')}>Сбросить очки</button>
@@ -483,11 +570,12 @@ export default function SkillTree({
             <>
               <h3>Новый навык</h3>
               <NodeEditor
-                key={`new-${selection.branchId}-${selection.tier}`}
+                key={`new-${selection.branchId}-${selection.tier}-${selection.lane}`}
                 state={state}
                 sphere={sphere}
                 branchId={selection.branchId}
                 tier={selection.tier}
+                lane={selection.lane}
                 onSave={(input) => {
                   if (run((s) => saveNode(s, sphere, input), 'Навык добавлен.'))
                     setSelection(null);
@@ -506,6 +594,7 @@ export default function SkillTree({
                 node={selected}
                 branchId={selected.branchId}
                 tier={selected.tier}
+                lane={selected.lane ?? 0}
                 onSave={(input) => run((s) => saveNode(s, sphere, input), 'Навык сохранён.')}
                 onRemove={() => {
                   run((s) => removeNode(s, sphere, selected.id), 'Навык удалён.');

@@ -23,9 +23,9 @@ const seed = initialState();
 seed.profile.onboardingComplete = true;
 const seedJson = JSON.stringify(seed);
 
-const desktopMenu = ['Главная', 'Сферы жизни', 'Мои задачи', 'Привычки', 'Цели', 'План жизни', 'Skill Tree', 'Достижения', 'Магазин', 'Город', 'Профиль', 'Ключевые итоги'];
+const desktopMenu = ['Главная', 'Сферы жизни', 'Мои задачи', 'Привычки', 'Цели', 'План жизни', 'Дерево навыков', 'Достижения', 'Магазин', 'Город', 'Профиль', 'Ключевые итоги'];
 const mobileTabs = ['Главная', 'Привычки', 'Цели', 'Город'];
-const mobileMore = ['Мои задачи', 'Сферы жизни', 'План жизни', 'Skill Tree', 'Достижения', 'Магазин', 'Профиль', 'Ключевые итоги'];
+const mobileMore = ['Мои задачи', 'Сферы жизни', 'План жизни', 'Дерево навыков', 'Достижения', 'Магазин', 'Профиль', 'Ключевые итоги'];
 
 let browser;
 const problems = [];
@@ -141,10 +141,10 @@ try {
       if (label === 'Магазин') {
         for (const tab of ['Награда Люкс', 'Мои награды', 'Награды']) await click(page.locator('.shop-tabs'), new RegExp('^' + tab));
       }
-      if (label === 'Skill Tree') {
+      if (label === 'Дерево навыков') {
         const tabs = page.locator('.skt-spheres').getByRole('tab');
         for (let i = 1; i < Math.min(4, await tabs.count()); i++) {
-          where = `Skill Tree → сфера ${i + 1}`;
+          where = `Дерево навыков → сфера ${i + 1}`;
           await tabs.nth(i).click();
           await settle();
         }

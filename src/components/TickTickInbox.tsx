@@ -14,7 +14,7 @@ function formatDate(value?: string | null) {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 }
-function Row({ item, state, busy, listName, onAccept, onDismiss, onChange }: {
+function Row({ item, state, busy, listName, onAccept, onDismiss, onDelete, onChange }: {
   item: IncomingTask;
   state: GameState;
   onChange: Dispatch<SetStateAction<GameState>>;
@@ -22,6 +22,7 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onChange }: {
   listName: string;
   onAccept: (choice: IncomingChoice) => Promise<string>;
   onDismiss: () => Promise<void>;
+  onDelete: () => Promise<void>;
 }) {
   const [sphere, setSphere] = useState(item.sphere);
   const [goalId, setGoalId] = useState('');
@@ -43,6 +44,9 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onChange }: {
     try { setError(''); await action(); }
     catch (e) { setError(e instanceof Error ? e.message : 'Не удалось выполнить действие.'); }
   }
+  function handleDelete() {
+    if (window.confirm(`Удалить задачу «${item.remote.title}»? Она пропадёт и из TickTick.`)) void run(onDelete);
+  }
   return <li className="ticktick-inbox-item">
     <div className="ticktick-inbox-title">
       <strong>{item.remote.title}</strong>
@@ -54,6 +58,7 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onChange }: {
     {!open && <div className="ticktick-inbox-actions">
       <button className="ticktick-sort-button" disabled={busy} onClick={() => setOpen(true)}>Разобрать</button>
       <button className="text-button" disabled={busy} onClick={() => void run(onDismiss)}>Пропустить</button>
+      <button className="text-button danger" disabled={busy} onClick={handleDelete}>Удалить</button>
     </div>}
     {open && <div className="ticktick-inbox-choice">
       <span className="ticktick-inbox-label" id={`sphere-${item.remote.id}`}>Сфера</span>
@@ -113,6 +118,7 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onChange }: {
       <button className="primary-button" disabled={busy || !canAccept} onClick={() => void run(() => onAccept({ sphere, goalId: single ? '' : goalId, stageId: stageId || undefined }))}>Принять в игру</button>
       <button className="text-button" disabled={busy} onClick={() => setOpen(false)}>Свернуть</button>
       <button className="text-button" disabled={busy} onClick={() => void run(onDismiss)}>Пропустить</button>
+      <button className="text-button danger" disabled={busy} onClick={handleDelete}>Удалить</button>
     </div></>}
     {error && <p className="transfer-message" role="alert">{error}</p>}
   </li>;
@@ -146,7 +152,8 @@ export default function TickTickInbox({ state, onChange }: { state: GameState; o
       {items.slice(0, shown).map((item) => <Row key={item.remote.id} item={item} state={state} onChange={onChange} busy={manager.busy}
         listName={names.get(item.projectId) ?? 'без названия'}
         onAccept={async (choice) => { const message = await manager.acceptIncoming(item.remote.id, choice); setNotice(message); return message; }}
-        onDismiss={() => manager.dismissIncoming(item.remote.id)} />)}
+        onDismiss={() => manager.dismissIncoming(item.remote.id)}
+        onDelete={async () => { await manager.deleteIncoming(item.remote.id, item.projectId); setNotice(`Задача «${item.remote.title}» удалена из игры и из TickTick.`); }} />)}
     </ul>}
     {items.length > shown && <button className="text-button" onClick={() => setShown((n) => n + pageSize)}>Показать ещё ({items.length - shown})</button>}
     {notice && <p className="transfer-message" role="status">{notice}</p>}

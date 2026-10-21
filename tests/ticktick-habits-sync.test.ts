@@ -40,7 +40,7 @@ test('кандидаты импорта: новые, неподдерживае�
   assert.equal(importCandidates(remote, { ...emptyHabitLinks(), sectionMap: { s2: 'hobby' } }, sections)[1].sphere, 'hobby');
 });
 
-test('импорт создаёт привычку без монет, без отметок в экономике и с серией из истории', () => {
+test('импорт создаёт привычку без лайфкоинов, без отметок в экономике и с серией из истории', () => {
   const start = newAccountGame('Алиса');
   const candidate = importCandidates(remote, emptyHabitLinks(), sections)[0];
   const result = importHabit(start, candidate, 'health', owner, range, checkins, new Set(), now);
@@ -49,7 +49,7 @@ test('импорт создаёт привычку без монет, без о�
   assert.equal(habit.rewardCoins, 0);
   assert.equal(habit.iconId, 'reading');
   assert.deepEqual(habit.weekdays, [0, 1, 2, 3, 4, 5, 6]);
-  // Экономика не тронута: ни отметок, ни монет, ни XP, ни транзакций.
+  // Экономика не тронута: ни отметок, ни лайфкоинов, ни XP, ни транзакций.
   assert.deepEqual(result.state.habitCompletions ?? [], []);
   assert.equal(result.state.coins, start.coins);
   assert.deepEqual(result.state.coinTransactions ?? [], start.coinTransactions ?? []);
@@ -76,7 +76,7 @@ test('сегодняшний день из TickTick не блокирует ло
   assert.ok(!externalDays(links, checkins, '2026-10-19')[result.localId].includes('2026-10-19'));
   const done = completeHabit(result.state, result.localId, owner, now);
   assert.equal(done.habitCompletions!.length, 1);
-  assert.equal(done.coins, start.coins); // монет 0
+  assert.equal(done.coins, start.coins); // лайфкоинов 0
 });
 
 test('повторная синхронизация не создаёт отметок и не награждает повторно', () => {

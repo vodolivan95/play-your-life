@@ -10,7 +10,7 @@ import {
   validCity,
 } from '../src/city.ts';
 import { backupText, restoreBackup } from '../src/backup.ts';
-test('улучшение здания списывает монеты, требует уровень и не начисляет XP', () => {
+test('улучшение здания списывает лайфкоины, требует уровень и не начисляет XP', () => {
   const s = initialState();
   const next = upgradeBuilding(s, 'health', 1);
   assert.equal(next.coins, s.coins - 60);

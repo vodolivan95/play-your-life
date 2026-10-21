@@ -97,7 +97,7 @@ export default function TickTickHabits({ habits, onArchive }: { habits: Habit[];
             <button type="button" className="hb-btn" disabled={tt.busy || !chosen.length} onClick={() => setPicked(Object.fromEntries(chosen.map(({ c, v }) => [c.remote.ticktickHabitId, { ...v, on: true }])))}>Выбрать все</button>
             <button type="button" className="hb-btn" onClick={() => setPanel('')}>Пропустить</button>
           </div>
-          <small>Импортируются привычки и история отметок. Монеты и XP за прошлые дни не начисляются; монеты новой привычки — 0, XP начисляется за отметки здесь.</small>
+          <small>Импортируются привычки и история отметок. Лайфкоины и XP за прошлые дни не начисляются; лайфкоины новой привычки — 0, XP начисляется за отметки здесь.</small>
         </div>
       )}
       {panel === 'map' && (

@@ -463,7 +463,7 @@ export function StageForm({
       <fieldset>
         <legend>Награды</legend>
         <p className="muted">
-          XP и Life Coins складываются из наград задач. Завершение этапа не
+          XP и лайфкоины складываются из наград задач. Завершение этапа не
           начисляет их повторно.
         </p>
         <label>

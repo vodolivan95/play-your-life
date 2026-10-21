@@ -146,7 +146,7 @@ import {
   saveHabit,
   completeHabit,
 } from "../src/personalQuests.ts";
-test("квест: транзакционный лимит, монеты и журнал, повтор и подделка баланса запрещены", async () => {
+test("квест: транзакционный лимит, лайфкоины и журнал, повтор и подделка баланса запрещены", async () => {
   const db = env.authenticatedContext("alice").firestore(),
     driver = firebaseSave(db, "alice");
   const fresh = await driver.create(newAccountGame("Алиса"));
@@ -209,7 +209,7 @@ test("квест: транзакционный лимит, монеты и жу�
   const bob = env.authenticatedContext("bob").firestore();
   await assertFails(getDoc(doc(bob, "players", "alice")));
 });
-test("привычка: только 0–10 монет, однократное выполнение, история не удаляется", async () => {
+test("привычка: только 0–10 лайфкоинов, однократное выполнение, история не удаляется", async () => {
   const db = env.authenticatedContext("alice").firestore(),
     driver = firebaseSave(db, "alice");
   const fresh = await driver.create(newAccountGame("Алиса"));

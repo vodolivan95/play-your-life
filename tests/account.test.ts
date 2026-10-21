@@ -61,7 +61,7 @@ function driver(initial: SaveRow | null = null) {
   };
 }
 const factory = () => newAccountGame('Игрок');
-test('новый аккаунт: 0 XP и монет, все 9 сфер нулевые, нет демо-проектов', () => {
+test('новый аккаунт: 0 XP и лайфкоинов, все 9 сфер нулевые, нет демо-проектов', () => {
   const state = factory();
   assert.equal(state.xp, 0);
   assert.equal(state.coins, 0);

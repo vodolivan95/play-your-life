@@ -4,7 +4,7 @@ import { initialState } from '../src/game.ts';
 import { buyItem, redeemPurchase, selectRewardTarget, shopItems } from '../src/shop.ts';
 import { backupText, restoreBackup } from '../src/backup.ts';
 
-test('покупка списывает только монеты и сохраняется в копии', () => {
+test('покупка списывает только лайфкоины и сохраняется в копии', () => {
   const state = { ...initialState(), coins: 1000 };
   const next = buyItem(state, 'coffee');
   assert.equal(next.coins, 850);
@@ -35,7 +35,7 @@ test('рамки покупаются один раз, надеваются то
     ),
   );
 });
-test('использование награды не даёт XP и не списывает повторно монеты', () => {
+test('использование награды не даёт XP и не списывает повторно лайфкоины', () => {
   const state = buyItem({ ...initialState(), coins: 1000 }, 'movie');
   const id = state.shop!.purchases[0].id;
   const next = redeemPurchase(state, id);
@@ -64,7 +64,7 @@ test('старые сохранения работают, повреждённы
     assert.throws(() => restoreBackup(JSON.stringify({ ...state, shop })));
 });
 
-test('выбор награды сохраняется без покупки, списания монет или начисления XP', () => {
+test('выбор награды сохраняется без покупки, списания лайфкоинов или начисления XP', () => {
   const state = buyItem({ ...initialState(), coins: 1000 }, 'gold');
   const next = selectRewardTarget(state, 'games');
   assert.equal(next.shop?.rewardTargetId, 'games');

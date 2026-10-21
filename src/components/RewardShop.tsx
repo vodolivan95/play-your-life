@@ -21,7 +21,7 @@ const TABS: [Tab, string][] = [
   ['owned', 'Мои награды'],
 ];
 
-/** Золотая монета: цена и баланс. */
+/** Золотой лайфкоин: цена и баланс. */
 function Coin({ size = 24 }: { size?: number }) {
   return (
     <svg className="shop-coin-icon" width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
@@ -121,12 +121,12 @@ export default function RewardShop({
         <div>
           <span>Баланс</span>
           <strong>{state.coins.toLocaleString('ru')}</strong>
-          <small>Монеты за выполненные задачи</small>
+          <small>Лайфкоины за выполненные задачи</small>
         </div>
       </section>
       <p className="shop-explanation">
         Зарабатывай в игре, отдыхай в жизни. Здесь тратятся только игровые
-        монеты. Реальные награды ты организуешь для себя сам.
+        лайфкоины. Реальные награды ты организуешь для себя сам.
       </p>
       <div className="tabs shop-tabs" aria-label="Разделы магазина">
         {TABS.map(([id, label]) => (
@@ -154,7 +154,7 @@ export default function RewardShop({
             <button type="button" className="shop-card shop-card-create" onClick={() => setEditing('new')}>
               <span className="shop-create-plus" aria-hidden="true">＋</span>
               <strong>Своя награда</strong>
-              <span>Придумай награду, добавь картинку и назначь цену в монетах</span>
+              <span>Придумай награду, добавь картинку и назначь цену в лайфкоинах</span>
             </button>
             {shown.map((i) => {
               const missing = Math.max(0, i.price - state.coins);
@@ -185,7 +185,7 @@ export default function RewardShop({
                   <button
                     className="shop-price"
                     onClick={() => setSelected(i.id)}
-                    aria-label={`${i.name}, ${i.price} монет`}
+                    aria-label={`${i.name}, ${i.price} лайфкоинов`}
                   >
                     <Coin size={28} />
                     <span>{i.price.toLocaleString('ru')}</span>
@@ -193,7 +193,7 @@ export default function RewardShop({
                   {missing > 0 && (
                     <div className="shop-saving">
                       <div className="shop-saving-bar"><div style={{ width: `${Math.min(100, Math.round((state.coins / i.price) * 100))}%` }} /></div>
-                      <span>Не хватает {missing.toLocaleString('ru')} монет</span>
+                      <span>Не хватает {missing.toLocaleString('ru')} лайфкоинов</span>
                     </div>
                   )}
                 </article>
@@ -234,7 +234,7 @@ export default function RewardShop({
                   </div>
                   <span className={`shop-kind${kindClass(i)}`}>{kindLabel(i)}</span>
                   <h3>{i.name}</h3>
-                  <p>{new Date(p.date).toLocaleDateString('ru')} · {p.price.toLocaleString('ru')} монет</p>
+                  <p>{new Date(p.date).toLocaleDateString('ru')} · {p.price.toLocaleString('ru')} лайфкоинов</p>
                   <button
                     className="shop-price shop-use"
                     disabled={!!p.usedAt || worn}
@@ -284,11 +284,11 @@ export default function RewardShop({
           )}
           <h2 id="shop-confirm-title">{item.name}</h2>
           <p>
-            Потратить {item.price} монет? После покупки останется{' '}
+            Потратить {item.price} лайфкоинов? После покупки останется{' '}
             {Math.max(0, state.coins - item.price)}.
           </p>
           {state.coins < item.price && (
-            <p>Не хватает {item.price - state.coins} монет.</p>
+            <p>Не хватает {item.price - state.coins} лайфкоинов.</p>
           )}
           <button
             autoFocus

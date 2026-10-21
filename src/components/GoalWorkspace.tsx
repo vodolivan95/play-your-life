@@ -696,7 +696,7 @@ export default function GoalWorkspace(p: Props) {
           <div>
             <b>⭐ {stage ? xp : goal.reward} XP</b>
             <b>
-              🪙 {coins} Life Coins <small>за задачи</small>
+              🪙 {coins} лайфкоинов <small>за задачи</small>
             </b>
             <strong>
               {(stage ? stage.achievementTitle : goal.achievementTitle) ||
@@ -1146,7 +1146,7 @@ export default function GoalWorkspace(p: Props) {
                         <small>
                           +{nextTask.xp} XP
                           {questCoins(nextTask)
-                            ? ` · ${questCoins(nextTask)} Life Coins`
+                            ? ` · ${questCoins(nextTask)} лайфкоинов`
                             : ''}
                         </small>
                       </div>
@@ -1407,10 +1407,10 @@ export default function GoalWorkspace(p: Props) {
               <p>
                 {stage
                   ? 'Награды этапа — это награды его задач; они начисляются при выполнении и не повторяются при завершении этапа.'
-                  : `За достижение цели предусмотрено ${goal.reward} XP. Life Coins начисляются за задачи по существующим правилам.`}
+                  : `За достижение цели предусмотрено ${goal.reward} XP. Лайфкоины начисляются за задачи по существующим правилам.`}
               </p>
               <p>
-                За задачи: {xp} XP · {coins} Life Coins.
+                За задачи: {xp} XP · {coins} лайфкоинов.
               </p>
               <p>
                 {stage
@@ -1479,7 +1479,7 @@ export default function GoalWorkspace(p: Props) {
               <p>{viewedTask.notes || 'Описание задачи не добавлено.'}</p>
               <p>
                 {shortDate(viewedTask.dueAt)} · +{viewedTask.xp} XP ·{' '}
-                {questCoins(viewedTask)} Life Coins
+                {questCoins(viewedTask)} лайфкоинов
               </p>
               <p>{viewedTask.done ? '✓ Выполнена' : 'В плане'}</p>
               {!viewedTask.done &&

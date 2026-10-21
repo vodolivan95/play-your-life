@@ -128,7 +128,7 @@ export default function QuestWizard({
         draft.rewardCoins < 0 ||
         draft.rewardCoins > (habitMode ? 10 : 100))
     )
-      throw new Error(`Награда: от 0 до ${habitMode ? 10 : 100} целых монет.`);
+      throw new Error(`Награда: от 0 до ${habitMode ? 10 : 100} целых лайфкоинов.`);
     if (draft.dueAt && draft.startsAt && draft.dueAt < draft.startsAt)
       throw new Error("Дедлайн раньше начала.");
   }
@@ -427,7 +427,7 @@ export default function QuestWizard({
         {(habitMode ? step === 3 : step === 4) && (
           <>
             <label>
-              Life Coins · 0–{habitMode ? 10 : 100}
+              Лайфкоины · 0–{habitMode ? 10 : 100}
               <input
                 type="number"
                 min="0"
@@ -489,7 +489,7 @@ export default function QuestWizard({
               </>
             )}
             <div className="pyl-reward-preview">
-              <GameArt kind="coin" /> +{draft.rewardCoins} Life Coins{" "}
+              <GameArt kind="coin" /> +{draft.rewardCoins} Лайфкоинов{" "}
               <strong>
                 ✦ +
                 {habitMode

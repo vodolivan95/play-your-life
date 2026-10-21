@@ -135,7 +135,7 @@ function HabitForm({ value, onClose, onSave }: { value: FormValue; onClose: () =
         <fieldset className="hb-group"><legend>Награда за день</legend>
           <div className="hb-levels">
             {COINS.map((c) => (
-              <button key={c} type="button" className={`hb-level${v.rewardCoins === c ? ' is-on' : ''}`} aria-pressed={v.rewardCoins === c} disabled={v.locked && v.rewardCoins !== c} onClick={() => set({ rewardCoins: c })}><strong>{c}</strong><span>монет</span></button>
+              <button key={c} type="button" className={`hb-level${v.rewardCoins === c ? ' is-on' : ''}`} aria-pressed={v.rewardCoins === c} disabled={v.locked && v.rewardCoins !== c} onClick={() => set({ rewardCoins: c })}><strong>{c}</strong><span>лайфкоинов</span></button>
             ))}
           </div>
           <p className="hb-note">Каждое выполнение даёт ещё 5 XP в выбранную сферу.</p>

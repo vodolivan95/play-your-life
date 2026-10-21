@@ -39,6 +39,10 @@ export type TickTickHabitsApi = {
   retry: () => void;
   resolveConflict: (conflict: HabitConflict) => Promise<void>;
   unlink: (localId: string) => Promise<void>;
+  /** Для удаления связанной привычки в игре: по возможности переводит её в архив в TickTick (настоящего удаления
+   * привычек у официального MCP-сервера нет) и снимает связь. Сбой сети не выбрасывается — локальное удаление
+   * привычки в игре не должно от него зависеть. */
+  archiveAndUnlink: (localId: string) => Promise<void>;
   saveSectionMap: (sectionMap: Record<string, string>) => Promise<void>;
 };
 
@@ -206,6 +210,19 @@ export default function useTickTickHabits(manager: TickTickManager | null, state
       ok('Связь с TickTick удалена. Привычка и история остались в игре.');
     });
   }
+  async function archiveAndUnlink(localId: string) {
+    const link = latest.current.links.links[localId];
+    // Не подключены — сеть не трогаем; устаревшая связь без локальной привычки сама уберётся при следующей load().
+    if (!link || link.status !== 'active' || !latest.current.connected) return;
+    // Лучшее из возможного: архивация — лишь сетевой побочный эффект, её сбой не должен мешать удалению в игре.
+    try { await request('/habits/archive', 'POST', { ticktickHabitId: link.ticktickHabitId }); }
+    catch (error) { fail(error); }
+    const l = latest.current.links;
+    const { [localId]: removed, ...rest } = l.links;
+    void removed;
+    await saveLinks({ ...l, links: rest });
+    setQueue((q) => q.filter((op) => op.localId !== localId));
+  }
   async function saveSectionMap(sectionMap: Record<string, string>) {
     await guarded(async () => { await saveLinks({ ...latest.current.links, sectionMap }); ok('Соответствия сохранены.'); });
   }
@@ -275,6 +292,6 @@ export default function useTickTickHabits(manager: TickTickManager | null, state
     connected, busy, message, code, loaded, candidates, remote, sections, links, linksDirty, conflicts, external, lastSyncAt,
     waiting: queue.filter((op) => op.status !== 'failed').length,
     failed: queue.filter((op) => op.status === 'failed').length,
-    load, refreshCheckins, importHabits, retry, resolveConflict, unlink, saveSectionMap,
+    load, refreshCheckins, importHabits, retry, resolveConflict, unlink, archiveAndUnlink, saveSectionMap,
   };
 }

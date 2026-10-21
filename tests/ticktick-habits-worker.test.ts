@@ -61,6 +61,7 @@ function mockMcp(t: { after: (fn: () => void) => void }): Mock {
       list_habits: { result: [{ id: 'habit-1', name: 'Читать', iconRes: 'habit_reading', color: '#4D8CF5', status: 0, goal: 1, step: 1, unit: 'Count', repeatRule: 'RRULE:FREQ=DAILY;INTERVAL=1', reminders: ['21:00'], sectionId: 'section-1', modifiedTime: 1792404000000, etag: 'e', totalCheckIns: 3, targetDays: 7, targetStartDate: 20261021, accessToken: 'must-not-leak' }] },
       get_habit_checkins: { habit_1: [{ habitId: 'habit-1', stamp: 20261019, value: 1, goal: 1, status: 2 }] },
       upsert_habit_checkins: { ok: true },
+      update_habit: { ok: true },
     };
     return reply(2, { content: [{ type: 'text', text: JSON.stringify(data[tool]) }] });
   };
@@ -180,6 +181,31 @@ test('POST /habits/checkin отклоняет некорректные отме�
   const base = { ticktickHabitId: 'habit-1', date: '2026-10-19', value: 1, goal: 1, idempotencyKey: 'checkin:local-123:20261019:1' };
   for (const bad of [{ ...base, ticktickHabitId: '../x' }, { ...base, date: '19.10.2026' }, { ...base, value: -1 }, { ...base, goal: 0 }, { ...base, idempotencyKey: 'x' }, { ...base, completed: 'yes' }, { ...base, date: '2099-01-01' }])
     assert.equal((await worker.fetch(request('/habits/checkin', 'POST', bad), f.env)).status, 400, JSON.stringify(bad));
+  assert.equal(mock.calls.length, 0);
+});
+
+test('POST /habits/archive переводит привычку TickTick в архив через update_habit (status 2)', async (t) => {
+  const mock = mockMcp(t);
+  const f = fixture();
+  await connected(f);
+  const response = await worker.fetch(request('/habits/archive', 'POST', { ticktickHabitId: 'habit-1' }), f.env);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { status: 'archived', ticktickHabitId: 'habit-1' });
+  assert.equal(mock.calls.length, 1);
+  assert.equal(mock.calls[0].tool, 'update_habit');
+  assert.deepEqual(mock.calls[0].args, { habit_id: 'habit-1', habit: { id: 'habit-1', status: 2 } });
+  assert.equal(mock.calls[0].auth, 'Bearer provider-secret-token');
+});
+
+test('POST /habits/archive требует подключения TickTick и корректный id привычки', async (t) => {
+  const mock = mockMcp(t);
+  const f = fixture();
+  const anonymous = await worker.fetch(request('/habits/archive', 'POST', { ticktickHabitId: 'habit-1' }), f.env);
+  assert.equal(anonymous.status, 401);
+  assert.equal(((await anonymous.json()) as { code: string }).code, 'TICKTICK_AUTH_REQUIRED');
+  await connected(f);
+  for (const bad of [{}, { ticktickHabitId: '../x' }, { ticktickHabitId: 123 }, { ticktickHabitId: '' }])
+    assert.equal((await worker.fetch(request('/habits/archive', 'POST', bad), f.env)).status, 400, JSON.stringify(bad));
   assert.equal(mock.calls.length, 0);
 });
 

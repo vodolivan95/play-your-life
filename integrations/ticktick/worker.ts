@@ -461,6 +461,18 @@ export class TickTickAccount {
       await this.storage.put('habitKeys', [...seen, { key, result }].slice(-500));
       return json(result);
     }
+    // Настоящего удаления привычки официальный MCP-сервер TickTick не предоставляет (есть только список, чтение,
+    // создание, обновление и отметки) — ближайший доступный эквивалент удалению в игре - перевод в архив (status 2),
+    // тот же статус, что игра уже распознаёт как «archived» при чтении (src/ticktickHabits.ts).
+    if (url.pathname === '/habits/archive' && request.method === 'POST') {
+      if (!await this.storage.get('token')) throw new BridgeError('Подключи аккаунт TickTick.', 401, undefined, 'TICKTICK_AUTH_REQUIRED');
+      const data = await body(request, 500);
+      const habitId = data.ticktickHabitId;
+      if (typeof habitId !== 'string' || !/^[\w-]{1,100}$/.test(habitId))
+        throw new BridgeError('Проверь привычку для архивации.', 400, undefined, 'INVALID_HABITS');
+      await this.mcp('update_habit', { habit_id: habitId, habit: { id: habitId, status: 2 } });
+      return json({ status: 'archived', ticktickHabitId: habitId });
+    }
     if (url.pathname === '/habits/links' && request.method === 'GET') {
       return json(await this.habitLinks());
     }

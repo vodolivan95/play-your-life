@@ -48,10 +48,17 @@ const midnightAt = /T00:00(:00)?(\.\d+)?(Z|[+-]\d{2}:?\d{2})?$/;
 /** Дата (и время, если оно задано) задачи TickTick для показа во входящих: «28 октября» или «28 октября, 19:30». */
 export function formatIncomingDate(value?: string | null): string {
   if (!value) return '';
+  if (midnightAt.test(value)) {
+    // Весь день — берём календарный день прямо из даты строки, без перевода через
+    // часовой пояс среды: иначе смещение TickTick может сдвинуть день на соседние сутки
+    // (тот же класс ошибки, что в remoteFields() src/ticktick.ts, версия 0.48.5).
+    const date = new Date(`${value.slice(0, 10)}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  }
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
   const day = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-  if (midnightAt.test(value)) return day;
   const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
   return `${day}, ${time}`;
 }

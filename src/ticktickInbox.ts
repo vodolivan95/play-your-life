@@ -42,6 +42,20 @@ export function mappedProjectIds(connection: TickTickConnection) {
   ];
 }
 
+// Ровно полночь (с учётом смещения TickTick) — это не время, а просто календарный день;
+// то же правило использует iso() в src/ticktick.ts и hasTime() в src/tasksCalendar.ts.
+const midnightAt = /T00:00(:00)?(\.\d+)?(Z|[+-]\d{2}:?\d{2})?$/;
+/** Дата (и время, если оно задано) задачи TickTick для показа во входящих: «28 октября» или «28 октября, 19:30». */
+export function formatIncomingDate(value?: string | null): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const day = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  if (midnightAt.test(value)) return day;
+  const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  return `${day}, ${time}`;
+}
+
 /** Во входящие попадают задачи со сроком не дальше этого числа месяцев от сегодня. */
 export const inboxHorizonMonths = 4;
 

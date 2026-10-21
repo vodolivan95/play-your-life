@@ -5,15 +5,10 @@ import { spheres } from '../game';
 import type { GameState } from '../game';
 import { saveGoal, saveStage } from '../planning';
 import { TickTickContext } from '../tickTickContext';
-import { goalsForSphere, openStages } from '../ticktickInbox';
+import { formatIncomingDate, goalsForSphere, openStages } from '../ticktickInbox';
 import type { IncomingChoice, IncomingTask } from '../ticktickInbox';
 
 const pageSize = 20;
-function formatDate(value?: string | null) {
-  if (!value) return '';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-}
 function Row({ item, state, busy, listName, onAccept, onDismiss, onDelete, onChange }: {
   item: IncomingTask;
   state: GameState;
@@ -38,8 +33,8 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onDelete, onCha
   const canAccept = single || Boolean(goalId);
   const goal = goals.find((g) => g.id === goalId);
   const stages = openStages(goal);
-  const start = formatDate(item.remote.startDate);
-  const due = formatDate(item.remote.dueDate);
+  const start = formatIncomingDate(item.remote.startDate);
+  const due = formatIncomingDate(item.remote.dueDate);
   async function run(action: () => Promise<unknown>) {
     try { setError(''); await action(); }
     catch (e) { setError(e instanceof Error ? e.message : 'Не удалось выполнить действие.'); }

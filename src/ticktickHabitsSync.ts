@@ -41,14 +41,14 @@ export type ImportResult = {
   days: string[];
 };
 
-/** Создаёт локальную привычку из привычки TickTick с наградой, выбранной при импорте (1–5 лайфкоинов), без записи отметок в экономику. */
+/** Создаёт локальную привычку из привычки TickTick с наградой, выбранной при импорте (0–5 лайфкоинов), без записи отметок в экономику. */
 export function importHabit(
   state: GameState, candidate: ImportCandidate, sphere: string, rewardCoins: number, ownerId: string, range: { from: string; to: string },
   checkins: readonly RemoteCheckin[], imported: ReadonlySet<string>, now = new Date(),
 ): ImportResult {
   if (candidate.state !== 'new' || !candidate.schedule.supported) throw new Error('Эту привычку нельзя импортировать автоматически.');
   if (!sphereIds.includes(sphere)) throw new Error('Выберите сферу для привычки.');
-  const coins = Math.min(5, Math.max(1, Math.round(rewardCoins) || 1));
+  const coins = Math.min(5, Math.max(0, Math.round(rewardCoins) || 0));
   const remote = candidate.remote;
   const mine = checkins.filter((c) => c.ticktickHabitId === remote.ticktickHabitId && c.day >= range.from && c.day <= range.to);
   const fresh = newCheckins(mine, imported);

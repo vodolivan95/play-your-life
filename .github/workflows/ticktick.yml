@@ -7,6 +7,10 @@ on:
     paths:
       - integrations/ticktick/**
       - .github/workflows/ticktick.yml
+      # Worker собирает код прямо из этих файлов (import '../../src/...'); без них правка там
+      # не доезжала до прод-воркера даже после мерджа в main (см. CHANGELOG, версия 0.49.2).
+      - src/ticktickHabits.ts
+      - src/ticktickSettings.ts
 
 permissions:
   contents: read

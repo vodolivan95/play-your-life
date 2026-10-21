@@ -56,7 +56,7 @@ function mockMcp(t: { after: (fn: () => void) => void }): Mock {
     if (mock.fail) return reply(2, { isError: true, content: [{ type: 'text', text: 'boom' }] });
     const data: Record<string, unknown> = {
       list_habit_sections: { sections: [{ id: 'section-1', name: 'Health' }] },
-      list_habits: { habits: [{ id: 'habit-1', name: 'Читать', iconRes: 'habit_reading', color: '#4D8CF5', status: 0, goal: 1, step: 1, unit: 'Count', repeatRule: 'RRULE:FREQ=DAILY;INTERVAL=1', reminders: [], sectionId: 'section-1', modifiedTime: 1792404000000, etag: 'e', totalCheckIns: 3, accessToken: 'must-not-leak' }] },
+      list_habits: { habits: [{ id: 'habit-1', name: 'Читать', iconRes: 'habit_reading', color: '#4D8CF5', status: 0, goal: 1, step: 1, unit: 'Count', repeatRule: 'RRULE:FREQ=DAILY;INTERVAL=1', reminders: ['21:00'], sectionId: 'section-1', modifiedTime: 1792404000000, etag: 'e', totalCheckIns: 3, targetDays: 7, targetStartDate: 20261021, accessToken: 'must-not-leak' }] },
       get_habit_checkins: { habit_1: [{ habitId: 'habit-1', stamp: 20261019, value: 1, goal: 1, status: 2 }] },
       upsert_habit_checkins: { ok: true },
     };
@@ -93,11 +93,14 @@ test('/habits возвращает нормализованные привычк
   assert.equal(response.status, 200);
   const text = await response.text();
   assert.ok(!text.includes('provider-secret-token') && !text.includes('refresh-secret-token') && !text.includes('must-not-leak'));
-  const data = JSON.parse(text) as { items: { ticktickHabitId: string; icon: string; sectionName: string; modifiedAt: string }[]; sections: unknown[] };
+  const data = JSON.parse(text) as { items: { ticktickHabitId: string; icon: string; sectionName: string; modifiedAt: string; targetDays: number; targetStartDate: string; reminders: string[] }[]; sections: unknown[] };
   assert.equal(data.items[0].ticktickHabitId, 'habit-1');
   assert.equal(data.items[0].icon, 'reading');
   assert.equal(data.items[0].sectionName, 'Health');
   assert.equal(data.items[0].modifiedAt, '2026-10-19T10:00:00.000Z');
+  assert.equal(data.items[0].targetDays, 7);
+  assert.equal(data.items[0].targetStartDate, '2026-10-21');
+  assert.deepEqual(data.items[0].reminders, ['21:00']);
   assert.deepEqual(mock.calls.map((c) => c.tool).sort(), ['list_habit_sections', 'list_habits']);
   assert.ok(mock.calls.every((c) => c.auth === 'Bearer provider-secret-token'));
 });

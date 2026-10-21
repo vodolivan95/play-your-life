@@ -21,6 +21,8 @@ export type TickTickHabitsApi = {
   code: string;
   loaded: boolean;
   candidates: ImportCandidate[];
+  /** Привычки TickTick как они есть, для показа полей (цель в днях, дата начала, напоминания) у связанных привычек. */
+  remote: RemoteHabit[];
   sections: HabitSection[];
   links: HabitLinksState;
   linksDirty: boolean;
@@ -270,7 +272,7 @@ export default function useTickTickHabits(manager: TickTickManager | null, state
   const conflicts = useMemo(() => findConflicts(state, links, checkins), [state, links, checkins]);
   const external = useMemo(() => new Map(Object.entries(externalDays(links, checkins, today))), [links, checkins, today]);
   return {
-    connected, busy, message, code, loaded, candidates, sections, links, linksDirty, conflicts, external, lastSyncAt,
+    connected, busy, message, code, loaded, candidates, remote, sections, links, linksDirty, conflicts, external, lastSyncAt,
     waiting: queue.filter((op) => op.status !== 'failed').length,
     failed: queue.filter((op) => op.status === 'failed').length,
     load, refreshCheckins, importHabits, retry, resolveConflict, unlink, saveSectionMap,

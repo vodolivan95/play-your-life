@@ -180,14 +180,14 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
                 <button type="button" aria-pressed={preset === 'date' || picking} onClick={() => setPicking(true)}>Выбрать дату</button>
               </div>
               {(picking || preset === 'date') && (
-                <>
-                  <input type="date" aria-label="Дата выполнения" value={dayOf(task.dueAt)}
-                    onChange={(e) => e.target.value && patch({ dueAt: withTime(e.target.value, clockOf(task.dueAt)) })} />
-                  <label className="twin-time">Время выполнения
-                    <input type="time" aria-label="Время выполнения" value={clockOf(task.dueAt)}
-                      onChange={(e) => task.dueAt && patch({ dueAt: withTime(task.dueAt, e.target.value) })} />
-                  </label>
-                </>
+                <input type="date" aria-label="Дата выполнения" value={dayOf(task.dueAt)}
+                  onChange={(e) => e.target.value && patch({ dueAt: withTime(e.target.value, clockOf(task.dueAt)) })} />
+              )}
+              {preset !== 'none' && (
+                <label className="twin-time">Время выполнения
+                  <input type="time" aria-label="Время выполнения" value={clockOf(task.dueAt)}
+                    onChange={(e) => task.dueAt && patch({ dueAt: withTime(task.dueAt, e.target.value) })} />
+                </label>
               )}
             </div>
           )}

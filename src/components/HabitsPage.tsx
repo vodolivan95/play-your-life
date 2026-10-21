@@ -273,8 +273,8 @@ export default function HabitsPage({ state, onChange, ownerId, today, notify }: 
             </div>
             {!confirmDelete ? <button type="button" className="hb-btn is-ghost" onClick={() => setConfirmDelete(true)}>Удалить навсегда</button> : (
               <div className="hb-confirm" role="alertdialog" aria-label="Удалить привычку">
-                <p>Удалить «{open.title}» и её историю? Уже выплаченные награды останутся.</p>
-                <div><button type="button" className="hb-btn is-danger" onClick={() => { if (run(() => removeHabit(state, open.id, ownerId), 'Привычка удалена')) { setOpenId(''); setConfirmDelete(false); } }}>Удалить</button><button type="button" className="hb-btn" onClick={() => setConfirmDelete(false)}>Отмена</button></div>
+                <p>Удалить «{open.title}» и её историю? Уже выплаченные награды останутся.{linkOf(open) && ' Связанная привычка в TickTick будет переведена в архив (удалить привычки по API TickTick не даёт).'}</p>
+                <div><button type="button" className="hb-btn is-danger" onClick={() => { const linked = open.id; if (run(() => removeHabit(state, open.id, ownerId), 'Привычка удалена')) { void tt?.archiveAndUnlink(linked); setOpenId(''); setConfirmDelete(false); } }}>Удалить</button><button type="button" className="hb-btn" onClick={() => setConfirmDelete(false)}>Отмена</button></div>
               </div>
             )}
           </aside>

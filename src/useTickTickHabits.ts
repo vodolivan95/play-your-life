@@ -12,7 +12,7 @@ import {
 } from './ticktickHabitsSync';
 import type { ExportOp, HabitConflict, ImportCandidate } from './ticktickHabitsSync';
 
-export type HabitImportChoice = { id: string; sphere: string };
+export type HabitImportChoice = { id: string; sphere: string; rewardCoins: number };
 export type TickTickHabitsApi = {
   connected: boolean;
   busy: boolean;
@@ -169,7 +169,7 @@ export default function useTickTickHabits(manager: TickTickManager | null, state
       const nextLinks: Record<string, HabitLink> = { ...before.links };
       let checkinCount = 0;
       for (const { choice, candidate } of picked) {
-        const result = importHabit(working, candidate!, choice.sphere, ownerId, range, items, imported);
+        const result = importHabit(working, candidate!, choice.sphere, choice.rewardCoins, ownerId, range, items, imported);
         working = result.state;
         added.push(working.habits!.find((h) => h.id === result.localId)!);
         nextLinks[result.localId] = result.link;

@@ -718,46 +718,56 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                     </button>
                   ))}
                 </div>
-                <div className="achievement-grid">
-                  {achievements
-                    .filter(
+                {Array.from(new Set(achievements.map((a) => a.category ?? 'Достижения'))).map(
+                  (category) => {
+                    const items = achievements.filter(
                       (a) =>
-                        achievementFilter === 'all' ||
-                        (achievementFilter === 'open'
-                          ? a.unlocked(state)
-                          : !a.unlocked(state)),
-                    )
-                    .map((a) => (
-                      <section
-                        className={`panel achievement ${a.unlocked(state) ? 'unlocked' : ''}`}
-                        key={a.name}
-                      >
-                        <span className="achievement-icon">
-                          <GameArt kind="trophy" />
-                        </span>
-                        <span className="mini-pill">
-                          {a.unlocked(state) ? 'Получено ✓' : 'Впереди'}
-                        </span>
-                        <h2>{a.name}</h2>
-                        <p>{a.description}</p>
-                        <div className="achievement-progress">
-                          <Progress
-                            label={`Достижение: ${a.name}`}
-                            value={
-                              a.unlocked(state)
-                                ? 100
-                                : Math.round(a.progress(state) * 100)
-                            }
-                          />
-                          <small>
-                            {a.unlocked(state)
-                              ? '✓'
-                              : `${Math.round(a.progress(state) * 100)}%`}
-                          </small>
+                        (a.category ?? 'Достижения') === category &&
+                        (achievementFilter === 'all' ||
+                          (achievementFilter === 'open'
+                            ? a.unlocked(state)
+                            : !a.unlocked(state))),
+                    );
+                    if (!items.length) return null;
+                    return (
+                      <div key={category}>
+                        <div className="section-heading">
+                          <h2>{category}</h2>
                         </div>
-                      </section>
-                    ))}
-                </div>
+                        <div className="achievement-grid">
+                          {items.map((a) => (
+                            <section
+                              className={`panel achievement achievement-${a.tier ?? 'bronze'} ${a.unlocked(state) ? 'unlocked' : ''}`}
+                              key={a.name}
+                            >
+                              <span className="achievement-icon">{a.icon}</span>
+                              <span className="mini-pill">
+                                {a.unlocked(state) ? 'Получено ✓' : 'Впереди'}
+                              </span>
+                              <h2>{a.name}</h2>
+                              <p>{a.description}</p>
+                              <div className="achievement-progress">
+                                <Progress
+                                  label={`Достижение: ${a.name}`}
+                                  value={
+                                    a.unlocked(state)
+                                      ? 100
+                                      : Math.round(a.progress(state) * 100)
+                                  }
+                                />
+                                <small>
+                                  {a.unlocked(state)
+                                    ? '✓'
+                                    : `${Math.round(a.progress(state) * 100)}%`}
+                                </small>
+                              </div>
+                            </section>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  },
+                )}
               </>
             )}
             </ErrorBoundary>

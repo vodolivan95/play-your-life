@@ -3,7 +3,7 @@ import type { GameState } from '../game';
 import { playerProgress } from '../game';
 import Avatar from './Avatar';
 
-/** Карточка игрока в боковом меню и в шторке «Ещё»: аватар с кольцом уровня, имя, титул, XP и монеты. */
+/** Карточка игрока в боковом меню и в шторке «Ещё»: аватар с кольцом уровня, имя, титул, XP и лайфкоины. */
 export default function PlayerCard({ state }: { state: GameState }) {
   const player = playerProgress(state);
   const personal = state.profile.mode === 'personal';
@@ -26,7 +26,7 @@ export default function PlayerCard({ state }: { state: GameState }) {
       <div className="pyl-xp" aria-hidden="true"><span style={{ width: `${Math.min(100, Math.max(0, player.progress))}%` }} /></div>
       <div className="pyl-player-meta">
         <span>{player.maxed ? `${state.xp} XP · максимум` : `${xpNow} / ${xpNext} XP`}</span>
-        <span>Life Coins {state.coins}</span>
+        <span>Лайфкоины {state.coins}</span>
       </div>
     </div>
   );

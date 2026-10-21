@@ -131,7 +131,7 @@ service cloud.firestore {
         && request.resource.data.get('recordChanges', []).size() == 0;
       allow update: if owner() && valid()
         && request.resource.data.revision == resource.data.revision + 1 && economyValid();
-      // Архив событий старше 60 дней: один документ на месяц. Не влияет на монеты и XP.
+      // Архив событий старше 60 дней: один документ на месяц. Не влияет на лайфкоины и XP.
       match /history/{month} {
         allow get: if owner();
         allow list, delete: if false;

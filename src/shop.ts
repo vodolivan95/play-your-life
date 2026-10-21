@@ -245,7 +245,7 @@ export function saveCustomReward(
   if (!name || name.length > 60) throw new Error('Название награды — от 1 до 60 символов.');
   if ((description?.length ?? 0) > 200) throw new Error('Описание — до 200 символов.');
   if (!Number.isSafeInteger(input.price) || input.price < 1 || input.price > MAX_CUSTOM_REWARD_PRICE)
-    throw new Error(`Цена — целое число от 1 до ${MAX_CUSTOM_REWARD_PRICE.toLocaleString('ru')} монет.`);
+    throw new Error(`Цена — целое число от 1 до ${MAX_CUSTOM_REWARD_PRICE.toLocaleString('ru')} лайфкоинов.`);
   if (!validProjectImage(input.image)) throw new Error('Некорректная картинка.');
   const list = state.shop?.customRewards ?? [];
   const old = input.id ? list.find((r) => r.id === input.id && !r.archived) : undefined;
@@ -291,7 +291,7 @@ export function buyItem(
     throw new Error('Эта рамка уже твоя.');
   if (state.coins < item.price)
     throw new Error(
-      'Недостаточно монет. Выполняй задачи, чтобы заработать ещё.',
+      'Недостаточно лайфкоинов. Выполняй задачи, чтобы заработать ещё.',
     );
   return {
     ...state,

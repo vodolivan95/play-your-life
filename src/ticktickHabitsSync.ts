@@ -41,7 +41,7 @@ export type ImportResult = {
   days: string[];
 };
 
-/** Создаёт локальную привычку из привычки TickTick без монет и без записи отметок в экономику. */
+/** Создаёт локальную привычку из привычки TickTick без лайфкоинов и без записи отметок в экономику. */
 export function importHabit(
   state: GameState, candidate: ImportCandidate, sphere: string, ownerId: string, range: { from: string; to: string },
   checkins: readonly RemoteCheckin[], imported: ReadonlySet<string>, now = new Date(),

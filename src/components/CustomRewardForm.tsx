@@ -76,7 +76,7 @@ export default function CustomRewardForm({ reward, state, onChange, notify, onCl
           <textarea value={description} maxLength={200} rows={2} onChange={(e) => setDescription(e.target.value)} />
         </label>
         <label>
-          Цена в монетах
+          Цена в лайфкоинах
           <input type="number" inputMode="numeric" min={1} max={MAX_CUSTOM_REWARD_PRICE} step={1} required value={price} onChange={(e) => setPrice(e.target.value)} />
         </label>
         <label className="custom-reward-lux">

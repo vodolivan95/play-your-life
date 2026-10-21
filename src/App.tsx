@@ -510,7 +510,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                     <span className="profile-tip-icon">
                       <Icon name="bolt" size={18} />
                     </span>
-                    <p>Выполни первое задание — получи первые XP и монеты.</p>
+                    <p>Выполни первое задание — получи первые XP и лайфкоины.</p>
                     <button
                       type="button"
                       className="icon-button profile-tip-dismiss"

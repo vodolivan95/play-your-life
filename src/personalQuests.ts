@@ -84,7 +84,7 @@ export type RewardItem = {
 export function checkCoins(value: number, max: number) {
   if (!Number.isSafeInteger(value) || value < 0 || value > max)
     throw new Error(
-      `Награда должна быть целым числом от 0 до ${max} Life Coins.`,
+      `Награда должна быть целым числом от 0 до ${max} лайфкоинов.`,
     );
   return value === 0 ? 0 : value;
 }

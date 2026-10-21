@@ -176,7 +176,7 @@ export default function useTickTickHabits(manager: TickTickManager | null, state
         for (const key of result.importedKeys) imported.add(key);
         checkinCount += result.importedKeys.length;
       }
-      // Добавляются только новые привычки: награды, монеты и отметки экономики не затрагиваются.
+      // Добавляются только новые привычки: награды, лайфкоины и отметки экономики не затрагиваются.
       onChange((current) => ({ ...current, habits: [...(current.habits ?? []), ...added.filter((h) => !(current.habits ?? []).some((x) => x.id === h.id))] }));
       setCheckins((old) => [...old, ...items]);
       const now = new Date().toISOString();

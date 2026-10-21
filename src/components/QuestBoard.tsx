@@ -87,7 +87,7 @@ export default function QuestBoard({
         setCelebrate(
           state.completed === 0
             ? "🏆 Первый шаг! Твоя первая задача выполнена!"
-            : `✓ +${next.xp - state.xp} XP · +${questCoins(q)} Life Coins${item ? " · " + item.icon + " " + item.name : ""}`,
+            : `✓ +${next.xp - state.xp} XP · +${questCoins(q)} лайфкоинов${item ? " · " + item.icon + " " + item.name : ""}`,
         );
       } else notify("Прогресс сохранён");
       setProgress(null);

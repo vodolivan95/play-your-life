@@ -152,7 +152,7 @@ export function purchaseRoomObject(state: GameState, roomId: RoomId, id: ObjectI
   const room = roomData(state, roomId);
   if (room.purchased.includes(id)) throw new Error('Предмет уже куплен.');
   if (sphereProgress(state.spheres[roomId].xp).level < item.level) throw new Error(`Нужен уровень сферы ${item.level}.`);
-  if (state.coins < item.price) throw new Error('Недостаточно монет.');
+  if (state.coins < item.price) throw new Error('Недостаточно лайфкоинов.');
   return { ...setRoom(state, roomId, { ...room, purchased: [...room.purchased, id] }), coins: state.coins - item.price };
 }
 export function placeRoomObject(state: GameState, roomId: RoomId, object: RoomObject): GameState {

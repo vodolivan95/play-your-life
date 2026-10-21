@@ -93,7 +93,7 @@ export function upgradeBuilding(
   const price = b.tier === 1 ? 60 : 120;
   if (state.coins < price)
     throw new Error(
-      'Недостаточно монет. Выполняй задачи, чтобы заработать ещё.',
+      'Недостаточно лайфкоинов. Выполняй задачи, чтобы заработать ещё.',
     );
   return update(state, id, { ...b, tier: b.tier + 1 }, state.coins - price);
 }
@@ -115,7 +115,7 @@ export function buyCityDecor(
   const item = cityDecor.find((x) => x.id === itemId);
   if (!item) throw new Error('Предмет не найден.');
   if (b.owned.includes(itemId)) return state;
-  if (state.coins < item.price) throw new Error('Недостаточно монет.');
+  if (state.coins < item.price) throw new Error('Недостаточно лайфкоинов.');
   return update(
     state,
     id,

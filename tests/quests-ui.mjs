@@ -112,13 +112,13 @@ try {
     await d.getByLabel("Цель / количество *").fill("10");
     await d.getByLabel("Единица измерения").fill("км");
     await d.getByRole("button", { name: "Далее →" }).click();
-    await d.getByLabel("Life Coins").fill("101");
+    await d.getByLabel("Лайфкоины").fill("101");
     await d.getByRole("button", { name: "Далее →" }).click();
     assert.equal(
       (await d.getByText("Награда", { exact: false }).count()) > 0,
       true,
     );
-    await d.getByLabel("Life Coins").fill("100");
+    await d.getByLabel("Лайфкоины").fill("100");
     await d.getByLabel("Виртуальная награда").selectOption("plant_basic");
     await d.getByRole("button", { name: "Далее →" }).click();
     await d.getByRole("button", { name: "Создать задачу", exact: true }).click();
@@ -135,7 +135,7 @@ try {
     d = page.locator(".pyl-quest-dialog");
     for (let i = 0; i < 4; i++)
       await d.getByRole("button", { name: "Далее →" }).click();
-    assert.equal(await d.getByLabel("Life Coins").isDisabled(), true);
+    assert.equal(await d.getByLabel("Лайфкоины").isDisabled(), true);
     await d.getByRole("button", { name: "Закрыть", exact: true }).click();
     await card.getByRole("button", { name: "Продолжить", exact: true }).click();
     await page.getByRole("button", { name: "Выполнить полностью" }).click();

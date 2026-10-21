@@ -9,7 +9,7 @@ import {
   updateGoal,
 } from '../src/game.ts';
 
-test('квест начисляет XP обеим шкалам и монеты только один раз', () => {
+test('квест начисляет XP обеим шкалам и лайфкоины только один раз', () => {
   const state = initialState();
   const done = completeQuest(state, 'english-1');
   assert.equal(done.xp, state.xp + 20);

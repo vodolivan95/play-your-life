@@ -30,6 +30,20 @@ test('настройки: сложность меняет XP, этап и сро
   assert.equal(q.name, 'Бег');
   assert.equal(updateTaskSettings(next, 'q1', { dueAt: null }).quests[0].dueAt, undefined);
 });
+test('настройки: срок с временем («YYYY-MM-DDTЧЧ:ММ» из поля времени) нормализуется в ISO с UTC', () => {
+  const withTime = updateTaskSettings(state([quest({})]), 'q1', { dueAt: '2026-11-02T14:30' }).quests[0];
+  assert.equal(withTime.dueAt, new Date('2026-11-02T14:30').toISOString());
+  // Секунды в срезе — тоже допустимый формат (его может прислать withTime() из TaskWindow).
+  const withSeconds = updateTaskSettings(state([quest({})]), 'q1', { dueAt: '2026-11-02T14:30:00' }).quests[0];
+  assert.equal(withSeconds.dueAt, new Date('2026-11-02T14:30:00').toISOString());
+  // Срок без времени остаётся обычной датой, а не ISO-строкой.
+  const bare = updateTaskSettings(state([quest({})]), 'q1', { dueAt: '2026-11-02' }).quests[0];
+  assert.equal(bare.dueAt, '2026-11-02');
+  // Срок со временем раньше начала — отказ, как и для обычной даты.
+  assert.throws(() => updateTaskSettings(
+    state([quest({ startsAt: '2026-11-02T18:00:00.000Z' })]), 'q1', { dueAt: '2026-11-02T14:30' },
+  ), /раньше начала/);
+});
 test('настройки: отказы', () => {
   const s = state([quest({}), quest({ id: 'q2', done: true }), quest({ id: 'q3', sourceType: 'SYSTEM' }), quest({ id: 'q4', goalId: undefined, stageId: undefined })]);
   assert.throws(() => updateTaskSettings(s, 'q2', { name: 'x' }));

@@ -116,7 +116,8 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
     }
   }
   if (patch.shiftDays !== undefined) {
-    if (old.tickTickSharedAt) throw new Error('Плановая дата берётся из TickTick: перенести задачу в календаре нельзя, поменяйте её там.');
+    // Перенос в календаре игры теперь и для связанных с TickTick задач — новая дата уходит
+    // туда же обычным обменом (localChanged), как и любое другое изменение связанной задачи.
     if (!old.dueAt && !old.startsAt) throw new Error('У задачи нет срока, которую можно перенести.');
     if (!Number.isInteger(patch.shiftDays) || !patch.shiftDays) throw new Error('Нечего переносить.');
     if (old.dueAt) q.dueAt = shiftDate(old.dueAt, patch.shiftDays);

@@ -154,13 +154,10 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
           </div>
           {linked ? (
             <div className="twin-field" role="group" aria-label="Плановая дата">
-              <span>Плановая дата</span>
-              <p>
-                {task.startsAt && task.dueAt && dayOf(task.startsAt) !== dayOf(task.dueAt)
-                  ? `${fmtDate(task.startsAt)} — ${fmtDate(task.dueAt)}`
-                  : task.dueAt ? fmtDate(task.dueAt) : 'Без даты в TickTick'}
-              </p>
-              <small>Дата берётся из TickTick при каждом обмене; поменять можно только там.</small>
+              <span>Плановая дата{task.dueAt ? ` · ${fmtDate(task.dueAt)}` : ''}</span>
+              <input type="date" aria-label="Дата выполнения" value={dayOf(task.dueAt)}
+                onChange={(e) => e.target.value && patch({ dueAt: withTime(e.target.value, clockOf(task.dueAt)) })} />
+              <small>Дата и время — в обе стороны с TickTick: перенос здесь при следующем обмене уйдёт и туда.</small>
               {task.dueAt && (
                 <div className="twin-time-row">
                   <label className="twin-time">С

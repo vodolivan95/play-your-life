@@ -79,11 +79,13 @@ test('сегодняшний день из TickTick не блокирует ло
   assert.equal(done.coins, start.coins + 3); // лайфкоины начислены за сегодняшнюю локальную отметку, по выбранной при импорте награде
 });
 
-test('награда при импорте ограничена диапазоном 1–5 лайфкоинов', () => {
+test('награда при импорте ограничена диапазоном 0–5 лайфкоинов, 0 допускается (без награды)', () => {
   const start = newAccountGame('Алиса');
   const candidate = importCandidates(remote, emptyHabitLinks(), sections)[0];
-  const tooLow = importHabit(start, candidate, 'health', 0, owner, range, checkins, new Set(), now);
-  assert.equal(tooLow.state.habits!.find((h) => h.id === tooLow.localId)!.rewardCoins, 1);
+  const zero = importHabit(start, candidate, 'health', 0, owner, range, checkins, new Set(), now);
+  assert.equal(zero.state.habits!.find((h) => h.id === zero.localId)!.rewardCoins, 0);
+  const tooLow = importHabit(start, candidate, 'health', -2, owner, range, checkins, new Set(), now);
+  assert.equal(tooLow.state.habits!.find((h) => h.id === tooLow.localId)!.rewardCoins, 0);
   const tooHigh = importHabit(start, candidate, 'health', 9, owner, range, checkins, new Set(), now);
   assert.equal(tooHigh.state.habits!.find((h) => h.id === tooHigh.localId)!.rewardCoins, 5);
 });

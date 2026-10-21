@@ -55,8 +55,10 @@ function mockMcp(t: { after: (fn: () => void) => void }): Mock {
     mock.calls.push({ tool, args: body.params.arguments, auth });
     if (mock.fail) return reply(2, { isError: true, content: [{ type: 'text', text: 'boom' }] });
     const data: Record<string, unknown> = {
-      list_habit_sections: { sections: [{ id: 'section-1', name: 'Health' }] },
-      list_habits: { habits: [{ id: 'habit-1', name: 'Читать', iconRes: 'habit_reading', color: '#4D8CF5', status: 0, goal: 1, step: 1, unit: 'Count', repeatRule: 'RRULE:FREQ=DAILY;INTERVAL=1', reminders: ['21:00'], sectionId: 'section-1', modifiedTime: 1792404000000, etag: 'e', totalCheckIns: 3, targetDays: 7, targetStartDate: 20261021, accessToken: 'must-not-leak' }] },
+      // Реальный MCP TickTick оборачивает списки в «result» (проверено на живом аккаунте), не в
+      // «sections»/«habits» — фикстура повторяет настоящую форму, чтобы тест ловил этот класс ошибки.
+      list_habit_sections: { result: [{ id: 'section-1', name: 'Health' }] },
+      list_habits: { result: [{ id: 'habit-1', name: 'Читать', iconRes: 'habit_reading', color: '#4D8CF5', status: 0, goal: 1, step: 1, unit: 'Count', repeatRule: 'RRULE:FREQ=DAILY;INTERVAL=1', reminders: ['21:00'], sectionId: 'section-1', modifiedTime: 1792404000000, etag: 'e', totalCheckIns: 3, targetDays: 7, targetStartDate: 20261021, accessToken: 'must-not-leak' }] },
       get_habit_checkins: { habit_1: [{ habitId: 'habit-1', stamp: 20261019, value: 1, goal: 1, status: 2 }] },
       upsert_habit_checkins: { ok: true },
     };

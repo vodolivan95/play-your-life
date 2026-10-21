@@ -15,7 +15,7 @@
 .peak-art-frame { position: absolute; right: 0; bottom: 0; height: 100%; -webkit-mask-image: linear-gradient(90deg, transparent 4%, #000 44%); mask-image: linear-gradient(90deg, transparent 4%, #000 44%); }
 .peak-art-frame > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .peak-art-frame-light { aspect-ratio: 2000 / 888; }
-.peak-art-frame-dark { aspect-ratio: 3200 / 1185; display: none; }
+.peak-art-frame-dark { aspect-ratio: 2400 / 889; display: none; }
 :root[data-theme="dark"] .peak-art-frame-light { display: none; }
 :root[data-theme="dark"] .peak-art-frame-dark { display: block; }
 .peak-glow { position: absolute; inset: 0; width: 100%; height: 100%; }

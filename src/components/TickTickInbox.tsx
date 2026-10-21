@@ -4,11 +4,32 @@ import type { Dispatch, SetStateAction } from 'react';
 import { spheres } from '../game';
 import type { GameState } from '../game';
 import { saveGoal, saveStage } from '../planning';
+import { remoteFields } from '../ticktick';
 import { TickTickContext } from '../tickTickContext';
 import { formatIncomingDate, goalsForSphere, openStages } from '../ticktickInbox';
 import type { IncomingChoice, IncomingTask } from '../ticktickInbox';
 
 const pageSize = 20;
+/** Срок с конкретным временем выполнения — часы:минуты, иначе пусто (как в TaskWindow.tsx). */
+function clockOf(value?: string) {
+  if (!value || /^\d{4}-\d{2}-\d{2}$/.test(value)) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  const hh = String(d.getHours()).padStart(2, '0'), mm = String(d.getMinutes()).padStart(2, '0');
+  return hh === '00' && mm === '00' ? '' : `${hh}:${mm}`;
+}
+/** Календарный день срока (локальный), годится и для даты, и для момента со временем. */
+function dayOf(value?: string) {
+  if (!value) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+/** Задаёт время на дне срока; пустое время возвращает к обычной дате без времени. */
+function withTime(day: string, time: string) {
+  return time ? `${day}T${time}` : day;
+}
 function Row({ item, state, busy, listName, onAccept, onDismiss, onDelete, onChange }: {
   item: IncomingTask;
   state: GameState;
@@ -30,11 +51,24 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onDelete, onCha
   const [addingGoal, setAddingGoal] = useState(false);
   const [goalDraft, setGoalDraft] = useState('');
   const goals = goalsForSphere(state, sphere);
-  const canAccept = single || Boolean(goalId);
   const goal = goals.find((g) => g.id === goalId);
   const stages = openStages(goal);
   const start = formatIncomingDate(item.remote.startDate);
   const due = formatIncomingDate(item.remote.dueDate);
+  // Время выполнения (интервал «с … до …») на дне, который прислал TickTick: день не меняем,
+  // только часы — как в окне уже принятой задачи. Доступно, только если у задачи есть срок.
+  const remoteTime = remoteFields(item.remote);
+  const [startClock, setStartClock] = useState(() => clockOf(remoteTime.startsAt));
+  const [dueClock, setDueClock] = useState(() => clockOf(remoteTime.dueAt));
+  const timeInvalid = Boolean(startClock && dueClock && startClock > dueClock);
+  const canAccept = (single || Boolean(goalId)) && !timeInvalid;
+  const timeChanged = Boolean(remoteTime.dueAt) && (startClock !== clockOf(remoteTime.startsAt) || dueClock !== clockOf(remoteTime.dueAt));
+  const timeChoice: Pick<IncomingChoice, 'dueAt' | 'startsAt'> = timeChanged && remoteTime.dueAt
+    ? {
+      dueAt: withTime(dayOf(remoteTime.dueAt), dueClock),
+      startsAt: startClock ? withTime(remoteTime.startsAt ? dayOf(remoteTime.startsAt) : dayOf(remoteTime.dueAt), startClock) : null,
+    }
+    : {};
   async function run(action: () => Promise<unknown>) {
     try { setError(''); await action(); }
     catch (e) { setError(e instanceof Error ? e.message : 'Не удалось выполнить действие.'); }
@@ -56,6 +90,20 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onDelete, onCha
       <button className="text-button danger" disabled={busy} onClick={handleDelete}>Удалить</button>
     </div>}
     {open && <div className="ticktick-inbox-choice">
+      {remoteTime.dueAt && <>
+        <span className="ticktick-inbox-label" id={`time-${item.remote.id}`}>Время выполнения</span>
+        <div className="ticktick-inbox-time-row" role="group" aria-labelledby={`time-${item.remote.id}`}>
+          <label className="ticktick-inbox-time">С
+            <input type="time" aria-label="Время начала" value={startClock} disabled={busy}
+              onChange={(e) => setStartClock(e.target.value)} />
+          </label>
+          <label className="ticktick-inbox-time">До
+            <input type="time" aria-label="Время выполнения" value={dueClock} disabled={busy}
+              onChange={(e) => setDueClock(e.target.value)} />
+          </label>
+        </div>
+        <p className="muted ticktick-inbox-hint">День остаётся как в TickTick ({due || start}); время — в игру и сразу обратно в TickTick, как для уже принятых задач.</p>
+      </>}
       <span className="ticktick-inbox-label" id={`sphere-${item.remote.id}`}>Сфера</span>
       <div className="ticktick-inbox-chips" role="group" aria-labelledby={`sphere-${item.remote.id}`}>
         {spheres.map((s) => <button key={s.id} type="button" className="ticktick-chip" aria-pressed={sphere === s.id} disabled={busy}
@@ -110,7 +158,8 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onDelete, onCha
     {open && <>
     <p className="muted ticktick-inbox-hint">Награда придёт один раз — при выполнении задачи.</p>
     <div className="ticktick-inbox-actions">
-      <button className="primary-button" disabled={busy || !canAccept} onClick={() => void run(() => onAccept({ sphere, goalId: single ? '' : goalId, stageId: stageId || undefined }))}>Принять в игру</button>
+      <button className="primary-button" disabled={busy || !canAccept} onClick={() => void run(() => onAccept({ sphere, goalId: single ? '' : goalId, stageId: stageId || undefined, ...timeChoice }))}>Принять в игру</button>
+      {timeInvalid && <p className="transfer-message" role="alert">Начало не может быть позже срока.</p>}
       <button className="text-button" disabled={busy} onClick={() => setOpen(false)}>Свернуть</button>
       <button className="text-button" disabled={busy} onClick={() => void run(onDismiss)}>Пропустить</button>
       <button className="text-button danger" disabled={busy} onClick={handleDelete}>Удалить</button>

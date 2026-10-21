@@ -411,6 +411,58 @@ test('входящие: берутся задачи на ближайшие 4 м
     ['near', 'no-date', 'overdue'],
   );
 });
+test('разбор: время, заданное при приёме, уходит в задачу и обратно в TickTick', () => {
+  const { state, connection, enId } = setup();
+  const incoming = findIncomingTasks(
+    connection,
+    byProject([remote('timed', { dueDate: '2026-10-28T00:00:00+0300' })]),
+    new Date('2026-10-01T00:00:00Z'),
+  )[0];
+  const accepted = acceptIncomingTask(state, connection, incoming, {
+    sphere: 'english',
+    goalId: enId,
+    startsAt: '2026-10-28T13:00',
+    dueAt: '2026-10-28T15:00',
+  }, 'timed-1');
+  assert.equal(accepted.task.startsAt, '2026-10-28T13:00');
+  assert.equal(accepted.task.dueAt, '2026-10-28T15:00');
+  const update = accepted.remoteUpdate as { startDate: string; dueDate: string; isAllDay: boolean };
+  assert.ok(update.startDate);
+  assert.ok(update.dueDate);
+  assert.equal(update.isAllDay, false);
+});
+test('разбор: без выбора времени день и isAllDay в TickTick не трогаются', () => {
+  const { state, connection, enId } = setup();
+  const incoming = findIncomingTasks(
+    connection,
+    byProject([remote('plain', { dueDate: '2026-10-28T00:00:00+0300' })]),
+    new Date('2026-10-01T00:00:00Z'),
+  )[0];
+  const accepted = acceptIncomingTask(state, connection, incoming, { sphere: 'english', goalId: enId }, 'plain-1');
+  assert.equal(accepted.task.dueAt, '2026-10-28');
+  const update = accepted.remoteUpdate as Record<string, unknown>;
+  assert.equal('startDate' in update, false);
+  assert.equal('dueDate' in update, false);
+});
+test('разбор: начало позже срока отклоняется, состояние не меняется', () => {
+  const { state, connection, enId } = setup();
+  const incoming = findIncomingTasks(
+    connection,
+    byProject([remote('bad-interval', { dueDate: '2026-10-28T00:00:00+0300' })]),
+    new Date('2026-10-01T00:00:00Z'),
+  )[0];
+  assert.throws(
+    () =>
+      acceptIncomingTask(state, connection, incoming, {
+        sphere: 'english',
+        goalId: enId,
+        startsAt: '2026-10-28T18:00',
+        dueAt: '2026-10-28T15:00',
+      }),
+    /Начало не может быть позже срока/,
+  );
+  assert.equal(state.quests.length, 0);
+});
 test('formatIncomingDate: во входящих показывает час задачи из TickTick, а не только день', () => {
   assert.equal(formatIncomingDate(undefined), '');
   // Полночь по смещению TickTick — задача без конкретного времени, только день.

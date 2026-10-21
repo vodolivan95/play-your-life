@@ -22,6 +22,13 @@ export type IncomingChoice = {
   /** Пустая строка — одиночная задача без цели (синхронизируется так же). */
   goalId: string;
   stageId?: string;
+  /**
+   * Время выполнения (интервал «с … до …»), заданное при разборе — так же, как в окне уже
+   * принятой задачи (0.48.5/0.48.8): день берётся из TickTick, а время можно задать здесь и
+   * оно сразу уйдёт обратно в TickTick. Не заданы — время остаётся таким, какое прислал TickTick.
+   */
+  startsAt?: string | null;
+  dueAt?: string;
 };
 export type IncomingAccepted = {
   state: GameState;
@@ -147,6 +154,16 @@ export function openStages(goal: Goal | undefined): GoalStage[] {
   return (goal?.stages ?? []).filter((stage) => stage.status !== 'completed');
 }
 
+/** Применяет время (если задано при разборе) к полям задачи из TickTick; день остаётся как в TickTick. */
+function withChoiceTime(fields: ReturnType<typeof remoteFields>, choice: IncomingChoice): ReturnType<typeof remoteFields> {
+  if (choice.dueAt === undefined && choice.startsAt === undefined) return fields;
+  const dueAt = choice.dueAt !== undefined ? choice.dueAt : fields.dueAt;
+  const startsAt = choice.startsAt !== undefined ? (choice.startsAt ?? undefined) : fields.startsAt;
+  if (startsAt && dueAt && new Date(startsAt).getTime() > new Date(dueAt).getTime())
+    throw new Error('Начало не может быть позже срока.');
+  return { ...fields, dueAt, startsAt };
+}
+
 export function acceptIncomingTask(
   state: GameState,
   connection: TickTickConnection,
@@ -166,7 +183,7 @@ export function acceptIncomingTask(
   if (choice.stageId && !stage) throw new Error('Этап не найден в выбранной цели.');
   if (state.quests.some((q) => q.id === taskId))
     throw new Error('Задача уже добавлена.');
-  const fields = remoteFields(incoming.remote);
+  const fields = withChoiceTime(remoteFields(incoming.remote), choice);
   const name = fields.name.trim().slice(0, maxTaskName);
   if (!name) throw new Error('У задачи TickTick нет названия.');
   // saveTask проверяет сроки цели и этапа и сообщает понятную ошибку.
@@ -186,12 +203,16 @@ export function acceptIncomingTask(
   return {
     state: next,
     task,
-    // Только название и заметка: даты и приоритет в TickTick не трогаем.
+    // Название и заметку обновляем всегда; день/время — только если его задали при разборе
+    // (обычно дата и так уже в TickTick, менять её оттуда не нужно).
     remoteUpdate: {
       id: incoming.remote.id,
       projectId: incoming.projectId,
       title: incoming.remote.title,
       content: payload.content,
+      ...(choice.dueAt !== undefined || choice.startsAt !== undefined
+        ? { startDate: payload.startDate, dueDate: payload.dueDate, isAllDay: payload.isAllDay, timeZone: payload.timeZone }
+        : {}),
     },
     connection: {
       ...connection,
@@ -220,7 +241,7 @@ function acceptSingleTask(
 ): IncomingAccepted {
   if (!state.spheres[choice.sphere]) throw new Error('Выбери сферу.');
   if (state.quests.some((q) => q.id === taskId)) throw new Error('Задача уже добавлена.');
-  const fields = remoteFields(incoming.remote);
+  const fields = withChoiceTime(remoteFields(incoming.remote), choice);
   const name = fields.name.trim().slice(0, maxTaskName);
   if (!name) throw new Error('У задачи TickTick нет названия.');
   const next = saveTask(state, { ...fields, id: taskId, name, sphere: choice.sphere, difficulty: 'Medium', sourceType: 'USER_CREATED', ownerId, rewardCoins: 0 });
@@ -231,7 +252,15 @@ function acceptSingleTask(
   return {
     state: next,
     task,
-    remoteUpdate: { id: incoming.remote.id, projectId: incoming.projectId, title: incoming.remote.title, content: payload.content },
+    remoteUpdate: {
+      id: incoming.remote.id,
+      projectId: incoming.projectId,
+      title: incoming.remote.title,
+      content: payload.content,
+      ...(choice.dueAt !== undefined || choice.startsAt !== undefined
+        ? { startDate: payload.startDate, dueDate: payload.dueDate, isAllDay: payload.isAllDay, timeZone: payload.timeZone }
+        : {}),
+    },
     connection: {
       ...connection,
       links: {

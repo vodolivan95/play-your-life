@@ -166,10 +166,20 @@ function iso(raw: unknown): string {
   const t = typeof raw === 'number' ? raw : typeof raw === 'string' ? Date.parse(raw) : NaN;
   return Number.isFinite(t) && t > 0 ? new Date(t).toISOString() : '';
 }
-/** Достаёт массив из ответа вида `[...]`, `{habits:[...]}` или `{items:[...]}`. */
+/**
+ * Достаёт массив из ответа вида `[...]`, `{habits:[...]}`, `{items:[...]}` или `{result:[...]}`.
+ * Живой официальный MCP-сервер TickTick оборачивает списки именно в `result` (проверено на реальном
+ * аккаунте владельца) — без этого ключа `list_habits`/`list_habit_sections` возвращали пустой список,
+ * и «Входящие привычки» молча показывали «Новых привычек для импорта нет», хотя привычки были.
+ * Если ни один известный ключ не найден, берём первое поле-массив — так же терпимо, как уже делает
+ * normalizeCheckins(), на случай ещё не встречавшейся формы ответа.
+ */
 export function listOf(payload: unknown, ...keys: string[]): unknown[] {
   if (Array.isArray(payload)) return payload;
-  if (object(payload)) for (const key of [...keys, 'items', 'data']) if (Array.isArray(payload[key])) return payload[key] as unknown[];
+  if (object(payload)) {
+    for (const key of [...keys, 'items', 'data', 'result']) if (Array.isArray(payload[key])) return payload[key] as unknown[];
+    for (const value of Object.values(payload)) if (Array.isArray(value)) return value as unknown[];
+  }
   return [];
 }
 export function normalizeSections(payload: unknown): HabitSection[] {

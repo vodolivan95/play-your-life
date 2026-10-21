@@ -91,6 +91,23 @@ test('нормализация привычки: поля, раздел, ста�
   assert.equal(normalizeHabits({ nothing: true }).length, 0);
 });
 
+test('живой MCP TickTick оборачивает списки в {result:[...]}, а не {habits:[...]} — нормализация это понимает', () => {
+  // Форма ответа снята с реального аккаунта владельца (list_habits/list_habit_sections): без ключа
+  // «result» в listOf() эти привычки и разделы считались пустым списком, хотя в TickTick они были.
+  const sections = normalizeSections({ result: [{ id: '68c08bb1a1fc1431fd041722', name: 'ОБУЧЕНИЕ 📖' }] });
+  assert.deepEqual(sections, [{ id: '68c08bb1a1fc1431fd041722', name: 'ОБУЧЕНИЕ 📖' }]);
+  const habits = normalizeHabits({
+    result: [{
+      id: '6ad75842d9209c036da5c656', name: 'Слова Sky Eng', iconRes: 'habit_learn_words', color: '#7BC4FA', status: 0,
+      goal: 4, step: -1, unit: ' Модулей слов ', repeatRule: 'RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,TU,WE,TH,FR',
+      sectionId: '68c08bb1a1fc1431fd041722', targetDays: 0, targetStartDate: 20261020,
+    }],
+  }, sections);
+  assert.equal(habits.length, 1);
+  assert.equal(habits[0].name, 'Слова Sky Eng');
+  assert.equal(habits[0].sectionName, 'ОБУЧЕНИЕ 📖');
+});
+
 test('нормализация check-in и дедупликация по привычке и дню', () => {
   const checkins = normalizeCheckins({
     h1: [{ habitId: 'h1', stamp: 20261019, value: 1, goal: 1, status: 2 }, { habitId: 'h1', stamp: 20261019, value: 1, goal: 1, status: 2 }, { habitId: 'h1', stamp: 20261018, value: 0, goal: 1, status: 1 }],

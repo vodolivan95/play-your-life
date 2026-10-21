@@ -774,58 +774,1045 @@ export function questsForToday(state: GameState, now = new Date()): Quest[] {
 function earnedPersonalStandard(s: GameState) {
   return s.events.some((e) => e.kind === 'score' && e.scoreAfter === 9);
 }
-export const achievements = [
+/** Достижения (0.50.0): вспомогательные функции читают реальное состояние игры, ничего не придумывают. */
+function p(value: number) {
+  return Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
+}
+function habitsOf(s: GameState) {
+  return s.habits ?? [];
+}
+function bestHabitStreak(s: GameState) {
+  return Math.max(0, ...habitsOf(s).map((h) => h.bestStreak));
+}
+function reflectionsOf(s: GameState) {
+  return Object.values(s.monthlyReflections ?? {});
+}
+function sameDayDeadlines(s: GameState) {
+  return s.quests.filter(
+    (q) => q.done && q.completedAt && q.dueAt && q.completedAt.slice(0, 10) === q.dueAt.slice(0, 10),
+  ).length;
+}
+function cityTier(s: GameState, sphereId: string) {
+  return s.city?.buildings?.[sphereId]?.tier ?? 1;
+}
+function cityOwned(s: GameState, sphereId: string) {
+  return s.city?.buildings?.[sphereId]?.owned ?? [];
+}
+function skillNodesOf(s: GameState, sphereId: string) {
+  return s.skillTrees?.[sphereId]?.nodes ?? [];
+}
+function skillBranchesOf(s: GameState, sphereId: string) {
+  return s.skillTrees?.[sphereId]?.branches ?? [];
+}
+function totalLearnedNodesOf(s: GameState, sphereId: string) {
+  return skillNodesOf(s, sphereId).filter((n) => n.level > 0).length;
+}
+function totalLearnedNodes(s: GameState) {
+  return spheres.reduce((sum, sp) => sum + totalLearnedNodesOf(s, sp.id), 0);
+}
+function completedStages(s: GameState) {
+  return s.goals.reduce((sum, g) => sum + (g.stages ?? []).filter((st) => st.status === 'completed').length, 0);
+}
+function longestOpenGoalDays(s: GameState) {
+  const now = Date.now();
+  return Math.max(
+    0,
+    ...s.goals
+      .filter((g) => !g.rewarded)
+      .map((g) => {
+        const created = Date.parse(g.created);
+        return Number.isFinite(created) ? (now - created) / 86400000 : 0;
+      }),
+  );
+}
+function totalCoinsEarned(s: GameState) {
+  return (s.coinTransactions ?? []).reduce((sum, t) => sum + (t.amount > 0 ? t.amount : 0), 0);
+}
+export type AchievementTier = 'bronze' | 'silver' | 'gold' | 'platinum' | 'special';
+export type Achievement = {
+  category: string;
+  tier: AchievementTier;
+  name: string;
+  icon: string;
+  description: string;
+  unlocked: (s: GameState) => boolean;
+  progress: (s: GameState) => number;
+  insight?: string;
+};
+const baseAchievements: Achievement[] = [
+  // ---- Первые шаги ----
   {
+    category: 'Первые шаги',
+    tier: 'bronze',
     name: 'Первый шаг',
     icon: '👟',
     description: 'Выполни свою первую задачу',
     unlocked: (s: GameState) => s.completed >= 1,
-    progress: (s: GameState) => Math.min(1, s.completed),
+    progress: (s: GameState) => p(s.completed / 1),
   },
   {
-    name: 'В ритме',
+    category: 'Первые шаги',
+    tier: 'bronze',
+    name: 'Добро пожаловать',
+    icon: '🎉',
+    description: 'Заверши настройку профиля',
+    unlocked: (s: GameState) => Boolean(s.profile.onboardingComplete),
+    progress: (s: GameState) => (s.profile.onboardingComplete ? 1 : 0),
+  },
+  {
+    category: 'Первые шаги',
+    tier: 'bronze',
+    name: 'Первое вложение в город',
+    icon: '🏙️',
+    description: 'Купи первое улучшение в «Городе»',
+    unlocked: (s: GameState) => (s.cityPurchases ?? []).length >= 1,
+    progress: (s: GameState) => p((s.cityPurchases ?? []).length / 1),
+  },
+  {
+    category: 'Первые шаги',
+    tier: 'bronze',
+    name: 'Новый жилец',
     icon: '🔥',
-    description: 'Будь активен 3 дня подряд',
-    unlocked: (s: GameState) => longestStreak(s.activeDates) >= 3,
-    progress: (s: GameState) => Math.min(1, longestStreak(s.activeDates) / 3),
+    description: 'Заведи свою первую привычку',
+    unlocked: (s: GameState) => habitsOf(s).length >= 1,
+    progress: (s: GameState) => p(habitsOf(s).length / 1),
   },
   {
+    category: 'Первые шаги',
+    tier: 'bronze',
+    name: 'Цифровой след',
+    icon: '🔑',
+    description: 'Поделись задачей с TickTick',
+    unlocked: (s: GameState) => s.quests.some((q) => Boolean(q.tickTickSharedAt)),
+    progress: (s: GameState) => (s.quests.some((q) => Boolean(q.tickTickSharedAt)) ? 1 : 0),
+  },
+
+  // ---- Задачи ----
+  {
+    category: 'Задачи',
+    tier: 'silver',
     name: 'На волне',
     icon: '⚡',
     description: 'Выполни 10 задач',
     unlocked: (s: GameState) => s.completed >= 10,
-    progress: (s: GameState) => Math.min(1, s.completed / 10),
+    progress: (s: GameState) => p(s.completed / 10),
   },
   {
+    category: 'Задачи',
+    tier: 'gold',
+    name: 'Трудяга',
+    icon: '💪',
+    description: 'Выполни 50 задач',
+    unlocked: (s: GameState) => s.completed >= 50,
+    progress: (s: GameState) => p(s.completed / 50),
+  },
+  {
+    category: 'Задачи',
+    tier: 'gold',
+    name: 'Марафонец задач',
+    icon: '🏃‍♂️',
+    description: 'Выполни 100 задач',
+    unlocked: (s: GameState) => s.completed >= 100,
+    progress: (s: GameState) => p(s.completed / 100),
+  },
+  {
+    category: 'Задачи',
+    tier: 'platinum',
+    name: 'Легенда списка',
+    icon: '📜',
+    description: 'Выполни 250 задач',
+    unlocked: (s: GameState) => s.completed >= 250,
+    progress: (s: GameState) => p(s.completed / 250),
+  },
+  {
+    category: 'Задачи',
+    tier: 'special',
+    name: 'Тысяча шагов',
+    icon: '🗿',
+    description: 'Выполни 1000 задач',
+    unlocked: (s: GameState) => s.completed >= 1000,
+    progress: (s: GameState) => p(s.completed / 1000),
+  },
+  {
+    category: 'Задачи',
+    tier: 'gold',
+    name: 'Разбор завалов',
+    icon: '📥',
+    description: 'Поделись с TickTick 20 задачами',
+    unlocked: (s: GameState) => s.quests.filter((q) => Boolean(q.tickTickSharedAt)).length >= 20,
+    progress: (s: GameState) => p(s.quests.filter((q) => Boolean(q.tickTickSharedAt)).length / 20),
+  },
+  {
+    category: 'Задачи',
+    tier: 'bronze',
+    name: 'Дедлайн под контролем',
+    icon: '⏰',
+    description: 'Поставь отдельный дедлайн у задачи',
+    unlocked: (s: GameState) => s.quests.some((q) => Boolean(q.deadlineAt)),
+    progress: (s: GameState) => (s.quests.some((q) => Boolean(q.deadlineAt)) ? 1 : 0),
+  },
+  {
+    category: 'Задачи',
+    tier: 'silver',
+    name: 'В последний момент',
+    icon: '🏁',
+    description: 'Заверши 10 задач точно в день дедлайна',
+    unlocked: (s: GameState) => sameDayDeadlines(s) >= 10,
+    progress: (s: GameState) => p(sameDayDeadlines(s) / 10),
+  },
+  {
+    category: 'Задачи',
+    tier: 'gold',
+    name: 'Без хвостов',
+    icon: '🧹',
+    description: 'Не допусти ни одной просроченной задачи',
+    unlocked: (s: GameState) =>
+      s.quests.some((q) => !q.done) &&
+      s.quests.filter((q) => !q.done).every((q) => !isOverdue(q.dueAt)),
     progress: (s: GameState) =>
-      Math.min(1, Math.max(0, ...s.goals.map((g) => g.current / g.target))),
+      s.quests.some((q) => !q.done) &&
+      s.quests.filter((q) => !q.done).every((q) => !isOverdue(q.dueAt))
+        ? 1
+        : 0,
+  },
+
+  // ---- Привычки ----
+  {
+    category: 'Привычки',
+    tier: 'bronze',
+    name: 'Первые три дня',
+    icon: '🔥',
+    description: 'Держи привычку 3 дня подряд',
+    unlocked: (s: GameState) => bestHabitStreak(s) >= 3,
+    progress: (s: GameState) => p(bestHabitStreak(s) / 3),
+  },
+  {
+    category: 'Привычки',
+    tier: 'bronze',
+    name: 'Неделя силы воли',
+    icon: '🔥',
+    description: 'Держи привычку 7 дней подряд',
+    unlocked: (s: GameState) => bestHabitStreak(s) >= 7,
+    progress: (s: GameState) => p(bestHabitStreak(s) / 7),
+  },
+  {
+    category: 'Привычки',
+    tier: 'silver',
+    name: 'Критическая точка',
+    icon: '🔥',
+    description: 'Держи привычку 14 дней подряд',
+    unlocked: (s: GameState) => bestHabitStreak(s) >= 14,
+    progress: (s: GameState) => p(bestHabitStreak(s) / 14),
+  },
+  {
+    category: 'Привычки',
+    tier: 'gold',
+    name: 'Привычка на 21 день',
+    icon: '🔥',
+    description: 'Держи привычку 21 день подряд',
+    unlocked: (s: GameState) => bestHabitStreak(s) >= 21,
+    progress: (s: GameState) => p(bestHabitStreak(s) / 21),
+    insight:
+      'первая веха правила «21–60–90»: 21 день нужен, чтобы привычка вообще прижилась и перестала требовать каждый раз уговаривать себя',
+  },
+  {
+    category: 'Привычки',
+    tier: 'gold',
+    name: 'Месяц стойкости',
+    icon: '🔥',
+    description: 'Держи привычку 30 дней подряд',
+    unlocked: (s: GameState) => bestHabitStreak(s) >= 30,
+    progress: (s: GameState) => p(bestHabitStreak(s) / 30),
+  },
+  {
+    category: 'Привычки',
+    tier: 'gold',
+    name: 'Автоматизм',
+    icon: '🔥',
+    description: 'Держи привычку 60 дней подряд',
+    unlocked: (s: GameState) => bestHabitStreak(s) >= 60,
+    progress: (s: GameState) => p(bestHabitStreak(s) / 60),
+    insight:
+      'вторая веха «21–60–90»: 60 дней — и привычка начинает получаться легче, срывы реже выбивают из колеи',
+  },
+  {
+    category: 'Привычки',
+    tier: 'platinum',
+    name: 'Второе дыхание',
+    icon: '🔥',
+    description: 'Держи привычку 90 дней подряд',
+    unlocked: (s: GameState) => bestHabitStreak(s) >= 90,
+    progress: (s: GameState) => p(bestHabitStreak(s) / 90),
+    insight:
+      'финальная веха «21–60–90»: три месяца — и привычка уже не то, что ты делаешь, а то, какой ты человек',
+  },
+  {
+    category: 'Привычки',
+    tier: 'platinum',
+    name: 'Полгода стабильности',
+    icon: '🔥',
+    description: 'Держи привычку 180 дней подряд',
+    unlocked: (s: GameState) => bestHabitStreak(s) >= 180,
+    progress: (s: GameState) => p(bestHabitStreak(s) / 180),
+  },
+  {
+    category: 'Привычки',
+    tier: 'special',
+    name: 'Год дисциплины',
+    icon: '🔥',
+    description: 'Держи привычку 365 дней подряд',
+    unlocked: (s: GameState) => bestHabitStreak(s) >= 365,
+    progress: (s: GameState) => p(bestHabitStreak(s) / 365),
+  },
+  {
+    category: 'Привычки',
+    tier: 'silver',
+    name: 'Коллекционер привычек',
+    icon: '🗂️',
+    description: 'Веди 5 активных привычек одновременно',
+    unlocked: (s: GameState) => habitsOf(s).filter((h) => h.isActive).length >= 5,
+    progress: (s: GameState) => p(habitsOf(s).filter((h) => h.isActive).length / 5),
+  },
+  {
+    category: 'Привычки',
+    tier: 'gold',
+    name: 'Без срывов',
+    icon: '🛡️',
+    description: 'Доведи все активные привычки до серии от 30 дней',
+    unlocked: (s: GameState) => {
+      const active = habitsOf(s).filter((h) => h.isActive);
+      return active.length >= 1 && active.every((h) => h.currentStreak >= 30);
+    },
+    progress: (s: GameState) => {
+      const active = habitsOf(s).filter((h) => h.isActive);
+      if (!active.length) return 0;
+      return p(Math.min(...active.map((h) => h.currentStreak)) / 30);
+    },
+  },
+  {
+    category: 'Привычки',
+    tier: 'silver',
+    name: 'Двойная серия',
+    icon: '🔥',
+    description: 'Держи 2 привычки одновременно с серией от 21 дня',
+    unlocked: (s: GameState) => habitsOf(s).filter((h) => h.currentStreak >= 21).length >= 2,
+    progress: (s: GameState) => p(habitsOf(s).filter((h) => h.currentStreak >= 21).length / 2),
+  },
+  {
+    category: 'Привычки',
+    tier: 'special',
+    name: 'Привычка-чемпион',
+    icon: '🏆',
+    description: 'Доведи одну привычку до 1000 выполнений',
+    unlocked: (s: GameState) => habitsOf(s).some((h) => h.totalCompletions >= 1000),
+    progress: (s: GameState) =>
+      p(Math.max(0, ...habitsOf(s).map((h) => h.totalCompletions)) / 1000),
+  },
+
+  // ---- Психология ----
+  {
+    category: 'Психология',
+    tier: 'bronze',
+    name: 'Если — то',
+    icon: '🧭',
+    description: 'Заполни план «если — то» в «Моих итогах»',
+    unlocked: (s: GameState) =>
+      reflectionsOf(s).some((r) =>
+        Object.values(r.review?.spheres ?? {}).some((sr) => Boolean(sr.ifThen?.trim())),
+      ),
+    progress: (s: GameState) =>
+      reflectionsOf(s).some((r) =>
+        Object.values(r.review?.spheres ?? {}).some((sr) => Boolean(sr.ifThen?.trim())),
+      )
+        ? 1
+        : 0,
+    insight:
+      'конкретный план на случай препятствия (implementation intention) заметно повышает шанс довести начатое до конца',
+  },
+  {
+    category: 'Психология',
+    tier: 'bronze',
+    name: 'Дневник благодарности',
+    icon: '📔',
+    description: 'Заполни все три пункта благодарности за месяц',
+    unlocked: (s: GameState) =>
+      reflectionsOf(s).some((r) => (r.review?.gratitude ?? []).filter((g) => g.trim()).length >= 3),
+    progress: (s: GameState) =>
+      p(
+        Math.max(
+          0,
+          ...reflectionsOf(s).map((r) => (r.review?.gratitude ?? []).filter((g) => g.trim()).length),
+        ) / 3,
+      ),
+    insight: 'регулярная фиксация благодарности связана с более высоким уровнем мотивации и удовлетворённости',
+  },
+  {
+    category: 'Психология',
+    tier: 'silver',
+    name: 'Три фокуса',
+    icon: '🎯',
+    description: 'Выбери три главных фокуса месяца в «Моих итогах»',
+    unlocked: (s: GameState) => reflectionsOf(s).some((r) => (r.review?.focuses ?? []).length >= 3),
+    progress: (s: GameState) =>
+      p(Math.max(0, ...reflectionsOf(s).map((r) => (r.review?.focuses ?? []).length)) / 3),
+    insight: 'когда приоритетов мало, меньше усталости от принятия решений и больше энергии доходит до важного',
+  },
+  {
+    category: 'Психология',
+    tier: 'gold',
+    name: 'Закрытый гештальт',
+    icon: '✅',
+    description: 'Отметь план прошлого месяца как выполненный',
+    unlocked: (s: GameState) =>
+      reflectionsOf(s).some((r) => Object.values(r.review?.plans ?? {}).includes('done')),
+    progress: (s: GameState) =>
+      reflectionsOf(s).some((r) => Object.values(r.review?.plans ?? {}).includes('done')) ? 1 : 0,
+    insight: 'незавершённые дела отвлекают внимание сильнее завершённых — закрыть их полезно даже с опозданием',
+  },
+  {
+    category: 'Психология',
+    tier: 'silver',
+    name: 'Отскок',
+    icon: '🪃',
+    description: 'Продолжи привычку после того, как серия уже прерывалась',
+    unlocked: (s: GameState) =>
+      habitsOf(s).some((h) => h.isActive && h.bestStreak > h.currentStreak && h.currentStreak >= 3),
+    progress: (s: GameState) =>
+      habitsOf(s).some((h) => h.isActive && h.bestStreak > h.currentStreak && h.currentStreak >= 3)
+        ? 1
+        : 0,
+    insight: 'доброе отношение к себе после срыва предсказывает лучшее возвращение к привычке, чем чувство вины',
+  },
+
+  // ---- Цели ----
+  {
+    category: 'Цели',
+    tier: 'gold',
     name: 'Новый горизонт',
     icon: '🏔️',
     description: 'Заверши большую цель',
     unlocked: (s: GameState) =>
-      Boolean(s.hasCompletedGoal) ||
-      s.goals.some((g) => g.rewarded) ||
-      s.events.some((e) => e.kind === 'goal'),
+      Boolean(s.hasCompletedGoal) || s.goals.some((g) => g.rewarded) || s.events.some((e) => e.kind === 'goal'),
+    progress: (s: GameState) =>
+      p(Math.max(0, ...s.goals.map((g) => (g.target ? g.current / g.target : 0)))),
   },
   {
+    category: 'Цели',
+    tier: 'silver',
     name: 'Стратег',
     icon: '♟️',
     description: 'Достигни 12 уровня',
     unlocked: (s: GameState) => playerProgress(s).level >= 12,
-    progress: (s: GameState) => Math.min(1, playerProgress(s).level / 12),
+    progress: (s: GameState) => p(playerProgress(s).level / 12),
   },
   {
+    category: 'Цели',
+    tier: 'bronze',
+    name: 'Вторая цель',
+    icon: '🚩',
+    description: 'Заведи вторую цель',
+    unlocked: (s: GameState) => s.goals.length >= 2,
+    progress: (s: GameState) => p(s.goals.length / 2),
+  },
+  {
+    category: 'Цели',
+    tier: 'gold',
+    name: 'Целеустремлённый',
+    icon: '🎯',
+    description: 'Заверши 5 целей',
+    unlocked: (s: GameState) => s.goals.filter((g) => g.rewarded).length >= 5,
+    progress: (s: GameState) => p(s.goals.filter((g) => g.rewarded).length / 5),
+  },
+  {
+    category: 'Цели',
+    tier: 'platinum',
+    name: 'Архитектор жизни',
+    icon: '🏛️',
+    description: 'Заверши 10 целей',
+    unlocked: (s: GameState) => s.goals.filter((g) => g.rewarded).length >= 10,
+    progress: (s: GameState) => p(s.goals.filter((g) => g.rewarded).length / 10),
+  },
+  {
+    category: 'Цели',
+    tier: 'bronze',
+    name: 'Первый этап',
+    icon: '🪜',
+    description: 'Заверши первый этап цели',
+    unlocked: (s: GameState) => completedStages(s) >= 1,
+    progress: (s: GameState) => p(completedStages(s) / 1),
+  },
+  {
+    category: 'Цели',
+    tier: 'silver',
+    name: 'Этап за этапом',
+    icon: '🪜',
+    description: 'Заверши 20 этапов целей',
+    unlocked: (s: GameState) => completedStages(s) >= 20,
+    progress: (s: GameState) => p(completedStages(s) / 20),
+  },
+  {
+    category: 'Цели',
+    tier: 'silver',
+    name: 'Большая пятёрка',
+    icon: '🗂️',
+    description: 'Веди 5 целей одновременно',
+    unlocked: (s: GameState) => s.goals.filter((g) => !g.rewarded).length >= 5,
+    progress: (s: GameState) => p(s.goals.filter((g) => !g.rewarded).length / 5),
+  },
+  {
+    category: 'Цели',
+    tier: 'silver',
+    name: 'Долгая игра',
+    icon: '⏳',
+    description: 'Веди одну цель дольше 6 месяцев',
+    unlocked: (s: GameState) => longestOpenGoalDays(s) >= 180,
+    progress: (s: GameState) => p(longestOpenGoalDays(s) / 180),
+  },
+
+  // ---- Сферы жизни ----
+  {
+    category: 'Сферы жизни',
+    tier: 'platinum',
+    name: 'Личный стандарт',
+    icon: '💎',
+    description: `Достигни ${MAX_SPHERE_LEVEL} уровня сферы`,
+    unlocked: (s: GameState) =>
+      earnedPersonalStandard(s) || Object.values(s.spheres).some((v) => sphereProgress(v.xp).maxed),
     progress: (s: GameState) =>
       earnedPersonalStandard(s)
         ? 1
-        : Math.min(
-            1,
-            Math.max(0, ...Object.values(s.spheres).map((sp) => sphereProgress(sp.xp).level)) / MAX_SPHERE_LEVEL,
-          ),
-    name: 'Личный стандарт',
-    icon: '💎',
-    description: `Достигни ${MAX_SPHERE_LEVEL} уровня сферы` ,
+        : p(Math.max(0, ...Object.values(s.spheres).map((sp) => sphereProgress(sp.xp).level)) / MAX_SPHERE_LEVEL),
+  },
+  {
+    category: 'Сферы жизни',
+    tier: 'gold',
+    name: 'Баланс',
+    icon: '⚖️',
+    description: 'Прокачай все сферы хотя бы до 10 уровня',
+    unlocked: (s: GameState) => Object.values(s.spheres).every((sp) => sphereProgress(sp.xp).level >= 10),
+    progress: (s: GameState) =>
+      p(Math.min(...Object.values(s.spheres).map((sp) => sphereProgress(sp.xp).level)) / 10),
+  },
+  {
+    category: 'Сферы жизни',
+    tier: 'gold',
+    name: 'Специалист',
+    icon: '🥇',
+    description: 'Достигни 50 уровня в одной сфере',
+    unlocked: (s: GameState) => Object.values(s.spheres).some((sp) => sphereProgress(sp.xp).level >= 50),
+    progress: (s: GameState) =>
+      p(Math.max(0, ...Object.values(s.spheres).map((sp) => sphereProgress(sp.xp).level)) / 50),
+  },
+  {
+    category: 'Сферы жизни',
+    tier: 'platinum',
+    name: 'Мастер сферы',
+    icon: '👑',
+    description: `Достигни ${MAX_SPHERE_LEVEL} уровня в трёх сферах`,
     unlocked: (s: GameState) =>
-      earnedPersonalStandard(s) || Object.values(s.spheres).some((v) => sphereProgress(v.xp).maxed),
+      Object.values(s.spheres).filter((sp) => sphereProgress(sp.xp).level >= MAX_SPHERE_LEVEL).length >= 3,
+    progress: (s: GameState) =>
+      p(
+        Object.values(s.spheres).filter((sp) => sphereProgress(sp.xp).level >= MAX_SPHERE_LEVEL).length / 3,
+      ),
+  },
+  {
+    category: 'Сферы жизни',
+    tier: 'bronze',
+    name: 'Полный круг',
+    icon: '🌐',
+    description: 'Получи хотя бы 1 уровень в каждой сфере',
+    unlocked: (s: GameState) => Object.values(s.spheres).every((sp) => sphereProgress(sp.xp).level >= 1),
+    progress: (s: GameState) =>
+      p(Math.min(...Object.values(s.spheres).map((sp) => sphereProgress(sp.xp).level)) / 1),
+  },
+  {
+    category: 'Сферы жизни',
+    tier: 'platinum',
+    name: 'Пять сотен',
+    icon: '⭐',
+    description: 'Набери суммарно 500 уровней по всем сферам',
+    unlocked: (s: GameState) =>
+      Object.values(s.spheres).reduce((sum, sp) => sum + sphereProgress(sp.xp).level, 0) >= 500,
+    progress: (s: GameState) =>
+      p(Object.values(s.spheres).reduce((sum, sp) => sum + sphereProgress(sp.xp).level, 0) / 500),
+  },
+
+  // ---- Город ----
+  {
+    category: 'Город',
+    tier: 'bronze',
+    name: 'Новосёл',
+    icon: '🏘️',
+    description: 'Купи первое улучшение здания в «Городе»',
+    unlocked: (s: GameState) => (s.cityPurchases ?? []).length >= 1,
+    progress: (s: GameState) => p((s.cityPurchases ?? []).length / 1),
+  },
+  {
+    category: 'Город',
+    tier: 'silver',
+    name: 'Мэр',
+    icon: '👔',
+    description: 'Прокачай любое здание до максимума',
+    unlocked: (s: GameState) => spheres.some((sp) => cityTier(s, sp.id) >= 3),
+    progress: (s: GameState) => p(Math.max(0, ...spheres.map((sp) => cityTier(s, sp.id))) / 3),
+  },
+  {
+    category: 'Город',
+    tier: 'gold',
+    name: 'Градостроитель',
+    icon: '🏗️',
+    description: 'Прокачай все здания минимум до 2 уровня',
+    unlocked: (s: GameState) => spheres.every((sp) => cityTier(s, sp.id) >= 2),
+    progress: (s: GameState) => p(Math.min(...spheres.map((sp) => cityTier(s, sp.id))) / 2),
+  },
+  {
+    category: 'Город',
+    tier: 'platinum',
+    name: 'Мегаполис',
+    icon: '🌆',
+    description: 'Прокачай все здания до максимума',
+    unlocked: (s: GameState) => spheres.every((sp) => cityTier(s, sp.id) >= 3),
+    progress: (s: GameState) => p(Math.min(...spheres.map((sp) => cityTier(s, sp.id))) / 3),
+  },
+  {
+    category: 'Город',
+    tier: 'gold',
+    name: 'Архитектор',
+    icon: '🏛️',
+    description: 'Укрась окружение каждого здания хотя бы одним предметом',
+    unlocked: (s: GameState) => spheres.every((sp) => cityOwned(s, sp.id).length >= 1),
+    progress: (s: GameState) => p(Math.min(...spheres.map((sp) => cityOwned(s, sp.id).length)) / 1),
+  },
+  {
+    category: 'Город',
+    tier: 'silver',
+    name: 'Коллекционер декора',
+    icon: '🌴',
+    description: 'Купи 10 предметов окружения для города',
+    unlocked: (s: GameState) => spheres.reduce((sum, sp) => sum + cityOwned(s, sp.id).length, 0) >= 10,
+    progress: (s: GameState) =>
+      p(spheres.reduce((sum, sp) => sum + cityOwned(s, sp.id).length, 0) / 10),
+  },
+
+  // ---- Дерево навыков ----
+  {
+    category: 'Дерево навыков',
+    tier: 'bronze',
+    name: 'Первая ветка',
+    icon: '🌱',
+    description: 'Открой первый навык в дереве',
+    unlocked: (s: GameState) => totalLearnedNodes(s) >= 1,
+    progress: (s: GameState) => p(totalLearnedNodes(s) / 1),
+  },
+  {
+    category: 'Дерево навыков',
+    tier: 'silver',
+    name: 'Разветвление',
+    icon: '🌿',
+    description: 'Добавь боковую ветвь в дереве навыков',
+    unlocked: (s: GameState) => spheres.some((sp) => skillBranchesOf(s, sp.id).length >= 2),
+    progress: (s: GameState) => (spheres.some((sp) => skillBranchesOf(s, sp.id).length >= 2) ? 1 : 0),
+  },
+  {
+    category: 'Дерево навыков',
+    tier: 'gold',
+    name: 'Крона знаний',
+    icon: '🌳',
+    description: 'Открой 25 навыков суммарно',
+    unlocked: (s: GameState) => totalLearnedNodes(s) >= 25,
+    progress: (s: GameState) => p(totalLearnedNodes(s) / 25),
+  },
+  {
+    category: 'Дерево навыков',
+    tier: 'platinum',
+    name: 'Древо мудрости',
+    icon: '🦉',
+    description: 'Доведи все навыки одной сферы до максимума',
+    unlocked: (s: GameState) =>
+      spheres.some((sp) => {
+        const nodes = skillNodesOf(s, sp.id);
+        return nodes.length > 0 && nodes.every((n) => n.level >= n.levels);
+      }),
+    progress: (s: GameState) =>
+      spheres.some((sp) => {
+        const nodes = skillNodesOf(s, sp.id);
+        return nodes.length > 0 && nodes.every((n) => n.level >= n.levels);
+      })
+        ? 1
+        : 0,
+  },
+  {
+    category: 'Дерево навыков',
+    tier: 'gold',
+    name: 'Специализация',
+    icon: '🔬',
+    description: 'Доведи один навык до максимального уровня',
+    unlocked: (s: GameState) => spheres.some((sp) => skillNodesOf(s, sp.id).some((n) => n.level >= n.levels && n.levels > 0)),
+    progress: (s: GameState) =>
+      spheres.some((sp) => skillNodesOf(s, sp.id).some((n) => n.level >= n.levels && n.levels > 0)) ? 1 : 0,
+  },
+  {
+    category: 'Дерево навыков',
+    tier: 'platinum',
+    name: 'Мастер веток',
+    icon: '🌲',
+    description: 'Создай 4 ветки навыков суммарно по всем сферам',
+    unlocked: (s: GameState) => spheres.reduce((sum, sp) => sum + skillBranchesOf(s, sp.id).length, 0) >= 4,
+    progress: (s: GameState) =>
+      p(spheres.reduce((sum, sp) => sum + skillBranchesOf(s, sp.id).length, 0) / 4),
+  },
+  {
+    category: 'Дерево навыков',
+    tier: 'gold',
+    name: 'Мультикласс',
+    icon: '🧩',
+    description: 'Открой навыки в 3 разных сферах',
+    unlocked: (s: GameState) => spheres.filter((sp) => totalLearnedNodesOf(s, sp.id) >= 1).length >= 3,
+    progress: (s: GameState) => p(spheres.filter((sp) => totalLearnedNodesOf(s, sp.id) >= 1).length / 3),
+  },
+
+  // ---- Серии ----
+  {
+    category: 'Серии',
+    tier: 'bronze',
+    name: 'В ритме',
+    icon: '🔥',
+    description: 'Будь активен 3 дня подряд',
+    unlocked: (s: GameState) => longestStreak(s.activeDates) >= 3,
+    progress: (s: GameState) => p(longestStreak(s.activeDates) / 3),
+  },
+  {
+    category: 'Серии',
+    tier: 'bronze',
+    name: 'Неделя подряд',
+    icon: '🔥',
+    description: 'Будь активен 7 дней подряд',
+    unlocked: (s: GameState) => longestStreak(s.activeDates) >= 7,
+    progress: (s: GameState) => p(longestStreak(s.activeDates) / 7),
+  },
+  {
+    category: 'Серии',
+    tier: 'silver',
+    name: 'Две недели',
+    icon: '🔥',
+    description: 'Будь активен 14 дней подряд',
+    unlocked: (s: GameState) => longestStreak(s.activeDates) >= 14,
+    progress: (s: GameState) => p(longestStreak(s.activeDates) / 14),
+  },
+  {
+    category: 'Серии',
+    tier: 'gold',
+    name: 'Три недели в игре',
+    icon: '⚡',
+    description: 'Будь активен 21 день подряд',
+    unlocked: (s: GameState) => longestStreak(s.activeDates) >= 21,
+    progress: (s: GameState) => p(longestStreak(s.activeDates) / 21),
+  },
+  {
+    category: 'Серии',
+    tier: 'gold',
+    name: 'Несгибаемый',
+    icon: '⚡',
+    description: 'Будь активен 30 дней подряд',
+    unlocked: (s: GameState) => longestStreak(s.activeDates) >= 30,
+    progress: (s: GameState) => p(longestStreak(s.activeDates) / 30),
+  },
+  {
+    category: 'Серии',
+    tier: 'platinum',
+    name: 'Два месяца подряд',
+    icon: '⚡',
+    description: 'Будь активен 60 дней подряд',
+    unlocked: (s: GameState) => longestStreak(s.activeDates) >= 60,
+    progress: (s: GameState) => p(longestStreak(s.activeDates) / 60),
+  },
+  {
+    category: 'Серии',
+    tier: 'platinum',
+    name: 'Железный человек',
+    icon: '⚡',
+    description: 'Будь активен 100 дней подряд',
+    unlocked: (s: GameState) => longestStreak(s.activeDates) >= 100,
+    progress: (s: GameState) => p(longestStreak(s.activeDates) / 100),
+  },
+  {
+    category: 'Серии',
+    tier: 'special',
+    name: 'Полгода в игре',
+    icon: '⚡',
+    description: 'Будь активен 180 дней подряд',
+    unlocked: (s: GameState) => longestStreak(s.activeDates) >= 180,
+    progress: (s: GameState) => p(longestStreak(s.activeDates) / 180),
+  },
+  {
+    category: 'Серии',
+    tier: 'special',
+    name: 'Всегда в игре',
+    icon: '⚡',
+    description: 'Будь активен 365 дней подряд',
+    unlocked: (s: GameState) => longestStreak(s.activeDates) >= 365,
+    progress: (s: GameState) => p(longestStreak(s.activeDates) / 365),
+  },
+
+  // ---- Профиль ----
+  {
+    category: 'Профиль',
+    tier: 'bronze',
+    name: 'Новичок',
+    icon: '🌟',
+    description: 'Достигни 5 уровня игрока',
+    unlocked: (s: GameState) => playerProgress(s).level >= 5,
+    progress: (s: GameState) => p(playerProgress(s).level / 5),
+  },
+  {
+    category: 'Профиль',
+    tier: 'silver',
+    name: 'Опытный игрок',
+    icon: '🌟',
+    description: 'Достигни 25 уровня игрока',
+    unlocked: (s: GameState) => playerProgress(s).level >= 25,
+    progress: (s: GameState) => p(playerProgress(s).level / 25),
+  },
+  {
+    category: 'Профиль',
+    tier: 'gold',
+    name: 'Середина пути',
+    icon: '🌟',
+    description: 'Достигни 50 уровня игрока',
+    unlocked: (s: GameState) => playerProgress(s).level >= 50,
+    progress: (s: GameState) => p(playerProgress(s).level / 50),
+  },
+  {
+    category: 'Профиль',
+    tier: 'platinum',
+    name: 'Почти легенда',
+    icon: '🌟',
+    description: 'Достигни 75 уровня игрока',
+    unlocked: (s: GameState) => playerProgress(s).level >= 75,
+    progress: (s: GameState) => p(playerProgress(s).level / 75),
+  },
+  {
+    category: 'Профиль',
+    tier: 'special',
+    name: 'Легенда PLAY YOUR LIFE',
+    icon: '👑',
+    description: `Достигни ${MAX_PLAYER_LEVEL} уровня игрока`,
+    unlocked: (s: GameState) => playerProgress(s).level >= MAX_PLAYER_LEVEL,
+    progress: (s: GameState) => p(playerProgress(s).level / MAX_PLAYER_LEVEL),
+  },
+  // ---- Магазин ----
+  {
+    category: 'Магазин',
+    tier: 'bronze',
+    name: 'Первая покупка',
+    icon: '🎁',
+    description: 'Купи первую награду в магазине',
+    unlocked: (s: GameState) => (s.shop?.purchases ?? []).length >= 1,
+    progress: (s: GameState) => p((s.shop?.purchases ?? []).length / 1),
+  },
+  {
+    category: 'Магазин',
+    tier: 'silver',
+    name: 'Копилка',
+    icon: '🪙',
+    description: 'Заработай суммарно 500 лайфкоинов',
+    unlocked: (s: GameState) => totalCoinsEarned(s) >= 500,
+    progress: (s: GameState) => p(totalCoinsEarned(s) / 500),
+  },
+  {
+    category: 'Магазин',
+    tier: 'gold',
+    name: 'Транжира',
+    icon: '🪙',
+    description: 'Потрать на одну покупку 1000 лайфкоинов',
+    unlocked: (s: GameState) => (s.shop?.purchases ?? []).some((pu) => pu.price >= 1000),
+    progress: (s: GameState) =>
+      p(Math.max(0, ...(s.shop?.purchases ?? []).map((pu) => pu.price)) / 1000),
+  },
+  {
+    category: 'Магазин',
+    tier: 'platinum',
+    name: 'Люкс',
+    icon: '💠',
+    description: 'Купи «Награду Люкс»',
+    unlocked: (s: GameState) =>
+      (s.shop?.purchases ?? []).some((pu) =>
+        (s.shop?.customRewards ?? []).some((r) => r.id === pu.itemId && r.lux),
+      ),
+    progress: (s: GameState) =>
+      (s.shop?.purchases ?? []).some((pu) =>
+        (s.shop?.customRewards ?? []).some((r) => r.id === pu.itemId && r.lux),
+      )
+        ? 1
+        : 0,
+  },
+  {
+    category: 'Магазин',
+    tier: 'gold',
+    name: 'Витрина',
+    icon: '🗃️',
+    description: 'Добавь 5 своих наград в магазин',
+    unlocked: (s: GameState) => (s.shop?.customRewards ?? []).length >= 5,
+    progress: (s: GameState) => p((s.shop?.customRewards ?? []).length / 5),
+  },
+
+  // ---- Мои итоги ----
+  {
+    category: 'Мои итоги',
+    tier: 'bronze',
+    name: 'Первый отчёт',
+    icon: '📔',
+    description: 'Заверши «Мои итоги» в первый раз',
+    unlocked: (s: GameState) => reflectionsOf(s).some((r) => r.status === 'completed'),
+    progress: (s: GameState) => (reflectionsOf(s).some((r) => r.status === 'completed') ? 1 : 0),
+  },
+  {
+    category: 'Мои итоги',
+    tier: 'gold',
+    name: 'Полная картина',
+    icon: '🗺️',
+    description: 'Заполни итоги по всем сферам за один месяц',
+    unlocked: (s: GameState) => reflectionsOf(s).some((r) => Object.keys(r.review?.spheres ?? {}).length >= spheres.length),
+    progress: (s: GameState) =>
+      p(Math.max(0, ...reflectionsOf(s).map((r) => Object.keys(r.review?.spheres ?? {}).length)) / spheres.length),
+  },
+  {
+    category: 'Мои итоги',
+    tier: 'gold',
+    name: 'Пятизвёздочный месяц',
+    icon: '⭐',
+    description: 'Поставь себе 5 звёзд за месяц',
+    unlocked: (s: GameState) => reflectionsOf(s).some((r) => r.mood === 5),
+    progress: (s: GameState) => p(Math.max(0, ...reflectionsOf(s).map((r) => r.mood ?? 0)) / 5),
+  },
+  {
+    category: 'Мои итоги',
+    tier: 'platinum',
+    name: 'Три месяца',
+    icon: '📅',
+    description: 'Заверши «Мои итоги» 3 раза',
+    unlocked: (s: GameState) => reflectionsOf(s).filter((r) => r.status === 'completed').length >= 3,
+    progress: (s: GameState) => p(reflectionsOf(s).filter((r) => r.status === 'completed').length / 3),
+  },
+  {
+    category: 'Мои итоги',
+    tier: 'special',
+    name: 'Год в датах',
+    icon: '📅',
+    description: 'Заверши «Мои итоги» 12 раз',
+    unlocked: (s: GameState) => reflectionsOf(s).filter((r) => r.status === 'completed').length >= 12,
+    progress: (s: GameState) => p(reflectionsOf(s).filter((r) => r.status === 'completed').length / 12),
+  },
+  {
+    category: 'Мои итоги',
+    tier: 'silver',
+    name: 'План на будущее',
+    icon: '🧭',
+    description: 'Опиши план на следующий месяц хотя бы для одной сферы',
+    unlocked: (s: GameState) =>
+      reflectionsOf(s).some((r) => Object.values(r.review?.spheres ?? {}).some((sr) => Boolean(sr.next?.trim()))),
+    progress: (s: GameState) =>
+      reflectionsOf(s).some((r) => Object.values(r.review?.spheres ?? {}).some((sr) => Boolean(sr.next?.trim())))
+        ? 1
+        : 0,
+  },
+
+  // ---- Особые ----
+  {
+    category: 'Особые',
+    tier: 'bronze',
+    name: 'Полуночник',
+    icon: '🌙',
+    description: 'Соверши действие глубокой ночью',
+    unlocked: (s: GameState) => s.events.some((e) => new Date(e.date).getHours() < 3),
+    progress: (s: GameState) => (s.events.some((e) => new Date(e.date).getHours() < 3) ? 1 : 0),
+  },
+  {
+    category: 'Особые',
+    tier: 'bronze',
+    name: 'Ранняя пташка',
+    icon: '🌅',
+    description: 'Соверши действие до 6 утра',
+    unlocked: (s: GameState) => s.events.some((e) => new Date(e.date).getHours() < 6),
+    progress: (s: GameState) => (s.events.some((e) => new Date(e.date).getHours() < 6) ? 1 : 0),
+  },
+  {
+    category: 'Особые',
+    tier: 'silver',
+    name: 'Новый год',
+    icon: '🎆',
+    description: 'Зайди в игру 1 января',
+    unlocked: (s: GameState) => s.events.some((e) => {
+      const d = new Date(e.date);
+      return d.getMonth() === 0 && d.getDate() === 1;
+    }),
+    progress: (s: GameState) =>
+      s.events.some((e) => {
+        const d = new Date(e.date);
+        return d.getMonth() === 0 && d.getDate() === 1;
+      })
+        ? 1
+        : 0,
   },
 ];
+/**
+ * Эти четыре достижения считают прогресс по всем «обычным» достижениям (baseAchievements), а не по
+ * итоговому экспортируемому списку achievements — иначе их unlocked()/progress() вызывали бы сами себя
+ * через achievements.filter(...) и приводили к бесконечной рекурсии (переполнению стека).
+ */
+const metaAchievements: Achievement[] = [
+  {
+    category: 'Профиль',
+    tier: 'gold',
+    name: 'Коллекционер наград',
+    icon: '🏆',
+    description: 'Получи 25 достижений',
+    unlocked: (s: GameState) => baseAchievements.filter((a) => a.unlocked(s)).length >= 25,
+    progress: (s: GameState) => p(baseAchievements.filter((a) => a.unlocked(s)).length / 25),
+  },
+  {
+    category: 'Профиль',
+    tier: 'special',
+    name: 'Все значки',
+    icon: '🏆',
+    description: 'Получи все достижения игры',
+    unlocked: (s: GameState) => baseAchievements.filter((a) => a.unlocked(s)).length >= baseAchievements.length,
+    progress: (s: GameState) => p(baseAchievements.filter((a) => a.unlocked(s)).length / baseAchievements.length),
+  },
+  {
+    category: 'Особые',
+    tier: 'special',
+    name: 'Путь легенды',
+    icon: '🌈',
+    description: 'Получи хотя бы одну награду каждой редкости',
+    unlocked: (s: GameState) => {
+      const tiers: AchievementTier[] = ['bronze', 'silver', 'gold', 'platinum', 'special'];
+      const unlockedTiers = new Set(baseAchievements.filter((a) => a.unlocked(s)).map((a) => a.tier));
+      return tiers.every((t) => unlockedTiers.has(t));
+    },
+    progress: (s: GameState) => {
+      const tiers: AchievementTier[] = ['bronze', 'silver', 'gold', 'platinum', 'special'];
+      const unlockedTiers = new Set(baseAchievements.filter((a) => a.unlocked(s)).map((a) => a.tier));
+      return p(tiers.filter((t) => unlockedTiers.has(t)).length / tiers.length);
+    },
+  },
+  {
+    category: 'Особые',
+    tier: 'special',
+    name: 'Полный комплект',
+    icon: '🎊',
+    description: 'Получи хотя бы одно достижение в каждой категории',
+    unlocked: (s: GameState) => {
+      const cats = new Set(baseAchievements.map((a) => a.category));
+      const unlockedCats = new Set(baseAchievements.filter((a) => a.unlocked(s)).map((a) => a.category));
+      return [...cats].every((c) => unlockedCats.has(c));
+    },
+    progress: (s: GameState) => {
+      const cats = new Set(baseAchievements.map((a) => a.category));
+      const unlockedCats = new Set(baseAchievements.filter((a) => a.unlocked(s)).map((a) => a.category));
+      return p([...cats].filter((c) => unlockedCats.has(c)).length / cats.size);
+    },
+  },
+];
+export const achievements: Achievement[] = [...baseAchievements, ...metaAchievements];

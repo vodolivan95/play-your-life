@@ -839,7 +839,7 @@ export type Achievement = {
   progress: (s: GameState) => number;
   insight?: string;
 };
-export const achievements: Achievement[] = [
+const baseAchievements: Achievement[] = [
   // ---- Первые шаги ----
   {
     category: 'Первые шаги',
@@ -1601,25 +1601,6 @@ export const achievements: Achievement[] = [
     unlocked: (s: GameState) => playerProgress(s).level >= MAX_PLAYER_LEVEL,
     progress: (s: GameState) => p(playerProgress(s).level / MAX_PLAYER_LEVEL),
   },
-  {
-    category: 'Профиль',
-    tier: 'gold',
-    name: 'Коллекционер наград',
-    icon: '🏆',
-    description: 'Получи 25 достижений',
-    unlocked: (s: GameState) => achievements.filter((a) => a.unlocked(s)).length >= 25,
-    progress: (s: GameState) => p(achievements.filter((a) => a.unlocked(s)).length / 25),
-  },
-  {
-    category: 'Профиль',
-    tier: 'special',
-    name: 'Все значки',
-    icon: '🏆',
-    description: 'Получи все достижения игры',
-    unlocked: (s: GameState) => achievements.filter((a) => a.unlocked(s)).length >= achievements.length - 1,
-    progress: (s: GameState) => p(achievements.filter((a) => a.unlocked(s)).length / (achievements.length - 1)),
-  },
-
   // ---- Магазин ----
   {
     category: 'Магазин',
@@ -1774,6 +1755,31 @@ export const achievements: Achievement[] = [
         ? 1
         : 0,
   },
+];
+/**
+ * Эти четыре достижения считают прогресс по всем «обычным» достижениям (baseAchievements), а не по
+ * итоговому экспортируемому списку achievements — иначе их unlocked()/progress() вызывали бы сами себя
+ * через achievements.filter(...) и приводили к бесконечной рекурсии (переполнению стека).
+ */
+const metaAchievements: Achievement[] = [
+  {
+    category: 'Профиль',
+    tier: 'gold',
+    name: 'Коллекционер наград',
+    icon: '🏆',
+    description: 'Получи 25 достижений',
+    unlocked: (s: GameState) => baseAchievements.filter((a) => a.unlocked(s)).length >= 25,
+    progress: (s: GameState) => p(baseAchievements.filter((a) => a.unlocked(s)).length / 25),
+  },
+  {
+    category: 'Профиль',
+    tier: 'special',
+    name: 'Все значки',
+    icon: '🏆',
+    description: 'Получи все достижения игры',
+    unlocked: (s: GameState) => baseAchievements.filter((a) => a.unlocked(s)).length >= baseAchievements.length,
+    progress: (s: GameState) => p(baseAchievements.filter((a) => a.unlocked(s)).length / baseAchievements.length),
+  },
   {
     category: 'Особые',
     tier: 'special',
@@ -1782,12 +1788,12 @@ export const achievements: Achievement[] = [
     description: 'Получи хотя бы одну награду каждой редкости',
     unlocked: (s: GameState) => {
       const tiers: AchievementTier[] = ['bronze', 'silver', 'gold', 'platinum', 'special'];
-      const unlockedTiers = new Set(achievements.filter((a) => a.unlocked(s)).map((a) => a.tier));
+      const unlockedTiers = new Set(baseAchievements.filter((a) => a.unlocked(s)).map((a) => a.tier));
       return tiers.every((t) => unlockedTiers.has(t));
     },
     progress: (s: GameState) => {
       const tiers: AchievementTier[] = ['bronze', 'silver', 'gold', 'platinum', 'special'];
-      const unlockedTiers = new Set(achievements.filter((a) => a.unlocked(s)).map((a) => a.tier));
+      const unlockedTiers = new Set(baseAchievements.filter((a) => a.unlocked(s)).map((a) => a.tier));
       return p(tiers.filter((t) => unlockedTiers.has(t)).length / tiers.length);
     },
   },
@@ -1798,14 +1804,15 @@ export const achievements: Achievement[] = [
     icon: '🎊',
     description: 'Получи хотя бы одно достижение в каждой категории',
     unlocked: (s: GameState) => {
-      const cats = new Set(achievements.map((a) => a.category));
-      const unlockedCats = new Set(achievements.filter((a) => a.unlocked(s)).map((a) => a.category));
+      const cats = new Set(baseAchievements.map((a) => a.category));
+      const unlockedCats = new Set(baseAchievements.filter((a) => a.unlocked(s)).map((a) => a.category));
       return [...cats].every((c) => unlockedCats.has(c));
     },
     progress: (s: GameState) => {
-      const cats = new Set(achievements.map((a) => a.category));
-      const unlockedCats = new Set(achievements.filter((a) => a.unlocked(s)).map((a) => a.category));
+      const cats = new Set(baseAchievements.map((a) => a.category));
+      const unlockedCats = new Set(baseAchievements.filter((a) => a.unlocked(s)).map((a) => a.category));
       return p([...cats].filter((c) => unlockedCats.has(c)).length / cats.size);
     },
   },
 ];
+export const achievements: Achievement[] = [...baseAchievements, ...metaAchievements];

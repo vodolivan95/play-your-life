@@ -40,13 +40,13 @@ test('кандидаты импорта: новые, неподдерживае�
   assert.equal(importCandidates(remote, { ...emptyHabitLinks(), sectionMap: { s2: 'hobby' } }, sections)[1].sphere, 'hobby');
 });
 
-test('импорт создаёт привычку без лайфкоинов, без отметок в экономике и с серией из истории', () => {
+test('импорт создаёт привычку с выбранной наградой, без отметок в экономике и с серией из истории', () => {
   const start = newAccountGame('Алиса');
   const candidate = importCandidates(remote, emptyHabitLinks(), sections)[0];
-  const result = importHabit(start, candidate, 'health', owner, range, checkins, new Set(), now);
+  const result = importHabit(start, candidate, 'health', 3, owner, range, checkins, new Set(), now);
   const habit = result.state.habits!.find((h) => h.id === result.localId)!;
   assert.equal(habit.title, 'Читать');
-  assert.equal(habit.rewardCoins, 0);
+  assert.equal(habit.rewardCoins, 3);
   assert.equal(habit.iconId, 'reading');
   assert.deepEqual(habit.weekdays, [0, 1, 2, 3, 4, 5, 6]);
   // Экономика не тронута: ни отметок, ни лайфкоинов, ни XP, ни транзакций.
@@ -71,19 +71,28 @@ test('импорт создаёт привычку без лайфкоинов, 
 test('сегодняшний день из TickTick не блокирует локальную отметку и награду', () => {
   const start = newAccountGame('Алиса');
   const candidate = importCandidates(remote, emptyHabitLinks(), sections)[0];
-  const result = importHabit(start, candidate, 'health', owner, range, checkins, new Set(), now);
+  const result = importHabit(start, candidate, 'health', 3, owner, range, checkins, new Set(), now);
   const links = { ...emptyHabitLinks(), links: { [result.localId]: result.link } };
   assert.ok(!externalDays(links, checkins, '2026-10-19')[result.localId].includes('2026-10-19'));
   const done = completeHabit(result.state, result.localId, owner, now);
   assert.equal(done.habitCompletions!.length, 1);
-  assert.equal(done.coins, start.coins); // лайфкоинов 0
+  assert.equal(done.coins, start.coins + 3); // лайфкоины начислены за сегодняшнюю локальную отметку, по выбранной при импорте награде
+});
+
+test('награда при импорте ограничена диапазоном 1–5 лайфкоинов', () => {
+  const start = newAccountGame('Алиса');
+  const candidate = importCandidates(remote, emptyHabitLinks(), sections)[0];
+  const tooLow = importHabit(start, candidate, 'health', 0, owner, range, checkins, new Set(), now);
+  assert.equal(tooLow.state.habits!.find((h) => h.id === tooLow.localId)!.rewardCoins, 1);
+  const tooHigh = importHabit(start, candidate, 'health', 9, owner, range, checkins, new Set(), now);
+  assert.equal(tooHigh.state.habits!.find((h) => h.id === tooHigh.localId)!.rewardCoins, 5);
 });
 
 test('повторная синхронизация не создаёт отметок и не награждает повторно', () => {
   const start = newAccountGame('Алиса');
   const candidate = importCandidates(remote, emptyHabitLinks(), sections)[0];
-  const first = importHabit(start, candidate, 'health', owner, range, checkins, new Set(), now);
-  const again = importHabit(start, candidate, 'health', owner, range, checkins, new Set(first.importedKeys), now);
+  const first = importHabit(start, candidate, 'health', 3, owner, range, checkins, new Set(), now);
+  const again = importHabit(start, candidate, 'health', 3, owner, range, checkins, new Set(first.importedKeys), now);
   assert.deepEqual(again.importedKeys, []);
   assert.deepEqual(again.state.habitCompletions ?? [], []);
 });
@@ -91,14 +100,14 @@ test('повторная синхронизация не создаёт отме
 test('нельзя импортировать неподдерживаемое, архивное, связанное и без сферы', () => {
   const start = newAccountGame('Алиса');
   const [, , unsupported, archived] = importCandidates(remote, emptyHabitLinks(), sections);
-  assert.throws(() => importHabit(start, unsupported, 'health', owner, range, [], new Set(), now));
-  assert.throws(() => importHabit(start, archived, 'health', owner, range, [], new Set(), now));
-  assert.throws(() => importHabit(start, importCandidates(remote, emptyHabitLinks(), sections)[0], 'нет-такой', owner, range, [], new Set(), now));
+  assert.throws(() => importHabit(start, unsupported, 'health', 3, owner, range, [], new Set(), now));
+  assert.throws(() => importHabit(start, archived, 'health', 3, owner, range, [], new Set(), now));
+  assert.throws(() => importHabit(start, importCandidates(remote, emptyHabitLinks(), sections)[0], 'нет-такой', 3, owner, range, [], new Set(), now));
 });
 
 test('экспорт: новые локальные отметки связанных привычек попадают в очередь один раз', () => {
   const start = newAccountGame('Алиса');
-  const result = importHabit(start, importCandidates(remote, emptyHabitLinks(), sections)[0], 'health', owner, range, [], new Set(), now);
+  const result = importHabit(start, importCandidates(remote, emptyHabitLinks(), sections)[0], 'health', 3, owner, range, [], new Set(), now);
   const links = { ...emptyHabitLinks(), links: { [result.localId]: result.link } };
   const done = completeHabit(result.state, result.localId, owner, now);
   const queue = pendingExports(done, links, [], 1000);
@@ -140,7 +149,7 @@ test('очередь: три автоматические попытки с ра
 
 test('конфликт: день выполнен здесь, а в TickTick отмечен как «не выполнено»', () => {
   const start = newAccountGame('Алиса');
-  const result = importHabit(start, importCandidates(remote, emptyHabitLinks(), sections)[0], 'health', owner, range, [], new Set(), now);
+  const result = importHabit(start, importCandidates(remote, emptyHabitLinks(), sections)[0], 'health', 3, owner, range, [], new Set(), now);
   const links = { ...emptyHabitLinks(), links: { [result.localId]: result.link } };
   const done = completeHabit(result.state, result.localId, owner, now);
   const none = normalizeCheckins([{ habitId: 'h1', stamp: 20261019, value: 0, goal: 1, status: 1 }]);
@@ -151,7 +160,7 @@ test('конфликт: день выполнен здесь, а в TickTick о�
 
 test('архив и удаление в TickTick меняют только статус связи, привычка и история остаются', () => {
   const start = newAccountGame('Алиса');
-  const result = importHabit(start, importCandidates(remote, emptyHabitLinks(), sections)[0], 'health', owner, range, checkins, new Set(), now);
+  const result = importHabit(start, importCandidates(remote, emptyHabitLinks(), sections)[0], 'health', 3, owner, range, checkins, new Set(), now);
   const links = { ...emptyHabitLinks(), links: { [result.localId]: result.link } };
   assert.equal(reconcileLinks(links, remote).links[result.localId].status, 'active');
   const archived = remote.map((h) => (h.ticktickHabitId === 'h1' ? { ...h, status: 'archived' as const } : h));

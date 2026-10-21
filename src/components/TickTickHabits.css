@@ -15,6 +15,12 @@
 .tth-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
 .tth-item, .tth-conflict { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
 .tth-item > *, .tth-conflict > span { min-width: 0; }
+.tth-item-col { flex-direction: column; align-items: stretch; gap: 10px; padding: 10px; border-radius: 14px; background: var(--hb-card-2); }
+.tth-item-col > .tth-item { padding: 0; background: none; }
+.tth-reward { display: grid; gap: 6px; border: 0; padding: 0; margin: 0; }
+.tth-reward legend { padding: 0; font-size: 12px; font-weight: 800; color: var(--hb-muted); }
+.tth-levels .hb-level { min-height: 44px; }
+.tth-levels .hb-level strong { font-size: 15px; } .tth-levels .hb-level span { font-size: 10px; }
 .tth-check { display: flex; align-items: flex-start; gap: 10px; flex: 1 1 220px; }
 .tth-check span, .tth-conflict > span { display: grid; gap: 2px; font-weight: 700; }
 .tth-select { display: grid; gap: 4px; font-size: 12px; color: var(--hb-muted); }

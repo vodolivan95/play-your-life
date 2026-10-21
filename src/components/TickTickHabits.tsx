@@ -6,12 +6,13 @@ import { extraText, lookbackChoices, syncedText } from '../ticktickHabits';
 import './TickTickHabits.css';
 
 const WEEK: [string, number][] = [['Пн', 1], ['Вт', 2], ['Ср', 3], ['Чт', 4], ['Пт', 5], ['Сб', 6], ['Вс', 0]];
+const REWARD_COINS = [1, 2, 3, 4, 5];
 const lookbackLabel = (days: number) => (days === 0 ? 'Весь период' : `${days} дней`);
 const scheduleText = (weekdays: number[]) => (weekdays.length === 7 ? 'каждый день' : WEEK.filter(([, n]) => weekdays.includes(n)).map(([l]) => l).join(', '));
 export default function TickTickHabits({ habits, onArchive }: { habits: Habit[]; onArchive: (id: string) => void }) {
   const tt = useContext(TickTickHabitsContext);
   const [panel, setPanel] = useState<'' | 'import' | 'map'>('');
-  const [picked, setPicked] = useState<Record<string, { on: boolean; sphere: string }>>({});
+  const [picked, setPicked] = useState<Record<string, { on: boolean; sphere: string; rewardCoins: number }>>({});
   const [lookback, setLookback] = useState(90);
   const [map, setMap] = useState<Record<string, string>>({});
   if (!tt) return null;
@@ -19,7 +20,7 @@ export default function TickTickHabits({ habits, onArchive }: { habits: Habit[];
   const status = reauth ? 'Требуется повторная авторизация' : tt.connected ? 'Подключён' : 'Не подключён';
   const fresh = tt.candidates.filter((c) => c.state === 'new');
   const skipped = tt.candidates.filter((c) => c.state === 'unsupported');
-  const choice = (id: string, sphere: string | null) => picked[id] ?? { on: true, sphere: sphere ?? '' };
+  const choice = (id: string, sphere: string | null) => picked[id] ?? { on: true, sphere: sphere ?? '', rewardCoins: 1 };
   const chosen = fresh.map((c) => ({ c, v: choice(c.remote.ticktickHabitId, c.sphere) }));
   const ready = chosen.filter(({ v }) => v.on && v.sphere);
   const missing = chosen.filter(({ v }) => v.on && !v.sphere).length;
@@ -81,11 +82,25 @@ export default function TickTickHabits({ habits, onArchive }: { habits: Habit[];
           {!tt.loaded && <p className="tth-note">Загружаю привычки…</p>}
           {tt.loaded && !fresh.length && !skipped.length && <p className="tth-note">Новых привычек для импорта нет.</p>}
           {chosen.map(({ c, v }) => (
-            <div key={c.remote.ticktickHabitId} className="tth-item">
-              <label className="tth-check"><input type="checkbox" checked={v.on} onChange={(e) => setPicked({ ...picked, [c.remote.ticktickHabitId]: { ...v, on: e.target.checked } })} />
-                <span>{c.remote.name}<small>{c.schedule.supported ? scheduleText(c.schedule.weekdays) : ''} · цель {c.remote.goal} {c.remote.unit === 'Count' ? 'раз' : c.remote.unit}{c.remote.sectionName ? ` · раздел «${c.remote.sectionName}»` : ''}{extraText(c.remote) ? ` · ${extraText(c.remote)}` : ''}</small></span></label>
-              <label className="tth-select">Сфера<select value={v.sphere} onChange={(e) => setPicked({ ...picked, [c.remote.ticktickHabitId]: { ...v, sphere: e.target.value } })}>
-                <option value="">Без сферы — выберите</option>{spheres.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+            <div key={c.remote.ticktickHabitId} className="tth-item tth-item-col">
+              <div className="tth-item">
+                <label className="tth-check"><input type="checkbox" checked={v.on} onChange={(e) => setPicked({ ...picked, [c.remote.ticktickHabitId]: { ...v, on: e.target.checked } })} />
+                  <span>{c.remote.name}<small>{c.schedule.supported ? scheduleText(c.schedule.weekdays) : ''} · цель {c.remote.goal} {c.remote.unit === 'Count' ? 'раз' : c.remote.unit}{c.remote.sectionName ? ` · раздел «${c.remote.sectionName}»` : ''}{extraText(c.remote) ? ` · ${extraText(c.remote)}` : ''}</small></span></label>
+                <label className="tth-select">Сфера<select value={v.sphere} onChange={(e) => setPicked({ ...picked, [c.remote.ticktickHabitId]: { ...v, sphere: e.target.value } })}>
+                  <option value="">Без сферы — выберите</option>{spheres.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+              </div>
+              {v.on && (
+                <fieldset className="tth-reward" aria-label={`Награда за «${c.remote.name}»`}>
+                  <legend>Награда за выполнение</legend>
+                  <div className="hb-levels tth-levels">
+                    {REWARD_COINS.map((n) => (
+                      <button key={n} type="button" className={`hb-level${v.rewardCoins === n ? ' is-on' : ''}`} aria-pressed={v.rewardCoins === n} onClick={() => setPicked({ ...picked, [c.remote.ticktickHabitId]: { ...v, rewardCoins: n } })}>
+                        <strong>{n}</strong><span>лайфкоин{n === 1 ? '' : 'ов'}</span>
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+              )}
             </div>
           ))}
           {missing > 0 && <p className="tth-warn" role="status">Для {missing} {missing === 1 ? 'привычки' : 'привычек'} нет сферы: выберите её вручную или настройте соответствия разделов.</p>}
@@ -93,11 +108,11 @@ export default function TickTickHabits({ habits, onArchive }: { habits: Habit[];
             <p key={c.remote.ticktickHabitId} className="tth-note">«{c.remote.name}» не импортируется: расписание {c.schedule.supported ? '' : `«${c.schedule.raw}» `}не поддерживается игрой. Исходное правило не подменяется.</p>
           ))}
           <div className="tth-actions">
-            <button type="button" className="hb-btn is-primary" disabled={tt.busy || !ready.length} onClick={() => void tt.importHabits(ready.map(({ c, v }) => ({ id: c.remote.ticktickHabitId, sphere: v.sphere })), lookback).then(() => setPanel(''))}>Импортировать{ready.length ? ` (${ready.length})` : ''}</button>
+            <button type="button" className="hb-btn is-primary" disabled={tt.busy || !ready.length} onClick={() => void tt.importHabits(ready.map(({ c, v }) => ({ id: c.remote.ticktickHabitId, sphere: v.sphere, rewardCoins: v.rewardCoins })), lookback).then(() => setPanel(''))}>Импортировать{ready.length ? ` (${ready.length})` : ''}</button>
             <button type="button" className="hb-btn" disabled={tt.busy || !chosen.length} onClick={() => setPicked(Object.fromEntries(chosen.map(({ c, v }) => [c.remote.ticktickHabitId, { ...v, on: true }])))}>Выбрать все</button>
             <button type="button" className="hb-btn" onClick={() => setPanel('')}>Пропустить</button>
           </div>
-          <small>Импортируются привычки и история отметок. Лайфкоины и XP за прошлые дни не начисляются; лайфкоины новой привычки — 0, XP начисляется за отметки здесь.</small>
+          <small>Импортируются привычки и история отметок. Лайфкоины и XP за прошлые дни не начисляются; лайфкоины за выполнение — по выбору выше (1–5), XP начисляется за отметки здесь.</small>
         </div>
       )}
       {panel === 'map' && (

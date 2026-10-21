@@ -35,7 +35,8 @@ const longDate = (key: string) => {
 
 function Chip({ item, selected, onPick, label, onDragStart, onDragEnd, dragging }: { item: CalendarItem; selected: boolean; onPick: () => void; label?: string; onDragStart: (e: DragEvent) => void; onDragEnd: () => void; dragging: boolean }) {
   const { quest } = item;
-  const movable = !quest.done && !quest.tickTickSharedAt;
+  // Перенос связанных с TickTick задач тоже разрешён: новая дата уходит туда обычным обменом.
+  const movable = !quest.done;
   return (
     <button
       type="button"
@@ -45,7 +46,7 @@ function Chip({ item, selected, onPick, label, onDragStart, onDragEnd, dragging 
       draggable={movable}
       onDragStart={movable ? onDragStart : undefined}
       onDragEnd={onDragEnd}
-      title={movable ? quest.name : `${quest.name}${quest.tickTickSharedAt ? ' · плановая дата из TickTick, перенести здесь нельзя' : ''}`}
+      title={`${quest.name}${quest.tickTickSharedAt ? ' · перенос уйдёт в TickTick' : ''}`}
     >
       {label ?? `${item.start ? `${item.start} ` : ''}${quest.tickTickSharedAt ? '⟳ ' : ''}${quest.name}`}
     </button>
@@ -282,7 +283,7 @@ export default function TasksCalendar({
                     {itemsForDay(items, day).filter((item) => item.start && item.end).map((item) => {
                       const top = ((minutesOf(item.start!) - firstHour * 60) / 60) * hourHeight + 1;
                       const height = Math.max(26, ((minutesOf(item.end!) - minutesOf(item.start!)) / 60) * hourHeight - 3);
-                      const movable = !item.quest.done && !item.quest.tickTickSharedAt;
+                      const movable = !item.quest.done;
                       return (
                         <button
                           key={item.quest.id}
@@ -293,7 +294,7 @@ export default function TasksCalendar({
                           draggable={movable}
                           onDragStart={movable ? startDrag(item) : undefined}
                           onDragEnd={endDrag}
-                          title={movable ? undefined : 'Плановая дата из TickTick, перенести здесь нельзя'}
+                          title={item.quest.tickTickSharedAt ? 'Перенос уйдёт в TickTick' : undefined}
                         >
                           <b>{item.quest.name}</b>
                           <span>{item.start} – {item.end}</span>

@@ -81,9 +81,10 @@ test('перенос в календаре: сдвигает срок (и нач
   const plain = updateTaskSettings(state([quest({ dueAt: '2026-10-20' })]), 'q1', { shiftDays: -5 }).quests[0];
   assert.equal(plain.dueAt, '2026-10-15');
 });
-test('перенос в календаре: связанную с TickTick задачу (плановую дату) перетащить нельзя', () => {
+test('перенос в календаре: связанную с TickTick задачу (плановую дату) тоже можно перетащить — уйдёт туда при обмене', () => {
   const s = state([quest({ dueAt: '2026-10-20', tickTickSharedAt: '2026-10-19T00:00:00.000Z' })]);
-  assert.throws(() => updateTaskSettings(s, 'q1', { shiftDays: 1 }), /TickTick/);
+  const moved = updateTaskSettings(s, 'q1', { shiftDays: 1 }).quests[0];
+  assert.equal(moved.dueAt, '2026-10-21');
 });
 test('перенос в календаре: без срока или без смещения — отказ', () => {
   assert.throws(() => updateTaskSettings(state([quest({})]), 'q1', { shiftDays: 1 }));

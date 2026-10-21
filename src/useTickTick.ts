@@ -11,7 +11,7 @@ import { acceptIncomingTask, dismissIncomingTask, findIncomingTasks, mappedProje
 import type { IncomingChoice, IncomingTask } from './ticktickInbox';
 
 /** Частота фоновой проверки изменений в TickTick, пока вкладка видима. */
-const TICKTICK_SYNC_INTERVAL_MS = 15_000;
+const TICKTICK_SYNC_INTERVAL_MS = 10_000;
 
 function readConnection(storageKey: string): TickTickConnection | null {
   try {

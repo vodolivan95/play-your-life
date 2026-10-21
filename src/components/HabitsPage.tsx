@@ -19,7 +19,7 @@ import {
 import type { CalendarCell } from '../habitsView';
 import { TickTickHabitsContext } from '../tickTickContext';
 import TickTickHabits from './TickTickHabits';
-import { syncedText } from '../ticktickHabits';
+import { extraText, syncedText } from '../ticktickHabits';
 import './HabitsPage.css';
 
 const WEEK: [string, number][] = [['Пн', 1], ['Вт', 2], ['Ср', 3], ['Чт', 4], ['Пт', 5], ['Сб', 6], ['Вс', 0]];
@@ -159,6 +159,7 @@ export default function HabitsPage({ state, onChange, ownerId, today, notify }: 
   const external = tt?.external;
   const [onlyTickTick, setOnlyTickTick] = useState(false);
   const linkOf = (h: Habit) => tt?.links.links[h.id];
+  const remoteOf = (h: Habit) => tt?.remote.find((r) => r.ticktickHabitId === linkOf(h)?.ticktickHabitId);
   const doneMap = useMemo(() => new Map(habits.map((h) => [h.id, doneDays(h, history, external?.get(h.id))])), [habits, history, external]);
   const doneOf = (h: Habit) => doneMap.get(h.id) ?? new Set<string>();
   const dueToday = habits.filter((h) => isScheduled(h, today));
@@ -261,6 +262,11 @@ export default function HabitsPage({ state, onChange, ownerId, today, notify }: 
               <div className="hb-days is-static">{WEEK.map(([l, n]) => <span key={n} className={`hb-day${open.weekdays.includes(n) ? ' is-on' : ''}`} style={open.weekdays.includes(n) ? { background: sp.color } : undefined}>{l}</span>)}</div>
               <dl className="hb-dl"><div><dt>Цель за день</dt><dd>{open.targetValue} {open.unit}</dd></div><div><dt>Сфера</dt><dd>{sp.name}</dd></div></dl>
             </section>
+            {linkOf(open) && remoteOf(open) && extraText(remoteOf(open)!) && (
+              <section className="hb-card"><strong>Из TickTick</strong>
+                <p className="hb-note">{extraText(remoteOf(open)!)}</p>
+              </section>
+            )}
             <div className="hb-d-actions">
               <button type="button" className="hb-btn" onClick={() => edit(open)}>Изменить</button>
               <button type="button" className="hb-btn is-danger" onClick={() => run(() => saveHabit(state, { ...open, isActive: false }, ownerId), 'Привычка в архиве') && setOpenId('')}>В архив</button>

@@ -21,6 +21,10 @@ export type RemoteHabit = {
   modifiedAt: string;
   etag: string;
   totalCheckIns: number;
+  /** Цель в днях из TickTick (0 — не задана). Игра её не считает, только показывает для чтения. */
+  targetDays: number;
+  /** Дата начала из TickTick (YYYY-MM-DD) или ''. Игра её не считает, только показывает для чтения. */
+  targetStartDate: string;
 };
 export type RemoteCheckin = {
   ticktickHabitId: string;
@@ -152,6 +156,12 @@ function status(raw: unknown): HabitStatus {
   if (raw === 'paused' || raw === 1 || raw === 'PAUSED') return 'paused';
   return 'active';
 }
+/** targetStartDate из TickTick приходит как YYYYMMDD (как stamp отметок); недопустимые значения дают ''. */
+function targetStartDateOf(raw: unknown): string {
+  const n = number(raw, 0);
+  if (!n) return '';
+  try { return dayOfStamp(n); } catch { return ''; }
+}
 function iso(raw: unknown): string {
   const t = typeof raw === 'number' ? raw : typeof raw === 'string' ? Date.parse(raw) : NaN;
   return Number.isFinite(t) && t > 0 ? new Date(t).toISOString() : '';
@@ -192,6 +202,8 @@ export function normalizeHabit(raw: unknown, sections: readonly HabitSection[] =
     modifiedAt: iso(raw.modifiedTime ?? raw.modifiedAt),
     etag: text(raw.etag, 100),
     totalCheckIns: Math.max(number(raw.totalCheckIns, 0), 0),
+    targetDays: Math.max(number(raw.targetDays, 0), 0),
+    targetStartDate: targetStartDateOf(raw.targetStartDate),
   };
 }
 export function normalizeHabits(payload: unknown, sections: readonly HabitSection[] = []): RemoteHabit[] {
@@ -332,6 +344,17 @@ export function validateHabitLinks(value: unknown): HabitLinksState {
     revision: Number(value.revision), links, sectionMap, lookbackDays: Number(value.lookbackDays),
     imported: [...new Set(value.imported as string[])], ...(value.lastSync ? { lastSync: value.lastSync as string } : {}),
   };
+}
+
+/** Дата YYYY-MM-DD → «21.10.2026». */
+export const dateText = (day: string): string => (day ? `${day.slice(8)}.${day.slice(5, 7)}.${day.slice(0, 4)}` : '');
+/** Доп. поля TickTick, которые игра только показывает: дата начала, цель в днях, напоминания. */
+export function extraText(r: Pick<RemoteHabit, 'targetDays' | 'targetStartDate' | 'reminders'>): string {
+  const parts: string[] = [];
+  if (r.targetStartDate) parts.push(`начало ${dateText(r.targetStartDate)}`);
+  if (r.targetDays > 0) parts.push(`цель ${r.targetDays} дн.`);
+  if (r.reminders.length) parts.push(`напоминание ${r.reminders.join(', ')}`);
+  return parts.join(' · ');
 }
 
 /** Время синхронизации для карточки: «сегодня, 12:30» или дата. */

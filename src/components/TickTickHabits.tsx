@@ -2,7 +2,7 @@ import { useContext, useState } from 'react';
 import { spheres } from '../game';
 import type { Habit } from '../personalQuests';
 import { TickTickHabitsContext } from '../tickTickContext';
-import { lookbackChoices, syncedText } from '../ticktickHabits';
+import { extraText, lookbackChoices, syncedText } from '../ticktickHabits';
 import './TickTickHabits.css';
 
 const WEEK: [string, number][] = [['Пн', 1], ['Вт', 2], ['Ср', 3], ['Чт', 4], ['Пт', 5], ['Сб', 6], ['Вс', 0]];
@@ -83,7 +83,7 @@ export default function TickTickHabits({ habits, onArchive }: { habits: Habit[];
           {chosen.map(({ c, v }) => (
             <div key={c.remote.ticktickHabitId} className="tth-item">
               <label className="tth-check"><input type="checkbox" checked={v.on} onChange={(e) => setPicked({ ...picked, [c.remote.ticktickHabitId]: { ...v, on: e.target.checked } })} />
-                <span>{c.remote.name}<small>{c.schedule.supported ? scheduleText(c.schedule.weekdays) : ''} · цель {c.remote.goal} {c.remote.unit === 'Count' ? 'раз' : c.remote.unit}{c.remote.sectionName ? ` · раздел «${c.remote.sectionName}»` : ''}</small></span></label>
+                <span>{c.remote.name}<small>{c.schedule.supported ? scheduleText(c.schedule.weekdays) : ''} · цель {c.remote.goal} {c.remote.unit === 'Count' ? 'раз' : c.remote.unit}{c.remote.sectionName ? ` · раздел «${c.remote.sectionName}»` : ''}{extraText(c.remote) ? ` · ${extraText(c.remote)}` : ''}</small></span></label>
               <label className="tth-select">Сфера<select value={v.sphere} onChange={(e) => setPicked({ ...picked, [c.remote.ticktickHabitId]: { ...v, sphere: e.target.value } })}>
                 <option value="">Без сферы — выберите</option>{spheres.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
             </div>

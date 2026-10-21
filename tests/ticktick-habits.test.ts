@@ -67,6 +67,7 @@ test('нормализация привычки: поля, раздел, ста�
   const habit = normalizeHabit({
     id: 'habit-1', name: ' Читать ', iconRes: 'habit_reading', color: '#4D8CF5', status: 0, goal: 1, step: 1, unit: 'Count',
     repeatRule: 'RRULE:FREQ=DAILY;INTERVAL=1', reminders: ['21:00', 5], sectionId: 'section-1', modifiedTime: 1792404000000, etag: 'e1', totalCheckIns: 12,
+    targetDays: 7, targetStartDate: 20261021,
   }, sections)!;
   assert.equal(habit.name, 'Читать');
   assert.equal(habit.icon, 'reading');
@@ -75,6 +76,11 @@ test('нормализация привычки: поля, раздел, ста�
   assert.equal(habit.status, 'active');
   assert.deepEqual(habit.reminders, ['21:00']);
   assert.equal(habit.modifiedAt, '2026-10-19T10:00:00.000Z');
+  assert.equal(habit.targetDays, 7);
+  assert.equal(habit.targetStartDate, '2026-10-21');
+  assert.equal(normalizeHabit({ id: 'x', name: 'A' })!.targetDays, 0);
+  assert.equal(normalizeHabit({ id: 'x', name: 'A' })!.targetStartDate, '');
+  assert.equal(normalizeHabit({ id: 'x', name: 'A', targetStartDate: 20261340 })!.targetStartDate, '');
   assert.equal(normalizeHabit({ id: 'x', name: 'A', status: 2 })!.status, 'archived');
   assert.equal(normalizeHabit({ id: 'x', name: 'A', color: 'url(javascript:1)' })!.color, '');
   assert.equal(normalizeHabit({ id: 'x', name: '   ' }), null);

@@ -162,12 +162,18 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
               </p>
               <small>Дата берётся из TickTick при каждом обмене; поменять можно только там.</small>
               {task.dueAt && (
-                <label className="twin-time">Время выполнения
-                  <input type="time" aria-label="Время выполнения" value={clockOf(task.dueAt)}
-                    onChange={(e) => patch({ dueAt: withTime(task.dueAt!, e.target.value) })} />
-                </label>
+                <div className="twin-time-row">
+                  <label className="twin-time">С
+                    <input type="time" aria-label="Время начала" value={clockOf(task.startsAt)}
+                      onChange={(e) => patch({ startsAt: e.target.value ? withTime(task.startsAt || task.dueAt!, e.target.value) : null })} />
+                  </label>
+                  <label className="twin-time">До
+                    <input type="time" aria-label="Время выполнения" value={clockOf(task.dueAt)}
+                      onChange={(e) => patch({ dueAt: withTime(task.dueAt!, e.target.value) })} />
+                  </label>
+                </div>
               )}
-              <small>Время — в обе стороны с TickTick; без времени задача показана на весь день.</small>
+              <small>Время — в обе стороны с TickTick; интервал «с … до …» показан в календаре; без времени задача на весь день.</small>
             </div>
           ) : (
             <div className="twin-field" role="group" aria-label="Срок">
@@ -184,10 +190,16 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
                   onChange={(e) => e.target.value && patch({ dueAt: withTime(e.target.value, clockOf(task.dueAt)) })} />
               )}
               {preset !== 'none' && (
-                <label className="twin-time">Время выполнения
-                  <input type="time" aria-label="Время выполнения" value={clockOf(task.dueAt)}
-                    onChange={(e) => task.dueAt && patch({ dueAt: withTime(task.dueAt, e.target.value) })} />
-                </label>
+                <div className="twin-time-row">
+                  <label className="twin-time">С
+                    <input type="time" aria-label="Время начала" value={clockOf(task.startsAt)}
+                      onChange={(e) => patch({ startsAt: e.target.value ? withTime(task.startsAt || task.dueAt!, e.target.value) : null })} />
+                  </label>
+                  <label className="twin-time">До
+                    <input type="time" aria-label="Время выполнения" value={clockOf(task.dueAt)}
+                      onChange={(e) => task.dueAt && patch({ dueAt: withTime(task.dueAt, e.target.value) })} />
+                  </label>
+                </div>
               )}
             </div>
           )}

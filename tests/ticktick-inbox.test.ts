@@ -14,6 +14,7 @@ import {
   incomingForToday,
   dismissIncomingTask,
   findIncomingTasks,
+  formatIncomingDate,
   inboxHorizon,
   goalsForSphere,
   openStages,
@@ -409,4 +410,13 @@ test('входящие: берутся задачи на ближайшие 4 м
     found.map((item) => item.remote.id).sort(),
     ['near', 'no-date', 'overdue'],
   );
+});
+test('formatIncomingDate: во входящих показывает час задачи из TickTick, а не только день', () => {
+  assert.equal(formatIncomingDate(undefined), '');
+  // Полночь по смещению TickTick — задача без конкретного времени, только день.
+  assert.equal(formatIncomingDate('2026-10-28T00:00:00+0300'), '28 октября');
+  // Настоящее время — показывается рядом с днём, в местном часе среды выполнения.
+  const moment = new Date('2026-10-28T19:30:00+0300');
+  const hh = String(moment.getHours()).padStart(2, '0'), mm = String(moment.getMinutes()).padStart(2, '0');
+  assert.equal(formatIncomingDate('2026-10-28T19:30:00+0300'), `28 октября, ${hh}:${mm}`);
 });

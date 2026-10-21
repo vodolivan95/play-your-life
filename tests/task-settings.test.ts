@@ -44,6 +44,25 @@ test('настройки: срок с временем («YYYY-MM-DDTЧЧ:ММ»
     state([quest({ startsAt: '2026-11-02T18:00:00.000Z' })]), 'q1', { dueAt: '2026-11-02T14:30' },
   ), /раньше начала/);
 });
+test('настройки: интервал выполнения — начало («С») рядом со сроком («До»)', () => {
+  // Начало задаётся так же, как срок, и нормализуется в тот же формат.
+  const withStart = updateTaskSettings(
+    state([quest({ dueAt: '2026-11-02T17:00:00.000Z' })]), 'q1', { startsAt: '2026-11-02T09:00' },
+  ).quests[0];
+  assert.equal(withStart.startsAt, new Date('2026-11-02T09:00').toISOString());
+  assert.equal(withStart.dueAt, '2026-11-02T17:00:00.000Z');
+  // Начало позже срока — отказ.
+  assert.throws(() => updateTaskSettings(
+    state([quest({ dueAt: '2026-11-02T09:00:00.000Z' })]), 'q1', { startsAt: '2026-11-02T17:00' },
+  ), /позже срока/);
+  // Очистка начала (пустое поле времени «С») убирает его совсем, а не оставляет пустую строку.
+  assert.equal(
+    updateTaskSettings(state([quest({ startsAt: '2026-11-02T09:00:00.000Z', dueAt: '2026-11-02T17:00:00.000Z' })]), 'q1', { startsAt: null }).quests[0].startsAt,
+    undefined,
+  );
+  // Неверный формат — отказ, как и у срока.
+  assert.throws(() => updateTaskSettings(state([quest({})]), 'q1', { startsAt: '02.11' }));
+});
 test('настройки: отказы', () => {
   const s = state([quest({}), quest({ id: 'q2', done: true }), quest({ id: 'q3', sourceType: 'SYSTEM' }), quest({ id: 'q4', goalId: undefined, stageId: undefined })]);
   assert.throws(() => updateTaskSettings(s, 'q2', { name: 'x' }));

@@ -1,12 +1,16 @@
 import { useId } from 'react';
 import type { ReactNode } from 'react';
 import heroPeak from '../assets/home-peak.svg';
+import heroPeakDark from '../assets/home-peak-dark.webp';
 import type { NextPeak } from '../nextPeak';
 import './HomeBanner.css';
 
-/** Размер рисунка гор (вектор): слой с живыми звёздами использует те же координаты. */
+/** Размер рисунка гор (вектор, светлая тема): слой с живыми звёздами использует те же координаты. */
 const ART_W = 2000;
 const ART_H = 888;
+/** Размер ночной фотографии (тёмная тема). */
+const ART_DARK_W = 3200;
+const ART_DARK_H = 1185;
 /** Золотые звёзды маршрута на рисунке (координаты рисунка). */
 const STARS = [
   { x: 1350, y: 320, delay: 0 },
@@ -18,12 +22,12 @@ const STARS = [
 const TRAIL =
   'M830 792 C858 787,957 777,1000 762 C1042 747,1064 729,1085 700 C1106 671,1108 622,1125 590 C1142 557,1170 525,1185 505 C1200 485,1202 479,1215 468 C1228 457,1249 455,1265 440 C1281 425,1296 400,1310 380 C1324 360,1337 342,1350 320 C1362 297,1376 269,1385 245 C1394 221,1399 189,1402 178';
 
-/** Фон: картинка гор и отдельный слой звёзд и облаков. Это только оформление, текста здесь нет. */
+/** Фон: картинка гор (своя для каждой темы) и отдельный слой звёзд и облаков. Это только оформление, текста здесь нет. */
 function BannerArt() {
   const glow = useId().replace(/:/g, '');
   return (
     <div className="peak-art" aria-hidden="true">
-      <div className="peak-art-frame">
+      <div className="peak-art-frame peak-art-frame-light">
       <img src={heroPeak} alt="" width={ART_W} height={ART_H} decoding="async" fetchPriority="high" />
       <i className="peak-cloud peak-cloud-a" />
       <i className="peak-cloud peak-cloud-b" />
@@ -43,6 +47,9 @@ function BannerArt() {
           <animate attributeName="opacity" values="0;0.95;0.95;0" keyTimes="0;0.12;0.88;1" dur="9s" repeatCount="indefinite" />
         </circle>
       </svg>
+      </div>
+      <div className="peak-art-frame peak-art-frame-dark">
+        <img src={heroPeakDark} alt="" width={ART_DARK_W} height={ART_DARK_H} decoding="async" fetchPriority="high" />
       </div>
     </div>
   );

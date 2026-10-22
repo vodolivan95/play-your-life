@@ -35,6 +35,8 @@ export function nearestInView(id: string, dir: [number, number], exclude: string
   return best;
 }
 export function roomViews(id: string): RoomViews {
+  // Сфера без здания на острове (пока только «Психология»): окна смотрят на общий горизонт.
+  if (!coastalBuildings.some(item => item.id === id)) return { facing: 'south', back: { building: null, distance: 0 }, side: { building: null, distance: 0 } };
   let best: RoomViews | null = null, bestScore = -Infinity;
   for (const facing of ['south', 'west', 'north', 'east'] as const) {
     const f = vectors[facing], right: [number, number] = [-f[1], f[0]];

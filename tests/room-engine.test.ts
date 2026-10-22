@@ -160,9 +160,9 @@ test('«Хобби»: свой каталог и уровни', async () => {
   assert.equal(next.coins, 880);
   assert.equal(validRooms(next.rooms), true);
 });
-test('«Задачи»: свой каталог; интерьеры есть у всех девяти зданий', async () => {
+test('«Задачи»: свой каталог; интерьеры есть у всех десяти зданий', async () => {
   const { hasRoom, roomConfigs } = await import('../src/roomEngine.ts');
-  for (const id of ['health', 'sport', 'growth', 'finance', 'english', 'driving', 'together', 'tasks', 'hobby']) assert.equal(hasRoom(id), true, id);
+  for (const id of ['health', 'sport', 'growth', 'finance', 'english', 'driving', 'together', 'tasks', 'hobby', 'psychology']) assert.equal(hasRoom(id), true, id);
   assert.deepEqual(roomConfigs.tasks.catalog.map(item => item.id), ['standingDesk', 'kanbanBoard', 'hourglass', 'filingCabinet', 'trophyCase', 'gong']);
   const state = newAccountGame('Задачи'); state.coins = 1000;
   assert.throws(() => purchaseRoomObject(state, 'tasks', 'trophyCase'), /уровень/);
@@ -170,5 +170,17 @@ test('«Задачи»: свой каталог; интерьеры есть у 
   let next = purchaseRoomObject(state, 'tasks', 'kanbanBoard');
   next = placeRoomObject(next, 'tasks', { id: 'kanbanBoard', position: [0, 0, -3.5], rotation: [0, 0, 0], scale: [1, 1, 1] });
   assert.equal(next.coins, 860);
+  assert.equal(validRooms(next.rooms), true);
+});
+test('«Психология»: свой каталог; комната доступна и объекты покупаются', async () => {
+  const { hasRoom, roomConfigs } = await import('../src/roomEngine.ts');
+  assert.equal(hasRoom('psychology'), true);
+  assert.deepEqual(roomConfigs.psychology.catalog.map(item => item.id), ['therapyCouch', 'loungeChair', 'mindLibrary', 'moodBoard', 'sandTray', 'singingBowl']);
+  const state = newAccountGame('Психология'); state.coins = 1000;
+  assert.throws(() => purchaseRoomObject(state, 'psychology', 'sandTray'), /уровень/);
+  assert.throws(() => purchaseRoomObject(state, 'psychology', 'singingBowl'), /уровень/);
+  let next = purchaseRoomObject(state, 'psychology', 'therapyCouch');
+  next = placeRoomObject(next, 'psychology', { id: 'therapyCouch', position: [0, 0, -3.5], rotation: [0, 0, 0], scale: [1, 1, 1] });
+  assert.ok(next.coins < 1000);
   assert.equal(validRooms(next.rooms), true);
 });

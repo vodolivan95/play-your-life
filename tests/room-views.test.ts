@@ -57,6 +57,12 @@ test('из «Хобби» окна смотрят на «Задачи» (зап�
   assert.equal(views.back.building, 'tasks');
   assert.equal(views.side.building, 'together');
 });
+test('у «Психологии» нет здания на карте острова — вид нейтральный, без падения', () => {
+  const views = roomViews('psychology');
+  assert.equal(views.facing, 'south');
+  assert.equal(views.back.building, null);
+  assert.equal(views.side.building, null);
+});
 test('из «Задач» окна смотрят на «Вождение» (запад) и «Общие дела» (север); окна не повторяют здание', () => {
   const views = roomViews('tasks');
   assert.equal(views.back.building, 'driving');

@@ -200,7 +200,7 @@ export default function Onboarding({
         </p>
         <div className="welcome-features">
           <span>⚡ Задачи и XP</span>
-          <span>🌱 9 сфер жизни</span>
+          <span>🌱 10 сфер жизни</span>
           <span>🎯 Твои цели</span>
         </div>
         <button

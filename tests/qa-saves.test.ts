@@ -97,7 +97,7 @@ for (const [name, make] of Object.entries(players)) {
     // 6. отчёт месяца считается для любого месяца без ошибок
     for (const month of ['2026-10', '2026-09', '2025-01', '2026-11', '2030-01']) {
       const r = monthReport(loaded, month, now);
-      assert.ok(Number.isFinite(r.daysTotal) && r.sphereRows.length === 9);
+      assert.ok(Number.isFinite(r.daysTotal) && r.sphereRows.length === 10);
       assert.ok(r.sphereRows.every((x) => Number.isFinite(x.xp) && Number.isFinite(x.share)));
     }
   });

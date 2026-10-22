@@ -17,6 +17,7 @@ export default function GameArt({ kind }: { kind: string }) {
     driving: ['#58c7ff', '#0765b3'],
     tasks: ['#76e1d7', '#10acb4'],
     hobby: ['#aa8ef3', '#7050c1'],
+    psychology: ['#b9a6ff', '#6a4fd6'],
     target: ['#ff8dbb', '#ed3b83'],
     coin: ['#ffe890', '#f5af08'],
     trophy: ['#ffdf64', '#eda00c'],
@@ -175,6 +176,13 @@ export default function GameArt({ kind }: { kind: string }) {
           strokeLinecap="round"
           opacity=".6"
         />
+      </>
+    ),
+    psychology: (
+      <>
+        <path d="M32 8c15 0 24 10 24 23 0 9-5 15-5 15v9c0 4-3 7-7 7h-4v6H28v-6h-2c-4 0-7-3-7-7v-7s-9-7-9-17C10 18 18 8 32 8Z" fill={paint} />
+        <path d="M21 25c3-5 9-7 14-5m-10 14c3 3 9 3 12 0" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" opacity=".55" />
+        <circle cx="25" cy="23" r="2.6" fill="#fff" opacity=".85" />
       </>
     ),
     target: (

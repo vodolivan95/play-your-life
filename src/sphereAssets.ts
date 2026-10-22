@@ -11,20 +11,36 @@ import together from './assets/sphere-buildings/joint-tasks-building.jpg';
 import driving from './assets/sphere-buildings/driving-building.jpg';
 import tasks from './assets/sphere-buildings/tasks-building.jpg';
 import hobby from './assets/sphere-buildings/leisure-building.webp';
+import psychology from './assets/sphere-buildings/psychology-building.jpg';
 import { coastalBuildings } from './coastalCity';
 
 // Фотографии UI отделены от ресурсов игровой карты. Иконки и комнаты сохраняются.
 export const cityAssets = { background: cityBackground, cleanSurfaces, preview: cityBackground, skyline: citySkyline, width: 1005, height: 1280 };
 const thumbnails = { health, sport, growth, english, finance, together, driving, tasks, hobby };
 const covers = {health,sport,growth,english,finance,together,driving,tasks,hobby};
-export const sphereAssets = Object.fromEntries(coastalBuildings.map(building => [building.id, {
-  icon: { source: existingIcons, id: building.id },
-  buildingThumbnail: thumbnails[building.id],
-  building: covers[building.id],
-  questCover: covers[building.id],
-  cityBuilding: { background: cityBackground, bounds: building },
-  room: building.id === 'sport' ? 'existing-sport-3d' : 'existing-room-preparation',
-}])) as Record<keyof typeof thumbnails, {
-  icon: { source: string; id: string }; buildingThumbnail: string; building:string; questCover:string;
+type SphereAsset = {
+  icon: { source: string; id: string }; buildingThumbnail: string; building: string; questCover: string;
   cityBuilding: { background: string; bounds: typeof coastalBuildings[number] }; room: string;
-}>;
+};
+export const sphereAssets = {
+  ...Object.fromEntries(coastalBuildings.map(building => [building.id, {
+    icon: { source: existingIcons, id: building.id },
+    buildingThumbnail: thumbnails[building.id],
+    building: covers[building.id],
+    questCover: covers[building.id],
+    cityBuilding: { background: cityBackground, bounds: building },
+    room: building.id === 'sport' ? 'existing-sport-3d' : 'existing-room-preparation',
+  }])),
+  // «Психология» пока не нарисована на острове «Города» (coastalBuildings/wideBuildings) — у неё
+  // ещё нет места на общей карте с машинами и жителями. Карточка сферы и обложки целей используют
+  // отдельную сгенерированную заглушку (`psychology-building.jpg`) до настоящей отрисовки здания.
+  psychology: {
+    icon: { source: existingIcons, id: 'psychology' },
+    buildingThumbnail: psychology,
+    building: psychology,
+    questCover: psychology,
+    // bounds — техническое поле, сейчас нигде не читается; у «Психологии» нет своей области на карте.
+    cityBuilding: { background: cityBackground, bounds: coastalBuildings[0] },
+    room: 'existing-room-preparation',
+  },
+} as Record<keyof typeof thumbnails | 'psychology', SphereAsset>;

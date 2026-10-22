@@ -442,19 +442,34 @@ async function syncTickTickProject(
     const snapshot = localFingerprint(local, state);
     const localChanged = snapshot !== link.local;
     const remoteChanged = remoteFingerprint(remote) !== link.remote;
+    const localValues = JSON.parse(snapshot) as unknown[];
+    const baseLocal = JSON.parse(link.local) as unknown[];
+    const currentRemote = JSON.parse(remoteFingerprint(remote)) as unknown[];
+    const baseRemote = JSON.parse(link.remote) as unknown[];
+    const fields = ['name', 'notes', 'startsAt', 'dueAt', 'priority'] as const;
+    const remoteValues = remoteFields(remote);
+    const merged = { ...local };
+    const conflicts: string[] = [];
+    for (let index = 0; index < fields.length; index++) {
+      const field = fields[index];
+      const changedHere = localValues[index] !== baseLocal[index];
+      const changedThere = currentRemote[index] !== baseRemote[index];
+      if (changedThere && !changedHere)
+        Object.assign(merged, { [field]: remoteValues[field] });
+      else if (changedThere && changedHere && localValues[index] !== currentRemote[index])
+        conflicts.push(field);
+    }
     if (local.done && remote.status !== 2) {
       await request(`${path}/complete`, 'POST');
       remote = { ...remote, status: 2 };
     }
     if (!local.done && localChanged) {
-      if (remoteChanged)
-        result.warnings.push(
-          `${local.name}: одновременные изменения; сохранён вариант PLAY YOUR LIFE.`,
-        );
+      if (conflicts.length)
+        result.warnings.push(`${local.name}: конфликт полей (${conflicts.join(', ')}); для них сохранён вариант PLAY YOUR LIFE, остальные изменения объединены.`);
       remote = await request<RemoteTask>(
         `/api/task/${encodeURIComponent(remote.id)}`,
         'POST',
-        { ...remotePayload(local, state, connection), id: remote.id },
+        { ...remotePayload(merged, state, connection), id: remote.id },
       );
       if (!remote.id)
         throw new Error('Изменение задачи не подтверждено TickTick.');
@@ -775,11 +790,7 @@ export function applyTickTickResult(state: GameState, result: TickTickResult) {
   };
   for (const [id, link] of Object.entries(connection.links)) {
     const task = next.quests.find((q) => q.id === id);
-    if (
-      task &&
-      result.changes.some((c) => c.id === id) &&
-      !warnings.some((w) => w.startsWith(`${task.name}:`))
-    )
+    if (task && result.changes.some((c) => c.id === id) && !rejected.has(id))
       connection.links[id] = { ...link, local: localFingerprint(task, next) };
   }
   for (const [id, remote] of rejected)

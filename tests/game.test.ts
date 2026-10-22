@@ -5,6 +5,7 @@ import {
   completeQuest,
   dateKey,
   initialState,
+  migrateState,
   streak,
   updateGoal,
 } from '../src/game.ts';
@@ -19,6 +20,19 @@ test('квест начисляет XP обеим шкалам и лайфкои
   assert.equal(done.activeDates.length, 1);
   assert.deepEqual(completeQuest(done, 'english-1'), done);
   assert.equal(state.quests[0].done, false);
+});
+test('старое сохранение без новой сферы «Психология» не роняет миграцию', () => {
+  // Воспроизводит реальное старое облачное сохранение (до версии 0.53.0): ни ключа
+  // «psychology» в state.spheres, ни monthlyTracking ещё не было. До фикса
+  // migrateState() падал на state.spheres['psychology'].score для undefined.
+  const state = initialState();
+  delete (state.spheres as Record<string, unknown>).psychology;
+  delete state.monthlyTracking;
+  const migrated = migrateState(state);
+  assert.deepEqual(migrated.spheres.psychology, { xp: 0, score: 0, highScore: 0, previousScore: 0 });
+  assert.equal(migrated.monthlyTracking?.scores.psychology, 0);
+  for (const id of ['health', 'sport', 'growth', 'english', 'finance', 'together', 'driving', 'tasks', 'hobby'])
+    assert.equal(migrated.spheres[id], state.spheres[id], id);
 });
 test('Life Score начисляет бонус за рост и исключает фарм', () => {
   const state = initialState();

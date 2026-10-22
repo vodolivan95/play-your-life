@@ -362,15 +362,22 @@ export function migrateState(
     Partial<Pick<GameState, 'profile' | 'mainGoalId'>>,
 ): GameState {
   const profile = state.profile;
+  // Старые сохранения не знают о сферах, добавленных позже (например, «Психология», версия 0.53.0):
+  // недостающие ключи дополняются чистым состоянием, иначе любое обращение к state.spheres[id] упадёт.
+  const filledSpheres: Record<string, SphereState> = { ...state.spheres };
+  for (const s of spheres)
+    if (!filledSpheres[s.id])
+      filledSpheres[s.id] = { xp: 0, score: 0, highScore: 0, previousScore: 0 };
   return {
     ...state,
+    spheres: filledSpheres,
     sphereProgressionModel: SPHERE_PROGRESSION_MODEL,
     quests: state.quests.map((q) => q.sourceType === 'USER_CREATED' && !q.done && Object.hasOwn(difficulties, q.difficulty) && q.xp !== difficulties[q.difficulty as keyof typeof difficulties] ? { ...q, xp: difficulties[q.difficulty as keyof typeof difficulties] } : q),
     goals: state.goals.map(g => g.progressMode === 'tasks' && state.quests.some(q => q.goalId === g.id && q.required !== false) ? { ...g, current: goalProgressValue(state, g), target: 100 } : g),
     monthlyTracking: state.monthlyTracking ?? {
       since: new Date().toISOString(),
       scores: Object.fromEntries(
-        spheres.map((s) => [s.id, state.spheres[s.id].score]),
+        spheres.map((s) => [s.id, filledSpheres[s.id].score]),
       ),
     },
     profile:

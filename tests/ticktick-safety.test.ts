@@ -219,6 +219,28 @@ test('сбой одной задачи не отменяет обмен оста
   assert.deepEqual(retry.warnings.filter((w) => w.startsWith('Задача 3')), []);
 });
 
+test('параллельные правки разных полей объединяются в обе стороны', async () => {
+  const { state: linkedState, connection, api } = await linked(1);
+  let state = linkedState;
+  const id = state.quests[0].id;
+  const remoteId = connection.links[id].remoteId;
+  state = {
+    ...state,
+    quests: state.quests.map((q) => q.id === id ? { ...q, name: 'Новое название в игре' } : q),
+  };
+  api.tasks.get(remoteId)!.dueDate = '2026-12-10T00:00:00+0000';
+
+  const result = applyTickTickResult(
+    state,
+    await syncTickTick(state, connection, api.request),
+  );
+  assert.equal(result.state.quests[0].name, 'Новое название в игре');
+  assert.equal(result.state.quests[0].dueAt, '2026-12-10');
+  assert.equal(api.tasks.get(remoteId)!.title, 'Новое название в игре');
+  assert.match(api.tasks.get(remoteId)!.dueDate!, /^2026-12-10/);
+  assert.deepEqual(result.warnings, []);
+});
+
 test('сбой создания одной задачи сохраняет связи остальных новых задач', async () => {
   const { state, connection } = setup(4);
   const api = upstream([{ match: /POST \/create$/, status: 400, times: 1 }]);

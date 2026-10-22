@@ -329,6 +329,28 @@ test('изменённый во время запроса текст не зат
   first = applyTickTickResult(edited, result);
   assert.equal(first.state.quests[0].name, 'Новейшая правка');
   assert.equal(first.state.xp, state.xp);
+  const retried = applyTickTickResult(
+    first.state,
+    await syncTickTick(first.state, first.connection, api.request),
+  );
+  assert.equal(api.tasks.get(rid)!.title, 'Новейшая правка');
+  assert.equal(retried.state.quests[0].name, 'Новейшая правка');
+});
+test('повреждённый снимок связи не прерывает синхронизацию', async () => {
+  let { state, connection } = setup();
+  const api = upstream();
+  const first = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
+  state = saveTask(first.state, { ...first.state.quests[0], name: 'Правка в игре' });
+  connection = first.connection;
+  const id = state.quests[0].id;
+  const remoteId = connection.links[id].remoteId;
+  connection.links[id] = { ...connection.links[id], remote: 'legacy-invalid-snapshot' };
+  api.tasks.get(remoteId)!.title = 'Правка в TickTick';
+
+  const result = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
+  assert.equal(api.tasks.get(remoteId)!.title, 'Правка в игре');
+  assert.equal(result.state.quests[0].name, 'Правка в игре');
+  assert.match(result.warnings[0], /конфликт полей/);
 });
 test('выполнение TickTick двигает цель, даты вне её срока отклоняются', async () => {
   let { state, connection } = setup();

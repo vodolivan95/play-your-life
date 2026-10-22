@@ -49,7 +49,7 @@ try {
         await page.locator('.sidebar').getByRole('button', { name: /^Ключевые итоги/ }).click();
       }
       await page.locator('.mrep').waitFor();
-      assert.equal(await page.locator('.mrep-sphere').count(), 9, 'Девять сфер в отчёте');
+      assert.equal(await page.locator('.mrep-sphere').count(), 10, 'Десять сфер в отчёте');
       assert.ok(await page.locator('.mrep-kpis > div').count() === 5, 'Пять показателей');
       await page.getByRole('group', { name: 'Важность сферы Финансы от 1 до 5' }).getByRole('button', { name: '5 из 5' }).click();
       assert.equal(await page.getByRole('group', { name: 'Важность сферы Финансы от 1 до 5' }).locator('button.on').count(), 5, 'Важность сохранилась');

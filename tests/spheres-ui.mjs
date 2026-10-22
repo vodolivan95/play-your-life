@@ -48,16 +48,16 @@ try {
       }
       const cards = page.locator('.sph-card');
       await cards.first().waitFor();
-      assert.equal(await cards.count(), 9, 'Девять районов');
+      assert.equal(await cards.count(), 10, 'Десять районов');
       await page.waitForTimeout(600);
       await page.screenshot({ path: `work/spheres/${name}-1-overview.png`, fullPage: true });
 
       // Фильтр «Есть задачи» оставляет только районы с задачами на сегодня.
       await page.getByRole('button', { name: 'Есть задачи', exact: true }).click();
       const withTasks = await cards.count();
-      assert.ok(withTasks > 0 && withTasks < 9, `Фильтр по задачам: ${withTasks}`);
+      assert.ok(withTasks > 0 && withTasks < 10, `Фильтр по задачам: ${withTasks}`);
       await page.getByRole('button', { name: 'Все', exact: true }).click();
-      assert.equal(await cards.count(), 9);
+      assert.equal(await cards.count(), 10);
 
       // Окно сферы из паутины и закрытие по Esc.
       const label = page.locator('button.radar-label').first();

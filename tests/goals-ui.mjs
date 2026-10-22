@@ -616,7 +616,7 @@ try {
         .locator('.home-spheres')
         .getByText('LVL 100 / 100', { exact: true })
         .count(),
-      9,
+      10,
     );
     assert.equal(
       await page

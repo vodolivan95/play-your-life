@@ -5,6 +5,11 @@ import { CityAppearanceContext } from '../cityAppearanceContext';
 import cityImage from '../assets/life-city.webp';
 import './CityBuildingArt.css';
 import { sphereAssets } from '../sphereAssets';
+import { coastalBuildings } from '../coastalCity';
+
+// У «Психологии» нет здания на острове «Города» (см. sphereAssets.ts) — её фотография сгенерирована,
+// а не вырезана из мастер-картинки острова, поэтому источник помечается иначе.
+const paintedOnIsland = new Set<string>(coastalBuildings.map(building => building.id));
 
 const initial: BuildingState = { tier: 1, style: 'coastal', owned: [], slots: [null, null, null] };
 function Palm({ x, y }: { x: number; y: number }) {
@@ -31,7 +36,8 @@ export default function CityBuildingArt({ id, building, variant = 'scene' }: { i
     if (!asset) return null;
     return <img className={`city-building-art ${variant === 'scene' ? 'sphere-building' : ''} building-art-${variant}`}
       src={asset.buildingThumbnail} alt={d.name} loading="lazy" decoding="async"
-      data-sphere={id} data-tier={b.tier} data-style={b.style} data-building-source="master-city" />;
+      data-sphere={id} data-tier={b.tier} data-style={b.style}
+      data-building-source={paintedOnIsland.has(id) ? 'master-city' : 'generated-placeholder'} />;
   }
   // Существующая фотографическая UI-иконка English остаётся без изменений.
 

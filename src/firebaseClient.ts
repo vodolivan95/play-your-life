@@ -22,4 +22,9 @@ const app = initializeApp({
 export const auth = getAuth(app);
 export const database = initializeFirestore(app, {
   ignoreUndefinedProperties: true,
+  // Обычный потоковый канал Firestore (WebChannel) иногда не проходит через провайдерские
+  // DPI/прокси — выглядит как «не удалось связаться с облаком» без кода ошибки Firebase,
+  // хотя обычные HTTPS-запросы (вход, статика) работают. Автоопределение переключает
+  // транспорт на обычный long-polling только когда потоковый канал недоступен.
+  experimentalAutoDetectLongPolling: true,
 });

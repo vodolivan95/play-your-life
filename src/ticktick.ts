@@ -214,6 +214,20 @@ export function remoteFingerprint(remote: RemoteTask) {
     done: false,
   });
 }
+const syncFields = ['name', 'notes', 'startsAt', 'dueAt', 'priority'] as const;
+type SyncField = (typeof syncFields)[number];
+function fingerprintFields(value: string): Partial<Record<SyncField, unknown>> | undefined {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (Array.isArray(parsed))
+      return Object.fromEntries(syncFields.map((field, index) => [field, parsed[index]])) as Partial<Record<SyncField, unknown>>;
+    if (parsed && typeof parsed === 'object')
+      return parsed as Partial<Record<SyncField, unknown>>;
+  } catch {
+    // Older or damaged saved snapshots fall back to the legacy local-wins policy.
+  }
+  return undefined;
+}
 export function remotePayload(
   task: Quest,
   state: GameState,
@@ -442,22 +456,25 @@ async function syncTickTickProject(
     const snapshot = localFingerprint(local, state);
     const localChanged = snapshot !== link.local;
     const remoteChanged = remoteFingerprint(remote) !== link.remote;
-    const localValues = JSON.parse(snapshot) as unknown[];
-    const baseLocal = JSON.parse(link.local) as unknown[];
-    const currentRemote = JSON.parse(remoteFingerprint(remote)) as unknown[];
-    const baseRemote = JSON.parse(link.remote) as unknown[];
-    const fields = ['name', 'notes', 'startsAt', 'dueAt', 'priority'] as const;
+    const localValues = fingerprintFields(snapshot);
+    const baseLocal = fingerprintFields(link.local);
+    const currentRemote = fingerprintFields(remoteFingerprint(remote));
+    const baseRemote = fingerprintFields(link.remote);
     const remoteValues = remoteFields(remote);
     const merged = { ...local };
     const conflicts: string[] = [];
-    for (let index = 0; index < fields.length; index++) {
-      const field = fields[index];
-      const changedHere = localValues[index] !== baseLocal[index];
-      const changedThere = currentRemote[index] !== baseRemote[index];
-      if (changedThere && !changedHere)
-        Object.assign(merged, { [field]: remoteValues[field] });
-      else if (changedThere && changedHere && localValues[index] !== currentRemote[index])
-        conflicts.push(field);
+    if (localValues && baseLocal && currentRemote && baseRemote) {
+      for (const field of syncFields) {
+        const changedHere = localValues[field] !== baseLocal[field];
+        const changedThere = currentRemote[field] !== baseRemote[field];
+        if (changedThere && !changedHere)
+          Object.assign(merged, { [field]: remoteValues[field] });
+        else if (changedThere && changedHere && localValues[field] !== currentRemote[field])
+          conflicts.push(field);
+      }
+    } else if (localChanged && remoteChanged) {
+      // With no comparable baseline, keep the established whole-task local-wins rule.
+      conflicts.push(...syncFields);
     }
     if (local.done && remote.status !== 2) {
       await request(`${path}/complete`, 'POST');
@@ -768,12 +785,15 @@ export function applyTickTickResult(state: GameState, result: TickTickResult) {
   for (const id of result.removed ?? []) if (next.quests.some((q) => q.id === id && !q.done)) next = removeQuest(next, id);
   const warnings = [...result.warnings];
   const rejected = new Map<string, string>();
+  const applied = new Set<string>();
   for (const change of result.changes) {
     const local = next.quests.find((q) => q.id === change.id);
     if (!local || !canSyncTask(next, local)) continue;
-    if (!local.done && localFingerprint(local, next) === change.snapshot) {
+    const unchangedSinceRead = localFingerprint(local, next) === change.snapshot;
+    if (!local.done && unchangedSinceRead) {
       try {
         next = saveTask(next, { ...local, ...remoteFields(change.remote) });
+        applied.add(change.id);
       } catch (error) {
         if (change.previousRemote)
           rejected.set(change.id, change.previousRemote);
@@ -781,6 +801,12 @@ export function applyTickTickResult(state: GameState, result: TickTickResult) {
           `${local.name}: ${error instanceof Error ? error.message : 'проверь сроки цели'}`,
         );
       }
+    } else if (unchangedSinceRead) {
+      applied.add(change.id);
+    } else if (change.previousRemote) {
+      // Keep the old remote baseline too: otherwise a concurrent local edit would be
+      // recorded as synced even though the just-finished request wrote an older snapshot.
+      rejected.set(change.id, change.previousRemote);
     }
     if (change.remote.status === 2) next = completeQuest(next, local.id);
   }
@@ -790,7 +816,7 @@ export function applyTickTickResult(state: GameState, result: TickTickResult) {
   };
   for (const [id, link] of Object.entries(connection.links)) {
     const task = next.quests.find((q) => q.id === id);
-    if (task && result.changes.some((c) => c.id === id) && !rejected.has(id))
+    if (task && applied.has(id) && !rejected.has(id))
       connection.links[id] = { ...link, local: localFingerprint(task, next) };
   }
   for (const [id, remote] of rejected)

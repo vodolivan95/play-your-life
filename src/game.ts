@@ -374,12 +374,26 @@ export function migrateState(
     sphereProgressionModel: SPHERE_PROGRESSION_MODEL,
     quests: state.quests.map((q) => q.sourceType === 'USER_CREATED' && !q.done && Object.hasOwn(difficulties, q.difficulty) && q.xp !== difficulties[q.difficulty as keyof typeof difficulties] ? { ...q, xp: difficulties[q.difficulty as keyof typeof difficulties] } : q),
     goals: state.goals.map(g => g.progressMode === 'tasks' && state.quests.some(q => q.goalId === g.id && q.required !== false) ? { ...g, current: goalProgressValue(state, g), target: 100 } : g),
-    monthlyTracking: state.monthlyTracking ?? {
-      since: new Date().toISOString(),
-      scores: Object.fromEntries(
-        spheres.map((s) => [s.id, filledSpheres[s.id].score]),
-      ),
-    },
+    monthlyTracking: state.monthlyTracking
+      ? {
+          ...state.monthlyTracking,
+          // Та же причина, что у filledSpheres выше: сфера, добавленная позже,
+          // отсутствует и здесь у старых сохранений.
+          scores: {
+            ...state.monthlyTracking.scores,
+            ...Object.fromEntries(
+              spheres
+                .filter((s) => state.monthlyTracking!.scores[s.id] === undefined)
+                .map((s) => [s.id, filledSpheres[s.id].score]),
+            ),
+          },
+        }
+      : {
+          since: new Date().toISOString(),
+          scores: Object.fromEntries(
+            spheres.map((s) => [s.id, filledSpheres[s.id].score]),
+          ),
+        },
     profile:
       profile &&
       profile.name?.trim() &&

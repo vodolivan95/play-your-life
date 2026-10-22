@@ -90,3 +90,20 @@ test('сохранение 0.34–0.36.1 с битой одиночной зад
   assert.equal(back.goals.length, 1);
   assert.equal(back.quests.length, 1);
 });
+test('реальное облачное сохранение до «Психологии» (версия < 0.53.0) загружается, а не отклоняется валидацией', () => {
+  // Воспроизводит настоящий баг на живом аккаунте: validateState() требовала запись
+  // по КАЖДОЙ из 10 сфер (включая новую «psychology») и в state.spheres, и в
+  // monthlyTracking.scores — любое старое сохранение, сделанное до появления
+  // десятой сферы (0.53.0), не могло пройти проверку и откатывалось в экран
+  // «Не удалось связаться с облаком», хотя сама сеть и Firestore работали. migrateState()
+  // умел дополнять недостающие сферы, но до этого не добирался — validateState() кидала
+  // исключение раньше, а accountPersistence.ts молча превращал его в этот экран.
+  const s = personal();
+  const raw = JSON.parse(JSON.stringify(s)) as Record<string, unknown>;
+  delete (raw.spheres as Record<string, unknown>).psychology;
+  delete ((raw.monthlyTracking as { scores: Record<string, unknown> }).scores).psychology;
+  assert.doesNotThrow(() => validateState(JSON.parse(JSON.stringify(raw))));
+  const restored = restoreBackup(JSON.stringify(raw));
+  assert.deepEqual(restored.spheres.psychology, { xp: 0, score: 0, highScore: 0, previousScore: 0 });
+  assert.equal(restored.monthlyTracking?.scores.psychology, 0);
+});

@@ -197,6 +197,11 @@ export function validateState(value: unknown): asserts value is SavedState {
     !record(value.spheres) ||
     !sphereIds.every((id) => {
       const s = (value.spheres as Record<string, unknown>)[id];
+      // Старое сохранение может не знать о сфере, добавленной позже (например, «Психология»,
+      // версия 0.53.0): отсутствующий ключ допускается здесь и дополняется чистым состоянием
+      // в migrateState(), иначе валидация отклоняла бы облачные сохранения всех игроков,
+      // которые не заходили в игру после появления новой сферы.
+      if (s === undefined) return true;
       return (
         record(s) &&
         number(s.xp) &&
@@ -348,13 +353,13 @@ export function validateState(value: unknown): asserts value is SavedState {
     (!record(value.monthlyTracking) ||
       !date(value.monthlyTracking.since) ||
       !record(value.monthlyTracking.scores) ||
-      !sphereIds.every((id) =>
-        score(
-          (value.monthlyTracking as { scores: Record<string, unknown> }).scores[
-            id
-          ],
-        ),
-      ))
+      !sphereIds.every((id) => {
+        const v = (value.monthlyTracking as { scores: Record<string, unknown> })
+          .scores[id];
+        // Как и у value.spheres выше: сфера, добавленная позже, может отсутствовать
+        // в старом сохранении — это чинит migrateState().
+        return v === undefined || score(v);
+      }))
   )
     return fail();
   if (

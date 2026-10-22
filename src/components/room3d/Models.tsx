@@ -27,6 +27,7 @@ export default function Model3D({ id, ghost, active = false, reduced = false }: 
       bronze: make('#8a5a2b', .9, .35), navy: make('#1c2a44', .1, .5), pink: make('#f29bb2', .05, .45), goldBar: make('#e8b93a', 1, .22), chestWood: make('#5a3418', 0, .6), black: make('#15181d', .4, .4),
       boardWhite: make('#fbfbf8', 0, .3), corkBlue: make('#2f5fd0', .1, .4), sticky1: make('#ffe066', 0, .8), sticky2: make('#7bdcb5', 0, .8), sticky3: make('#ff9ec4', 0, .8), sandGold: make('#e2c27a', 0, .9),
       canvasWhite: make('#fbf8f0', 0, .9), clay: make('#b8754a', 0, .8), pianoBlack: make('#0e0f12', .2, .15), keyWhite: make('#f7f5ef', 0, .3), guitarWood: make('#c77a32', .05, .35), purple: make('#7a4ad0', 0, .7),
+      indigo: make('#6a4fd6', 0, .55), lilac: make('#cabdf2', 0, .8), sage: make('#8fae8a', 0, .75), bronzeBowl: make('#b5873f', .85, .3),
       teal: make('#2d8a8a', 0, .85), mustard: make('#d9a21b', 0, .85), coral: make('#e86a5a', 0, .85), tableGreen: make('#1f6b4a', 0, .6), netWhite: make('#f4f2ee', 0, .8), brick: make('#9a4a32', 0, .9),
       fire: new MeshStandardMaterial({ color: '#ffb347', emissive: '#ff7a1a', emissiveIntensity: ghost ? 0 : active ? 3 : 1.6, transparent: true, opacity: ghost ? .3 : .9, toneMapped: false }),
       carRed: make('#d3202f', .6, .25), yellow: make('#f2c230', .1, .5), road: make('#2b2f36', 0, .9), chrome: make('#d9dde3', 1, .15),
@@ -553,6 +554,49 @@ export default function Model3D({ id, ghost, active = false, reduced = false }: 
         {cylinder([0, -.52, .02], [.25, .02, .25], materials.goldBar, [Math.PI / 2, 0, 0])}
       </group>
       {box([.3, .5, .3], [.04, .5, .04], materials.walnut, [0, 0, .5])}{sphere([.42, .74, .3], [.1, .1, .1], materials.cream)}
+    </>}
+    {id === 'therapyCouch' && <>
+      {box([0, .26, 0], [1.9, .3, .78], materials.indigo)}
+      {box([0, .46, -.06], [1.8, .18, .6], materials.lilac)}
+      {box([-.85, .55, 0], [.14, .55, .74], materials.indigo, [0, 0, .22])}
+      {[-.6, 0, .6].map(x => <group key={x}>{box([x, .5, -.3], [.5, .3, .14], materials.lilac)}</group>)}
+      {[-.82, .82].map(x => [-.32, .32].map(z => <group key={`${x}:${z}`}>{cylinder([x, .06, z], [.05, .12, .05], materials.walnut)}</group>))}
+    </>}
+    {id === 'loungeChair' && <>
+      {box([0, .28, .04], [.74, .26, .68], materials.lilac)}
+      {box([0, .64, -.28], [.74, .64, .16], materials.lilac, [-.1, 0, 0])}
+      {[-.36, .36].map(x => <group key={x}>{box([x, .48, .02], [.13, .24, .7], materials.indigo)}</group>)}
+      {[-.3, .3].map(x => [-.26, .3].map(z => <group key={`${x}:${z}`}>{cylinder([x, .08, z], [.05, .16, .05], materials.walnut)}</group>))}
+      {sphere([.18, .48, .16], [.14, .11, .14], materials.sage)}
+    </>}
+    {id === 'mindLibrary' && <>
+      {box([0, 1, -.22], [1.8, 2, .05], materials.walnut)}
+      {[-.88, .88].map(x => <group key={x}>{box([x, 1, 0], [.06, 2, .45], materials.oak)}</group>)}
+      {[.08, .52, .96, 1.4, 1.84].map(y => <group key={y}>{box([0, y, 0], [1.76, .05, .45], materials.oak)}</group>)}
+      {[.1, .54, .98, 1.42].map((y, row) => Array.from({ length: 9 }, (_, i) => {
+        const mats = [materials.indigo, materials.sage, materials.lilac, materials.coral, materials.teal];
+        return <group key={i}>{box([-.78 + i * .19, y + .17, 0], [.05, .34, .3], mats[(i + row) % mats.length])}</group>;
+      }))}
+      {cylinder([.6, 1.98, 0], [.12, .18, .12], materials.wood)}{sphere([.6, 2.14, 0], [.14, .14, .14], materials.sage)}
+    </>}
+    {id === 'moodBoard' && <>
+      {[-.6, .6].map(x => <group key={x}>{box([x, .85, 0], [.06, 1.7, .06], materials.walnut)}{box([x, .03, 0], [.08, .06, .5], materials.walnut)}</group>)}
+      {box([0, 1.1, 0], [1.3, .9, .04], materials.lilac)}
+      {box([0, 1.1, .025], [1.22, .82, .005], materials.paper)}
+      {([[-.4, 1.3, materials.indigo], [-.1, 1.34, materials.sage], [.2, 1.28, materials.coral], [-.35, 1, materials.teal], [-.05, .96, materials.indigo], [.28, .98, materials.sage]] as const).map(([x, y, mat], i) => <group key={i}>{sphere([x, y, .04], [.08, .08, .08], mat)}</group>)}
+      {box([.25, .7, .04], [.5, .02, .005], materials.dark)}
+    </>}
+    {id === 'sandTray' && <>
+      {box([0, .22, 0], [1, .3, .72], materials.walnut)}
+      {box([0, .33, 0], [.88, .1, .6], materials.sand)}
+      {Array.from({ length: 6 }, (_, i) => <group key={i}>{box([-.35 + i * .14, .385, 0], [.72, .005, .005], materials.sage, [0, 0, (i % 2 ? .02 : -.02)])}</group>)}
+      {sphere([.22, .4, .1], [.05, .05, .05], materials.indigo)}{sphere([.3, .4, -.08], [.04, .04, .04], materials.coral)}
+    </>}
+    {id === 'singingBowl' && <>
+      {cylinder([0, .04, 0], [.4, .08, .4], materials.lilac)}
+      <mesh position={[0, .2, 0]} scale={[.32, .22, .32]} geometry={geometries.sphere} material={materials.bronzeBowl} castShadow={!ghost} />
+      {active && !ghost && <pointLight position={[0, .32, 0]} intensity={2.4} distance={3} decay={2} color="#f2e3c6" />}
+      {box([.3, .22, 0], [.03, .22, .03], materials.walnut, [0, 0, .4])}
     </>}
   </group>;
 }

@@ -19,6 +19,7 @@ export function projectStyle(name: string, sphere: string) {
     driving: '#40a6cc',
     tasks: '#688fdf',
     hobby: '#aa7add',
+    psychology: '#6a4fd6',
   };
   return {
     kind: match?.[1] ?? sphere,

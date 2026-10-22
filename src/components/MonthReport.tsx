@@ -163,7 +163,7 @@ export default function MonthReport({
                 <div className="mrep-legend"><span className="dash">Начало месяца</span><span className="fill">Сейчас</span></div>
               </>
             ) : (
-              <p className="mrep-small">Колесо появится, когда накопятся оценки всех девяти сфер за месяц.</p>
+              <p className="mrep-small">Колесо появится, когда накопятся оценки всех десяти сфер за месяц.</p>
             )}
           </div>
           <div className="mrep-sphere-grid">

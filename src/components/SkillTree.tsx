@@ -3,6 +3,7 @@ import type { CSSProperties, Dispatch, SetStateAction } from 'react';
 import { spheres } from '../game';
 import type { GameState } from '../game';
 import icons from '../assets/sphere-icons.png';
+import GameArt from './GameArt';
 import {
   MAX_BRANCHES,
   MAX_SKILL_COST,
@@ -42,7 +43,8 @@ const crops: Record<string, [number, number]> = {
 };
 function SkillIcon({ id }: { id: string }) {
   const crop = crops[id];
-  if (!crop) return null;
+  // Сферы без фото в девятииконном листе (пока только «Психология») получают векторную иконку GameArt.
+  if (!crop) return <span className="skt-icon skt-icon-vector"><GameArt kind={id} /></span>;
   const r = 122;
   return (
     <svg className="skt-icon" viewBox={`${crop[0] + 147 - r} ${crop[1] + 128 - r} ${r * 2} ${r * 2}`} aria-hidden="true">

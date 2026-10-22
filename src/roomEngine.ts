@@ -1,7 +1,7 @@
 import type { GameState } from './game.ts';
 import { sphereProgress } from './sphereProgress.ts';
 
-export type RoomId = 'health' | 'sport' | 'growth' | 'english' | 'finance' | 'together' | 'driving' | 'tasks' | 'hobby';
+export type RoomId = 'health' | 'sport' | 'growth' | 'english' | 'finance' | 'together' | 'driving' | 'tasks' | 'hobby' | 'psychology';
 export type ObjectId = 'mat' | 'dumbbells' | 'bench' | 'ball' | 'plant' | 'treadmill'
   | 'bookshelf' | 'desk' | 'armchair' | 'floorLamp' | 'globe' | 'board'
   | 'massageTable' | 'waterCooler' | 'smoothieBar' | 'firstAid' | 'aquarium' | 'cedarBarrel'
@@ -11,7 +11,8 @@ export type ObjectId = 'mat' | 'dumbbells' | 'bench' | 'ball' | 'plant' | 'tread
   | 'diningTable' | 'gameTable' | 'beanBags' | 'karaoke' | 'pingPong' | 'fireplace'
   | 'easel' | 'guitar' | 'potteryWheel' | 'craftTable' | 'piano' | 'telescope'
   | 'standingDesk' | 'kanbanBoard' | 'hourglass' | 'filingCabinet' | 'trophyCase' | 'gong'
-  | 'kettlebells' | 'dumbbell-rack' | 'exercise-bike' | 'boxing-bag' | 'power-rack';
+  | 'kettlebells' | 'dumbbell-rack' | 'exercise-bike' | 'boxing-bag' | 'power-rack'
+  | 'therapyCouch' | 'loungeChair' | 'mindLibrary' | 'moodBoard' | 'sandTray' | 'singingBowl';
 export type Vec3 = [number, number, number];
 export type RoomObject = { id: ObjectId; position: Vec3; rotation: Vec3; scale: Vec3 };
 export type RoomData = { purchased: ObjectId[]; objects: RoomObject[] };
@@ -103,11 +104,20 @@ const tasksCatalog: readonly ObjectSpec[] = [
   { id: 'trophyCase', name: 'Витрина с наградами', price: 280, level: 3, size: [2, 1], asset: '/models/tasks/trophy-case.glb' },
   { id: 'gong', name: 'Гонг завершения', price: 320, level: 5, size: [1, 1], asset: '/models/tasks/gong.glb' },
 ];
-const catalogs: Partial<Record<RoomId, readonly ObjectSpec[]>> = { sport: sportCatalog, growth: growthCatalog, health: healthCatalog, finance: financeCatalog, english: englishCatalog, driving: drivingCatalog, together: togetherCatalog, hobby: hobbyCatalog, tasks: tasksCatalog };
+// Психология — кабинет психолога: тёплый ковёр, книжная полка и доска настроения по краям, пол для мебели 11 × 9 м.
+const psychologyCatalog: readonly ObjectSpec[] = [
+  { id: 'therapyCouch', name: 'Кушетка для сессий', price: 180, level: 0, size: [2, 1], asset: '/models/psychology/therapy-couch.glb' },
+  { id: 'loungeChair', name: 'Кресло для разговора', price: 150, level: 0, size: [1, 1], asset: '/models/psychology/lounge-chair.glb' },
+  { id: 'mindLibrary', name: 'Книжная полка', price: 140, level: 0, size: [2, 1], asset: '/models/psychology/mind-library.glb' },
+  { id: 'moodBoard', name: 'Доска настроения', price: 110, level: 0, size: [1, 1], asset: '/models/psychology/mood-board.glb' },
+  { id: 'sandTray', name: 'Песочница для терапии', price: 260, level: 3, size: [1, 1], asset: '/models/psychology/sand-tray.glb' },
+  { id: 'singingBowl', name: 'Поющая чаша', price: 180, level: 5, size: [1, 1], asset: '/models/psychology/singing-bowl.glb' },
+];
+const catalogs: Partial<Record<RoomId, readonly ObjectSpec[]>> = { sport: sportCatalog, growth: growthCatalog, health: healthCatalog, finance: financeCatalog, english: englishCatalog, driving: drivingCatalog, together: togetherCatalog, hobby: hobbyCatalog, tasks: tasksCatalog, psychology: psychologyCatalog };
 
 export const roomConfigs: Record<RoomId, RoomConfig> = Object.fromEntries(
-  (['health', 'sport', 'growth', 'english', 'finance', 'together', 'driving', 'tasks', 'hobby'] as const)
-    .map(id => [id, { id, title: ({ health: 'Здоровье', sport: 'Спорт', growth: 'Саморазвитие', english: 'Английский', finance: 'Финансы', together: 'Общие дела', driving: 'Вождение', tasks: 'Задачи', hobby: 'Хобби' })[id], size: id === 'sport' ? [12, 10] : [11, 9], catalog: catalogs[id] ?? [] }]),
+  (['health', 'sport', 'growth', 'english', 'finance', 'together', 'driving', 'tasks', 'hobby', 'psychology'] as const)
+    .map(id => [id, { id, title: ({ health: 'Здоровье', sport: 'Спорт', growth: 'Саморазвитие', english: 'Английский', finance: 'Финансы', together: 'Общие дела', driving: 'Вождение', tasks: 'Задачи', hobby: 'Хобби', psychology: 'Психология' })[id], size: id === 'sport' ? [12, 10] : [11, 9], catalog: catalogs[id] ?? [] }]),
 ) as Record<RoomId, RoomConfig>;
 
 /** Есть ли у сферы наполненный 3D-интерьер (каталог предметов). */
@@ -118,7 +128,7 @@ export function roomData(state: GameState, id: RoomId): RoomData {
   return state.rooms?.[id] ?? { purchased: [], objects: [] };
 }
 export function objectSpec(id: ObjectId): ObjectSpec {
-  const item = [sportCatalog, growthCatalog, healthCatalog, financeCatalog, englishCatalog, drivingCatalog, togetherCatalog, hobbyCatalog, tasksCatalog].flat().find(item => item.id === id);
+  const item = [sportCatalog, growthCatalog, healthCatalog, financeCatalog, englishCatalog, drivingCatalog, togetherCatalog, hobbyCatalog, tasksCatalog, psychologyCatalog].flat().find(item => item.id === id);
   if (!item) throw new Error('Предмет не найден.');
   return item;
 }

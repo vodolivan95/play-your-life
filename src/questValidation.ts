@@ -20,6 +20,7 @@ const spheres = [
   "driving",
   "tasks",
   "hobby",
+  "psychology",
 ];
 function list(
   v: unknown,

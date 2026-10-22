@@ -8,4 +8,7 @@ export const cityLandmarks: Record<string, { name: string; x: number; y: number 
   driving: { name: 'Автошкола', x: 20, y: 71 },
   tasks: { name: 'Мастерская планов', x: 50, y: 71 },
   hobby: { name: 'Дом творчества', x: 80, y: 71 },
+  // У «Психологии» пока нет собственного здания на острове «Города» — запись нужна только
+  // для карточек сферы (CityBuildingArt); x/y не используются, пока сфера не появится на карте.
+  psychology: { name: 'Кабинет психолога', x: 50, y: 90 },
 };

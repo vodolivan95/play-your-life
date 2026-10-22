@@ -28,10 +28,10 @@ test('серия дней и XP по неделям считаются по со
   assert.equal(weeks.reduce((s, w) => s + w.xp, 0), 40);
 });
 
-test('новая игра: девять районов без выдуманного прогресса', () => {
+test('новая игра: десять районов без выдуманного прогресса', () => {
   const s = newAccountGame('Игрок');
   const cards = sphereCards(s, now);
-  assert.equal(cards.length, 9);
+  assert.equal(cards.length, 10);
   assert.ok(cards.every((c) => c.level === 0 && c.status === 'normal' && c.streak === 0 && c.idleDays === null && c.projects === 0));
   assert.equal(arrangeCards(cards, 'weak', 'order').length, 0);
   assert.deepEqual(nextSteps(s, 4, now), []);
@@ -46,7 +46,7 @@ test('демо-игра: фильтры, сортировка и открыта�
   assert.equal(health.idleDays, 0);
   assert.ok(health.weekXP >= 15);
   const weakFirst = arrangeCards(cards, 'all', 'weak');
-  assert.ok(weakFirst[0].totalXP <= weakFirst[8].totalXP);
+  assert.ok(weakFirst[0].totalXP <= weakFirst[9].totalXP);
   assert.ok(arrangeCards(cards, 'tasks', 'order').every((c) => c.tasksToday > 0));
   const detail = sphereDetail(s, 'health', now);
   assert.equal(detail.info.name, 'Здоровье');
@@ -85,7 +85,7 @@ test('лучшая серия и статистика района', () => {
   assert.equal(s.streak, 2);
   assert.equal(s.best, 2);
   assert.equal(s.place, 2, 'район на втором месте по XP');
-  assert.equal(s.placeOf, 9);
+  assert.equal(s.placeOf, 10);
   assert.equal(s.weekdays.reduce((a, b) => a + b, 0), 100);
   assert.equal(s.bestDay?.xp, 70);
   assert.equal(s.achievements.find((a) => a.id === 'first')?.done, true);

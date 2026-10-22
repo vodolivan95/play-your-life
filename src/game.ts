@@ -84,6 +84,15 @@ export const spheres = [
     score: 7,
     xp: 470,
   },
+  {
+    id: 'psychology',
+    name: 'Психология',
+    icon: '🧠',
+    coefficient: 12,
+    color: '#6a4fd6',
+    score: 4,
+    xp: 260,
+  },
 ];
 export const difficulties = {
   Micro: 5,

@@ -12,6 +12,7 @@ import DrivingDecor from './DrivingDecor';
 import TogetherDecor from './TogetherDecor';
 import HobbyDecor from './HobbyDecor';
 import TasksDecor from './TasksDecor';
+import PsychologyDecor from './PsychologyDecor';
 import type { RoomQuality, RoomTime } from './RoomScene3D';
 
 function surface(kind: 'stone' | 'wood', normal = false) {
@@ -54,7 +55,7 @@ function Skyline({ roomId, time }: { roomId: RoomId; time: RoomTime }) {
 }
 export default function RoomEnvironment({ roomId, time, quality }: { roomId: RoomId; time: RoomTime; quality: RoomQuality }) {
   // Кабинет «Саморазвития» — тёплый паркет вместо каменного пола спортзала.
-  const study = roomId === 'growth', health = roomId === 'health', finance = roomId === 'finance', english = roomId === 'english', driving = roomId === 'driving', together = roomId === 'together', hobby = roomId === 'hobby', tasks = roomId === 'tasks';
+  const study = roomId === 'growth', health = roomId === 'health', finance = roomId === 'finance', english = roomId === 'english', driving = roomId === 'driving', together = roomId === 'together', hobby = roomId === 'hobby', tasks = roomId === 'tasks', psychology = roomId === 'psychology';
   const stone = useTexture(`${import.meta.env.BASE_URL}environments/sport-stone.jpg`);
   // Texture sampler configuration is an imperative GPU operation.
   // eslint-disable-next-line react-hooks/immutability
@@ -84,6 +85,7 @@ export default function RoomEnvironment({ roomId, time, quality }: { roomId: Roo
     {together && <TogetherDecor />}
     {hobby && <HobbyDecor />}
     {tasks && <TasksDecor />}
+    {psychology && <PsychologyDecor />}
     {tasks ? <>
       <mesh position={[0, -.005, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[12.4, 10.4]} /><meshStandardMaterial color="#c9ced6" roughness={.95} /></mesh>
       <mesh position={[0, .003, .2]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[1.2, 8]} /><meshStandardMaterial color="#2f5fd0" roughness={.95} /></mesh>
@@ -117,6 +119,10 @@ export default function RoomEnvironment({ roomId, time, quality }: { roomId: Roo
       {Array.from({ length: 9 }, (_, i) => <group key={`tile-z-${i}`}>{block([0, -.003, -5.2 + (i + 1) * 10.4 / 10], [12.4, .002, .01], '#55565a', 0, .9)}</group>)}
       <mesh position={[0, .004, .3]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><circleGeometry args={[2, 48]} /><meshStandardMaterial color="#9fd8cf" roughness={.95} /></mesh>
       <mesh position={[0, .005, .3]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[1.8, 1.86, 64]} /><meshStandardMaterial color="#f4f2ee" roughness={.9} /></mesh>
+    </> : psychology ? <>
+      <mesh position={[0, -.005, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[12.4, 10.4]} /><meshStandardMaterial map={maps.parquet} color="#ded3f2" roughness={.6} /></mesh>
+      <mesh position={[0, .004, .3]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><circleGeometry args={[2.1, 48]} /><meshStandardMaterial color="#cabdf2" roughness={.95} /></mesh>
+      <mesh position={[0, .005, .3]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[1.9, 1.98, 64]} /><meshStandardMaterial color="#6a4fd6" roughness={.9} /></mesh>
     </> : study ? <>
       <mesh position={[0, -.005, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[12.4, 10.4]} /><meshStandardMaterial map={maps.parquet} roughness={.55} metalness={0} envMapIntensity={.9} /></mesh>
       <mesh position={[0, .004, .4]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[5.2, 3.6]} /><meshStandardMaterial color="#6d2f2a" roughness={.95} /></mesh>

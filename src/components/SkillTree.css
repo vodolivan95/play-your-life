@@ -165,6 +165,16 @@
   height: 100%;
   border-radius: 50%;
 }
+.skt-icon-vector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #241a42;
+}
+.skt-icon-vector svg {
+  width: 72%;
+  height: 72%;
+}
 
 /* Доска и панель */
 .skt-layout {

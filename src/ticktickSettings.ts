@@ -16,7 +16,7 @@ export type TickTickSettings = {
   lastSync?: string;
   revision: number;
 };
-export const tickTickSphereIds = ['health', 'sport', 'growth', 'english', 'finance', 'together', 'driving', 'tasks', 'hobby'];
+export const tickTickSphereIds = ['health', 'sport', 'growth', 'english', 'finance', 'together', 'driving', 'tasks', 'hobby', 'psychology'];
 export function emptyTickTickSettings(revision = 0): TickTickSettings {
   return { sphereLists: {}, auto: true, deleteRemote: true, links: {}, dismissed: [], revision };
 }

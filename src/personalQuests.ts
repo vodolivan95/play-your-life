@@ -25,6 +25,7 @@ export const habitIcons = [
   ["driving", "🚗", "Вождение"],
   ["art", "🎨", "Хобби"],
   ["learning", "🧠", "Обучение"],
+  ["psychology", "💭", "Психология"],
 ] as const;
 export const virtualRewards = [
   { id: "plant_basic", icon: "🪴", name: "Растение" },
@@ -95,7 +96,7 @@ export function questCoins(q: Quest) {
 }
 function checkSphere(id: string) {
   if (!spheres.some((s) => s.id === id))
-    throw new Error("Выбери одну из девяти сфер.");
+    throw new Error("Выбери одну из десяти сфер.");
 }
 export function saveCustomQuest(
   state: GameState,

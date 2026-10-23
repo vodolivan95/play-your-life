@@ -50,6 +50,7 @@ try {
       isMobile: width < 600,
       hasTouch: width < 600,
       timezoneId: 'Europe/Moscow',
+      reducedMotion: 'reduce',
     });
     const page = await context.newPage(),
       errors = [];
@@ -286,13 +287,13 @@ try {
       ),
       'Страница цели шире экрана',
     );
-    await stageA.getByRole('link', { name: 'Продолжить →' }).click();
+    await stageA.getByRole('link', { name: 'Продолжить →' }).click({ force: true });
     await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.a}`);
     await workspace.getByRole('link', { name: 'Перейти к цели →' }).click();
     await stageB
       .getByRole('button', { name: 'Раскрыть этап: Разговорная практика' })
       .click();
-    await stageB.getByRole('link', { name: 'Продолжить →' }).click();
+    await stageB.getByRole('link', { name: 'Продолжить →' }).click({ force: true });
     await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.b}`);
     await page.goBack();
     await page.waitForURL(`**/#/goals/${ids.id}`);

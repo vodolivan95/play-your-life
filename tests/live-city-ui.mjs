@@ -214,7 +214,8 @@ try {
  await cards.locator('.pyl-more').getByRole('button',{name:/^Сферы жизни/}).click();
  await cards.locator('.sph-grid').scrollIntoViewIfNeeded();await cards.locator('.sph-grid img').first().waitFor();
  const sphereCount=await cards.evaluate(async()=>{const {spheres}=await import('/src/game.ts');return spheres.length;});
- assert.equal(await cards.locator('.sph-grid img[data-building-source="master-city"]').count(),sphereCount);
+ assert.equal(await cards.locator('.sph-grid img[data-building-source="master-city"]').count(),sphereCount-1,'Девять зданий вырезаны с мастер-карты; Психология имеет отдельную иллюстрацию');
+ assert.equal(await cards.locator('.sph-grid img[data-building-source="generated-placeholder"]').count(),1,'Психология использует отдельную иллюстрацию');
  assert.equal(await cards.locator('.sph-grid canvas').count(),0);
  for(const photo of await cards.locator('.sph-grid img[data-sphere]').all()){await photo.scrollIntoViewIfNeeded();await photo.evaluate(image=>image.decode());}
  assert.ok(await cards.evaluate(async()=>{const {sphereAssets}=await import('/src/sphereAssets.ts');return [...document.querySelectorAll('.sph-grid img[data-sphere]')].every(image=>image.naturalWidth>0&&image.getAttribute('src')===sphereAssets[image.dataset.sphere].buildingThumbnail);}),'Все фотографии загружены и соответствуют реестру');

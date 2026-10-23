@@ -166,7 +166,17 @@ try {
 
       // Ручное число, общий вывод и отдельный план — только пользовательские записи, не новые квесты.
       const healthCount = page.getByLabel('Задач закрыто за месяц в сфере Здоровье');
+      const tasksTotal = page.getByRole('group', { name: 'Итого задач по всем сферам', exact: true }).locator('b');
+      assert.equal(await tasksTotal.textContent(), '—', 'Без ручных чисел сумма не подменяется нулём');
+      await healthCount.fill('0');
+      assert.equal(await tasksTotal.textContent(), '0', 'Явно внесённый ноль остаётся нулём');
       await healthCount.fill('4');
+      assert.equal(await tasksTotal.textContent(), '4', 'Карточка показывает количество задач, а не число заполненных сфер');
+      const sportCount = page.getByLabel('Задач закрыто за месяц в сфере Спорт');
+      await sportCount.fill('6');
+      assert.equal(await tasksTotal.textContent(), '10', 'Сумма включает ручные числа всех сфер');
+      await sportCount.fill('');
+      assert.equal(await tasksTotal.textContent(), '4', 'Очистка поля пересчитывает сумму без изменения других сфер');
       await page.getByLabel('Главный вывод месяца').fill('Сон важнее идеального расписания.');
       await page.getByRole('button', { name: /Добавить план/ }).click();
       await page.getByLabel('План 1 на следующий месяц').fill('Ложиться до 23:00 пять дней в неделю');

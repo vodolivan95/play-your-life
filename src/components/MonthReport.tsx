@@ -147,30 +147,63 @@ export default function MonthReport({
           </div>
         </header>
         <div className="mrep-spheres-layout">
-          <div className="mrep-card mrep-radar">
-            <h4>Колесо баланса</h4>
-            {hasRadar ? (
-              <>
-                <svg viewBox="0 0 380 340" role="img" aria-label="Колесо баланса: оценки сфер в начале месяца и сейчас">
-                  {[2, 4, 6, 8, 10].map((ring) => <polygon key={ring} points={polygon(Array(total).fill(ring))} className="ring" />)}
-                  <polygon points={polygon(before)} className="before" />
-                  <polygon points={polygon(after)} className="after" />
-                  {r.sphereRows.map((x, i) => {
-                    const p = radarPoint(i, total, after[i] ?? 0);
-                    const l = radarPoint(i, total, 11.8);
-                    return (
-                      <g key={x.id}>
-                        <circle cx={p.x} cy={p.y} r="5" fill={x.color} className="dot" />
-                        <text x={l.x} y={l.y + 4} textAnchor={l.x < 150 ? 'end' : l.x > 230 ? 'start' : 'middle'}>{x.name.length > 12 ? `${x.name.slice(0, 11)}…` : x.name}</text>
-                      </g>
-                    );
-                  })}
-                </svg>
-                <div className="mrep-legend"><span className="dash">Начало месяца</span><span className="fill">Сейчас</span></div>
-              </>
-            ) : (
-              <p className="mrep-small">Колесо появится, когда накопятся оценки всех десяти сфер за месяц.</p>
-            )}
+          <div className="mrep-summary-column">
+            <div className="mrep-card mrep-radar">
+              <h4>Колесо баланса</h4>
+              {hasRadar ? (
+                <>
+                  <svg viewBox="0 0 380 340" role="img" aria-label="Колесо баланса: оценки сфер в начале месяца и сейчас">
+                    {[2, 4, 6, 8, 10].map((ring) => <polygon key={ring} points={polygon(Array(total).fill(ring))} className="ring" />)}
+                    <polygon points={polygon(before)} className="before" />
+                    <polygon points={polygon(after)} className="after" />
+                    {r.sphereRows.map((x, i) => {
+                      const p = radarPoint(i, total, after[i] ?? 0);
+                      const l = radarPoint(i, total, 11.8);
+                      return (
+                        <g key={x.id}>
+                          <circle cx={p.x} cy={p.y} r="5" fill={x.color} className="dot" />
+                          <text x={l.x} y={l.y + 4} textAnchor={l.x < 150 ? 'end' : l.x > 230 ? 'start' : 'middle'}>{x.name.length > 12 ? `${x.name.slice(0, 11)}…` : x.name}</text>
+                        </g>
+                      );
+                    })}
+                  </svg>
+                  <div className="mrep-legend"><span className="dash">Начало месяца</span><span className="fill">Сейчас</span></div>
+                </>
+              ) : (
+                <p className="mrep-small">Колесо появится, когда накопятся оценки всех десяти сфер за месяц.</p>
+              )}
+            </div>
+            <div className="mrep-summary-stack">
+              <section className="mrep-card mrep-goals">
+                <header><div><h3>Главные цели</h3><p>Где сейчас прогресс.</p></div></header>
+                {r.goals.length === 0 && <p className="mrep-small">Целей пока нет.</p>}
+                {r.goals.map((g) => (
+                  <div className="mrep-row" key={g.id}>
+                    <div><span>{g.name}</span><b>{g.percent}%</b></div>
+                    <div className="mrep-track green"><i style={{ width: `${g.percent}%` }} /></div>
+                    <small>{g.text}</small>
+                  </div>
+                ))}
+              </section>
+              <section className="mrep-card mrep-habits">
+                <header><div><h3>Привычки и серии</h3><p>{r.habits.rate === null ? 'Привычек пока нет. Они появятся в разделе «Привычки».' : `Выполнено ${r.habits.rate}% отметок.`}</p></div>{r.habits.rate !== null && <span className="mrep-badge">{r.habits.rate}%</span>}</header>
+                {r.habits.rows.map((h) => (
+                  <div className="mrep-habit" key={h.id}>
+                    <div><b>{h.name}</b><span>{h.rate === null ? 'ещё нет плановых дней' : `${h.made} из ${h.due} · серия ${h.streak}, рекорд ${h.best}`}</span></div>
+                    <div className="mrep-cells" aria-label={`Отметки привычки ${h.name}`}>
+                      {h.cells.map((c, i) => <span key={i} className={c} />)}
+                    </div>
+                  </div>
+                ))}
+              </section>
+              <section className="mrep-card mrep-achievements">
+                <header><div><h3>Достижения месяца</h3></div></header>
+                {r.achievements.length === 0 && <p className="mrep-small">Достигнутые цели месяца появятся здесь.</p>}
+                {r.achievements.map((a) => (
+                  <div className="mrep-ach" key={a.name + a.date}><span>★</span><div><b>{a.name}</b><small>{a.date}</small></div></div>
+                ))}
+              </section>
+            </div>
           </div>
           <div className="mrep-sphere-grid">
             {r.sphereRows.map((x) => (
@@ -194,40 +227,6 @@ export default function MonthReport({
           </div>
         </div>
       </section>
-
-      <div className="mrep-two">
-        <section className="mrep-card mrep-wide">
-          <header><div><h3>Привычки и серии</h3><p>{r.habits.rate === null ? 'Привычек пока нет. Они появятся в разделе «Привычки».' : `Выполнено ${r.habits.rate}% отметок.`}</p></div>{r.habits.rate !== null && <span className="mrep-badge">{r.habits.rate}%</span>}</header>
-          {r.habits.rows.map((h) => (
-            <div className="mrep-habit" key={h.id}>
-              <div><b>{h.name}</b><span>{h.rate === null ? 'ещё нет плановых дней' : `${h.made} из ${h.due} · серия ${h.streak}, рекорд ${h.best}`}</span></div>
-              <div className="mrep-cells" aria-label={`Отметки привычки ${h.name}`}>
-                {h.cells.map((c, i) => <span key={i} className={c} />)}
-              </div>
-            </div>
-          ))}
-        </section>
-        <div className="mrep-col">
-          <section className="mrep-card">
-            <header><div><h3>Главные цели</h3><p>Где сейчас прогресс.</p></div></header>
-            {r.goals.length === 0 && <p className="mrep-small">Целей пока нет.</p>}
-            {r.goals.map((g) => (
-              <div className="mrep-row" key={g.id}>
-                <div><span>{g.name}</span><b>{g.percent}%</b></div>
-                <div className="mrep-track green"><i style={{ width: `${g.percent}%` }} /></div>
-                <small>{g.text}</small>
-              </div>
-            ))}
-          </section>
-          <section className="mrep-card">
-            <header><div><h3>Достижения месяца</h3></div></header>
-            {r.achievements.length === 0 && <p className="mrep-small">Достигнутые цели месяца появятся здесь.</p>}
-            {r.achievements.map((a) => (
-              <div className="mrep-ach" key={a.name + a.date}><span>★</span><div><b>{a.name}</b><small>{a.date}</small></div></div>
-            ))}
-          </section>
-        </div>
-      </div>
 
       <section className="mrep-card mrep-compare">
         <div className="mrep-compare-main">

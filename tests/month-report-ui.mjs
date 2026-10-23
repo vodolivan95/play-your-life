@@ -51,6 +51,21 @@ try {
       await page.locator('.mrep').waitFor();
       assert.equal(await page.locator('.mrep-sphere').count(), 10, 'Десять сфер в отчёте');
       assert.ok(await page.locator('.mrep-kpis > div').count() === 5, 'Пять показателей');
+      for (const selector of ['.mrep-goals', '.mrep-habits', '.mrep-achievements']) {
+        assert.equal(await page.locator(selector).count(), 1, 'Обзорные карточки сохранены без дублирования');
+      }
+      const layout = await page.locator('.mrep-spheres-layout').boundingBox();
+      const grid = await page.locator('.mrep-sphere-grid').boundingBox();
+      assert.ok(layout && grid && Math.abs(grid.x - layout.x) < 1 && Math.abs(grid.width - layout.width) < 1,
+        'Сферы занимают всю ширину: слева не резервируется пустая колонка');
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1),
+        'Компактная раскладка не создаёт горизонтальную прокрутку страницы');
+      if (!mobile) {
+        await page.setViewportSize({ width: 1920, height: 1000 });
+        const columns = await page.locator('.mrep-sphere-grid').evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(' ').length);
+        assert.equal(columns, 5, 'На широком экране пять сфер в строке, две полные строки');
+        await page.setViewportSize({ width: 1440, height: 1000 });
+      }
       await page.getByRole('group', { name: 'Важность сферы Финансы от 1 до 5' }).getByRole('button', { name: '5 из 5' }).click();
       assert.equal(await page.getByRole('group', { name: 'Важность сферы Финансы от 1 до 5' }).locator('button.on').count(), 5, 'Важность сохранилась');
       await page.screenshot({ path: `work/month-report/${name}-1-report.png`, fullPage: true });

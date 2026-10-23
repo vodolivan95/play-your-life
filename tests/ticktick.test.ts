@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { initialState, removeQuest } from '../src/game.ts';
+import { completeQuest, initialState, removeQuest, reopenQuest } from '../src/game.ts';
 import { saveGoal, saveTask } from '../src/planning.ts';
 import {
   applyTickTickResult,
@@ -185,6 +185,30 @@ test('редактирование в обе стороны, выполнени�
   assert.equal(applied.state.xp, 2470);
   assert.equal(api.tasks.get(rid)!.status, 2);
   assert.equal(applied.state.completed, 1);
+});
+test('отмена выполнения в игре переоткрывает связанную задачу TickTick', async () => {
+  let { state, connection } = setup();
+  const api = upstream();
+  let applied = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
+  state = applied.state;
+  connection = applied.connection;
+  const id = state.quests[0].id;
+  const remoteId = connection.links[id].remoteId;
+
+  state = completeQuest(state, id);
+  applied = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
+  state = applied.state;
+  connection = applied.connection;
+  assert.equal(api.tasks.get(remoteId)!.status, 2);
+  const earned = { xp: state.xp, coins: state.coins, completed: state.completed };
+
+  state = reopenQuest(state, id);
+  applied = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
+  assert.equal(api.tasks.get(remoteId)!.status, 0);
+  assert.equal(applied.state.quests.find((q) => q.id === id)!.done, false);
+  assert.equal(applied.connection.links[id].done, false);
+  assert.deepEqual({ xp: applied.state.xp, coins: applied.state.coins, completed: applied.state.completed }, earned);
+  assert.ok(api.calls.some((call) => call.path === `/api/task/${remoteId}` && (call.body as { status?: number }).status === 0));
 });
 test('посторонние задачи TickTick не импортируются и не изменяются', async () => {
   const { state, connection } = setup();

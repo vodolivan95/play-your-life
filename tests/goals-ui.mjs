@@ -395,10 +395,12 @@ try {
       .getByRole('button', { name: 'Продолжить игру на этом устройстве' })
       .click();
     await workspace.waitFor();
-    assert.ok(
+    assert.equal(
       await workspace
-        .getByRole('button', { name: 'Выполнить: Выучить слова', exact: true })
+        .getByRole('button', { name: 'Отменить выполнение: Выучить слова', exact: true })
         .isDisabled(),
+      false,
+      'после загрузки выполненную задачу можно снова открыть',
     );
     await workspace.getByRole('link', { name: 'Перейти к цели →' }).click();
     await stageB.locator('.gw-stage-tasks').waitFor();

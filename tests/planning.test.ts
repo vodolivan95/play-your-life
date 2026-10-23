@@ -5,6 +5,7 @@ import {
   completeQuest,
   initialState,
   migrateState,
+  reopenQuest,
   removeQuest,
   syncGoalTasks,
   updateGoal,
@@ -118,6 +119,25 @@ test('задачи изменяют прогресс и начисляют на�
   const again = completeQuest(expanded, expanded.quests.at(-1)!.id);
   assert.equal(again.xp - done.xp, 20);
   assert.equal(again.events.filter((e) => e.kind === 'goal').length, 1);
+});
+test('снятие отметки возвращает прогресс цели и не выдаёт награду повторно', () => {
+  const before = add(plan());
+  const taskId = before.quests.find((q) => q.goalId === goal(before).id)!.id;
+  const done = completeQuest(before, taskId);
+  const earned = { xp: done.xp, coins: done.coins, completed: done.completed };
+  assert.equal(goal(done).current, 100);
+
+  const reopened = reopenQuest(done, taskId);
+  assert.equal(reopened.quests.find((q) => q.id === taskId)!.done, false);
+  assert.equal(reopened.quests.find((q) => q.id === taskId)!.currentValue, 0);
+  assert.equal(goal(reopened).current, 0);
+  assert.deepEqual({ xp: reopened.xp, coins: reopened.coins, completed: reopened.completed }, earned);
+
+  const completedAgain = completeQuest(reopened, taskId);
+  assert.equal(completedAgain.quests.find((q) => q.id === taskId)!.done, true);
+  assert.deepEqual({ xp: completedAgain.xp, coins: completedAgain.coins, completed: completedAgain.completed }, earned);
+  assert.equal(completedAgain.events.filter((e) => e.kind === 'quest' && e.sourceId === taskId).length, 1);
+  assert.equal(completedAgain.events.filter((e) => e.kind === 'goal' && e.sourceId === goal(before).id).length, 1);
 });
 test('создание, изменение и удаление задач не выдают XP за цель', () => {
   let s = add(add(plan()), 'Не готово');

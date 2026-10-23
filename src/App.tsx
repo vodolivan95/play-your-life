@@ -35,6 +35,7 @@ import { incomingForToday } from './ticktickInbox';
 import {
   achievements,
   completeQuest,
+  reopenQuest,
   dateKey,
   loadState,
   getStorageProblem,
@@ -50,6 +51,7 @@ import {
 } from './game';
 import type { Quest, GameState } from './game';
 import QuestBoard from './components/QuestBoard';
+import TaskWindow from './components/TaskWindow';
 import HabitsPage from './components/HabitsPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import QuestWizard from './components/QuestWizard';
@@ -132,6 +134,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   const [storageError, setStorageError] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pendingTask, setPendingTask] = useState<string | null>(null);
+  const [sphereTaskId, setSphereTaskId] = useState<string | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (userId || getStorageProblem()) return;
@@ -184,12 +187,20 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   function finish(q: Quest) {
     if (q.done) return;
     const next = completeQuest(state, q.id);
-    if (next === state || next.xp <= state.xp) {
+    if (next === state) {
       notify('Эту задачу пока нельзя выполнить: проверь этап и время начала.');
       return;
     }
     setState(next);
-    notify(`+${next.xp - state.xp} XP · Отличная работа!`);
+    notify(q.rewardClaimed
+      ? 'Задача отмечена выполненной. Награда уже была получена и повторно не начислена.'
+      : `+${next.xp - state.xp} XP · Отличная работа!`);
+  }
+  function undoFinish(q: Quest) {
+    const next = reopenQuest(state, q.id);
+    if (next === state) return;
+    setState(next);
+    notify('Отметка выполнения снята. Полученная награда остаётся и повторно не начислится.');
   }
   const unlocked = achievements.filter((a) => a.unlocked(state)).length;
   const active = state.quests.filter((q) => !q.done);
@@ -212,46 +223,51 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   function QuestRow({
     quest,
     removable = false,
+    onOpen,
   }: {
     quest: Quest;
     removable?: boolean;
+    onOpen?: () => void;
   }) {
     const info = spheres.find((s) => s.id === quest.sphere)!;
+    const taskInfo = <>
+      <strong>{quest.name}</strong>
+      <small>{info.name}</small>
+      {(quest.dueAt || quest.startsAt) && (
+        <small
+          className={`quest-deadline ${!quest.done && isOverdue(quest.dueAt) ? 'is-overdue' : ''}`}
+        >
+          {!quest.done && isOverdue(quest.dueAt) ? 'Срок прошёл · ' : ''}
+          {new Date(
+            (quest.dueAt ?? quest.startsAt!).length === 10
+              ? `${quest.dueAt ?? quest.startsAt}T12:00:00`
+              : (quest.dueAt ?? quest.startsAt!),
+          ).toLocaleString('ru-RU', {
+            day: 'numeric',
+            month: 'short',
+            ...(hasClockTime(quest.dueAt ?? quest.startsAt)
+              ? { hour: '2-digit', minute: '2-digit' }
+              : {}),
+          })}
+        </small>
+      )}
+    </>;
     return (
       <div className={`quest-row ${quest.done ? 'completed' : ''}`}>
         <span className="quest-icon" style={{ background: `${info.color}15` }}>
           <GameArt kind={info.id} />
         </span>
         <div className="quest-info">
-          <strong>{quest.name}</strong>
-          <small>{info.name}</small>
-          {(quest.dueAt || quest.startsAt) && (
-            <small
-              className={`quest-deadline ${!quest.done && isOverdue(quest.dueAt) ? 'is-overdue' : ''}`}
-            >
-              {!quest.done && isOverdue(quest.dueAt)
-                ? 'Срок прошёл · '
-                : ''}
-              {new Date(
-                (quest.dueAt ?? quest.startsAt!).length === 10
-                  ? `${quest.dueAt ?? quest.startsAt}T12:00:00`
-                  : (quest.dueAt ?? quest.startsAt!),
-              ).toLocaleString('ru-RU', {
-                day: 'numeric',
-                month: 'short',
-                ...(hasClockTime(quest.dueAt ?? quest.startsAt)
-                  ? { hour: '2-digit', minute: '2-digit' }
-                  : {}),
-              })}
-            </small>
-          )}
+          {onOpen
+            ? <button type="button" className="quest-info-open" aria-label={`Открыть задачу: ${quest.name}`} onClick={onOpen}>{taskInfo}</button>
+            : taskInfo}
         </div>
         <span className="xp-tag">+{quest.xp} XP</span>
         <button
           className={`check-button ${quest.done ? 'checked' : ''}`}
-          disabled={quest.done}
-          onClick={() => finish(quest)}
-          aria-label={`Выполнить: ${quest.name}`}
+          onClick={() => quest.done ? undoFinish(quest) : finish(quest)}
+          aria-label={`${quest.done ? 'Отменить выполнение' : 'Выполнить'}: ${quest.name}`}
+          title={quest.done ? 'Отменить выполнение' : 'Выполнить'}
         >
           <Icon name="check" size={18} />
         </button>
@@ -355,7 +371,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                   <SphereOverview
                     state={state}
                     id={sphere.id}
-                    renderQuest={(q) => <QuestRow key={q.id} quest={q} />}
+                    renderQuest={(q) => <QuestRow key={q.id} quest={q} onOpen={() => setSphereTaskId(q.id)} />}
                     onOpenGoal={(goal) => { navigate('goals'); openGoal(goal.id); setGoalOrigin(sphere.id); }}
                     onProjects={() => setSphereTab('projects')}
                     onNewProject={() => setModal('goal')}
@@ -406,7 +422,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                   {active
                     .filter((q) => q.sphere === sphere.id)
                     .map((q) => (
-                      <QuestRow key={q.id} quest={q} />
+                      <QuestRow key={q.id} quest={q} onOpen={() => setSphereTaskId(q.id)} />
                     ))}
                   {!active.some((q) => q.sphere === sphere.id) && (
                     <p className="muted">
@@ -778,6 +794,29 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
           </main>
         </div>
         <MobileNav page={page} state={state} onNavigate={navigate} />
+        {sphereTaskId && (
+          <TaskWindow
+            taskId={sphereTaskId}
+            state={state}
+            today={today}
+            onChange={setState}
+            onClose={() => setSphereTaskId(null)}
+            onAdvanced={(q) => {
+              setQuestTemplate(q);
+              setQuestSphere(q.sphere);
+              setModal('quest');
+            }}
+            onUndo={undoFinish}
+            onDelete={(q) => {
+              if (window.confirm('Удалить задачу? Уже заработанные награды и история сохранятся.')) {
+                setState((current) => removeQuest(current, q.id));
+                setSphereTaskId(null);
+                notify('Задача удалена.');
+              }
+            }}
+            notify={notify}
+          />
+        )}
         <dialog
           aria-label={
             modal === 'quest'
@@ -900,4 +939,3 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
     </TickTickContext.Provider>
   );
 }
-

@@ -70,6 +70,7 @@ export function validQuestExtension(q: Record<string, unknown>) {
     (q.rewardClaimed === undefined || bool(q.rewardClaimed)) &&
     (q.rewardLocked === undefined || bool(q.rewardLocked)) &&
     (q.rewardClaimedAt === undefined || date(q.rewardClaimedAt)) &&
+    (!q.rewardClaimed || date(q.rewardClaimedAt)) &&
     (q.sourceType !== "USER_CREATED" ||
       (text(q.ownerId) &&
         !!q.ownerId &&
@@ -77,8 +78,7 @@ export function validQuestExtension(q: Record<string, unknown>) {
         (q.xp ===
           difficulties[String(q.difficulty) as keyof typeof difficulties] ||
           q.xp === legacyDifficultyXp[String(q.difficulty)]) &&
-        (!q.done || (q.rewardClaimed === true && date(q.rewardClaimedAt))))) &&
-    (!q.rewardClaimed || q.done === true)
+        (!q.done || (q.rewardClaimed === true && date(q.rewardClaimedAt)))))
   );
 }
 export function validPersonalState(s: Record<string, unknown>) {

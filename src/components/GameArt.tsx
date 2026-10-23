@@ -6,11 +6,11 @@ import psychologyIcon from '../assets/psychology-icon.png';
 /** Small vector game illustrations, shared by every screen and crisp at any size. */
 export default function GameArt({ kind }: { kind: string }) {
   const id = useId().replace(/:/g, '');
-  if (citySphereIds.includes(kind as (typeof citySphereIds)[number])) return <SphereIcon id={kind} />;
   // «Психология» использует присланную пользователем картинку (22 октября 2026, версия 0.53.3)
   // вместо плоской векторной иконки — растровый неоновый значок (профиль + мозг), как у других
   // сфер нет готового флоского SVG. .game-art уже задаёт нужные width/height/filter и для <img>.
   if (kind === 'psychology') return <img className="game-art game-art-psychology" src={psychologyIcon} alt="" aria-hidden="true" />;
+  if (citySphereIds.includes(kind as (typeof citySphereIds)[number])) return <SphereIcon id={kind} />;
   const paint = `url(#${id})`;
   const colors: Record<string, [string, string]> = {
     health: ['#ff8fb7', '#f5286d'],

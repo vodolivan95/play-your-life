@@ -6,6 +6,25 @@ for(let i=0;i<60;i++){try{if((await fetch('http://127.0.0.1:5175')).ok)break;}ca
 import assert from 'node:assert/strict';
 import { writeFile, mkdir } from 'node:fs/promises';
 await mkdir('work/live-city',{recursive:true});
+async function checkParkTips(page) {
+ for(const [id,label] of [['walk','Прогулка'],['rest','Отдых'],['fountain','Фонтан']]) {
+  const marker=page.getByRole('button',{name:'Парк: '+label,exact:true});
+  await marker.scrollIntoViewIfNeeded();await marker.focus();await marker.press('Enter');
+  const panel=page.locator('#park-zone-panel');await panel.waitFor();
+  assert.equal(await marker.getAttribute('aria-pressed'),'true');
+  assert.equal(await panel.getAttribute('aria-label'),'Парк: '+label);
+  assert.equal(await page.locator('.park-walk-path').count(),id==='walk'?1:0);
+  assert.equal(await panel.getByRole('heading',{name:label,exact:true}).count(),1);
+  await page.getByRole('button',{name:'Закрыть подсказку парка',exact:true}).press('Escape');
+  assert.equal(await panel.count(),0);
+  assert.ok(await marker.evaluate(node=>document.activeElement===node),'focus returns to '+id);
+ }
+ await page.getByRole('button',{name:'Парк: Прогулка',exact:true}).click();
+ await page.getByRole('button',{name:'Парк: Отдых',exact:true}).click();
+ await page.getByRole('button',{name:'Парк: Фонтан',exact:true}).click();
+ await page.getByRole('button',{name:'Закрыть подсказку парка',exact:true}).click();
+ assert.ok(await page.getByRole('button',{name:'Парк: Фонтан',exact:true}).evaluate(node=>document.activeElement===node),'focus returns to the last selected zone after switching');
+}
 let browser;
 const results=[];
 try {
@@ -14,9 +33,11 @@ try {
  const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:5175/?room-demo=sport');
  await page.locator('.live-city-canvas[data-ready=true]').waitFor();
- assert.equal(await page.locator('.coastal-building').count(),9);
- assert.equal(await page.locator('[data-building="psychology"], [data-pin="psychology"]').count(),0);
- assert.equal(await page.locator('.coastal-districts').getByText('Психология',{exact:true}).count(),0);
+ assert.equal(await page.locator('.coastal-building').count(),10);
+ assert.equal(await page.locator('[data-building="psychology"], [data-pin="psychology"]').count(),2);
+ assert.equal(await page.locator('.coastal-districts').getByText('Психология',{exact:true}).count(),1);
+ assert.equal(await page.locator('[data-park-zone]').count(),3);
+ await checkParkTips(page);
  assert.ok((await page.locator('.coastal-map > img').getAttribute('src')).includes('city-islands'));
  const profile=await page.evaluate(async()=>{const {islandProfile}=await import('/src/cityLive/islandMap.ts');return {id:islandProfile.id,fountains:islandProfile.fountains.length,waterfalls:islandProfile.waterfalls.length,storageKey:islandProfile.storageKey};});
  assert.equal(profile.id,'islands');
@@ -52,6 +73,9 @@ try {
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'overflow '+width);
   const bounds=await page.locator('.coastal-building').evaluateAll(nodes=>nodes.map(n=>{const b=n.getBoundingClientRect();return {w:b.width,h:b.height};}));
   assert.ok(bounds.every(b=>b.w>=44&&b.h>=44),'touch targets '+width);
+  const parkBounds=await page.locator('[data-park-zone]').evaluateAll(nodes=>nodes.map(n=>{const b=n.getBoundingClientRect();return {w:b.width,h:b.height};}));
+  assert.ok(parkBounds.every(b=>b.w>=44&&b.h>=44),'park touch targets '+width);
+  await checkParkTips(page);
   const canvasBounds=await page.locator('.live-city-canvas').boundingBox();const mapBounds=await page.locator('.coastal-map').boundingBox();
   assert.ok(Math.abs(canvasBounds.width-mapBounds.width)<1);assert.ok(Math.abs(canvasBounds.height-mapBounds.height)<1);
   const mobileStats=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));
@@ -96,11 +120,12 @@ try {
  await page.locator('.coastal-map').scrollIntoViewIfNeeded();await page.waitForTimeout(1200);const paused=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));
  await page.waitForTimeout(1200);const paused2=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));assert.equal(paused.elapsed,paused2.elapsed);
  await page.getByRole('button',{name:'▶ Продолжить',exact:true}).click();
- for(const [id,title] of [['growth','Саморазвитие'],['health','Здоровье'],['finance','Финансы'],['english','Английский'],['driving','Вождение'],['together','Общие дела'],['hobby','Хобби'],['tasks','Задачи']]) {const button=page.locator('[data-building="'+id+'"]');await button.scrollIntoViewIfNeeded();await button.click();
+ for(const [id,title] of [['growth','Саморазвитие'],['health','Здоровье'],['finance','Финансы'],['english','Английский'],['driving','Вождение'],['together','Общие дела'],['hobby','Хобби'],['tasks','Задачи'],['psychology','Психология']]) {const button=page.locator('[data-building="'+id+'"]');await button.scrollIntoViewIfNeeded();await button.click();
   await page.locator('section[aria-label="3D-комната '+title+'"]').waitFor();await page.getByRole('button',{name:'Вернуться из комнаты',exact:true}).click();}
  await page.goto('http://127.0.0.1:5175/?room-demo=sport&city-dev=1');
  await page.locator('.city-dev-tools summary').click();await page.getByLabel('Дороги',{exact:true}).check();await page.getByLabel('FPS',{exact:true}).check();
  await page.getByLabel('ID маршрута',{exact:true}).fill('browser-test');await page.getByRole('button',{name:'Расставить точки',exact:true}).click();
+ assert.equal(await page.locator('[data-park-zone]').count(),0,'park buttons do not intercept DEV route editing');
  const canvas=page.locator('.live-city-canvas');await canvas.click({position:{x:40,y:100}});await canvas.click({position:{x:80,y:110}});await canvas.click({position:{x:120,y:140}});
  await page.getByRole('button',{name:'SAVE',exact:true}).click();assert.ok(await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).some(r=>r.id==='browser-test'),profile.storageKey));
  assert.equal(await page.evaluate(()=>localStorage.getItem('play-your-life-live-city-routes-wide-v1')),null,'Старые маршруты не перезаписываются');

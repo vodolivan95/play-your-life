@@ -11,6 +11,7 @@ export const cityRooms: Record<string, { name: string; activity: string; items: 
   driving: { name: 'Автошкола', activity: 'Изучают маршруты и машины', items: ['Симулятор вождения', 'Учебный автомобиль', 'Карта маршрутов'], icons: ['🎮', '🚗', '🗺️'] },
   tasks: { name: 'Мастерская планов', activity: 'Обсуждают и воплощают планы', items: ['Стол планирования', 'Доска проектов', 'Зона отдыха'], icons: ['💻', '📋', '🛋️'] },
   hobby: { name: 'Дом творчества', activity: 'Рисуют и играют музыку', items: ['Мольберт художника', 'Музыкальная студия', 'Галерея работ'], icons: ['🎨', '🎹', '🖼️'] },
+  psychology: { name: 'Дом психологии', activity: 'Размышляют и общаются', items: ['Уютная гостиная', 'Книжный уголок', 'Сад отдыха'], icons: ['🛋️', '📚', '🌳'] },
 };
 export const cityPrices = [30, 80, 150];
 export type CityPurchase = { id: string; sphere: string; slot: number; price: number; date: string };
@@ -36,6 +37,7 @@ export const citySphereIds = [
   'driving',
   'tasks',
   'hobby',
+  'psychology',
 ] as const;
 export const cityStyles = ['coastal', 'tropical', 'modern'] as const;
 export type CityStyle = (typeof cityStyles)[number];

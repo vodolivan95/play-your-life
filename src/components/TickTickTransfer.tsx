@@ -9,10 +9,12 @@ export default function TickTickTransfer({
   state,
   tasks,
   onChange,
+  onInbox,
 }: {
   state: GameState;
   tasks: Quest[];
   onChange: Dispatch<SetStateAction<GameState>>;
+  onInbox?: () => void;
 }) {
   const manager = useContext(TickTickContext);
   const concreteTasks = tasks.filter((q) => !q.done && isGoalTask(state, q));
@@ -100,6 +102,7 @@ export default function TickTickTransfer({
           задачи автоматически.
         </p>
       )}
+      {onInbox && <button type="button" className="secondary-button submit-button" onClick={onInbox}>Разобрать входящие</button>}
       <TickTickConnection demo={state.profile.mode === 'demo'} />
       <details>
         <summary>Передать вручную без подключения</summary>

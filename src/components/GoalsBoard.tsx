@@ -16,6 +16,7 @@ import {
 } from '../planning';
 import { GoalForm, StageForm, TaskForm } from './PlanningForms';
 import TickTickTransfer from './TickTickTransfer';
+import { TickTickInboxContent } from './TickTickInboxDialog';
 import Icon from './Icon';
 import GameArt from './GameArt';
 import ProjectArt from './ProjectArt';
@@ -38,7 +39,8 @@ type Editor =
   | { kind: 'goal' }
   | { kind: 'stage'; stage?: GoalStage }
   | { kind: 'task'; task?: Quest; stageId?: string }
-  | { kind: 'transfer'; task?: Quest };
+  | { kind: 'transfer'; task?: Quest }
+  | { kind: 'inbox' };
 function TileIcon({ kind }: { kind: 'target' | 'trend' | 'calendar' | 'star' }) {
   const paths = {
     target: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.2" /></>,
@@ -454,11 +456,14 @@ export default function GoalsBoard({
         <GoalWorkspace ownerId={ownerId} key={`${goal.id}:${stageId ?? 'goal'}`} state={state} goal={goal} stageId={stageId} onChange={onChange}
           onEditGoal={() => setEditor({ kind: 'goal' })} onEditStage={stage => setEditor({ kind: 'stage', stage })}
           onAddTask={stageId => setEditor({ kind: 'task', stageId })} onEditTask={task => setEditor({ kind: 'task', task })}
-          onTransfer={task => setEditor({ kind: 'transfer', task })} onNotify={onNotify} onSelect={onSelect} onSphere={onSphere} />
+          onTransfer={task => setEditor({ kind: 'transfer', task })} onInbox={() => setEditor({ kind: 'inbox' })} onNotify={onNotify} onSelect={onSelect} onSphere={onSphere} />
       )}
       <dialog
+        className={editor?.kind === 'inbox' ? 'ticktick-inbox-dialog' : undefined}
         aria-label={
-          editor?.kind === 'stage'
+          editor?.kind === 'inbox'
+            ? `Разобрать входящие: ${spheres.find((s) => s.id === goal?.sphere)?.name ?? ''}`
+            : editor?.kind === 'stage'
             ? 'Настройка этапа'
             : editor?.kind === 'task'
               ? 'Настройка задачи'
@@ -522,8 +527,10 @@ export default function GoalsBoard({
               state={state}
               tasks={editor.task ? [editor.task] : tasks}
               onChange={onChange}
+              onInbox={() => setEditor({ kind: 'inbox' })}
             />
           )}
+          {goal && editor?.kind === 'inbox' && <TickTickInboxContent key={`${goal.id}:${stageId ?? ''}`} state={state} onChange={onChange} scope={{ sphereId: goal.sphere, goalId: goal.id, stageId }} />}
         </div>
       </dialog>
     </>

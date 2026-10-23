@@ -16,6 +16,7 @@ import {
   findIncomingTasks,
   formatIncomingDate,
   inboxHorizon,
+  incomingForScope,
   goalsForSphere,
   openStages,
 } from '../src/ticktickInbox.ts';
@@ -137,6 +138,42 @@ test('входящие: задача из списка, привязанного
   connection.sphereLists = { english: 'life', growth: 'life' };
   const found = findIncomingTasks(connection, byProject([remote('same')]));
   assert.equal(found.length, 1);
+});
+
+test('входящие в scope: фильтр использует список сферы, а не подсказку item.sphere', () => {
+  const { connection } = setup();
+  // Один список может быть сознательно назначен нескольким сферам. Задача была
+  // найдена первой для «Спорта», но должна быть доступна и при разборе «Английского».
+  connection.sphereLists = {
+    english: 'shared-list',
+    sport: 'shared-list',
+    health: 'health-list',
+  };
+  const incoming = [
+    { remote: remote('shared', {}, 'shared-list'), projectId: 'shared-list', sphere: 'sport' },
+    { remote: remote('health', {}, 'health-list'), projectId: 'health-list', sphere: 'health' },
+    { remote: remote('outside', {}, 'other-list'), projectId: 'other-list', sphere: 'growth' },
+  ];
+
+  // Обычные входящие не фильтруются.
+  assert.deepEqual(incomingForScope(incoming, connection).map((item) => item.remote.id), [
+    'shared',
+    'health',
+    'outside',
+  ]);
+  assert.deepEqual(
+    incomingForScope(incoming, connection, { sphereId: 'english' }).map((item) => [item.remote.id, item.sphere]),
+    [['shared', 'sport']],
+  );
+  assert.deepEqual(
+    incomingForScope(incoming, connection, { sphereId: 'health', goalId: 'goal-1', stageId: 'stage-1' }).map((item) => item.remote.id),
+    ['health'],
+  );
+  assert.deepEqual(
+    incomingForScope(incoming, connection, { sphereId: 'finance' }),
+    [],
+    'сфера без сопоставленного списка не показывает произвольные входящие',
+  );
 });
 
 test('выбор сферы, цели и этапа: задача создаётся в цели, связь и XP корректны', () => {

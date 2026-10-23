@@ -1,0 +1,37 @@
+.ticktick-inbox-dialog {
+  width: 820px;
+  max-width: calc(100% - 24px);
+}
+.ticktick-inbox-dialog-body > h2 {
+  padding-right: 32px;
+}
+.ticktick-inbox-dialog-body .ticktick-inbox {
+  margin-top: 20px;
+}
+.ticktick-inbox-dialog-body .ticktick-inbox-title strong {
+  overflow-wrap: anywhere;
+}
+.ticktick-inbox-dialog-body .ticktick-chip {
+  height: auto;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.sph-inbox-action {
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 16px 0;
+}
+.sph-inbox-action > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+}
+@media (max-width: 600px) {
+  .sph-inbox-action { padding: 12px 8px 0; }
+  .sph-inbox-action > button { width: 100%; }
+  .ticktick-inbox-dialog .dialog-content { padding: 24px 14px 18px; }
+}

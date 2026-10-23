@@ -29,6 +29,7 @@ import { GoalForm } from './components/PlanningForms';
 import { saveGoal } from './planning';
 import useTickTick from './useTickTick';
 import TickTickConnection from './components/TickTickConnection';
+import TickTickInboxDialog from './components/TickTickInboxDialog';
 import { TickTickContext, TickTickHabitsContext } from './tickTickContext';
 import useTickTickHabits from './useTickTickHabits';
 import { incomingForToday } from './ticktickInbox';
@@ -135,6 +136,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pendingTask, setPendingTask] = useState<string | null>(null);
   const [sphereTaskId, setSphereTaskId] = useState<string | null>(null);
+  const [inboxSphereId, setInboxSphereId] = useState<string | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (userId || getStorageProblem()) return;
@@ -366,6 +368,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                   onBack={() => setSelected(null)}
                   onQuest={newQuest}
                   onCity={() => { setCityEnter(sphere.id); navigate('city'); }}
+                  onInbox={() => setInboxSphereId(sphere.id)}
                 />
                 {sphereTab === 'overview' && (
                   <SphereOverview
@@ -794,6 +797,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
           </main>
         </div>
         <MobileNav page={page} state={state} onNavigate={navigate} />
+        {inboxSphereId && <TickTickInboxDialog state={state} onChange={setState} scope={{ sphereId: inboxSphereId }} onClose={() => setInboxSphereId(null)} />}
         {sphereTaskId && (
           <TaskWindow
             taskId={sphereTaskId}

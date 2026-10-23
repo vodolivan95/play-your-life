@@ -9,6 +9,10 @@ export type SphereTrend = 'up' | 'stable' | 'down';
 export type PlannedTask = { title: string; confidence: number; questId?: string };
 export type SphereReview = {
   achieved: string;
+  /** Явно записанная ключевая победа; пустая строка намеренно отличается от отсутствующего поля. */
+  keyResult?: string;
+  /** Необязательное подтверждение ключевой победы. */
+  resultEvidence?: string;
   failed: string;
   next: string;
   ifWhen: string;
@@ -19,6 +23,15 @@ export type SphereReview = {
   /** Сколько задач закрыто за месяц в этой сфере: вписывает сам игрок (например, по TickTick), в игре не считается. */
   tasksDone: number | null;
 };
+export type ReviewPlan = { id: string; title: string; sphere?: string };
+export type ReviewPlanCheck = {
+  sourceMonth: string;
+  sourceText: string;
+  sphere?: string;
+  outcome: 'done' | 'part' | 'no' | 'custom';
+  comment: string;
+};
+export type CarryPlan = { id: string; sourceMonth: string; text: string; sphere?: string };
 export type MonthReview = {
   /** Как вышли планы прошлого месяца: id сферы → исход. */
   plans: Record<string, PlanOutcome>;
@@ -33,12 +46,23 @@ export type MonthReview = {
   softStep: string;
   /** Задача из мягкого режима, когда она уже создана. */
   softQuestId?: string;
+  /** Общий вывод по месяцу. */
+  conclusion?: string;
+  /** Обстоятельства, которые стоит помнить при чтении итога. */
+  context?: string;
+  /** Новые планы. Само присутствие пустого массива отключает чтение старых полей next. */
+  nextPlans?: ReviewPlan[];
+  /** Ответы по перенесённым планам, с независимым снимком исходного текста. */
+  planChecks?: Record<string, ReviewPlanCheck>;
 };
 
 export const MAX_FOCUSES = 3;
 export const CONFIDENCE_OK = 7;
 const TEXT_LIMIT = 2000;
 const SHORT_LIMIT = 200;
+const PLAN_ID_LIMIT = 120;
+export const MAX_NEXT_PLANS = 40;
+export const MAX_PLAN_CHECKS = 80;
 // Список сфер читается лениво: game.ts и stateValidation.ts импортируют друг друга.
 const sphereIds = () => spheres.map((s) => s.id);
 
@@ -78,10 +102,37 @@ export function validPlannedTask(value: unknown): boolean {
     (value.questId === undefined || str(value.questId, 120))
   );
 }
+function validReviewPlan(value: unknown): value is ReviewPlan {
+  return (
+    record(value) &&
+    str(value.id, PLAN_ID_LIMIT) &&
+    typeof value.id === 'string' &&
+    value.id.trim().length > 0 &&
+    str(value.title, TEXT_LIMIT) &&
+    // Пустая строка — допустимый черновик после «Добавить план».
+    // carriedPlans отдельно исключает незаполненные строки из будущей проверки.
+    (value.sphere === undefined || (typeof value.sphere === 'string' && str(value.sphere, PLAN_ID_LIMIT) && sphereIds().includes(value.sphere)))
+  );
+}
+function validReviewPlanCheck(value: unknown): value is ReviewPlanCheck {
+  return (
+    record(value) &&
+    typeof value.sourceMonth === 'string' &&
+    validMonth(value.sourceMonth) &&
+    str(value.sourceText, TEXT_LIMIT) &&
+    typeof value.sourceText === 'string' &&
+    value.sourceText.trim().length > 0 &&
+    (value.sphere === undefined || (typeof value.sphere === 'string' && str(value.sphere, PLAN_ID_LIMIT) && sphereIds().includes(value.sphere))) &&
+    ['done', 'part', 'no', 'custom'].includes(value.outcome as string) &&
+    str(value.comment, TEXT_LIMIT)
+  );
+}
 export function validSphereReview(value: unknown): boolean {
   return (
     record(value) &&
     [value.achieved, value.failed, value.next].every((t) => str(t, TEXT_LIMIT)) &&
+    (value.keyResult === undefined || str(value.keyResult, TEXT_LIMIT)) &&
+    (value.resultEvidence === undefined || str(value.resultEvidence, TEXT_LIMIT)) &&
     [value.ifWhen, value.ifThen].every((t) => str(t, SHORT_LIMIT)) &&
     (value.score === null || (typeof value.score === 'number' && Number.isInteger(value.score) && value.score >= 1 && value.score <= 10)) &&
     (value.trend === null || ['up', 'stable', 'down'].includes(value.trend as string)) &&
@@ -96,6 +147,23 @@ export function validReview(value: unknown): boolean {
   if (!record(value.spheres) || !Object.entries(value.spheres).every(([id, r]) => sphereIds().includes(id) && validSphereReview(r))) return false;
   if (!Array.isArray(value.gratitude) || value.gratitude.length !== 3 || !value.gratitude.every((g) => str(g, SHORT_LIMIT))) return false;
   if (!Array.isArray(value.focuses) || value.focuses.length > MAX_FOCUSES || new Set(value.focuses).size !== value.focuses.length || !value.focuses.every((f) => sphereIds().includes(f as string))) return false;
+  if (value.conclusion !== undefined && !str(value.conclusion, TEXT_LIMIT)) return false;
+  if (value.context !== undefined && !str(value.context, TEXT_LIMIT)) return false;
+  if (
+    value.nextPlans !== undefined &&
+    (!Array.isArray(value.nextPlans) ||
+      value.nextPlans.length > MAX_NEXT_PLANS ||
+      new Set(value.nextPlans.map((plan) => record(plan) ? plan.id : undefined)).size !== value.nextPlans.length ||
+      !value.nextPlans.every(validReviewPlan))
+  )
+    return false;
+  if (
+    value.planChecks !== undefined &&
+    (!record(value.planChecks) ||
+      Object.keys(value.planChecks).length > MAX_PLAN_CHECKS ||
+      !Object.entries(value.planChecks).every(([id, check]) => id.length > 0 && id.length <= PLAN_ID_LIMIT && validReviewPlanCheck(check)))
+  )
+    return false;
   return typeof value.soft === 'boolean' && str(value.softHelped, SHORT_LIMIT) && str(value.softStep, SHORT_LIMIT) && (value.softQuestId === undefined || str(value.softQuestId, 120));
 }
 export function validMoodCheckins(value: unknown): boolean {
@@ -111,12 +179,54 @@ export function validMoodCheckins(value: unknown): boolean {
 
 export function reviewOf(state: GameState, month: string): MonthReview {
   const saved = state.monthlyReflections?.[month]?.review;
-  return saved ? { ...blankReview(), ...saved, spheres: { ...saved.spheres } } : blankReview();
+  if (!saved) return blankReview();
+  return {
+    ...blankReview(),
+    ...saved,
+    plans: { ...saved.plans },
+    wins: [...saved.wins],
+    spheres: Object.fromEntries(
+      Object.entries(saved.spheres).map(([id, review]) => [
+        id,
+        { ...review, task: review.task ? { ...review.task } : review.task },
+      ]),
+    ),
+    gratitude: [...saved.gratitude],
+    focuses: [...saved.focuses],
+    ...(saved.nextPlans === undefined ? {} : { nextPlans: saved.nextPlans.map((plan) => ({ ...plan })) }),
+    ...(saved.planChecks === undefined
+      ? {}
+      : { planChecks: Object.fromEntries(Object.entries(saved.planChecks).map(([id, check]) => [id, { ...check }])) }),
+  };
 }
 export function sphereReviewOf(review: MonthReview, sphere: string): SphereReview {
-  return review.spheres[sphere] ?? blankSphereReview();
+  const saved = review.spheres[sphere];
+  return saved ? { ...saved, task: saved.task ? { ...saved.task } : saved.task } : blankSphereReview();
 }
 
+function clipped(value: unknown, max: number): unknown {
+  return typeof value === 'string' ? value.slice(0, max) : value;
+}
+function cleanPlan(value: unknown): unknown {
+  if (!record(value)) return value;
+  const { sphere, ...plan } = value;
+  return {
+    ...plan,
+    id: clipped(value.id, PLAN_ID_LIMIT),
+    title: clipped(value.title, TEXT_LIMIT),
+    ...(sphere === undefined ? {} : { sphere }),
+  };
+}
+function cleanPlanCheck(value: unknown): unknown {
+  if (!record(value)) return value;
+  const { sphere, ...check } = value;
+  return {
+    ...check,
+    sourceText: clipped(value.sourceText, TEXT_LIMIT),
+    comment: clipped(value.comment, TEXT_LIMIT),
+    ...(sphere === undefined ? {} : { sphere }),
+  };
+}
 function clean(review: MonthReview): MonthReview {
   const next: MonthReview = { ...review, spheres: {} };
   next.wins = review.wins.slice(0, 12).map((w) => w.slice(0, SHORT_LIMIT));
@@ -124,11 +234,28 @@ function clean(review: MonthReview): MonthReview {
   next.focuses = [...new Set(review.focuses)].filter((f) => sphereIds().includes(f)).slice(0, MAX_FOCUSES);
   next.softHelped = review.softHelped.slice(0, SHORT_LIMIT);
   next.softStep = review.softStep.slice(0, SHORT_LIMIT);
+  if (review.conclusion === undefined) delete next.conclusion;
+  else next.conclusion = clipped(review.conclusion, TEXT_LIMIT) as string;
+  if (review.context === undefined) delete next.context;
+  else next.context = clipped(review.context, TEXT_LIMIT) as string;
+  if (review.nextPlans !== undefined) {
+    next.nextPlans = Array.isArray(review.nextPlans)
+      ? review.nextPlans.slice(0, MAX_NEXT_PLANS).map(cleanPlan) as ReviewPlan[]
+      : review.nextPlans;
+  } else delete next.nextPlans;
+  if (review.planChecks !== undefined) {
+    next.planChecks = record(review.planChecks)
+      ? Object.fromEntries(Object.entries(review.planChecks).slice(0, MAX_PLAN_CHECKS).map(([id, check]) => [id, cleanPlanCheck(check)])) as Record<string, ReviewPlanCheck>
+      : review.planChecks;
+  } else delete next.planChecks;
   for (const [id, r] of Object.entries(review.spheres)) {
     if (!sphereIds().includes(id)) continue;
+    const { keyResult, resultEvidence, ...oldFields } = r;
     next.spheres[id] = {
-      ...r,
+      ...oldFields,
       achieved: r.achieved.slice(0, TEXT_LIMIT),
+      ...(keyResult === undefined ? {} : { keyResult: clipped(keyResult, TEXT_LIMIT) as string }),
+      ...(resultEvidence === undefined ? {} : { resultEvidence: clipped(resultEvidence, TEXT_LIMIT) as string }),
       failed: r.failed.slice(0, TEXT_LIMIT),
       next: r.next.slice(0, TEXT_LIMIT),
       ifWhen: r.ifWhen.slice(0, SHORT_LIMIT),
@@ -212,6 +339,133 @@ export function previousPlans(state: GameState, month: string) {
   return spheres
     .map((s) => ({ sphere: s.id, name: s.name, color: s.color, text: (review.spheres[s.id]?.next ?? '').trim() }))
     .filter((p) => p.text);
+}
+
+/** Детерминированный короткий id для строки из старого поля next. */
+function legacyPlanId(sourceMonth: string, sphere: string | undefined, index: number, text: string) {
+  const source = [sourceMonth, sphere ?? '', String(index), text].join('\u001f');
+  let hash = 2166136261;
+  for (let i = 0; i < source.length; i += 1) {
+    hash ^= source.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `legacy:${sourceMonth}:${sphere ?? 'general'}:${index}:${(hash >>> 0).toString(36)}`;
+}
+function linesOf(text: string) {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+/**
+ * Планы, перенесённые в month из предыдущего месяца.
+ * Старый формат разбирается построчно, пока nextPlans отсутствует. Снимки уже
+ * отвеченных планов дополняют список и всегда имеют приоритет над изменённым
+ * исходником: исторический ответ не теряет свой исходный текст.
+ */
+export function carriedPlans(state: GameState, month: string): CarryPlan[] {
+  if (!validMonth(month)) return [];
+  const sourceMonth = moveMonth(month, -1);
+  const sourceReflection = state.monthlyReflections?.[sourceMonth];
+  const sourceReview = sourceReflection?.review;
+  const currentChecks = state.monthlyReflections?.[month]?.review?.planChecks ?? {};
+  const plans: CarryPlan[] = [];
+
+  if (sourceReview?.nextPlans !== undefined) {
+    for (const plan of sourceReview.nextPlans) {
+      const text = plan.title.trim();
+      if (!text) continue;
+      plans.push({
+        id: plan.id,
+        sourceMonth,
+        text,
+        ...(plan.sphere === undefined ? {} : { sphere: plan.sphere }),
+      });
+    }
+  } else if (sourceReview || sourceReflection) {
+    for (const sphere of spheres) {
+      const text = sourceReview?.spheres[sphere.id]?.next ?? '';
+      linesOf(text).forEach((line, index) => {
+        plans.push({ id: legacyPlanId(sourceMonth, sphere.id, index, line), sourceMonth, text: line, sphere: sphere.id });
+      });
+    }
+    linesOf(sourceReflection?.nextMonth ?? '').forEach((line, index) => {
+      plans.push({ id: legacyPlanId(sourceMonth, undefined, index, line), sourceMonth, text: line });
+    });
+  }
+
+  const byId = new Map(plans.map((plan) => [plan.id, plan]));
+  for (const [id, check] of Object.entries(currentChecks)) {
+    // validReview гарантирует форму в обычных сохранениях; эта защита оставляет
+    // чистую функцию устойчивой и к ещё не проверенному локальному черновику.
+    if (!validReviewPlanCheck(check)) continue;
+    byId.set(id, {
+      id,
+      sourceMonth: check.sourceMonth,
+      text: check.sourceText,
+      ...(check.sphere === undefined ? {} : { sphere: check.sphere }),
+    });
+  }
+  return [...byId.values()];
+}
+
+function validCarryPlan(value: unknown): value is CarryPlan {
+  return (
+    record(value) &&
+    typeof value.id === 'string' &&
+    str(value.id, PLAN_ID_LIMIT) &&
+    value.id.trim().length > 0 &&
+    typeof value.sourceMonth === 'string' &&
+    validMonth(value.sourceMonth) &&
+    typeof value.text === 'string' &&
+    str(value.text, TEXT_LIMIT) &&
+    value.text.trim().length > 0 &&
+    (value.sphere === undefined || (typeof value.sphere === 'string' && sphereIds().includes(value.sphere)))
+  );
+}
+
+/** Сохраняет только ответ на один переносимый план; XP, задачи и исходный месяц не меняются. */
+export function savePlanCheck(
+  state: GameState,
+  month: string,
+  plan: CarryPlan,
+  outcome: ReviewPlanCheck['outcome'],
+  comment = '',
+  now = new Date(),
+): GameState {
+  if (
+    !validMonth(month) ||
+    month > monthKey(now) ||
+    !validCarryPlan(plan) ||
+    !validReviewPlanCheck({
+      sourceMonth: plan.sourceMonth,
+      sourceText: plan.text,
+      ...(plan.sphere === undefined ? {} : { sphere: plan.sphere }),
+      outcome,
+      comment,
+    })
+  )
+    return state;
+  const review = reviewOf(state, month);
+  const status = state.monthlyReflections?.[month]?.status ?? 'draft';
+  return saveReview(
+    state,
+    month,
+    {
+      planChecks: {
+        ...review.planChecks,
+        [plan.id]: {
+          sourceMonth: plan.sourceMonth,
+          sourceText: plan.text,
+          ...(plan.sphere === undefined ? {} : { sphere: plan.sphere }),
+          outcome,
+          comment,
+        },
+      },
+    },
+    now,
+    status,
+  );
 }
 
 /** Маленькие победы месяца, найденные по сохранённой истории. Ничего не выдумывается. */

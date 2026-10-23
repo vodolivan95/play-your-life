@@ -65,11 +65,11 @@
 .mrep-share{flex:1 1 200px;min-width:0;display:flex;align-items:center;gap:12px}.mrep-share .mrep-track{flex:1}.mrep-share b{flex:0 0 44px;text-align:right}
 .mrep-value em{font-style:normal;font-weight:800;font-size:13px;padding:4px 12px;border-radius:999px;background:rgba(20,33,61,.06)}.mrep-value em.focus{background:rgba(255,193,7,.22);color:#8a6200}.mrep-value em.overload{background:rgba(130,90,230,.16);color:#6a43c2}.mrep-value em.ok{background:rgba(52,199,89,.16);color:#1f8a3e}
 .mrep-focus-note{padding:14px 18px;border-radius:16px;background:rgba(130,90,230,.1);border:1px solid rgba(130,90,230,.25)}
-.mrep-view{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.mrep-view>div{display:grid;gap:4px;padding:14px 16px;border-radius:16px;background:rgba(47,125,225,.07)}.mrep-view span{font-size:13px;color:#5b6b82;font-weight:700}
-@media(max-width:900px){.mrep-hero{grid-template-columns:1fr;padding:22px}.mrep-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.mrep-sphere-grid{grid-template-columns:1fr}.mrep-radar{flex:1 1 100%}.mrep-view{grid-template-columns:1fr}.mrep-card{padding:18px}.mrep-value>b{flex:1 1 100%}}
+
+@media(max-width:900px){.mrep-hero{grid-template-columns:1fr;padding:22px}.mrep-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.mrep-sphere-grid{grid-template-columns:1fr}.mrep-radar{flex:1 1 100%}.mrep-card{padding:18px}.mrep-value>b{flex:1 1 100%}}
 :root[data-theme='dark'] .mrep{color:#f2f6ff}
 :root[data-theme='dark'] .mrep-hero{background:linear-gradient(135deg,#1b2860,#141b31 58%);border-color:rgba(148,163,255,.22)}
-:root[data-theme='dark'] .mrep-hero p,:root[data-theme='dark'] .mrep-days,:root[data-theme='dark'] .mrep-card header p,:root[data-theme='dark'] .mrep-head p,:root[data-theme='dark'] .mrep-small,:root[data-theme='dark'] .mrep-sphere-head span,:root[data-theme='dark'] .mrep-ring-box span,:root[data-theme='dark'] .mrep-ring-side span,:root[data-theme='dark'] .mrep-kpis span,:root[data-theme='dark'] .mrep-kpis small,:root[data-theme='dark'] .mrep-big,:root[data-theme='dark'] .mrep-row small,:root[data-theme='dark'] .mrep-habit span,:root[data-theme='dark'] .mrep-ach small,:root[data-theme='dark'] .mrep-insights span,:root[data-theme='dark'] .mrep-view span,:root[data-theme='dark'] .mrep-note,:root[data-theme='dark'] .mrep-bars span{color:#9aa7d4}
+:root[data-theme='dark'] .mrep-hero p,:root[data-theme='dark'] .mrep-days,:root[data-theme='dark'] .mrep-card header p,:root[data-theme='dark'] .mrep-head p,:root[data-theme='dark'] .mrep-small,:root[data-theme='dark'] .mrep-sphere-head span,:root[data-theme='dark'] .mrep-ring-box span,:root[data-theme='dark'] .mrep-ring-side span,:root[data-theme='dark'] .mrep-kpis span,:root[data-theme='dark'] .mrep-kpis small,:root[data-theme='dark'] .mrep-big,:root[data-theme='dark'] .mrep-row small,:root[data-theme='dark'] .mrep-habit span,:root[data-theme='dark'] .mrep-ach small,:root[data-theme='dark'] .mrep-insights span,:root[data-theme='dark'] .mrep-note,:root[data-theme='dark'] .mrep-bars span{color:#9aa7d4}
 :root[data-theme='dark'] .mrep-pill{background:rgba(140,180,255,.16);color:#a9c8ff}:root[data-theme='dark'] .mrep-pill.violet{background:rgba(195,168,255,.16);color:#d3c0ff}
 :root[data-theme='dark'] .mrep-track{background:rgba(255,255,255,.1)}
 :root[data-theme='dark'] .mrep-ring-box .bg{stroke:rgba(255,255,255,.1)}:root[data-theme='dark'] .mrep-ring-box .fg{stroke:#8cb4ff}
@@ -88,7 +88,7 @@
 :root[data-theme='dark'] .mrep-cells span{background:rgba(255,255,255,.1)}:root[data-theme='dark'] .mrep-cells .done{background:#46d39a}:root[data-theme='dark'] .mrep-cells .missed{background:rgba(255,138,138,.55)}
 :root[data-theme='dark'] .mrep-ach>span{background:rgba(244,197,87,.16);color:#f4c557}
 :root[data-theme='dark'] .mrep-months i{background:rgba(140,180,255,.35)}:root[data-theme='dark'] .mrep-months i.current{background:linear-gradient(#8cb4ff,#c3a8ff)}:root[data-theme='dark'] .mrep-months span{color:#c9d3f5}
-:root[data-theme='dark'] .mrep-insights>div,:root[data-theme='dark'] .mrep-view>div{background:rgba(10,17,48,.55)}
+:root[data-theme='dark'] .mrep-insights>div{background:rgba(10,17,48,.55)}
 :root[data-theme='dark'] .mrep-hint{background:rgba(140,180,255,.08);color:#b9d0ff}
 :root[data-theme='dark'] .mrep-dots button::before{background:rgba(255,255,255,.14)}:root[data-theme='dark'] .mrep-dots button.on::before{background:#f4c557}
 :root[data-theme='dark'] .mrep-value em{background:rgba(255,255,255,.08)}:root[data-theme='dark'] .mrep-value em.focus{background:rgba(255,217,128,.16);color:#ffd980}:root[data-theme='dark'] .mrep-value em.overload{background:rgba(195,168,255,.16);color:#d3c0ff}:root[data-theme='dark'] .mrep-value em.ok{background:rgba(70,211,154,.16);color:#6fe3b3}

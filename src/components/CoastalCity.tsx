@@ -15,8 +15,6 @@ import LiveCityCanvas from './LiveCityCanvas';
 import { sphereCards } from '../sphereDetails';
 import './CoastalCity.css';
 import { useCityZoom } from '../cityLive/useCityZoom';
-import { parkZones } from '../parkZones';
-import { ParkMarkers, ParkPanel } from './ParkZones';
 
 const weatherOptions = [
   ['clear','Ясно'],['partlyCloudy','Переменная облачность'],['cloudy','Облачно'],
@@ -52,11 +50,8 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
   // Все десять районов, включая возвращённую психологию, используют прежний прогресс.
   const cards=useMemo(()=>sphereCards(state).filter(card=>islandBuildings.some(building=>building.id===card.id)),[state]);
   const [picked,setPicked]=useState<string|null>(null);
-  const [parkPicked,setParkPicked]=useState<string|null>(null);
   const current=cards.find(c=>c.id===picked)??null;
-  const parkCurrent=parkZones.find(zone=>zone.id===parkPicked)??null;
-  const pickDistrict=(id:string)=>{setParkPicked(null);setPicked(picked===id?null:id);};
-  const pickPark=(id:string)=>{setPicked(null);setParkPicked(parkPicked===id?null:id);};
+  const pickDistrict=(id:string)=>setPicked(picked===id?null:id);
   const [preferences,setPreferences]=useState(readPreferences);
   // Одна горизонтальная карта острова для ПК и телефона; на телефоне она шире экрана и листается.
   const profile=islandProfile,buildings=islandBuildings;
@@ -122,7 +117,7 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
       </div>
       <p role="status">{message||`${draft.length} точек · SAVE сохраняет только маршруты; прогресс игры не изменяется.`}</p>
     </details>}
-    <p className="coastal-hint" id="coastal-hint">{editing?'Нажимай на карту, чтобы добавить точки маршрута.':'Нажми на здание, чтобы войти. В парке перед психологией выбери значок прогулки, скамейки или фонтана — откроется подсказка. Подпись района или список — карточка района. Приближай колёсиком мыши или двойным щелчком к курсору, листай перетаскиванием; на телефоне — двумя пальцами.'}</p>
+    <p className="coastal-hint" id="coastal-hint">{editing?'Нажимай на карту, чтобы добавить точки маршрута.':'Нажми на здание, чтобы войти. Подпись района или список — карточка района. Приближай колёсиком мыши или двойным щелчком к курсору, листай перетаскиванием; на телефоне — двумя пальцами.'}</p>
     <div className="coastal-frame">
     <div ref={scroll} className="coastal-scroll" aria-label="Прибрежная карта" aria-describedby="coastal-hint">
       <div className="coastal-stage" style={wide?{width:`${zoom*100}%`}:undefined}>
@@ -131,7 +126,6 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
         <img src={islandMapUrl} width={ISLAND_IMAGE_WIDTH} height={ISLAND_IMAGE_HEIGHT} fetchPriority="high" decoding="async" alt="Карта города: десять зданий сфер жизни, включая психологию, и отдельный цветущий парк с прогулочной дорожкой, скамейками и фонтаном" draggable={false}/>
         <LiveCityCanvas profile={profile} routes={routes} paused={paused} speed={speed} quality={preferences.quality} time={preferences.time} weather={preferences.weather}
           debug={debug} draft={draft} editing={editing} onPoint={point=>setDraft([...draft,point])}/>
-        <ParkMarkers zones={parkZones} selected={parkPicked} onSelect={pickPark} disabled={editing} walkPath={routes.find(route=>route.id==='islands-walk-park')?.points}/>
         {buildings.map(building=>{
           const sphere=spheres.find(s=>s.id===building.id)!,tier=buildingState(state,building.id).tier;
           return <button key={building.id} className="coastal-building" data-building={building.id}
@@ -172,6 +166,5 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
       <button className="enter" onClick={()=>onOpen(current.id)}>Войти внутрь</button>
     </aside>}
     </div>
-    <ParkPanel zone={editing?null:parkCurrent} onClose={()=>setParkPicked(null)}/>
   </div>;
 }

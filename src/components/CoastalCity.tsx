@@ -128,11 +128,13 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
           debug={debug} draft={draft} editing={editing} onPoint={point=>setDraft([...draft,point])}/>
         {buildings.map(building=>{
           const sphere=spheres.find(s=>s.id===building.id)!,tier=buildingState(state,building.id).tier;
-          return <button key={building.id} className="coastal-building" data-building={building.id}
-            aria-label={`Войти: ${sphere.name}`} onClick={()=>onOpen(building.id)}
-            style={{left:`${building.x}%`,top:`${building.y}%`,width:`${building.width}%`,height:`${building.height}%`,clipPath:coastalHitShapes[building.id]}}>
-            <span>{sphere.icon} {sphere.name}{tier>1?` · Здание ${tier} ур.`:''}</span>
-          </button>;
+          return <div key={building.id} className="coastal-building-zone"
+            style={{left:`${building.x}%`,top:`${building.y}%`,width:`${building.width}%`,height:`${building.height}%`}}>
+            <button className="coastal-building" data-building={building.id}
+              aria-label={`Войти: ${sphere.name}`} onClick={()=>onOpen(building.id)}
+              style={{clipPath:coastalHitShapes[building.id]}}/>
+            <span className="coastal-building-tooltip" aria-hidden="true">{sphere.icon} {sphere.name}{tier>1?` · Здание ${tier} ур.`:''}</span>
+          </div>;
         })}
         {wide&&buildings.map(building=>{
           const card=cards.find(c=>c.id===building.id);if(!card)return null;

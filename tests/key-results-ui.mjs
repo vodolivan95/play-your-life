@@ -166,7 +166,8 @@ try {
 
       // Ручное число, общий вывод и отдельный план — только пользовательские записи, не новые квесты.
       const healthCount = page.getByLabel('Задач закрыто за месяц в сфере Здоровье');
-      const tasksTotal = page.getByRole('group', { name: 'Итого задач по всем сферам', exact: true }).locator('b');
+      // Существующая компактная мобильная обложка скрывает aside; сумму проверяем и в его DOM.
+      const tasksTotal = page.getByRole('group', { name: 'Итого задач по всем сферам', exact: true, includeHidden: true }).locator('b');
       assert.equal(await tasksTotal.textContent(), '—', 'Без ручных чисел сумма не подменяется нулём');
       await healthCount.fill('0');
       assert.equal(await tasksTotal.textContent(), '0', 'Явно внесённый ноль остаётся нулём');

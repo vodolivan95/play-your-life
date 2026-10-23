@@ -211,7 +211,7 @@ function GameBar({ value, text, label, tone: kind = 'xp' }: { value: number; tex
 }
 
 /** Сцена открытой сферы: здание на весь блок, ресурсы, метки на здании, уровень и док разделов. */
-export function SphereScene({ state, id, tab, onTab, onBack, onQuest, onCity }: { state: GameState; id: string; tab: SphereTab; onTab: (tab: SphereTab) => void; onBack: () => void; onQuest: () => void; onCity: () => void }) {
+export function SphereScene({ state, id, tab, onTab, onBack, onQuest, onCity, onInbox }: { state: GameState; id: string; tab: SphereTab; onTab: (tab: SphereTab) => void; onBack: () => void; onQuest: () => void; onCity: () => void; onInbox: () => void }) {
   const d = sphereDetail(state, id);
   const done = d.tasksToday.filter((q) => q.done).length;
   const open = d.tasksToday.length - done;
@@ -257,6 +257,9 @@ export function SphereScene({ state, id, tab, onTab, onBack, onQuest, onCity }: 
           ))}
         </div>
         <button type="button" className="sph-dock-plus" onClick={onQuest}><span><Glyph name="plus" size={26} /></span><small>Новое задание</small></button>
+      </div>
+      <div className="sph-inbox-action">
+        <button type="button" className="sph-secondary" onClick={onInbox}><Icon name="arrow" size={18} /> Разобрать входящие</button>
       </div>
     </section>
   );
@@ -443,4 +446,3 @@ export function SphereOverview({ state, id, renderQuest, onOpenGoal, onProjects,
     </div>
   );
 }
-

@@ -17,6 +17,20 @@ export type IncomingTask = {
   /** Сфера, список которой содержит задачу; подсказка для выбора. */
   sphere: string;
 };
+/** Контекст разбора из сферы, цели или открытого этапа. */
+export type IncomingScope = {
+  sphereId: string;
+  goalId?: string;
+  stageId?: string;
+};
+
+/** Сравниваем список, а не подсказку item.sphere: один список может быть у нескольких сфер. */
+export function incomingForScope(incoming: IncomingTask[], connection: TickTickConnection, scope?: IncomingScope): IncomingTask[] {
+  if (!scope) return incoming;
+  const projectId = connection.sphereLists?.[scope.sphereId];
+  return projectId ? incoming.filter((item) => item.projectId === projectId) : [];
+}
+
 export type IncomingChoice = {
   sphere: string;
   /** Пустая строка — одиночная задача без цели (синхронизируется так же). */

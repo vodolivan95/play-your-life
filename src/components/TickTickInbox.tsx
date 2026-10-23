@@ -6,8 +6,8 @@ import type { GameState } from '../game';
 import { saveGoal, saveStage } from '../planning';
 import { remoteFields } from '../ticktick';
 import { TickTickContext } from '../tickTickContext';
-import { formatIncomingDate, goalsForSphere, openStages } from '../ticktickInbox';
-import type { IncomingChoice, IncomingTask } from '../ticktickInbox';
+import { formatIncomingDate, goalsForSphere, incomingForScope, openStages } from '../ticktickInbox';
+import type { IncomingChoice, IncomingScope, IncomingTask } from '../ticktickInbox';
 
 const pageSize = 20;
 /** Срок с конкретным временем выполнения — часы:минуты, иначе пусто (как в TaskWindow.tsx). */
@@ -30,19 +30,21 @@ function dayOf(value?: string) {
 function withTime(day: string, time: string) {
   return time ? `${day}T${time}` : day;
 }
-function Row({ item, state, busy, listName, onAccept, onDismiss, onDelete, onChange }: {
+function Row({ item, state, busy, listName, scope, onAccept, onDismiss, onDelete, onChange }: {
   item: IncomingTask;
   state: GameState;
   onChange: Dispatch<SetStateAction<GameState>>;
   busy: boolean;
   listName: string;
+  scope?: IncomingScope;
   onAccept: (choice: IncomingChoice) => Promise<string>;
   onDismiss: () => Promise<void>;
   onDelete: () => Promise<void>;
 }) {
-  const [sphere, setSphere] = useState(item.sphere);
-  const [goalId, setGoalId] = useState('');
-  const [stageId, setStageId] = useState('');
+  const [sphere, setSphere] = useState(scope?.sphereId ?? item.sphere);
+  const initialGoal = goalsForSphere(state, sphere).find((g) => g.id === scope?.goalId);
+  const [goalId, setGoalId] = useState(initialGoal?.id ?? '');
+  const [stageId, setStageId] = useState(() => openStages(initialGoal).find((s) => s.id === scope?.stageId)?.id ?? '');
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
   const [single, setSingle] = useState(false);
@@ -61,7 +63,7 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onDelete, onCha
   const [startClock, setStartClock] = useState(() => clockOf(remoteTime.startsAt));
   const [dueClock, setDueClock] = useState(() => clockOf(remoteTime.dueAt));
   const timeInvalid = Boolean(startClock && dueClock && startClock > dueClock);
-  const canAccept = (single || Boolean(goalId)) && !timeInvalid;
+  const canAccept = (single || Boolean(goal)) && (!stageId || stages.some((s) => s.id === stageId)) && !timeInvalid;
   const timeChanged = Boolean(remoteTime.dueAt) && (startClock !== clockOf(remoteTime.startsAt) || dueClock !== clockOf(remoteTime.dueAt));
   const timeChoice: Pick<IncomingChoice, 'dueAt' | 'startsAt'> = timeChanged && remoteTime.dueAt
     ? {
@@ -106,7 +108,7 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onDelete, onCha
       </>}
       <span className="ticktick-inbox-label" id={`sphere-${item.remote.id}`}>Сфера</span>
       <div className="ticktick-inbox-chips" role="group" aria-labelledby={`sphere-${item.remote.id}`}>
-        {spheres.map((s) => <button key={s.id} type="button" className="ticktick-chip" aria-pressed={sphere === s.id} disabled={busy}
+        {spheres.filter((s) => !scope || s.id === scope.sphereId).map((s) => <button key={s.id} type="button" className="ticktick-chip" aria-pressed={sphere === s.id} disabled={busy || Boolean(scope)}
           onClick={() => { setSphere(s.id); setGoalId(''); setStageId(''); setSingle(false); setAdding(false); }}>{s.icon} {s.name}</button>)}
       </div>
       <span className="ticktick-inbox-label" id={`goal-${item.remote.id}`}>Цель</span>
@@ -167,7 +169,7 @@ function Row({ item, state, busy, listName, onAccept, onDismiss, onDelete, onCha
     {error && <p className="transfer-message" role="alert">{error}</p>}
   </li>;
 }
-export default function TickTickInbox({ state, onChange }: { state: GameState; onChange: Dispatch<SetStateAction<GameState>> }) {
+export default function TickTickInbox({ state, onChange, scope }: { state: GameState; onChange: Dispatch<SetStateAction<GameState>>; scope?: IncomingScope }) {
   const manager = useContext(TickTickContext);
   const [shown, setShown] = useState(pageSize);
   const [notice, setNotice] = useState('');
@@ -183,7 +185,8 @@ export default function TickTickInbox({ state, onChange }: { state: GameState; o
   }, [active]);
   if (!manager || !active) return null;
   const names = new Map(manager.projects.map((p) => [p.id, p.name]));
-  const items = manager.incoming;
+  const items = incomingForScope(manager.incoming, manager.connection!, scope);
+  const mapped = !scope || Boolean(manager.connection?.sphereLists?.[scope.sphereId]);
   return <section className="ticktick-inbox" aria-label="Входящие из TickTick">
     <div className="ticktick-inbox-head">
       <h3>Входящие из TickTick{items.length > 0 && <span className="ticktick-badge-count" aria-label={`Задач: ${items.length}`}>{items.length}</span>}</h3>
@@ -191,9 +194,10 @@ export default function TickTickInbox({ state, onChange }: { state: GameState; o
       <button className="ticktick-refresh" disabled={manager.busy} onClick={() => void manager.refreshAll()}>{manager.inboxBusy ? 'Проверяем…' : 'Обновить'}</button>
     </div>
     {manager.inboxError && <p className="transfer-message" role="alert">{manager.inboxError}</p>}
-    {!items.length && !manager.inboxError && <p className="empty">Новых задач в сопоставленных списках нет.</p>}
+    {!mapped && <p className="empty">Сопоставь эту сферу со списком в настройках TickTick ниже и сохрани настройки.</p>}
+    {mapped && !items.length && !manager.inboxError && <p className="empty">{manager.inboxBusy ? 'Загружаем входящие…' : scope ? 'Новых задач в списке этой сферы нет.' : 'Новых задач в сопоставленных списках нет.'}</p>}
     {items.length > 0 && <ul className="ticktick-inbox-list">
-      {items.slice(0, shown).map((item) => <Row key={item.remote.id} item={item} state={state} onChange={onChange} busy={manager.busy}
+      {items.slice(0, shown).map((item) => <Row key={`${scope?.sphereId ?? ''}:${scope?.goalId ?? ''}:${scope?.stageId ?? ''}:${item.remote.id}`} item={item} state={state} onChange={onChange} busy={manager.busy} scope={scope}
         listName={names.get(item.projectId) ?? 'без названия'}
         onAccept={async (choice) => { const message = await manager.acceptIncoming(item.remote.id, choice); setNotice(message); return message; }}
         onDismiss={() => manager.dismissIncoming(item.remote.id)}

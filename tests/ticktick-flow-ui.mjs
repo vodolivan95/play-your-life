@@ -19,17 +19,18 @@ import App from '../../src/App';
 import {newAccountGame} from '../../src/accountGame';
 import '../../src/styles.css'; import '../../src/interface.css'; import '../../src/components/AdaptiveLayout.css';
 const uid = new URLSearchParams(location.search).get('uid') || 'guest';
+const demo = uid === 'demo';
 const key = 'ticktick-fixture-game:' + uid;
 function Fixture() {
   const [state, setState] = useState(() => {
     const saved = localStorage.getItem(key); if(saved) return JSON.parse(saved);
-    const s = newAccountGame('Тестовый игрок'); s.profile.onboardingComplete = true;
-    s.goals = [{id:'goal-1', name:'Вылечить зубы', sphere:'english', current:0, target:100, created:'2026-10-01', reward:0, rewarded:false, progressMode:'tasks'},{id:'goal-2', name:'Бросить курить', sphere:'english', current:0, target:100, created:'2026-10-01', reward:0, rewarded:false, progressMode:'tasks'}];
+    const s = newAccountGame('Тестовый игрок'); s.profile.onboardingComplete = true; s.profile.mode = demo ? 'demo' : 'personal';
+    s.goals = [{id:'goal-1', name:'Вылечить зубы', sphere:'english', current:0, target:100, created:'2026-10-01', reward:0, rewarded:false, progressMode:'tasks',stages:[{id:'stage-1',name:'Первый визит',status:'active',completionMode:'tasks'}]},{id:'goal-2', name:'Бросить курить', sphere:'english', current:0, target:100, created:'2026-10-01', reward:0, rewarded:false, progressMode:'tasks'}];
     s.quests = [];
     return s;
   });
   useEffect(() => localStorage.setItem(key, JSON.stringify(state)), [state]);
-  return <App state={state} onChange={setState} userId={uid === 'guest' ? undefined : uid} tickTickToken={uid === 'guest' ? undefined : async () => 'fixture-login-' + uid} />;
+  return <App state={state} onChange={setState} userId={uid === 'guest' || demo ? undefined : uid} tickTickToken={uid === 'guest' || demo ? undefined : async () => 'fixture-login-' + uid} />;
 }
 createRoot(document.getElementById('root')!).render(<Fixture/>);
 `);
@@ -172,7 +173,118 @@ try {
   await page.waitForFunction(uid=>JSON.parse(localStorage.getItem('ticktick-fixture-game:'+uid)).quests.some(q=>q.name==='Купить билеты'&&q.done),uid,{timeout:15000});
   st = await stateOf(page,uid);
   assert.equal(names(st.goals).length,2);
-  console.log('TickTick flow UI passed: inbox accept (single + goal), reload keeps goals, due date move, remote delete, remote complete. Mock services only.');
+  // 7. Из сферы открывается нативный inbox-dialog поверх той же страницы.
+  a.tasks.set('scope-1',{id:'scope-1',projectId:'english',title:'Разобрать из сферы',status:0});
+  await page.locator('.sidebar').getByRole('button',{name:/^Сферы жизни/}).click();
+  const englishCard = page.locator('.sph-card').filter({hasText:'Английский'}).first();
+  await englishCard.locator('.sph-card-photo').click();
+  const quick = page.getByRole('dialog',{name:'Сфера Английский',exact:true});
+  await quick.getByRole('button',{name:'Открыть район',exact:true}).click();
+  const scene = page.locator('.sph-scene');
+  await scene.getByRole('heading',{name:'Английский',exact:true}).waitFor();
+  const sphereUrl = page.url();
+  await scene.getByRole('button',{name:'Разобрать входящие',exact:true}).click();
+  const sphereInboxDialog = page.getByRole('dialog',{name:'Разобрать входящие: Английский',exact:true});
+  await sphereInboxDialog.waitFor();
+  assert.equal(page.url(),sphereUrl,'разбор из сферы не меняет страницу');
+  assert.equal(await scene.isVisible(),true,'диалог остаётся поверх открытой сферы');
+  const sphereInbox = sphereInboxDialog.getByRole('region',{name:'Входящие из TickTick'});
+  const scopeRow = sphereInbox.locator('li',{hasText:'Разобрать из сферы'});
+  await scopeRow.waitFor();
+  await scopeRow.getByRole('button',{name:'Разобрать',exact:true}).click();
+  const sphereChoices = scopeRow.getByRole('group',{name:'Сфера'});
+  assert.equal(await sphereChoices.getByRole('button').count(),1,'в scope остаётся ровно одна сфера');
+  assert.equal(await sphereChoices.getByRole('button',{name:/Английский/}).getAttribute('aria-pressed'),'true');
+  await page.keyboard.press('Escape');
+  await sphereInboxDialog.waitFor({state:'detached'});
+
+  // 8. Меню цели предвыбирает цель и этап, но оставляет выбор другой цели,
+  // одиночной задачи и создание новых сущностей в той же сфере.
+  await page.goto(harness(uid)+'#/goals/goal-1/stages/stage-1');
+  const workspace = page.locator('.gw-workspace');
+  await workspace.waitFor();
+  await workspace.locator('summary[aria-label="Дополнительные действия цели"]').click();
+  await workspace.getByRole('button',{name:'Разобрать входящие',exact:true}).click();
+  const goalInboxDialog = page.getByRole('dialog',{name:'Разобрать входящие: Английский',exact:true});
+  await goalInboxDialog.waitFor();
+  assert.equal(await page.locator('dialog[open]').count(),1,'в меню цели открыт один native dialog');
+  const goalInbox = goalInboxDialog.getByRole('region',{name:'Входящие из TickTick'});
+  const goalRow = goalInbox.locator('li',{hasText:'Разобрать из сферы'});
+  await goalRow.waitFor();
+  await goalRow.getByRole('button',{name:'Разобрать',exact:true}).click();
+  const goalChoices = goalRow.getByRole('group',{name:'Цель'});
+  const stageChoices = goalRow.getByRole('group',{name:'Этап'});
+  assert.equal(await goalChoices.getByRole('button',{name:'Вылечить зубы',exact:true}).getAttribute('aria-pressed'),'true');
+  assert.equal(await stageChoices.getByRole('button',{name:'Первый визит',exact:true}).getAttribute('aria-pressed'),'true');
+  await goalChoices.getByRole('button',{name:'Бросить курить',exact:true}).click();
+  assert.equal(await goalChoices.getByRole('button',{name:'Бросить курить',exact:true}).getAttribute('aria-pressed'),'true');
+  await goalChoices.getByRole('button',{name:'Без цели',exact:true}).click();
+  assert.equal(await goalChoices.getByRole('button',{name:'Без цели',exact:true}).getAttribute('aria-pressed'),'true');
+  await goalChoices.getByRole('button',{name:'＋ Новая цель',exact:true}).click();
+  await goalRow.getByLabel('Название новой цели').fill('Цель из входящих');
+  await goalRow.getByRole('button',{name:'Создать цель',exact:true}).click();
+  await goalChoices.getByRole('button',{name:'Цель из входящих',exact:true}).waitFor();
+  assert.equal(await goalChoices.getByRole('button',{name:'Цель из входящих',exact:true}).getAttribute('aria-pressed'),'true');
+  const newStageChoices = goalRow.getByRole('group',{name:'Этап'});
+  await newStageChoices.getByRole('button',{name:'＋ Новый этап',exact:true}).click();
+  await goalRow.getByLabel('Название нового этапа').fill('Этап из входящих');
+  await goalRow.getByRole('button',{name:'Создать этап',exact:true}).click();
+  assert.equal(await newStageChoices.getByRole('button',{name:'Этап из входящих',exact:true}).getAttribute('aria-pressed'),'true');
+  await goalRow.getByRole('button',{name:'Принять в игру',exact:true}).click();
+  await page.waitForFunction(uid=>{
+    const s=JSON.parse(localStorage.getItem('ticktick-fixture-game:'+uid));
+    const g=s.goals.find(g=>g.name==='Цель из входящих');
+    return Boolean(g?.stages?.some(stage=>stage.name==='Этап из входящих')&&s.quests.some(q=>q.name==='Разобрать из сферы'&&q.goalId===g.id&&q.stageId===g.stages.find(stage=>stage.name==='Этап из входящих').id));
+  },uid,{timeout:15000});
+  st = await stateOf(page,uid);
+  const importedGoal = st.goals.find(g=>g.name==='Цель из входящих');
+  const importedTask = st.quests.find(q=>q.name==='Разобрать из сферы');
+  assert.equal(importedTask.goalId,importedGoal.id);
+  assert.equal(importedTask.stageId,importedGoal.stages.find(s=>s.name==='Этап из входящих').id);
+  await goalInboxDialog.getByRole('button',{name:'Закрыть',exact:true}).click();
+
+  // 9. «Задачи в TickTick» переключает тот же native dialog на inbox, не вкладывая диалоги.
+  // <details> не размонтируется при смене editor и остаётся раскрытым после шага 8.
+  await workspace.getByRole('button',{name:'Задачи в TickTick',exact:true}).click();
+  const connectionDialog = page.getByRole('dialog',{name:'Подключение TickTick',exact:true});
+  await connectionDialog.waitFor();
+  assert.equal(await page.locator('dialog[open]').count(),1);
+  await connectionDialog.getByRole('button',{name:'Разобрать входящие',exact:true}).click();
+  const switchedInboxDialog = page.getByRole('dialog',{name:'Разобрать входящие: Английский',exact:true});
+  await switchedInboxDialog.getByRole('heading',{name:'Разобрать входящие',exact:true}).waitFor();
+  assert.equal(await page.locator('dialog[open]').count(),1,'переключение не создаёт вложенный dialog');
+  await page.keyboard.press('Escape');
+  await switchedInboxDialog.waitFor({state:'hidden'});
+
+  // 10. В demo диалог не пуст: объясняет ограничение и показывает TickTickConnection.
+  const demoCtx=await context(1440); const demoPage=await demoCtx.newPage();
+  await demoPage.goto(harness('demo'));
+  await demoPage.locator('.sidebar').getByRole('button',{name:/^Сферы жизни/}).click();
+  const demoCard=demoPage.locator('.sph-card').filter({hasText:'Английский'}).first();
+  await demoCard.locator('.sph-card-photo').click();
+  const demoQuick=demoPage.getByRole('dialog',{name:'Сфера Английский',exact:true});
+  await demoQuick.getByRole('button',{name:'Открыть район',exact:true}).click();
+  await demoPage.locator('.sph-scene').getByRole('button',{name:'Разобрать входящие',exact:true}).click();
+  const demoInboxDialog=demoPage.getByRole('dialog',{name:'Разобрать входящие: Английский',exact:true});
+  await demoInboxDialog.getByText('В демо-игре входящие недоступны. Войди в личный аккаунт и подключи TickTick.',{exact:true}).waitFor();
+  await demoInboxDialog.getByRole('region',{name:'Настройки TickTick'}).getByText('Демо и игра на устройстве не передаются в TickTick.',{exact:false}).waitFor();
+  await demoInboxDialog.getByRole('button',{name:'Закрыть',exact:true}).click();
+  await demoInboxDialog.waitFor({state:'detached'});
+  await demoCtx.close();
+
+  // 11. Offline-ветка также обязана объяснять состояние, а не оставлять пустой inbox.
+  await page.locator('.sidebar').getByRole('button',{name:/^Сферы жизни/}).click();
+  const returnCard=page.locator('.sph-card').filter({hasText:'Английский'}).first();
+  await returnCard.locator('.sph-card-photo').click();
+  const returnQuick=page.getByRole('dialog',{name:'Сфера Английский',exact:true});
+  await returnQuick.getByRole('button',{name:'Открыть район',exact:true}).click();
+  await ctx.setOffline(true);
+  await page.locator('.sph-scene').getByRole('button',{name:'Разобрать входящие',exact:true}).click();
+  const offlineInboxDialog=page.getByRole('dialog',{name:'Разобрать входящие: Английский',exact:true});
+  await offlineInboxDialog.getByText(/Нет сети/i).waitFor();
+  await offlineInboxDialog.getByRole('region',{name:'Настройки TickTick'}).waitFor();
+  await ctx.setOffline(false);
+  console.log('TickTick flow UI passed: inbox accept, scope from sphere/goal/stage, native dialog switch, demo and offline states. Mock services only.');
 } catch (error) {
   console.error('Fixture requests:', JSON.stringify(calls));
   console.error('Fixture page errors:', JSON.stringify(pageErrors));

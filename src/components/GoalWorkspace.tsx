@@ -51,6 +51,7 @@ type Props = {
   onAddTask: (stageId?: string) => void;
   onEditTask: (task: Quest) => void;
   onTransfer: (task?: Quest) => void;
+  onInbox: () => void;
   onNotify: (message: string) => void;
   onSelect: (id: string | null) => void;
   onSphere: (id: string) => void;
@@ -988,6 +989,7 @@ export default function GoalWorkspace(p: Props) {
             <div>
               <button onClick={p.onEditGoal}>Настроить цель</button>
               <button onClick={() => p.onTransfer()}>Задачи в TickTick</button>
+              <button onClick={p.onInbox}>Разобрать входящие</button>
               <button
                 onClick={() => mutate((s) => ({ ...s, mainGoalId: goal.id }))}
               >

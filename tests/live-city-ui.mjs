@@ -14,13 +14,22 @@ try {
  const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:5175/?room-demo=sport');
  await page.locator('.live-city-canvas[data-ready=true]').waitFor();
+ assert.equal(await page.locator('.coastal-building').count(),9);
+ assert.equal(await page.locator('[data-building="psychology"], [data-pin="psychology"]').count(),0);
+ assert.equal(await page.locator('.coastal-districts').getByText('Психология',{exact:true}).count(),0);
+ assert.ok((await page.locator('.coastal-map > img').getAttribute('src')).includes('city-islands'));
+ const profile=await page.evaluate(async()=>{const {islandProfile}=await import('/src/cityLive/islandMap.ts');return {id:islandProfile.id,fountains:islandProfile.fountains.length,waterfalls:islandProfile.waterfalls.length,storageKey:islandProfile.storageKey};});
+ assert.equal(profile.id,'islands');
  const start=await page.locator('.live-city-canvas').getAttribute('data-stats');
- await page.waitForTimeout(30000);
+ // Новые межостровные трассы короткие: за 30 секунд агенты успевают выйти и смениться.
+ // Перемещение конкретного агента проверяем раньше, затем проверяем непрерывный поток.
+ await page.waitForTimeout(2200);
+ const initial=JSON.parse(start),short=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));
+ for(const kind of ['road','water','pedestrian'])assert.ok(short.positions.some(p=>p.kind===kind&&initial.positions.some(b=>b.id===p.id&&Math.hypot(b.x-p.x,b.y-p.y)>.0001)),kind+' перемещается');
+ await page.waitForTimeout(27800);
  const after=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));
  const before=JSON.parse(start);
- // Суда на широкой карте проходят маршрут быстрее 30 секунд и сменяют друг друга: для них проверяем текущую скорость, а не тот же id.
- for(const kind of ['road','pedestrian'])assert.ok(after.positions.some(p=>p.kind===kind&&before.positions.some(b=>b.id===p.id&&Math.hypot(b.x-p.x,b.y-p.y)>.002)),kind+' движется');
- assert.ok(after.positions.some(p=>p.kind==='water'&&p.speed>1),'water движется');
+ for(const kind of ['road','water','pedestrian'])assert.ok(after.positions.some(p=>p.kind===kind&&p.speed>1),kind+' продолжает движение');
  console.log("30-second profile",JSON.stringify({elapsed:after.elapsed,fps:after.fps,renderMs:after.renderMs,simulationMs:after.simulationMs,quality:after.quality,counts:after.counts}));
  await page.locator(".coastal-map").screenshot({path:"work/live-city/profile.png"});
  // Спрайты жителей в браузере: внутри силуэта почти нет прозрачных пикселей (фигуры не «призраки»).
@@ -33,7 +42,7 @@ try {
    if(!all)continue;solid++;if(a<200)faint++;}
   out[name]={cell,share:faint/Math.max(1,solid)};}return out;});
  for(const [name,m] of Object.entries(opacity))assert.ok(m.share<.05,`Спрайт ${name} прозрачный: ${m.share}`);
- assert.ok(after.elapsed>before.elapsed+15);assert.equal(after.fountains,9);assert.equal(after.waterfalls,14);
+ assert.ok(after.elapsed>before.elapsed+15);assert.equal(after.profile,'islands');assert.equal(after.fountains,profile.fountains);assert.equal(after.waterfalls,profile.waterfalls);
  await page.locator('.coastal-map').screenshot({path:'work/live-city/desktop-day.png'});
  results.push({width:1440,stats:after});
  for(const width of [360,390,412,430]) {
@@ -52,7 +61,9 @@ try {
   assert.ok(await page.locator('.live-city-canvas').evaluate((node,ratio)=>node.width>=Math.min(1400,node.getBoundingClientRect().width*ratio)-1,pixelRatio),'sharp canvas '+width);
   await page.waitForTimeout(2200);
   const moving=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));
-  for(const kind of ['road','water','pedestrian'])assert.ok(moving.positions.some(p=>p.kind===kind&&mobileStats.positions.some(b=>b.id===p.id&&Math.hypot(b.x-p.x,b.y-p.y)>.0001)),kind+' mobile movement '+width);
+  assert.ok(moving.elapsed>mobileStats.elapsed,'mobile simulation advances '+width);
+  for(const kind of ['road','pedestrian'])assert.ok(moving.positions.some(p=>p.kind===kind&&mobileStats.positions.some(b=>b.id===p.id&&Math.hypot(b.x-p.x,b.y-p.y)>.0001)),kind+' mobile movement '+width);
+  assert.ok(moving.positions.some(p=>p.kind==='water'&&p.speed>1),'water mobile movement '+width);
   await page.locator('.coastal-map').screenshot({path:'work/live-city/mobile-'+width+'.png'});
   results.push({width,stats:JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'))});
  }
@@ -91,10 +102,11 @@ try {
  await page.locator('.city-dev-tools summary').click();await page.getByLabel('Дороги',{exact:true}).check();await page.getByLabel('FPS',{exact:true}).check();
  await page.getByLabel('ID маршрута',{exact:true}).fill('browser-test');await page.getByRole('button',{name:'Расставить точки',exact:true}).click();
  const canvas=page.locator('.live-city-canvas');await canvas.click({position:{x:40,y:100}});await canvas.click({position:{x:80,y:110}});await canvas.click({position:{x:120,y:140}});
- await page.getByRole('button',{name:'SAVE',exact:true}).click();assert.ok(await page.evaluate(()=>JSON.parse(localStorage.getItem('play-your-life-live-city-routes-wide-v1')).some(r=>r.id==='browser-test')));
+ await page.getByRole('button',{name:'SAVE',exact:true}).click();assert.ok(await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).some(r=>r.id==='browser-test'),profile.storageKey));
+ assert.equal(await page.evaluate(()=>localStorage.getItem('play-your-life-live-city-routes-wide-v1')),null,'Старые маршруты не перезаписываются');
  await page.reload();await page.locator('.city-dev-tools summary').click();assert.equal(await page.locator('option[value="browser-test"]').count(),1);
  await page.getByRole('button',{name:'Исходные маршруты',exact:true}).click();
- assert.equal(await page.evaluate(()=>localStorage.getItem('play-your-life-live-city-routes-wide-v1')),null);
+ assert.equal(await page.evaluate(key=>localStorage.getItem(key),profile.storageKey),null);
  assert.deepEqual(errors,[]);await context.close();
  // Reduced motion removes ambient effects and lowers budget, without freezing the transport.
  const reducedContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:3,reducedMotion:'reduce'});

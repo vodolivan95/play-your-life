@@ -124,7 +124,7 @@ export type Intersection = { id: string; center: Point; radius: number };
 export type QualityBudget = { road: number; water: number; pedestrian: number };
 /** Профиль карты: размеры, маршруты и места эффектов одной картинки города. Движок не зависит от конкретной карты. */
 export type CityProfile = {
-  id: 'portrait' | 'wide'; width: number; height: number; storageKey: string;
+  id: 'portrait' | 'wide' | 'islands'; width: number; height: number; storageKey: string;
   routes: CityRoute[]; intersections: Intersection[]; fountains: Fountain[]; waterfalls: Waterfall[];
   waterRegions: number[][][]; bridgeMasks: number[][][]; palms: number[][]; beach: number[][]; rainShine: number[][]; signs: number[][]; lightPoints: number[][];
   /** Вращающийся глобус поверх карты: положение кадра и свечение; null — глобус нарисован на самой карте. */

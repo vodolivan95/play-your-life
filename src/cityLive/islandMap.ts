@@ -6,8 +6,10 @@ import type { CityProfile, CityRoute, Fountain, Point } from './paths.ts';
 export const ISLAND_SOURCE_WIDTH = 6712;
 export const ISLAND_SOURCE_HEIGHT = 3748;
 export const ISLAND_WIDTH = 2000;
-/** Точное соотношение финального PNG без «Психологии»: 1679 × 937. */
-export const ISLAND_HEIGHT = ISLAND_WIDTH * 937 / 1679;
+/** Точные пропорции карты со зданием психологии и отдельной парковой террасой. */
+export const ISLAND_IMAGE_WIDTH = 1678;
+export const ISLAND_IMAGE_HEIGHT = 937;
+export const ISLAND_HEIGHT = ISLAND_WIDTH * ISLAND_IMAGE_HEIGHT / ISLAND_IMAGE_WIDTH;
 
 const scale = ISLAND_WIDTH / ISLAND_SOURCE_WIDTH;
 const p = (x: number, y: number): Point => ({ x: x / ISLAND_SOURCE_WIDTH, y: y / ISLAND_SOURCE_HEIGHT });
@@ -15,8 +17,8 @@ const xy = (x: number, y: number): [number, number] => [x * scale, y * scale];
 const px = (value: number) => value * scale;
 const area = (points: number[][]): number[][] => points.map(([x, y]) => xy(x, y));
 
-// Точки дорожек уточнены по финальной иллюстрации 1679 × 937, не по старым площадям.
-const imagePoint = (x: number, y: number): Point => ({ x: x / 1679, y: y / 937 });
+// Точки дорожек уточнены по финальной иллюстрации, не по старым площадям.
+const imagePoint = (x: number, y: number): Point => ({ x: x / ISLAND_IMAGE_WIDTH, y: y / ISLAND_IMAGE_HEIGHT });
 const imageRoute = (id: string, kind: CityRoute['kind'], points: number[][], speed: number, capacity: number): CityRoute =>
   ({ id, kind, points: points.map(([x, y]) => imagePoint(x, y)), closed: false, speed, capacity });
 
@@ -42,7 +44,8 @@ const walkers: CityRoute[] = [
   imageRoute('islands-walk-tasks', 'pedestrian', [[771,750],[790,758],[816,764],[844,768],[872,766],[900,760],[924,752]], 4.1, 7),
   imageRoute('islands-walk-together', 'pedestrian', [[1214,634],[1232,643],[1255,648],[1280,651],[1303,649],[1324,643],[1345,634]], 4.1, 7),
   imageRoute('islands-walk-hobby', 'pedestrian', [[1518,748],[1536,759],[1558,766],[1584,768],[1608,763],[1630,754]], 4.1, 7),
-  imageRoute('islands-walk-park', 'pedestrian', [[1125,797],[1140,807],[1159,813],[1182,816],[1206,813],[1225,808],[1238,799]], 4.1, 7),
+  imageRoute('islands-walk-park', 'pedestrian', [[812,860],[843,876],[880,889],[920,898],[960,900],[1000,896],[1040,886],[1063,877]], 4.1, 7),
+  imageRoute('islands-walk-psychology', 'pedestrian', [[1154,819],[1176,834],[1205,843],[1237,846],[1263,849],[1298,844],[1330,835],[1356,824]], 4.1, 7),
   imageRoute('islands-walk-driving', 'pedestrian', [[502,599],[524,609],[548,614],[571,613],[592,607],[611,601]], 4.1, 7),
 ];
 
@@ -57,7 +60,7 @@ const water: CityRoute[] = [
 ];
 
 // Чаши фонтанов привязаны к финальной карте, включая сохранённый фонтан парка.
-const imageSize = (value: number) => value * ISLAND_WIDTH / 1679;
+const imageSize = (value: number) => value * ISLAND_WIDTH / ISLAND_IMAGE_WIDTH;
 const fountains: Fountain[] = [
   { id: 'sport', center: imagePoint(500, 355), rx: imageSize(45), ry: imageSize(13), height: imageSize(28) },
   { id: 'health', center: imagePoint(810, 300), rx: imageSize(70), ry: imageSize(22), height: imageSize(35) },
@@ -68,7 +71,8 @@ const fountains: Fountain[] = [
   { id: 'together', center: imagePoint(1270, 620), rx: imageSize(55), ry: imageSize(18), height: imageSize(30) },
   { id: 'english', center: imagePoint(1480, 470), rx: imageSize(52), ry: imageSize(15), height: imageSize(26) },
   { id: 'hobby', center: imagePoint(1570, 735), rx: imageSize(62), ry: imageSize(20), height: imageSize(28) },
-  { id: 'park-front', center: imagePoint(1180, 784), rx: imageSize(61), ry: imageSize(19), height: imageSize(28) },
+  { id: 'psychology', center: imagePoint(1260, 821), rx: imageSize(53), ry: imageSize(17), height: imageSize(28) },
+  { id: 'park-front', center: imagePoint(936, 841), rx: imageSize(59), ry: imageSize(19), height: imageSize(28) },
 ];
 
 const waterfalls = [
@@ -83,8 +87,8 @@ const waterfalls = [
   { id: 'finance-south', start: p(1250, 2180), end: p(1230, 2510), width: px(78) },
   { id: 'driving-south', start: p(2020, 2420), end: p(1990, 2770), width: px(94) },
   { id: 'tasks-south', start: p(3020, 3000), end: p(3000, 3370), width: px(88) },
-  { id: 'park-west', start: p(4400, 2990), end: p(4380, 3370), width: px(85) },
-  { id: 'park-east', start: p(5040, 2990), end: p(5030, 3380), width: px(86) },
+  { id: 'park-front', start: imagePoint(940, 916), end: imagePoint(940, 936), width: imageSize(24) },
+  { id: 'psychology-front', start: imagePoint(1268, 866), end: imagePoint(1264, 914), width: imageSize(24) },
   { id: 'hobby-south', start: p(6480, 2800), end: p(6460, 3150), width: px(82) },
 ];
 
@@ -106,7 +110,7 @@ const lights = [
 const signs = [
   [3350,760],[1920,1120],[4740,1160],[1090,1740],[5900,1510],
   [2180,2050],[4840,1970],[3370,2570],[6250,2370],
-].map(([x, y]) => xy(x, y));
+].map(([x, y]) => xy(x, y)).concat([[imageSize(1247), imageSize(740)]]);
 
 /** Кликабельные фасады в процентах новой картинки; дороги и сохранённый парк намеренно исключены. */
 const box = (id: string, x: number, y: number, width: number, height: number) => ({
@@ -127,13 +131,15 @@ export const islandBuildings = [
   box('together', 4210, 1630, 1450, 1030),
   box('tasks', 2730, 2180, 1480, 900),
   box('hobby', 5340, 1970, 1370, 1050),
+  { id: 'psychology', x: 66.8, y: 67.8, width: 16.5, height: 18.2 },
 ] as const;
 
 export const islandProfile: CityProfile = {
   id: 'islands',
   width: ISLAND_WIDTH,
   height: ISLAND_HEIGHT,
-  storageKey: 'play-your-life-live-city-routes-islands-v1',
+  // Старые локальные маршруты остаются в v1, но не накладываются на новое здание и парк.
+  storageKey: 'play-your-life-live-city-routes-islands-v2',
   routes: [...roads, ...water, ...walkers],
   intersections: [],
   fountains,

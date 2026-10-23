@@ -8,13 +8,15 @@ import islandMapUrl from '../assets/city-islands.webp';
 import { validRoutes } from '../cityLive/paths';
 import type { CityRoute, Point, RouteKind } from '../cityLive/paths';
 import { readRoutes } from '../cityLive/simulation';
-import { islandBuildings, islandProfile } from '../cityLive/islandMap';
+import { islandBuildings, islandProfile, ISLAND_IMAGE_WIDTH, ISLAND_IMAGE_HEIGHT } from '../cityLive/islandMap';
 import type { Quality } from '../cityLive/simulation';
 import type { CityTime, DebugFlags } from '../cityLive/render';
 import LiveCityCanvas from './LiveCityCanvas';
 import { sphereCards } from '../sphereDetails';
 import './CoastalCity.css';
 import { useCityZoom } from '../cityLive/useCityZoom';
+import { parkZones } from '../parkZones';
+import { ParkMarkers, ParkPanel } from './ParkZones';
 
 const weatherOptions = [
   ['clear','Ясно'],['partlyCloudy','Переменная облачность'],['cloudy','Облачно'],
@@ -47,10 +49,14 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
 }) {
   const {zoom,setZoom,scroll}=useCityZoom();
   const wide=useWide();
-  // Психология остаётся в игре и сохранениях, но не входит в эту карту города.
+  // Все десять районов, включая возвращённую психологию, используют прежний прогресс.
   const cards=useMemo(()=>sphereCards(state).filter(card=>islandBuildings.some(building=>building.id===card.id)),[state]);
   const [picked,setPicked]=useState<string|null>(null);
+  const [parkPicked,setParkPicked]=useState<string|null>(null);
   const current=cards.find(c=>c.id===picked)??null;
+  const parkCurrent=parkZones.find(zone=>zone.id===parkPicked)??null;
+  const pickDistrict=(id:string)=>{setParkPicked(null);setPicked(picked===id?null:id);};
+  const pickPark=(id:string)=>{setPicked(null);setParkPicked(parkPicked===id?null:id);};
   const [preferences,setPreferences]=useState(readPreferences);
   // Одна горизонтальная карта острова для ПК и телефона; на телефоне она шире экрана и листается.
   const profile=islandProfile,buildings=islandBuildings;
@@ -116,15 +122,16 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
       </div>
       <p role="status">{message||`${draft.length} точек · SAVE сохраняет только маршруты; прогресс игры не изменяется.`}</p>
     </details>}
-    <p className="coastal-hint" id="coastal-hint">{editing?'Нажимай на карту, чтобы добавить точки маршрута.':'Нажми на здание, чтобы войти. Подпись района или список — карточка района. Приближай колёсиком мыши или двойным щелчком к курсору, листай перетаскиванием; на телефоне — двумя пальцами.'}</p>
+    <p className="coastal-hint" id="coastal-hint">{editing?'Нажимай на карту, чтобы добавить точки маршрута.':'Нажми на здание, чтобы войти. В парке перед психологией выбери значок прогулки, скамейки или фонтана — откроется подсказка. Подпись района или список — карточка района. Приближай колёсиком мыши или двойным щелчком к курсору, листай перетаскиванием; на телефоне — двумя пальцами.'}</p>
     <div className="coastal-frame">
     <div ref={scroll} className="coastal-scroll" aria-label="Прибрежная карта" aria-describedby="coastal-hint">
       <div className="coastal-stage" style={wide?{width:`${zoom*100}%`}:undefined}>
       <div className="coastal-map" data-time={preferences.time} data-weather={preferences.weather} data-paused={paused} data-editing={editing}
         style={{...(wide?{}:{width:`${zoom*175}%`}),'--city-rate':speed} as unknown as CSSProperties}>
-        <img src={islandMapUrl} width={1679} height={937} fetchPriority="high" decoding="async" alt="Новая карта города: девять зданий сфер жизни, острова, мосты, водопады и цветущий парк" draggable={false}/>
+        <img src={islandMapUrl} width={ISLAND_IMAGE_WIDTH} height={ISLAND_IMAGE_HEIGHT} fetchPriority="high" decoding="async" alt="Карта города: десять зданий сфер жизни, включая психологию, и отдельный цветущий парк с прогулочной дорожкой, скамейками и фонтаном" draggable={false}/>
         <LiveCityCanvas profile={profile} routes={routes} paused={paused} speed={speed} quality={preferences.quality} time={preferences.time} weather={preferences.weather}
           debug={debug} draft={draft} editing={editing} onPoint={point=>setDraft([...draft,point])}/>
+        <ParkMarkers zones={parkZones} selected={parkPicked} onSelect={pickPark} disabled={editing} walkPath={routes.find(route=>route.id==='islands-walk-park')?.points}/>
         {buildings.map(building=>{
           const sphere=spheres.find(s=>s.id===building.id)!,tier=buildingState(state,building.id).tier;
           return <button key={building.id} className="coastal-building" data-building={building.id}
@@ -136,7 +143,7 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
         {wide&&buildings.map(building=>{
           const card=cards.find(c=>c.id===building.id);if(!card)return null;
           return <button key={building.id} className="coastal-pin" data-pin={building.id} aria-pressed={picked===building.id}
-            aria-label={`Район ${card.name}, уровень ${card.level}`} onClick={()=>setPicked(picked===building.id?null:building.id)}
+            aria-label={`Район ${card.name}, уровень ${card.level}`} onClick={()=>pickDistrict(building.id)}
             style={{left:`${building.x+building.width*.78}%`,top:`${building.y+building.height*.3}%`,'--pin':card.color} as CSSProperties}>
             {card.tasksToday>0&&<i aria-hidden="true">{card.tasksToday}</i>}<small>ур. {card.level}</small>
           </button>;
@@ -146,12 +153,12 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
     </div>
     {wide&&<nav className="coastal-districts" aria-label="Районы острова">
       <header><b>Районы</b><small>ур. района</small></header>
-      {cards.map(card=><button key={card.id} aria-pressed={picked===card.id} onClick={()=>setPicked(picked===card.id?null:card.id)} style={{'--pin':card.color} as CSSProperties}>
+      {cards.map(card=><button key={card.id} aria-pressed={picked===card.id} onClick={()=>pickDistrict(card.id)} style={{'--pin':card.color} as CSSProperties}>
         <span className="dot" aria-hidden="true"/><span className="name">{card.name}<span className="bar"><span style={{width:`${card.progress}%`}}/></span></span><b>{card.level}</b>
       </button>)}
     </nav>}
     {!wide&&<div className="coastal-chips" aria-label="Районы острова">
-      {cards.map(card=><button key={card.id} aria-pressed={picked===card.id} onClick={()=>setPicked(picked===card.id?null:card.id)} style={{'--pin':card.color} as CSSProperties}>
+      {cards.map(card=><button key={card.id} aria-pressed={picked===card.id} onClick={()=>pickDistrict(card.id)} style={{'--pin':card.color} as CSSProperties}>
         <span className="dot" aria-hidden="true"/>{card.name} · {card.level}
       </button>)}
     </div>}
@@ -165,5 +172,6 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
       <button className="enter" onClick={()=>onOpen(current.id)}>Войти внутрь</button>
     </aside>}
     </div>
+    <ParkPanel zone={editing?null:parkCurrent} onClose={()=>setParkPicked(null)}/>
   </div>;
 }

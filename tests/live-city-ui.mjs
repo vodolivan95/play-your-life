@@ -8,6 +8,85 @@ import { writeFile, mkdir } from 'node:fs/promises';
 await mkdir('work/live-city',{recursive:true});
 let browser;
 const results=[];
+async function waitForTooltipOpacity(page,tooltip,label) {
+ let opacity=0;
+ for(let attempt=0;attempt<70;attempt++) {
+  opacity=await tooltip.evaluate(node=>Number.parseFloat(getComputedStyle(node).opacity));
+  if(opacity>.95)return;
+  await page.waitForTimeout(30);
+ }
+ assert.ok(opacity>.95,`${label}: подсказка не стала видимой (opacity ${opacity})`);
+}
+async function checkBuildingTooltips(page) {
+ const contract=await page.locator('.coastal-map').evaluate(map=>{
+  const mapRect=map.getBoundingClientRect(),none=value=>!value||value==='none';
+  return [...map.querySelectorAll('.coastal-building-zone')].map(zone=>{
+   const button=zone.querySelector(':scope > .coastal-building'),tooltip=zone.querySelector(':scope > .coastal-building-tooltip');
+   const chain=[];let ancestor=tooltip;
+   while(ancestor) {
+    const style=getComputedStyle(ancestor);
+    chain.push({tag:ancestor.tagName,className:ancestor.className,clipPath:style.clipPath,maskImage:style.maskImage,webkitMaskImage:style.webkitMaskImage});
+    if(ancestor===map)break;
+    ancestor=ancestor.parentElement;
+   }
+   const zoneRect=zone.getBoundingClientRect(),tooltipRect=tooltip?.getBoundingClientRect();
+   const tooltipStyle=tooltip&&getComputedStyle(tooltip),buttonStyle=button&&getComputedStyle(button),zoneStyle=getComputedStyle(zone);
+   return {
+    id:button?.dataset.building,buttonDirect:button?.parentElement===zone,tooltipDirect:tooltip?.parentElement===zone,tooltipCount:zone.querySelectorAll(':scope > .coastal-building-tooltip').length,
+    clipPath:buttonStyle?.clipPath,buttonPointerEvents:buttonStyle?.pointerEvents,zonePointerEvents:zoneStyle.pointerEvents,
+    tooltipInsideButton:!!button?.contains(tooltip),ariaHidden:tooltip?.getAttribute('aria-hidden'),tooltipPointerEvents:tooltipStyle?.pointerEvents,
+    boxSizing:tooltipStyle?.boxSizing,tooltipWidth:tooltipRect?.width,zoneWidth:zoneRect.width,
+    fullRectInMap:!!tooltipRect&&tooltipRect.left>=mapRect.left-.5&&tooltipRect.top>=mapRect.top-.5&&tooltipRect.right<=mapRect.right+.5&&tooltipRect.bottom<=mapRect.bottom+.5,
+    reachesMap:chain.at(-1)?.tag==='DIV'&&chain.at(-1)?.className.includes('coastal-map'),
+    unclipped:chain.every(item=>none(item.clipPath)&&none(item.maskImage)&&none(item.webkitMaskImage)),chain,
+   };
+  });
+ });
+ assert.equal(contract.length,10,'десять оболочек подсказок зданий');
+ assert.deepEqual(contract.map(item=>item.id).sort(),['driving','english','finance','growth','health','hobby','psychology','sport','tasks','together']);
+ for(const item of contract) {
+  assert.ok(item.buttonDirect,`${item.id}: кнопка — прямой потомок оболочки`);
+  assert.equal(item.tooltipCount,1,`${item.id}: одна явная подсказка`);
+  assert.ok(item.tooltipDirect,`${item.id}: подсказка — sibling кнопки`);
+  assert.equal(item.tooltipInsideButton,false,`${item.id}: подсказка не потомок кнопки`);
+  assert.match(item.clipPath??'',/^polygon\(/,`${item.id}: polygon hitbox сохранён на кнопке`);
+  assert.equal(item.zonePointerEvents,'none',`${item.id}: оболочка не увеличивает область клика`);
+  assert.equal(item.buttonPointerEvents,'auto',`${item.id}: кнопка принимает события`);
+  assert.equal(item.ariaHidden,'true',`${item.id}: подсказка скрыта от accessibility tree`);
+  assert.equal(item.tooltipPointerEvents,'none',`${item.id}: подсказка не перехватывает клик`);
+  assert.equal(item.boxSizing,'border-box',`${item.id}: ширина подсказки учитывает padding`);
+  assert.ok((item.tooltipWidth??Infinity)<=(item.zoneWidth??0)+.5,`${item.id}: подсказка не шире зоны здания`);
+  assert.ok(item.fullRectInMap,`${item.id}: прямоугольник подсказки целиком в карте`);
+  assert.ok(item.reachesMap&&item.unclipped,`${item.id}: до карты нет clip-path или mask (${JSON.stringify(item.chain)})`);
+ }
+ const togetherZone=page.locator('.coastal-building-zone:has(> .coastal-building[data-building="together"])'),together=togetherZone.locator(':scope > .coastal-building'),togetherTooltip=togetherZone.locator(':scope > .coastal-building-tooltip');
+ const psychologyZone=page.locator('.coastal-building-zone:has(> .coastal-building[data-building="psychology"])'),psychology=psychologyZone.locator(':scope > .coastal-building'),psychologyTooltip=psychologyZone.locator(':scope > .coastal-building-tooltip');
+ const scrollPosition=await page.locator('.coastal-scroll').evaluate(node=>({left:node.scrollLeft,top:node.scrollTop}));
+ try {
+  if(await page.evaluate(()=>innerWidth>=1000)) {
+   const box=await together.boundingBox();assert.ok(box,'Общие дела видны на desktop');
+   await together.hover({position:{x:box.width*.5,y:box.height*.5}});
+   await waitForTooltipOpacity(page,togetherTooltip,'hover Общих дел');
+   await togetherZone.screenshot({path:'work/live-city/together-tooltip.png'});
+   const corner=await togetherZone.evaluate(zone=>{
+    const button=zone.querySelector('.coastal-building'),tooltip=zone.querySelector('.coastal-building-tooltip'),rect=zone.getBoundingClientRect(),hit=document.elementFromPoint(rect.left+2,rect.top+2);
+    return {building:hit?.closest('.coastal-building')===button,tooltip:hit===tooltip||hit?.closest('.coastal-building-tooltip')===tooltip};
+   });
+   assert.equal(corner.building,false,'угол outside polygon не стал прямоугольной областью кнопки');
+   assert.equal(corner.tooltip,false,'pointer-events:none не возвращает подсказку в hit-test угла');
+  }
+  await psychology.scrollIntoViewIfNeeded();
+  await page.keyboard.press('Tab');
+  await psychology.focus();
+  assert.equal(await psychology.evaluate(button=>button.matches(':focus-visible')),true,'Психология получила keyboard focus-visible');
+  await waitForTooltipOpacity(page,psychologyTooltip,'keyboard focus Психологии');
+ } finally {
+  await psychology.evaluate(button=>button.blur());
+  const mapBox=await page.locator('.coastal-map').boundingBox();assert.ok(mapBox,'карта существует для ухода мыши');
+  await page.mouse.move(mapBox.x+5,mapBox.y+5);
+  await page.locator('.coastal-scroll').evaluate((node,position)=>{node.scrollLeft=position.left;node.scrollTop=position.top;},scrollPosition);
+ }
+}
 try {
  browser=await chromium.launch({executablePath:process.env.LIFEGAME_CHROMIUM_PATH||undefined,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu']});
  const context=await browser.newContext({viewport:{width:1440,height:1100},hasTouch:true});
@@ -28,11 +107,12 @@ try {
  const initial=JSON.parse(start),short=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));
  for(const kind of ['road','water','pedestrian'])assert.ok(short.positions.some(p=>p.kind===kind&&initial.positions.some(b=>b.id===p.id&&Math.hypot(b.x-p.x,b.y-p.y)>.0001)),kind+' перемещается');
  await page.waitForTimeout(27800);
- const after=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));
- const before=JSON.parse(start);
- for(const kind of ['road','water','pedestrian'])assert.ok(after.positions.some(p=>p.kind===kind&&p.speed>1),kind+' продолжает движение');
- console.log("30-second profile",JSON.stringify({elapsed:after.elapsed,fps:after.fps,renderMs:after.renderMs,simulationMs:after.simulationMs,quality:after.quality,counts:after.counts}));
- await page.locator(".coastal-map").screenshot({path:"work/live-city/profile.png"});
+	 const after=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));
+	 const before=JSON.parse(start);
+	 for(const kind of ['road','water','pedestrian'])assert.ok(after.positions.some(p=>p.kind===kind&&p.speed>1),kind+' продолжает движение');
+	 console.log("30-second profile",JSON.stringify({elapsed:after.elapsed,fps:after.fps,renderMs:after.renderMs,simulationMs:after.simulationMs,quality:after.quality,counts:after.counts}));
+	 await checkBuildingTooltips(page);
+	 await page.locator(".coastal-map").screenshot({path:"work/live-city/profile.png"});
  // Спрайты жителей в браузере: внутри силуэта почти нет прозрачных пикселей (фигуры не «призраки»).
  const opacity=await page.evaluate(async()=>{const out={};for(const name of ['knight','barbarian','mage','rogue','hooded']){
   const image=new Image();image.src=`/src/assets/city-people/kaykit-${name}.webp`;await image.decode();
@@ -63,10 +143,11 @@ try {
   assert.ok(await page.locator('.live-city-canvas').evaluate((node,ratio)=>node.width>=Math.min(1400,node.getBoundingClientRect().width*ratio)-1,pixelRatio),'sharp canvas '+width);
   await page.waitForTimeout(2200);
   const moving=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));
-  assert.ok(moving.elapsed>mobileStats.elapsed,'mobile simulation advances '+width);
-  for(const kind of ['road','pedestrian'])assert.ok(moving.positions.some(p=>p.kind===kind&&mobileStats.positions.some(b=>b.id===p.id&&Math.hypot(b.x-p.x,b.y-p.y)>.0001)),kind+' mobile movement '+width);
-  assert.ok(moving.positions.some(p=>p.kind==='water'&&p.speed>1),'water mobile movement '+width);
-  await page.locator('.coastal-map').screenshot({path:'work/live-city/mobile-'+width+'.png'});
+	  assert.ok(moving.elapsed>mobileStats.elapsed,'mobile simulation advances '+width);
+	  for(const kind of ['road','pedestrian'])assert.ok(moving.positions.some(p=>p.kind===kind&&mobileStats.positions.some(b=>b.id===p.id&&Math.hypot(b.x-p.x,b.y-p.y)>.0001)),kind+' mobile movement '+width);
+	  assert.ok(moving.positions.some(p=>p.kind==='water'&&p.speed>1),'water mobile movement '+width);
+	  await checkBuildingTooltips(page);
+	  await page.locator('.coastal-map').screenshot({path:'work/live-city/mobile-'+width+'.png'});
   results.push({width,stats:JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'))});
  }
  await page.getByRole('combobox',{name:'Время города',exact:true}).selectOption('night');

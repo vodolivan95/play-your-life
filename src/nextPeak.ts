@@ -46,7 +46,7 @@ function remainingText(required: Quest[]) {
     : '';
 }
 
-function candidate(state: GameState, goal: Goal, now: Date): NextPeak {
+export function goalPeak(state: GameState, goal: Goal, now: Date = new Date()): NextPeak {
   const stage = activeGoalStage(state, goal, now);
   if (stage) {
     const m = stageMetrics(state, goal, stage);
@@ -93,7 +93,7 @@ export function nextPeak(state: GameState, now = new Date()): NextPeak | null {
   const open = state.goals.filter((g) => !g.rewarded);
   if (!open.length) return null;
   return open
-    .map((goal) => ({ goal, peak: candidate(state, goal, now) }))
+    .map((goal) => ({ goal, peak: goalPeak(state, goal, now) }))
     .sort(
       (a, b) =>
         Number(focus.has(b.goal.id)) - Number(focus.has(a.goal.id)) ||

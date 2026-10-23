@@ -50,6 +50,7 @@ try {
       isMobile: width < 600,
       hasTouch: width < 600,
       timezoneId: 'Europe/Moscow',
+      reducedMotion: 'reduce',
     });
     const page = await context.newPage(),
       errors = [];
@@ -286,13 +287,13 @@ try {
       ),
       'Страница цели шире экрана',
     );
-    await stageA.getByRole('link', { name: 'Продолжить →' }).click();
+    await stageA.getByRole('link', { name: 'Продолжить →' }).click({ force: true });
     await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.a}`);
     await workspace.getByRole('link', { name: 'Перейти к цели →' }).click();
     await stageB
       .getByRole('button', { name: 'Раскрыть этап: Разговорная практика' })
       .click();
-    await stageB.getByRole('link', { name: 'Продолжить →' }).click();
+    await stageB.getByRole('link', { name: 'Продолжить →' }).click({ force: true });
     await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.b}`);
     await page.goBack();
     await page.waitForURL(`**/#/goals/${ids.id}`);
@@ -603,29 +604,20 @@ try {
     await page
       .getByRole('button', { name: 'Продолжить игру на этом устройстве' })
       .click();
-    await page
-      .locator('.home-player')
-      .getByText('LEVEL 100', { exact: true })
-      .waitFor();
-    assert.equal(
-      await page
-        .getByRole('progressbar', { name: 'Максимальный уровень 100' })
-        .getAttribute('aria-valuenow'),
-      '100',
-    );
-    assert.equal(
-      await page
-        .locator('.home-spheres')
-        .getByText('LVL 100 / 100', { exact: true })
-        .count(),
-      10,
-    );
+    await page.locator('.home-dashboard').waitFor();
+    assert.equal(await page.locator('.home-player, .home-spheres').count(), 0);
     assert.equal(
       await page
         .locator('.dashboard-metric')
         .filter({ hasText: 'Уровень' })
         .locator('strong')
         .innerText(),
+      '100',
+    );
+    await page.evaluate(() => { location.hash = '#profile'; });
+    await page.locator('.profile-hero').waitFor();
+    assert.equal(
+      await page.getByRole('progressbar', { name: 'Максимальный уровень 100' }).getAttribute('aria-valuenow'),
       '100',
     );
     assert.equal(

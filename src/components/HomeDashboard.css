@@ -222,3 +222,20 @@
 .home-dashboard[data-theme='dark'] .home-quick-main { background:linear-gradient(180deg,#ffd56b,#f5a623); color:#2a1a00; box-shadow:0 8px 24px #f5a62340; }
 .home-dashboard[data-theme='dark'] .home-quick-second { border-color:#96b9ff44; background:#0b1428; color:#fff; }
 @media(max-width:760px) { .home-quick { flex-direction:row; width:100%; order:3; } .home-quick button { flex:1; padding:0 10px; font-size:13px; } }
+
+/* Главная 0.59.0: баннер → задачи и серия → сводка за год. */
+.home-dashboard > .peak-banner { grid-column: 1 / -1; min-width: 0; }
+.home-dashboard .home-today { grid-column: 1; grid-row: 2; }
+.home-dashboard .home-streak { grid-column: 2; grid-row: 2; }
+.home-dashboard > .home-year-summary { grid-column: 1 / -1; min-width: 0; }
+.profile-account .account-bar { margin: 0; }
+@media (max-width: 900px) {
+  .home-dashboard .home-today, .home-dashboard .home-streak { grid-column: 1; grid-row: auto; }
+}
+@media (max-width: 340px) {
+  .home-dashboard .home-week { min-width: 0; gap: 2px; }
+  .home-dashboard .home-week span { width: clamp(24px, 8vw, 28px); height: clamp(24px, 8vw, 28px); }
+}
+@media (max-width: 760px) {
+  .app-shell:not(.app-page-home) .main-wrap > .topbar { display: none; }
+}

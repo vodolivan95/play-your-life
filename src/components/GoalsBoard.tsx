@@ -34,6 +34,11 @@ import {
   sortGoals,
 } from '../goalsOverview';
 import type { GoalSort } from '../goalsOverview';
+import {
+  MAX_MONTHLY_FOCUS,
+  monthlyFocusGoals,
+  toggleMonthlyFocus,
+} from '../monthlyFocus';
 import './GoalsOverview.css';
 type Editor =
   | { kind: 'goal' }
@@ -82,6 +87,11 @@ export default function GoalsBoard({
   const [sort, setSort] = useState<GoalSort>('due');
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [editor, setEditor] = useState<Editor | null>(null);
+  const monthNow = new Date();
+  const currentMonthlyFocus = monthlyFocusGoals(state, monthNow);
+  const monthlyFocusLimitReached =
+    currentMonthlyFocus.length >= MAX_MONTHLY_FOCUS;
+  const monthlyFocusLimitMessage = `В этом месяце уже выбрано ${MAX_MONTHLY_FOCUS} из ${MAX_MONTHLY_FOCUS} главных целей. Сначала уберите одну из них.`;
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (editor) dialog.current?.showModal();
@@ -95,6 +105,38 @@ export default function GoalsBoard({
   const tasks = state.quests.filter((q) => q.goalId === goal?.id && !!goal);
   function main(id: string) {
     onChange((s) => ({ ...s, mainGoalId: id })); onNotify('Главная цель выбрана');
+  }
+  function toggleGoalMonthlyFocus(id: string) {
+    const isMonthlyFocus = currentMonthlyFocus.some((goal) => goal.id === id);
+    const shouldAdd = !isMonthlyFocus;
+    try {
+      if (shouldAdd && monthlyFocusLimitReached) {
+        throw new Error(monthlyFocusLimitMessage);
+      }
+      toggleMonthlyFocus(state, id, monthNow);
+    } catch (e) {
+      onNotify(
+        e instanceof Error ? e.message : 'Не удалось изменить главные цели месяца.',
+      );
+      return;
+    }
+    onChange((latest) => {
+      const latestFocus = monthlyFocusGoals(latest, monthNow);
+      const latestSelected = latestFocus.some((goal) => goal.id === id);
+      if (
+        !latest.goals.some((goal) => goal.id === id) ||
+        (shouldAdd && (latestSelected || latestFocus.length >= MAX_MONTHLY_FOCUS)) ||
+        (!shouldAdd && !latestSelected)
+      ) {
+        return latest;
+      }
+      return toggleMonthlyFocus(latest, id, monthNow);
+    });
+    onNotify(
+      shouldAdd
+        ? 'Цель выбрана главной целью месяца.'
+        : 'Цель убрана из главных целей месяца.',
+    );
   }
   const visibleGoals = sortGoals(
     state,
@@ -228,6 +270,9 @@ export default function GoalsBoard({
             const late = !isGoalDone(g) && days !== undefined && days < 0;
             const next = goalNextStep(state, g);
             const isMain = mainGoal?.id === g.id;
+            const isMonthlyFocus = currentMonthlyFocus.some(
+              (monthlyGoal) => monthlyGoal.id === g.id,
+            );
             return (
               <section
                 className={`gl-card ${isMain ? 'is-main' : ''} ${preview?.id === g.id ? 'is-selected' : ''}`}
@@ -264,6 +309,11 @@ export default function GoalsBoard({
                         {goalStatus(g)}
                       </span>
                       {isMain && <span className="gl-tag is-main">★ Главная</span>}
+                      {isMonthlyFocus && (
+                        <span className="gl-tag is-monthly-focus">
+                          ★ Главная цель месяца
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className={`gl-deadline ${late ? 'is-late' : ''}`}>
@@ -327,6 +377,26 @@ export default function GoalsBoard({
                   >
                     {isMain ? '★ Главная цель' : '☆ Сделать главной'}
                   </button>
+                  <button
+                    className="text-button main-goal-button"
+                    aria-pressed={isMonthlyFocus}
+                    disabled={!isMonthlyFocus && monthlyFocusLimitReached}
+                    title={
+                      !isMonthlyFocus && monthlyFocusLimitReached
+                        ? monthlyFocusLimitMessage
+                        : undefined
+                    }
+                    onClick={() => toggleGoalMonthlyFocus(g.id)}
+                  >
+                    {isMonthlyFocus
+                      ? 'Убрать из главных целей месяца'
+                      : 'Сделать главной целью месяца'}
+                  </button>
+                  {!isMonthlyFocus && monthlyFocusLimitReached && (
+                    <small className="gl-monthly-focus-limit">
+                      {monthlyFocusLimitMessage}
+                    </small>
+                  )}
                   {g.progressMode !== 'tasks' && (
                     <label className="goal-input">
                       Текущий прогресс

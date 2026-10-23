@@ -453,6 +453,7 @@
 :root[data-theme="dark"] .gl-card { background: #151d33; }
 :root[data-theme="dark"] .gl-tag { background: color-mix(in srgb, var(--gl-color, #1272d6) 18%, #151d33); color: #ced7ec; }
 :root[data-theme="dark"] .gl-tag.is-main { background: #3d3419; color: #ffd066; }
+:root[data-theme="dark"] .gl-tag.is-monthly-focus { background: #131a2e; color: #81eabe; }
 :root[data-theme="dark"] .gl-tag.is-late { background: #411a1a; color: #eb9191; }
 :root[data-theme="dark"] .gl-deadline { color: #9db0da; }
 :root[data-theme="dark"] .gl-deadline b { color: #e0e6f3; }
@@ -465,6 +466,7 @@
 :root[data-theme="dark"] .gl-next { color: #b2c0e2; }
 :root[data-theme="dark"] .gl-next b { color: #e0e6f3; }
 :root[data-theme="dark"] .gl-reward { background: #3d3419; color: #ffd066; }
+:root[data-theme="dark"] .gl-monthly-focus-limit { color: #9db0da; }
 :root[data-theme="dark"] .gl-plan { background: #1b3242; color: #95c8e4; }
 :root[data-theme="dark"] .gl-ico.is-blue { background: #1a2b3f; color: #97c6f6; }
 :root[data-theme="dark"] .gl-ico.is-green { background: #1e3929; color: #84ecb8; }

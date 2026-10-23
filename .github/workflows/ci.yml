@@ -44,6 +44,8 @@ jobs:
           node-version-file: .nvmrc
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - name: Verify homepage month focus and yearly summary (local fixture only)
+        run: node --experimental-strip-types --no-warnings tests/home-ui.mjs
       - run: npm run test:quests-ui
       - run: npm run test:tasks-calendar
       - run: npm run test:goals-ui

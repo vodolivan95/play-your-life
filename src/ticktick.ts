@@ -452,6 +452,7 @@ async function syncTickTickProject(
     }
     if (!remote.id)
       throw new Error('TickTick вернул задачу без идентификатора.');
+    const locallyReopened = !local.done && link.done === true;
     const remoteWasCompleted = remote.status === 2;
     const snapshot = localFingerprint(local, state);
     const localChanged = snapshot !== link.local;
@@ -476,11 +477,22 @@ async function syncTickTickProject(
       // With no comparable baseline, keep the established whole-task local-wins rule.
       conflicts.push(...syncFields);
     }
-    if (local.done && remote.status !== 2) {
+    let reopenedInTickTick = false;
+    if (locallyReopened && remoteWasCompleted) {
+      remote = await request<RemoteTask>(
+        `/api/task/${encodeURIComponent(remote.id)}`,
+        'POST',
+        { ...remotePayload(merged, state, connection), id: remote.id, status: 0 },
+      );
+      if (!remote.id)
+        throw new Error('TickTick не подтвердил отмену выполнения задачи.');
+      remote = { ...remote, status: 0 };
+      reopenedInTickTick = true;
+    } else if (local.done && remote.status !== 2) {
       await request(`${path}/complete`, 'POST');
       remote = { ...remote, status: 2 };
     }
-    if (!local.done && localChanged) {
+    if (!local.done && localChanged && !reopenedInTickTick) {
       if (conflicts.length)
         result.warnings.push(`${local.name}: конфликт полей (${conflicts.join(', ')}); для них сохранён вариант PLAY YOUR LIFE, остальные изменения объединены.`);
       remote = await request<RemoteTask>(
@@ -496,10 +508,11 @@ async function syncTickTickProject(
       }
     }
     // Completion wins; reopening an already rewarded action never creates new XP.
-    const wasCompleted =
+    const wasCompleted = !locallyReopened && (
       tasks.find((t) => t.id === link.remoteId)?.status === 2 ||
       remote.status === 2 ||
-      remoteWasCompleted;
+      remoteWasCompleted
+    );
     if (remoteChanged || wasCompleted)
       result.changes.push({
         id: localId,

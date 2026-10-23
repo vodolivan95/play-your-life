@@ -37,8 +37,12 @@ export function economyRecords(
       item: q.virtualRewardId ?? "",
       sphere: q.sphere,
       locked: !!q.done || !!q.rewardLocked || (q.currentValue ?? 0) > 0,
-      completed: q.done,
-      progress: q.currentValue ?? (q.done ? 1 : 0),
+      // `completed` here means the one-time reward was claimed, not that the
+      // task is currently checked. Reopened tasks keep their existing receipt.
+      completed: q.done || q.rewardClaimed === true,
+      progress: q.rewardClaimed === true && old
+        ? Math.max(old.progress, q.currentValue ?? (q.done ? 1 : 0))
+        : q.currentValue ?? (q.done ? 1 : 0),
       claims: {},
       offset: 0,
       weekdays: [],

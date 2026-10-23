@@ -31,11 +31,13 @@ try {
       page.on('pageerror', (e) => errors.push(e.message));
       await page.goto(url);
       await page.evaluate(async (theme) => {
-        const { initialState } = await import('/src/game.ts');
+        const { initialState, completeQuest, dateKey } = await import('/src/game.ts');
         const s = initialState();
         s.profile.onboardingComplete = true;
         s.events.push({ id: 'ui-health', sphere: 'health', title: 'Утренняя зарядка', xp: 20, date: new Date().toISOString(), kind: 'quest' });
-        localStorage.setItem('play-your-life-v1', JSON.stringify(s));
+        s.quests.push({ id: 'ui-sphere-task', name: 'Задача из сферы', sphere: 'health', xp: 20, difficulty: 'Medium', done: false, dueAt: dateKey() });
+        const done = completeQuest(s, 'ui-sphere-task');
+        localStorage.setItem('play-your-life-v1', JSON.stringify(done));
         localStorage.setItem('play-your-life-home-theme', theme);
       }, theme);
       await page.reload();
@@ -85,6 +87,52 @@ try {
       }
       await page.getByRole('button', { name: '← Все сферы' }).click();
       await cards.first().waitFor();
+      const healthCard = cards.filter({ hasText: 'Здоровье' }).first();
+      await healthCard.locator('.sph-card-photo').click();
+      await quick.getByRole('button', { name: 'Открыть район' }).click();
+      const daily = page.locator('.sph-daily');
+      await daily.waitFor();
+      const taskName = 'Задача из сферы';
+      const originalRewards = await page.evaluate(() => {
+        const s = JSON.parse(localStorage.getItem('play-your-life-v1'));
+        return { xp: s.xp, coins: s.coins, completed: s.completed };
+      });
+      await daily.getByRole('button', { name: `Отменить выполнение: ${taskName}` }).click();
+      await page.waitForFunction(() => !JSON.parse(localStorage.getItem('play-your-life-v1')).quests.find(q => q.id === 'ui-sphere-task').done);
+      assert.deepEqual(await page.evaluate(() => {
+        const s = JSON.parse(localStorage.getItem('play-your-life-v1'));
+        return { xp: s.xp, coins: s.coins, completed: s.completed };
+      }), originalRewards, 'отмена сохраняет уже выплаченную награду');
+      await daily.getByRole('button', { name: `Открыть задачу: ${taskName}` }).click();
+      const taskDialog = page.getByRole('dialog', { name: taskName });
+      await taskDialog.waitFor();
+      assert.equal(await page.locator('.screen-spheres').isVisible(), true, 'меню открывается поверх сферы');
+      await taskDialog.getByLabel('Комментарий / заметка').fill('Комментарий из сферы');
+      await taskDialog.getByLabel('Время выполнения').fill('16:30');
+      await page.waitForFunction(() => {
+        const q = JSON.parse(localStorage.getItem('play-your-life-v1')).quests.find(q => q.id === 'ui-sphere-task');
+        return q.notes === 'Комментарий из сферы' && q.dueAt && new Date(q.dueAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) === '16:30';
+      }).catch(async (error) => {
+        console.error('Сохранённая задача:', await page.evaluate(() => JSON.parse(localStorage.getItem('play-your-life-v1')).quests.find(q => q.id === 'ui-sphere-task')));
+        console.error('Поле времени:', await taskDialog.getByLabel('Время выполнения').inputValue());
+        console.error('Уведомление:', await page.locator('.toast').allTextContents());
+        throw error;
+      });
+      assert.deepEqual(await page.evaluate(() => {
+        const q = JSON.parse(localStorage.getItem('play-your-life-v1')).quests.find(q => q.id === 'ui-sphere-task');
+        return { notes: q.notes, clock: new Date(q.dueAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) };
+      }), { notes: 'Комментарий из сферы', clock: '16:30' }, 'комментарий и время выполнения сохраняются из меню сферы');
+      await taskDialog.getByRole('button', { name: 'Готово' }).click();
+      await daily.getByRole('button', { name: `Выполнить: ${taskName}` }).click();
+      await page.waitForFunction(() => JSON.parse(localStorage.getItem('play-your-life-v1')).quests.find(q => q.id === 'ui-sphere-task').done);
+      assert.deepEqual(await page.evaluate(() => {
+        const s = JSON.parse(localStorage.getItem('play-your-life-v1'));
+        return { xp: s.xp, coins: s.coins, completed: s.completed };
+      }), originalRewards, 'повторное выполнение не начисляет награду второй раз');
+      await daily.getByRole('button', { name: `Открыть задачу: ${taskName}` }).click();
+      await taskDialog.waitFor();
+      await taskDialog.getByRole('button', { name: 'Отменить выполнение' }).click();
+      await page.waitForFunction(() => !JSON.parse(localStorage.getItem('play-your-life-v1')).quests.find(q => q.id === 'ui-sphere-task').done);
       assert.deepEqual(errors, []);
       await context.close();
     }

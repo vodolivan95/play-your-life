@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { initialState, migrateState, completeQuest, removeQuest } from '../src/game.ts';
+import { initialState, migrateState, completeQuest, removeQuest, reopenQuest } from '../src/game.ts';
 import { saveGoal, saveStage, saveTask, deleteGoal } from '../src/planning.ts';
 import { validateState } from '../src/stateValidation.ts';
 import { restoreBackup } from '../src/backup.ts';
@@ -22,6 +22,21 @@ function roundtrip(state: ReturnType<typeof initialState>) {
   const restored = restoreBackup(JSON.stringify(state));
   return migrateState(JSON.parse(JSON.stringify(restored)));
 }
+test('переоткрытая задача сохраняет квитанцию награды, а квитанция без даты отклоняется', () => {
+  let s = saveTask(personal(), {
+    id: 'reopened', name: 'Задача', sphere: 'health', difficulty: 'Medium',
+    sourceType: 'USER_CREATED', ownerId: 'u1', rewardCoins: 0,
+  });
+  s = completeQuest(s, 'reopened');
+  s = reopenQuest(s, 'reopened');
+  const restored = roundtrip(s);
+  assert.equal(restored.quests[0].done, false);
+  assert.equal(restored.quests[0].rewardClaimed, true);
+  assert.equal(restored.quests[0].rewardClaimedAt, s.quests[0].rewardClaimedAt);
+  assert.equal(restored.quests[0].completedAt, undefined);
+  delete s.quests[0].rewardClaimedAt;
+  assert.throws(() => validateState(s));
+});
 test('цели «Вылечить зубы» и «Бросить курить» с этапами и задачами переживают сохранение и загрузку', () => {
   let s = personal();
   s = saveGoal(s, { name: 'Вылечить зубы', sphere: 'health', target: 100, reward: 100, progressMode: 'tasks' });

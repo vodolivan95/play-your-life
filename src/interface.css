@@ -375,6 +375,23 @@ h3 {
 .quest-info {
   min-width: 0;
 }
+.quest-info-open {
+  display: grid;
+  width: 100%;
+  gap: 0;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.quest-info-open:focus-visible {
+  outline: 2px solid #0ca7f1;
+  outline-offset: 3px;
+  border-radius: 3px;
+}
 .quest-info strong {
   font-size: 12px;
   line-height: 1.4;

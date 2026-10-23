@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { firebaseSave } from "../src/firebaseSave.ts";
-import { completeQuest } from "../src/game.ts";
+import { completeQuest, reopenQuest } from "../src/game.ts";
 import { test, after, beforeEach } from "node:test";
 import { readFileSync } from "node:fs";
 import {
@@ -173,6 +173,21 @@ test("квест: транзакционный лимит, лайфкоины и
     row.revision,
   );
   assert.equal(same.state.coins, 100);
+  row = await driver.save(
+    reopenQuest(same.state, s.quests[0].id),
+    same.revision,
+  );
+  assert.equal(row.state.quests[0].done, false);
+  assert.equal(row.state.coins, 100);
+  assert.equal(row.state.coinTransactions.length, 1);
+  row = await driver.save(
+    completeQuest(row.state, s.quests[0].id),
+    row.revision,
+  );
+  assert.equal(row.state.quests[0].done, true);
+  assert.equal(row.state.coins, 100);
+  assert.equal(row.state.coinTransactions.length, 1);
+  assert.equal(row.state.completed, 1);
   const ref = doc(db, "players", "alice"),
     data = (await getDoc(ref)).data();
   await assertFails(

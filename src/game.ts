@@ -555,11 +555,21 @@ export function award(
 }
 export function completeQuest(state: GameState, id: string): GameState {
   const quest = state.quests.find((q) => q.id === id);
-  if (!quest || quest.done || quest.rewardClaimed) return state;
+  if (!quest || quest.done) return state;
   const parentGoal = state.goals.find((g) => g.id === quest.goalId);
   const parentStage = parentGoal?.stages?.find((s) => s.id === quest.stageId);
   if (parentGoal && parentStage && (stageAccess(state, parentGoal, parentStage) || parentStage.status === 'paused')) return state;
   if (quest.sourceType === 'USER_CREATED' && quest.startsAt && new Date(quest.startsAt) > new Date()) return state;
+  if (quest.rewardClaimed) {
+    let next: GameState = {
+      ...state,
+      quests: state.quests.map((q) => q.id === id
+        ? { ...q, done: true, currentValue: q.targetValue ?? 1, completedAt: new Date().toISOString(), rewardLocked: true }
+        : q),
+    };
+    if (quest.goalId) next = syncGoalTasks(next, quest.goalId, true);
+    return next;
+  }
   const coins = questCoins(quest);
   const xp = quest.sourceType === 'USER_CREATED' ? difficulties[quest.difficulty as keyof typeof difficulties] : quest.xp;
   if (!Number.isFinite(xp) || xp < 0) throw new Error('Некорректная награда XP.');
@@ -627,6 +637,27 @@ export function completeQuest(state: GameState, id: string): GameState {
     if (quest.goalId) next = syncGoalTasks(next, quest.goalId);
   }
   return next;
+}
+export function reopenQuest(state: GameState, id: string): GameState {
+  const quest = state.quests.find((q) => q.id === id);
+  if (!quest?.done) return state;
+  const next: GameState = {
+    ...state,
+    quests: state.quests.map((q) => {
+      if (q.id !== id) return q;
+      const reopened = {
+        ...q,
+        done: false,
+        currentValue: 0,
+        rewardClaimed: true,
+        rewardClaimedAt: q.rewardClaimedAt ?? q.completedAt ?? new Date().toISOString(),
+        rewardLocked: true,
+      };
+      delete reopened.completedAt;
+      return reopened;
+    }),
+  };
+  return quest.goalId ? syncGoalTasks(next, quest.goalId) : next;
 }
 export function nextRepeatDay(base: string, repeat: NonNullable<Quest['repeat']>, today: string): string {
   const date = new Date(`${base}T12:00:00`);

@@ -176,7 +176,7 @@ export function saveCustomQuest(
     createdAt: old?.createdAt ?? new Date().toISOString(),
     done: false,
     rewardLocked: locked,
-    rewardClaimed: false,
+    rewardClaimed: old?.rewardClaimed ?? false,
   };
   const clean = Object.fromEntries(
     Object.entries(q).filter(([, v]) => v !== undefined),
@@ -195,7 +195,7 @@ export function progressQuest(
   ownerId: string,
 ): GameState {
   const q = state.quests.find((item) => item.id === id);
-  if (!q || q.done || q.rewardClaimed) return state;
+  if (!q || q.done) return state;
   if (q.ownerId && q.ownerId !== ownerId)
     throw new Error("Это задача другого пользователя.");
   if (q.startsAt && Date.parse(q.startsAt) > Date.now())

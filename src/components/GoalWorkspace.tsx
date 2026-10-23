@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import type { Dispatch, SetStateAction, ReactNode } from 'react';
 import {
   completeQuest,
+  reopenQuest,
   removeQuest,
   spheres,
   syncGoalTasks,
@@ -609,7 +610,16 @@ export default function GoalWorkspace(p: Props) {
       p.onNotify('Задача запланирована на будущую дату.');
       return false;
     }
-    return mutate((s) => completeQuest(s, task.id));
+    const changed = mutate((s) => completeQuest(s, task.id));
+    if (changed && task.rewardClaimed)
+      p.onNotify('Задача отмечена выполненной. Награда уже была получена и повторно не начислена.');
+    return changed;
+  }
+  function undoFinish(task: Quest) {
+    const changed = mutate((s) => reopenQuest(s, task.id));
+    if (changed)
+      p.onNotify('Отметка выполнения снята. Полученная награда остаётся и повторно не начислится.');
+    return changed;
   }
   function taskRow(task: Quest) {
     const parent = stages.find((s) => s.id === task.stageId);
@@ -625,13 +635,12 @@ export default function GoalWorkspace(p: Props) {
       >
         <button
           className="gw-task-check"
-          disabled={
-            task.done ||
+          disabled={!task.done && (
             !!blocked ||
             (!!task.startsAt && Date.parse(task.startsAt) > now)
-          }
-          aria-label={`Выполнить: ${task.name}`}
-          onClick={() => finish(task)}
+          )}
+          aria-label={`${task.done ? 'Отменить выполнение' : 'Выполнить'}: ${task.name}`}
+          onClick={() => task.done ? undoFinish(task) : finish(task)}
         >
           {task.done ? '✓' : ''}
         </button>
@@ -1522,13 +1531,13 @@ export default function GoalWorkspace(p: Props) {
                 )}
               <div className="gw-task-toolbar">
                 <button
-                  className="primary-button"
-                  disabled={viewedTask.done}
+                  className={viewedTask.done ? 'secondary-button' : 'primary-button'}
                   onClick={() => {
-                    if (finish(viewedTask!)) setDetail(null);
+                    if (viewedTask!.done) undoFinish(viewedTask!);
+                    else if (finish(viewedTask!)) setDetail(null);
                   }}
                 >
-                  Выполнить задачу
+                  {viewedTask.done ? 'Отменить выполнение' : 'Выполнить задачу'}
                 </button>
                 {!viewedTask.done && (
                   <button

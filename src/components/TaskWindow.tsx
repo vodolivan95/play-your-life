@@ -53,7 +53,7 @@ function withTime(dueAt: string, time: string) {
   const day = dayOf(dueAt);
   return time ? `${day}T${time}` : day;
 }
-export default function TaskWindow({ taskId, state, today, onChange, onClose, onAdvanced, onProgress, onDelete, notify }: {
+export default function TaskWindow({ taskId, state, today, onChange, onClose, onAdvanced, onProgress, onUndo, onDelete, notify }: {
   taskId: string;
   state: GameState;
   today: string;
@@ -61,6 +61,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
   onClose: () => void;
   onAdvanced?: (q: Quest) => void;
   onProgress?: (q: Quest) => void;
+  onUndo?: (q: Quest) => void;
   onDelete?: (q: Quest) => void;
   notify: (s: string) => void;
 }) {
@@ -79,12 +80,16 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
     linked = !!task.tickTickSharedAt,
     locked = task.done;
   function patch(p: TaskPatch, message?: string) {
-    try {
-      onChange(updateTaskSettings(state, task!.id, p));
-      if (message) notify(message);
-    } catch (e) {
-      notify((e as Error).message);
-    }
+    onChange((current) => {
+      try {
+        const next = updateTaskSettings(current, task!.id, p);
+        if (message) queueMicrotask(() => notify(message));
+        return next;
+      } catch (e) {
+        queueMicrotask(() => notify((e as Error).message));
+        return current;
+      }
+    });
   }
   function addStage() {
     try {
@@ -235,7 +240,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
               <button className="secondary-button" disabled={!sub.trim()}>＋ Добавить</button>
             </form>
           </div>
-          <label className="twin-field">Заметка
+          <label className="twin-field">Комментарий / заметка
             <textarea rows={3} value={notes} maxLength={2000} disabled={locked} onChange={(e) => setNotes(e.target.value)}
               onBlur={() => notes.trim() !== (task.notes ?? '') && patch({ notes })} />
           </label>
@@ -253,6 +258,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
           {task.sourceType === 'USER_CREATED' && onAdvanced && (
             <button type="button" className="text-button" onClick={() => { onClose(); onAdvanced(task); }}>Расширенные настройки</button>
           )}
+          {task.done && onUndo && <button type="button" className="secondary-button" onClick={() => onUndo(task)}>Отменить выполнение</button>}
           {onDelete && <button type="button" className="text-button" onClick={() => onDelete(task)}>Удалить</button>}
           {onProgress && !task.done && <button type="button" className="secondary-button" onClick={() => onProgress(task)}>Продолжить</button>}
           <button type="button" className="primary-button" onClick={onClose}>Готово</button>

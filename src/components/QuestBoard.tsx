@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import { removeQuest } from "../game";
+import { removeQuest, reopenQuest } from "../game";
 import type { GameState, Quest } from "../game";
 import {
   progressQuest,
@@ -83,12 +83,15 @@ export default function QuestBoard({
       const next = progressQuest(state, q.id, value, ownerId);
       onChange(next);
       if (!q.done && next.quests.find((i) => i.id === q.id)?.done) {
-        const item = virtualRewards.find((i) => i.id === q.virtualRewardId);
-        setCelebrate(
-          state.completed === 0
-            ? "🏆 Первый шаг! Твоя первая задача выполнена!"
-            : `✓ +${next.xp - state.xp} XP · +${questCoins(q)} лайфкоинов${item ? " · " + item.icon + " " + item.name : ""}`,
-        );
+        if (q.rewardClaimed) setCelebrate("Задача снова отмечена выполненной. Награда повторно не начислена.");
+        else {
+          const item = virtualRewards.find((i) => i.id === q.virtualRewardId);
+          setCelebrate(
+            state.completed === 0
+              ? "🏆 Первый шаг! Твоя первая задача выполнена!"
+              : `✓ +${next.xp - state.xp} XP · +${questCoins(q)} лайфкоинов${item ? " · " + item.icon + " " + item.name : ""}`,
+          );
+        }
       } else notify("Прогресс сохранён");
       setProgress(null);
     } catch (e) {
@@ -188,6 +191,7 @@ export default function QuestBoard({
           onClose={() => setOpenTask(null)}
           onAdvanced={(q) => setForm({ quest: q, habitMode: false })}
           onProgress={(q) => { setOpenTask(null); startProgress(q); }}
+          onUndo={(q) => apply((s) => reopenQuest(s, q.id), "Отметка выполнения снята. Полученная награда остаётся и повторно не начислится.")}
           onDelete={deleteQuest}
         />
       )}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
-import { completeQuest, dateKey, isOverdue, spheres } from '../game';
+import { completeQuest, dateKey, isOverdue, reopenQuest, spheres } from '../game';
 import type { GameState, Quest } from '../game';
 import {
   formatDate,
@@ -89,12 +89,18 @@ export default function LifePlanner({
       >
         <button
           className={`check-button ${task.done ? 'checked' : ''}`}
-          disabled={task.done}
-          aria-label={`Выполнить: ${task.name}`}
+          aria-label={`${task.done ? 'Отменить выполнение' : 'Выполнить'}: ${task.name}`}
+          title={task.done ? 'Отменить выполнение' : 'Выполнить'}
           onClick={() => {
-            const next = completeQuest(state, task.id);
+            const next = task.done
+              ? reopenQuest(state, task.id)
+              : completeQuest(state, task.id);
             onChange(next);
-            if (next.xp > state.xp)
+            if (task.done && next !== state)
+              onNotify('Отметка выполнения снята. Полученная награда остаётся и повторно не начислится.');
+            else if (!task.done && task.rewardClaimed && next !== state)
+              onNotify('Задача отмечена выполненной. Награда уже была получена и повторно не начислена.');
+            else if (next.xp > state.xp)
               onNotify(`+${next.xp - state.xp} XP · Шаг сделан!`);
           }}
         >

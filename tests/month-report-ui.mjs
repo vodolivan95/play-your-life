@@ -54,7 +54,9 @@ try {
       await page.getByRole('group', { name: 'Важность сферы Финансы от 1 до 5' }).getByRole('button', { name: '5 из 5' }).click();
       assert.equal(await page.getByRole('group', { name: 'Важность сферы Финансы от 1 до 5' }).locator('button.on').count(), 5, 'Важность сохранилась');
       await page.screenshot({ path: `work/month-report/${name}-1-report.png`, fullPage: true });
-      await page.getByRole('button', { name: 'Подвести итог' }).first().click();
+      await page.getByRole('button', { name: 'Записать победу' }).first().click();
+      await page.locator('.prv-victories').waitFor();
+      await page.getByRole('button', { name: 'Открыть «Мои итоги»', exact: true }).click();
       await page.locator('.myr').waitFor();
       await page.screenshot({ path: `work/month-report/${name}-2-mine.png` });
 

@@ -187,7 +187,7 @@ export default function MonthReport({
                 </div>
                 <div className={`mrep-status ${victoryOf(r.review, x.id) ? 'done' : 'none'}`}>
                   <span>{victoryOf(r.review, x.id) ? 'Личная победа сохранена' : 'Можно дополнить месяц'}</span>
-                  <button onClick={onOpenMine}>{victoryOf(r.review, x.id) ? 'Мои итоги' : 'Подвести итог'}</button>
+                  <button onClick={victoryOf(r.review, x.id) ? onOpenMine : onOpenVictory ?? onOpenMine}>{victoryOf(r.review, x.id) ? 'Мои итоги' : 'Записать победу'}</button>
                 </div>
               </div>
             ))}

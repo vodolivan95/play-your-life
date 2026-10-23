@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { spheres } from '../game';
 import type { GameState } from '../game';
-import { coastalHitShapes, wideBuildings } from '../coastalCity';
+import { coastalHitShapes } from '../coastalCity';
 import { buildingState } from '../city';
-import wideMapUrl from '../assets/city-wide.webp';
+import islandMapUrl from '../assets/city-islands.webp';
 import { validRoutes } from '../cityLive/paths';
 import type { CityRoute, Point, RouteKind } from '../cityLive/paths';
 import { readRoutes } from '../cityLive/simulation';
-import { wideProfile } from '../cityLive/wideMap';
+import { islandBuildings, islandProfile } from '../cityLive/islandMap';
 import type { Quality } from '../cityLive/simulation';
 import type { CityTime, DebugFlags } from '../cityLive/render';
 import LiveCityCanvas from './LiveCityCanvas';
@@ -47,12 +47,13 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
 }) {
   const {zoom,setZoom,scroll}=useCityZoom();
   const wide=useWide();
-  const cards=useMemo(()=>sphereCards(state),[state]);
+  // Психология остаётся в игре и сохранениях, но не входит в эту карту города.
+  const cards=useMemo(()=>sphereCards(state).filter(card=>islandBuildings.some(building=>building.id===card.id)),[state]);
   const [picked,setPicked]=useState<string|null>(null);
   const current=cards.find(c=>c.id===picked)??null;
   const [preferences,setPreferences]=useState(readPreferences);
   // Одна горизонтальная карта острова для ПК и телефона; на телефоне она шире экрана и листается.
-  const profile=wideProfile,buildings=wideBuildings;
+  const profile=islandProfile,buildings=islandBuildings;
   const [routes,setRoutes]=useState<CityRoute[]>(()=>{try{return readRoutes(localStorage,profile);}catch{return profile.routes;}});
   const [debug,setDebug]=useState(debugDefaults);
   const dev=new URLSearchParams(window.location.search).get('city-dev')==='1';
@@ -72,7 +73,7 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
     const url=URL.createObjectURL(new Blob([JSON.stringify(routes,null,2)],{type:'application/json'}));
     const link=document.createElement('a');link.href=url;link.download='play-your-life-city-routes.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   };
-  return <div className="coastal-city">
+  return <div className="coastal-city" style={{'--city-aspect':`${profile.width} / ${profile.height}`} as CSSProperties}>
     <div className="coastal-controls" aria-label="Вид города">
       <label>Время <select aria-label="Время города" value={preferences.time} onChange={e=>setPreferences({...preferences,time:e.target.value as CityTime})}>
         <option value="auto">Авто · цикл дня</option><option value="day">День</option><option value="sunset">Закат</option><option value="night">Ночь</option><option value="sunrise">Рассвет</option>
@@ -121,7 +122,7 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
       <div className="coastal-stage" style={wide?{width:`${zoom*100}%`}:undefined}>
       <div className="coastal-map" data-time={preferences.time} data-weather={preferences.weather} data-paused={paused} data-editing={editing}
         style={{...(wide?{}:{width:`${zoom*175}%`}),'--city-rate':speed} as unknown as CSSProperties}>
-        <img src={wideMapUrl} width={2576} height={1449} fetchPriority="high" decoding="async" alt="Прибрежный город на островах: девять зданий сфер жизни, мосты, водопады и пляж" draggable={false}/>
+        <img src={islandMapUrl} width={1679} height={937} fetchPriority="high" decoding="async" alt="Новая карта города: девять зданий сфер жизни, острова, мосты, водопады и цветущий парк" draggable={false}/>
         <LiveCityCanvas profile={profile} routes={routes} paused={paused} speed={speed} quality={preferences.quality} time={preferences.time} weather={preferences.weather}
           debug={debug} draft={draft} editing={editing} onPoint={point=>setDraft([...draft,point])}/>
         {buildings.map(building=>{

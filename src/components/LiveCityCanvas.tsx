@@ -9,6 +9,7 @@ import rogueUrl from '../assets/city-people/kaykit-rogue.webp';
 import hoodedUrl from '../assets/city-people/kaykit-hooded.webp';
 import { cityAssets } from '../sphereAssets';
 import wideMapUrl from '../assets/city-wide.webp';
+import islandMapUrl from '../assets/city-islands.webp';
 import { CitySimulation, QualityManager } from '../cityLive/simulation';
 import { isConstrainedDevice } from '../cityLive/device';
 import type { Quality } from '../cityLive/simulation';
@@ -38,7 +39,7 @@ export default function LiveCityCanvas(props:Props) {
     const renderer=new CityRenderer(ctx,profile);
     const background=new Image(),sprites=new Image(),boats=new Image(),globe=new Image(),clean=new Image();
     const people=peopleUrls.map(url=>{const img=new Image();img.src=url;return img;});
-    background.src=profile.id==='wide'?wideMapUrl:cityAssets.background;sprites.src=spritesUrl;boats.src=boatsUrl;if(profile.globe)globe.src=globeUrl;if(profile.cleanSurfaces)clean.src=cityAssets.cleanSurfaces;
+    background.src=profile.id==='islands'?islandMapUrl:profile.id==='wide'?wideMapUrl:cityAssets.background;sprites.src=spritesUrl;boats.src=boatsUrl;if(profile.globe)globe.src=globeUrl;if(profile.cleanSurfaces)clean.src=cityAssets.cleanSurfaces;
     let unitPx=1,frame=0,previous=0,lastStats=0,visible=true,disposed=false,ready=false,lastSignature='',renderMs=0,simulationMs=0;
     const resize=()=>{
       const width=Math.max(1,node.getBoundingClientRect().width);unitPx=width/MAP_WIDTH;
@@ -84,7 +85,7 @@ export default function LiveCityCanvas(props:Props) {
         lastStats=now;
         const stats={elapsed:Math.round(sim.elapsed*100)/100,renderMs:Math.round(renderMs*10)/10,simulationMs:Math.round(simulationMs*10)/10,fps:Math.round(quality.fps),quality:quality.level,
           counts:Object.fromEntries(['road','water','pedestrian'].map(kind=>[kind,sim.agents.filter(a=>a.kind===kind).length])),
-          positions:sim.normalizedPositions,collisionStops:sim.collisionStops,fountains:profile.fountains.length,waterfalls:profile.waterfalls.length,paused,reduced,level:quality.level};
+          profile:profile.id,positions:sim.normalizedPositions,collisionStops:sim.collisionStops,fountains:profile.fountains.length,waterfalls:profile.waterfalls.length,paused,reduced,level:quality.level};
         node.dataset.stats=JSON.stringify(stats);node.dataset.ready='true';
         if (fps.current) fps.current.value=`${stats.fps} FPS · ${stats.quality.toUpperCase()} · ${stats.counts.road} авто · ${stats.counts.water} суда · ${stats.counts.pedestrian} NPC`;
       }

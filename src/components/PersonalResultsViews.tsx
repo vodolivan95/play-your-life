@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { CSSProperties, Dispatch, SetStateAction } from 'react';
 import { spheres } from '../game';
 import type { GameState } from '../game';
 import { monthKey, monthLabel, validMonth } from '../monthly';
@@ -12,6 +12,58 @@ type StateChange = Dispatch<SetStateAction<GameState>>;
 type Range = 6 | 12;
 
 const DEFAULT_SPHERE = 'health';
+
+/** По умолчанию всё видно: анимация включается только при доступном наблюдателе. */
+function useYearReveal(year: number, sphere: string) {
+  const root = useRef<HTMLDivElement>(null);
+  const previousYear = useRef(year);
+  useEffect(() => {
+    const container = root.current;
+    if (!container) return;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const items = Array.from(container.querySelectorAll<HTMLElement>('[data-year-reveal]'));
+    const show = (item: HTMLElement) => { item.dataset.yearReveal = 'visible'; };
+    const newYear = previousYear.current !== year;
+    previousYear.current = year;
+    if (reduced.matches || typeof IntersectionObserver === 'undefined') {
+      items.forEach(show);
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        show(entry.target as HTMLElement);
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -24px 0px' });
+    items.forEach((item) => {
+      if (!newYear && item.dataset.yearReveal === 'visible') return;
+      item.dataset.yearReveal = 'pending';
+      observer.observe(item);
+    });
+    const showFocused = (event: FocusEvent) => {
+      let item = event.target instanceof Element
+        ? event.target.closest<HTMLElement>('[data-year-reveal]') : null;
+      while (item && container.contains(item)) {
+        show(item);
+        observer.unobserve(item);
+        item = item.parentElement?.closest<HTMLElement>('[data-year-reveal]') ?? null;
+      }
+    };
+    const reduceMotion = () => {
+      if (reduced.matches) { items.forEach(show); observer.disconnect(); }
+    };
+    container.addEventListener('focusin', showFocused);
+    reduced.addEventListener('change', reduceMotion);
+    return () => {
+      observer.disconnect();
+      container.removeEventListener('focusin', showFocused);
+      reduced.removeEventListener('change', reduceMotion);
+      items.forEach(show);
+    };
+  }, [year, sphere]);
+  return root;
+}
 
 function abbreviatedMonth(month: string) {
   return monthLabel(month).split(' ')[0].slice(0, 3);
@@ -339,6 +391,7 @@ export function YearResults({
   const [year, setYear] = useState(initialYear);
   const [sphere, setSphere] = useState(DEFAULT_SPHERE);
   const chosenYear = years.includes(year) ? year : (years[0] ?? currentYear);
+  const revealRoot = useYearReveal(chosenYear, sphere);
 
   const summaries = spheres.map((item) => ({ item, data: personalYear(state, chosenYear, item.id) }));
   const selected = summaries.find((entry) => entry.item.id === sphere) ?? summaries[0];
@@ -348,8 +401,8 @@ export function YearResults({
   const yearMonths = Array.from({ length: 12 }, (_, index) => monthForYear(chosenYear, index));
 
   return (
-    <div className="prv prv-year">
-      <section className="kr-hero prv-year-hero" aria-labelledby="prv-year-title">
+    <div className="prv prv-year prv-year-root" ref={revealRoot}>
+      <section className="kr-hero prv-year-hero" data-year-reveal="" aria-labelledby="prv-year-title">
         <div>
           <p className="kr-eyebrow">ГОДОВЫЕ ИТОГИ · ЛИЧНЫЕ ЗАПИСИ</p>
           <h2 id="prv-year-title">{chosenYear}</h2>
@@ -372,7 +425,7 @@ export function YearResults({
         </label>
       </section>
 
-      <section className="kr-card prv-year-matrix-card" aria-labelledby="prv-matrix-title">
+      <section className="kr-card prv-year-matrix-card" data-year-reveal="" aria-labelledby="prv-matrix-title">
         <div className="kr-section-head">
           <div>
             <p className="kr-eyebrow">МАТРИЦА РУЧНЫХ ЧИСЕЛ</p>
@@ -447,7 +500,7 @@ export function YearResults({
         </div>
       </section>
 
-      <section className="kr-card prv-year-detail" aria-labelledby="prv-year-detail-title">
+      <section className="kr-card prv-year-detail" data-year-reveal="" aria-labelledby="prv-year-detail-title">
         <div className="kr-section-head">
           <div>
             <p className="kr-eyebrow">ЛИЧНАЯ ХРОНИКА</p>
@@ -458,7 +511,7 @@ export function YearResults({
         <SpherePicker value={sphere} onChange={setSphere} label="Сфера для годовой хроники" />
         {selected && (
           <div className="prv-year-months">
-            {yearMonths.map((key) => {
+            {yearMonths.map((key, index) => {
               const item = selected.data.months.find((candidate) => candidate.month === key);
               const future = item?.future ?? key > currentMonth;
               const tasks = item?.tasks ?? null;
@@ -466,7 +519,8 @@ export function YearResults({
               const evidence = evidenceFor(state, key, sphere).trim();
               const empty = !future && tasks === null && !victory && !evidence;
               return (
-                <article className={`prv-year-month${future ? ' is-future' : ''}${key === currentMonth ? ' is-current' : ''}`} key={key}>
+                <article className={`prv-year-month${future ? ' is-future' : ''}${key === currentMonth ? ' is-current' : ''}`}
+                  data-year-reveal="" style={{ '--prv-delay': `${(index % 3) * 65}ms` } as CSSProperties} key={`${sphere}-${key}`}>
                   <div className="prv-year-month-head">
                     <h4>{monthLabel(key).split(' ')[0]}</h4>
                     {key === currentMonth && <span className="kr-pill">СЕЙЧАС</span>}

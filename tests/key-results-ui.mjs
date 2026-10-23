@@ -240,6 +240,28 @@ try {
       assert.ok(await futureCells.count() > 0, 'В текущем году есть нейтральные будущие ячейки');
       for (const text of await futureCells.allTextContents()) assert.match(text.trim(), /^ещё не наступил$/, 'Будущий месяц не считается нулём');
       await page.locator('.prv-year-month.is-current').getByText('Наладил сон и восстановление', { exact: true }).waitFor();
+      const yearRoot = page.locator('.prv-year-root');
+      const yearReveal = yearRoot.locator('[data-year-reveal]').first();
+      await yearReveal.scrollIntoViewIfNeeded();
+      await page.waitForFunction((element) => element.getAttribute('data-year-reveal') === 'visible', await yearReveal.elementHandle());
+      await page.waitForFunction((element) => {
+        const style = getComputedStyle(element);
+        return style.opacity !== '0' && element.getAnimations().every((animation) => animation.playState === 'finished');
+      }, await yearReveal.elementHandle());
+      const yearMonths = yearRoot.locator('.prv-year-month');
+      await yearMonths.first().scrollIntoViewIfNeeded();
+      await page.waitForFunction((element) => element.getAttribute('data-year-reveal') === 'visible', await yearMonths.first().elementHandle());
+      const spherePicker = page.getByRole('group', { name: 'Сфера для годовой хроники' });
+      await spherePicker.getByRole('button', { name: 'Спорт' }).click();
+      await assert.equal(await yearMonths.count(), 12, 'При смене сферы сохраняются все 12 месяцев');
+      await spherePicker.getByRole('button', { name: 'Здоровье' }).click();
+      assert.equal(await yearMonths.count(), 12, 'При возврате к здоровью сохраняются все 12 месяцев');
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.waitForFunction((root) => {
+        const months = [...root.querySelectorAll('.prv-year-month')];
+        return months.length === 12 && months.every((month) => month.getAttribute('data-year-reveal') === 'visible' &&
+          getComputedStyle(month).animationName === 'none' && getComputedStyle(month).transform === 'none');
+      }, await yearRoot.elementHandle());
       await page.screenshot({ path: `work/key-results/${name}-year.png`, fullPage: true });
       await assertNoDocumentOverflow(page, `${name}: итоги года`);
 

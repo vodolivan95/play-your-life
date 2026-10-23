@@ -921,3 +921,57 @@
     min-height: 0;
   }
 }
+
+/* Годовой отчёт: спокойное появление, не анимация самих числовых данных. */
+.key-results .prv-year [data-year-reveal='pending'] {
+  opacity: 0;
+  transform: translate3d(0, 16px, 0) scale(.985);
+}
+.key-results .prv-year [data-year-reveal='visible'] {
+  animation: prv-year-arrive .72s cubic-bezier(.22, 1, .36, 1) var(--prv-delay, 0ms) both;
+}
+.key-results .prv-year-matrix-card { --prv-delay: 75ms; }
+.key-results .prv-year-detail { --prv-delay: 110ms; }
+.key-results .prv-year-month {
+  position: relative;
+  isolation: isolate;
+  transition: border-color .25s ease, box-shadow .3s ease;
+}
+.key-results .prv-year-month.is-future { --prv-reveal-opacity: .76; }
+.key-results .prv-year-hero::before,
+.key-results .prv-year-month::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(115deg, transparent 22%, color-mix(in srgb, var(--kr-blue) 11%, transparent) 42%, rgba(255, 255, 255, .13) 50%, transparent 70%);
+}
+.key-results .prv-year-hero[data-year-reveal='visible']::before,
+.key-results .prv-year-month[data-year-reveal='visible']::after {
+  animation: prv-year-glass-light .95s ease-out calc(var(--prv-delay, 0ms) + 120ms) both;
+}
+@keyframes prv-year-arrive {
+  from { opacity: 0; transform: translate3d(0, 16px, 0) scale(.985); }
+  to { opacity: var(--prv-reveal-opacity, 1); transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes prv-year-glass-light {
+  0%, 100% { opacity: 0; }
+  35% { opacity: .65; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .key-results .prv-year-month:not(.is-future):hover {
+    border-color: color-mix(in srgb, var(--kr-blue) 38%, var(--kr-line));
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--kr-blue) 7%, transparent), inset 0 1px 0 rgba(255, 255, 255, .12);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .key-results .prv-year [data-year-reveal] {
+    animation: none !important;
+    transform: none !important;
+    opacity: var(--prv-reveal-opacity, 1) !important;
+  }
+  .key-results .prv-year-hero::before,
+  .key-results .prv-year-month::after { animation: none !important; opacity: 0 !important; }
+}

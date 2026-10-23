@@ -3,6 +3,8 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { GameState } from '../game';
 import { monthKey, monthLabel, moveMonth, validMonth } from '../monthly';
 import { monthReport, setImportance } from '../monthReport';
+import { victoryOf } from '../personalResults';
+import { carriedPlans } from '../keyResults';
 import './MonthReport.css';
 
 const ratingTitles = ['', 'Тяжёлый месяц', 'Неровный месяц', 'Спокойный месяц', 'Хороший месяц', 'Отличный месяц'];
@@ -21,12 +23,17 @@ export default function MonthReport({
   state,
   onChange,
   onOpenMine,
+  selectedMonth,
+  onOpenVictory,
 }: {
   state: GameState;
   onChange: Dispatch<SetStateAction<GameState>>;
   onOpenMine: () => void;
+  selectedMonth?: string;
+  onOpenVictory?: () => void;
 }) {
-  const [month, setMonth] = useState(monthKey);
+  const [localMonth, setMonth] = useState(monthKey);
+  const month = selectedMonth ?? localMonth;
   const r = monthReport(state, month);
   const s = r.summary;
   const change = r.xpChange;
@@ -53,13 +60,13 @@ export default function MonthReport({
 
   return (
     <div className="mrep">
-      <div className="mrep-bar">
+      {!selectedMonth && <div className="mrep-bar">
         <div className="mrep-nav">
           <button className="icon-button outlined" aria-label="Предыдущий месяц" onClick={() => setMonth(moveMonth(month, -1))}>←</button>
           <b>{monthLabel(month)}</b>
           <button className="icon-button outlined" aria-label="Следующий месяц" disabled={month >= monthKey()} onClick={() => { const next = moveMonth(month, 1); if (validMonth(next) && next <= monthKey()) setMonth(next); }}>→</button>
         </div>
-      </div>
+      </div>}
 
       <section className="mrep-hero">
         <div className="mrep-hero-main">
@@ -132,12 +139,11 @@ export default function MonthReport({
         <header className="mrep-head">
           <div>
             <h3>Сферы жизни</h3>
-            <p>Уровни: начало → конец месяца. Итог по каждой сфере ты пишешь во вкладке «Мои итоги».</p>
+            <p>Уровни и XP — из игры. Закрытые задачи — из «Моих итогов». Личная победа — из «Ключевого результата».</p>
           </div>
           <div className="mrep-head-side">
-            <span>Итогов по сферам: {r.filled} из {total}</span>
-            <div className="mrep-track green"><i style={{ width: `${(r.filled / total) * 100}%` }} /></div>
-            <button className="mrep-cta" onClick={onOpenMine}>Подвести итоги по сферам</button>
+            <span>Личных побед записано: {r.sphereRows.filter((row) => victoryOf(r.review, row.id).trim()).length}</span>
+            <button className="mrep-cta" onClick={onOpenVictory ?? onOpenMine}>Личные победы по сферам</button>
           </div>
         </header>
         <div className="mrep-spheres-layout">
@@ -175,9 +181,14 @@ export default function MonthReport({
                   <div><b>+{x.xp}</b><span>XP</span></div>
                 </div>
                 <div className="mrep-track sphere"><i style={{ width: `${x.share}%` }} /></div>
-                {x.status === 'done' && <div className="mrep-status done"><span>✓ {x.result || 'Итог записан'}</span><button onClick={onOpenMine}>Изменить</button></div>}
-                {x.status === 'draft' && <div className="mrep-status draft"><span>Черновик итога</span><button onClick={onOpenMine}>Дописать</button></div>}
-                {x.status === 'none' && <div className="mrep-status none"><span>Итог не подведён</span><button onClick={onOpenMine}>Подвести итог</button></div>}
+                <div className="kr-report-personal">
+                  <span>Закрыто задач вручную: <b>{r.review.spheres[x.id]?.tasksDone ?? 'не указано'}</b></span>
+                  <p>{victoryOf(r.review, x.id) || 'Личная победа пока не записана'}</p>
+                </div>
+                <div className={`mrep-status ${victoryOf(r.review, x.id) ? 'done' : 'none'}`}>
+                  <span>{victoryOf(r.review, x.id) ? 'Личная победа сохранена' : 'Можно дополнить месяц'}</span>
+                  <button onClick={onOpenMine}>{victoryOf(r.review, x.id) ? 'Мои итоги' : 'Подвести итог'}</button>
+                </div>
               </div>
             ))}
           </div>
@@ -267,11 +278,15 @@ export default function MonthReport({
           <div><h3>Мой взгляд на месяц</h3><p>Цифры — только часть истории. Остальное — в «Мои итоги».</p></div>
           <button className="mrep-cta" onClick={onOpenMine}>Открыть «Мои итоги»</button>
         </header>
-        <div className="mrep-view">
-          <div><span>Оценка месяца</span><b>{r.rating ? `${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)} ${ratingTitles[r.rating]}` : 'Ещё не поставлена'}</b></div>
-          <div><span>Победы</span><b>{r.review.wins.length ? r.review.wins.slice(0, 3).join(' · ') : 'Ещё не выбраны'}</b></div>
-          <div><span>Фокусы на следующий месяц</span><b>{r.review.focuses.length ? r.review.focuses.map((id) => r.sphereRows.find((x) => x.id === id)?.name).filter(Boolean).join(', ') : 'Ещё не выбраны'}</b></div>
+        <div className="kr-report-conclusion">
+          <div><h4>Главный вывод</h4><p>{r.review.conclusion ?? state.monthlyReflections?.[month]?.lessons ?? 'Вывод пока не записан'}</p></div>
+          <div><h4>Планы на следующий месяц</h4>
+            {(r.review.nextPlans?.filter((plan) => plan.title.trim()).length ?? 0) > 0
+              ? <ol>{r.review.nextPlans!.filter((plan) => plan.title.trim()).map((plan) => <li key={plan.id}>{plan.title}</li>)}</ol>
+              : <p>{carriedPlans(state, moveMonth(month, 1)).map((plan) => plan.text).join(' · ') || 'Планы пока не записаны'}</p>}
+          </div>
         </div>
+        {r.rating !== null && <p className="mrep-small">Прежняя оценка месяца: {r.rating} из 5 · {ratingTitles[r.rating]}</p>}
       </section>
     </div>
   );

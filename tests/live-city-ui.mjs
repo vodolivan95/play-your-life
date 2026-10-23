@@ -208,14 +208,19 @@ try {
  await cards.evaluate(async()=>{const {newAccountGame}=await import('/src/accountGame.ts');const state=newAccountGame('Тест города');state.profile.onboardingComplete=true;state.coins=237;state.xp=400;localStorage.setItem('play-your-life-v1',JSON.stringify(state));});
  await cards.getByRole('button',{name:'Продолжить игру на этом устройстве'}).click();
  const oldSave=await cards.evaluate(()=>localStorage.getItem('play-your-life-v1'));
- await cards.locator('.home-spheres').scrollIntoViewIfNeeded();await cards.locator('.home-spheres img').first().waitFor();
- assert.equal(await cards.locator('.home-spheres img[data-building-source="master-city"]').count(),9);
- assert.equal(await cards.locator('.home-spheres [data-sphere-icon]').count(),9);
- assert.equal(await cards.locator('.home-spheres canvas').count(),0);
- for(const photo of await cards.locator('.home-spheres img[data-sphere]').all()){await photo.scrollIntoViewIfNeeded();await photo.evaluate(image=>image.decode());}
- assert.ok(await cards.evaluate(async()=>{const {sphereAssets}=await import('/src/sphereAssets.ts');return [...document.querySelectorAll('.home-spheres img[data-sphere]')].every(image=>image.naturalWidth>0&&image.getAttribute('src')===sphereAssets[image.dataset.sphere].buildingThumbnail);}),'Все фотографии загружены и соответствуют реестру');
+ await cards.locator('.home-dashboard').waitFor();
+ assert.equal(await cards.locator('.home-spheres').count(),0,'Карточки сфер убраны с главной по правкам пользователя');
+ await cards.locator('.pyl-tabbar').getByRole('button',{name:/^Ещё/}).click();
+ await cards.locator('.pyl-more').getByRole('button',{name:/^Сферы жизни/}).click();
+ await cards.locator('.sph-grid').scrollIntoViewIfNeeded();await cards.locator('.sph-grid img').first().waitFor();
+ const sphereCount=await cards.evaluate(async()=>{const {spheres}=await import('/src/game.ts');return spheres.length;});
+ assert.equal(await cards.locator('.sph-grid img[data-building-source="master-city"]').count(),sphereCount);
+ assert.equal(await cards.locator('.sph-grid canvas').count(),0);
+ for(const photo of await cards.locator('.sph-grid img[data-sphere]').all()){await photo.scrollIntoViewIfNeeded();await photo.evaluate(image=>image.decode());}
+ assert.ok(await cards.evaluate(async()=>{const {sphereAssets}=await import('/src/sphereAssets.ts');return [...document.querySelectorAll('.sph-grid img[data-sphere]')].every(image=>image.naturalWidth>0&&image.getAttribute('src')===sphereAssets[image.dataset.sphere].buildingThumbnail);}),'Все фотографии загружены и соответствуют реестру');
  assert.equal(await cards.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
- await cards.locator('.home-spheres').screenshot({path:'work/live-city/sphere-cards-mobile.png'});
+ await cards.locator('.sph-grid').screenshot({path:'work/live-city/sphere-cards-mobile.png'});
+ await cards.locator('.pyl-tabbar').getByRole('button',{name:/^Главная/}).click();
  for(const width of [360,390,412,430]){await cards.setViewportSize({width,height:844});assert.equal(await cards.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'home overflow '+width);}
  await cards.reload();await cards.getByRole('button',{name:'Продолжить игру на этом устройстве'}).click();assert.equal(await cards.evaluate(()=>localStorage.getItem('play-your-life-v1')),oldSave);
  await cardsContext.close();await writeFile('work/live-city/browser-result.json',JSON.stringify({passed:true,results,errors},null,2));console.log(JSON.stringify({passed:true,viewports:results.map(r=>({width:r.width,fps:r.stats.fps,quality:r.stats.quality,counts:r.stats.counts})),errors},null,2));

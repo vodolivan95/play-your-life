@@ -129,6 +129,10 @@
   background: #fff1c7;
   color: #6b4a00;
 }
+.gl-tag.is-monthly-focus {
+  background: #e4f7ee;
+  color: #13724a;
+}
 .gl-tag.is-late {
   background: #ffe3e3;
   color: #9b1c1c;
@@ -203,6 +207,13 @@
 }
 .gl-card .goal-controls {
   margin: 0;
+}
+.gl-monthly-focus-limit {
+  display: block;
+  margin-top: 8px;
+  color: #52627d;
+  font-size: 12px;
+  line-height: 1.45;
 }
 .gl-plan {
   width: 100%;

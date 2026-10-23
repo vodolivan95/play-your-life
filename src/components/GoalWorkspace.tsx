@@ -36,6 +36,11 @@ import {
 import { questCoins, progressQuest } from '../personalQuests';
 import { sphereProgress, MAX_SPHERE_LEVEL } from '../sphereProgress';
 import { sphereAssets } from '../sphereAssets';
+import {
+  MAX_MONTHLY_FOCUS,
+  monthlyFocusGoals,
+  toggleMonthlyFocus,
+} from '../monthlyFocus';
 import SphereIcon from './SphereIcon';
 import Icon from './Icon';
 import './GoalWorkspace.css';
@@ -507,6 +512,12 @@ export default function GoalWorkspace(p: Props) {
   const [tab, setTab] = useState('overview');
   const [filter, setFilter] = useState('all');
   const [now, setNow] = useState(() => Date.now());
+  const monthNow = new Date(now);
+  const currentMonthlyFocus = monthlyFocusGoals(state, monthNow);
+  const isMonthlyFocus = currentMonthlyFocus.some((item) => item.id === goal.id);
+  const monthlyFocusLimitReached =
+    currentMonthlyFocus.length >= MAX_MONTHLY_FOCUS;
+  const monthlyFocusLimitMessage = `В этом месяце уже выбрано ${MAX_MONTHLY_FOCUS} из ${MAX_MONTHLY_FOCUS} главных целей. Сначала уберите одну из них.`;
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 60000);
     return () => window.clearInterval(timer);
@@ -575,6 +586,37 @@ export default function GoalWorkspace(p: Props) {
       return false;
     }
   };
+  function toggleGoalMonthlyFocus() {
+    const shouldAdd = !isMonthlyFocus;
+    try {
+      if (shouldAdd && monthlyFocusLimitReached) {
+        throw new Error(monthlyFocusLimitMessage);
+      }
+      toggleMonthlyFocus(state, goal.id, monthNow);
+    } catch (e) {
+      p.onNotify(
+        e instanceof Error ? e.message : 'Не удалось изменить главные цели месяца.',
+      );
+      return;
+    }
+    p.onChange((latest) => {
+      const latestFocus = monthlyFocusGoals(latest, monthNow);
+      const latestSelected = latestFocus.some((item) => item.id === goal.id);
+      if (
+        !latest.goals.some((item) => item.id === goal.id) ||
+        (shouldAdd && (latestSelected || latestFocus.length >= MAX_MONTHLY_FOCUS)) ||
+        (!shouldAdd && !latestSelected)
+      ) {
+        return latest;
+      }
+      return toggleMonthlyFocus(latest, goal.id, monthNow);
+    });
+    p.onNotify(
+      shouldAdd
+        ? 'Цель выбрана главной целью месяца.'
+        : 'Цель убрана из главных целей месяца.',
+    );
+  }
   const stageLink = (s: GoalStage, text: ReactNode, className = '') => {
     const label =
       className === 'gw-stage-enter' ? `Открыть этап: ${s.name}` : undefined;
@@ -996,6 +1038,25 @@ export default function GoalWorkspace(p: Props) {
                 Сделать главной
               </button>
               <button
+                aria-pressed={isMonthlyFocus}
+                disabled={!isMonthlyFocus && monthlyFocusLimitReached}
+                title={
+                  !isMonthlyFocus && monthlyFocusLimitReached
+                    ? monthlyFocusLimitMessage
+                    : undefined
+                }
+                onClick={toggleGoalMonthlyFocus}
+              >
+                {isMonthlyFocus
+                  ? 'Убрать из главных целей месяца'
+                  : 'Сделать главной целью месяца'}
+              </button>
+              {!isMonthlyFocus && monthlyFocusLimitReached && (
+                <small className="gw-monthly-focus-limit">
+                  {monthlyFocusLimitMessage}
+                </small>
+              )}
+              <button
                 className="gw-danger"
                 onClick={() => {
                   if (
@@ -1021,6 +1082,12 @@ export default function GoalWorkspace(p: Props) {
           <h2>{goal.name}</h2>
           {!stageId && goal.description && <p>{goal.description}</p>}
           <div className="gw-banner-metrics">
+            {isMonthlyFocus && (
+              <span>
+                ★ Главная цель месяца
+                <small>Выбрана на текущий месяц</small>
+              </span>
+            )}
             <span>
               ▦ {shortDate(goal.dueAt)}
               {days.remaining !== null && (

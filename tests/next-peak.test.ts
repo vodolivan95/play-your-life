@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { initialState, completeQuest } from '../src/game.ts';
 import { saveGoal, saveStage, saveTask } from '../src/planning.ts';
 import { toggleMonthlyFocus } from '../src/monthlyFocus.ts';
-import { nextPeak } from '../src/nextPeak.ts';
+import { nextPeak, goalPeak } from '../src/nextPeak.ts';
 import type { GameState } from '../src/game.ts';
 
 const NOW = new Date('2026-10-19T12:00:00+03:00');
@@ -108,4 +108,23 @@ test('цель без этапов показывает реальный про�
   assert.equal(peak.stageId, undefined);
   assert.equal(peak.counter, '0%');
   assert.equal(peak.taskId, undefined);
+});
+
+test('карточка конкретной цели не подменяется другой главной целью месяца', () => {
+  const first = withGoal(empty(), 'Первая цель');
+  const firstStage = addStage(first.s, first.id, 'Первый этап');
+  const firstTask = addTask(firstStage.s, first.id, firstStage.id, 'Первая задача');
+  const second = withGoal(firstTask.s, 'Вторая цель');
+  const secondStage = addStage(second.s, second.id, 'Второй этап');
+  const secondTask = addTask(secondStage.s, second.id, secondStage.id, 'Вторая задача');
+  let state = toggleMonthlyFocus(secondTask.s, first.id, NOW);
+  state = toggleMonthlyFocus(state, second.id, NOW);
+  const a = goalPeak(state, state.goals.find(g => g.id === first.id)!, NOW);
+  const b = goalPeak(state, state.goals.find(g => g.id === second.id)!, NOW);
+  assert.equal(a.goalName, 'Первая цель');
+  assert.equal(a.stageName, 'Первый этап');
+  assert.equal(a.taskId, firstTask.id);
+  assert.equal(b.goalName, 'Вторая цель');
+  assert.equal(b.stageName, 'Второй этап');
+  assert.equal(b.taskId, secondTask.id);
 });

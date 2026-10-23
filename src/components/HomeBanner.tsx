@@ -1,9 +1,10 @@
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import type { ReactNode } from 'react';
 import heroPeak from '../assets/home-peak.svg';
 import heroPeakDark from '../assets/home-peak-dark.webp';
 import { useMenuTheme } from '../menuTheme';
 import type { NextPeak } from '../nextPeak';
+import { MAX_MONTHLY_FOCUS } from '../monthlyFocus';
 import './HomeBanner.css';
 
 /** Размер рисунка гор (вектор, светлая тема): слой с живыми звёздами использует те же координаты. */
@@ -93,9 +94,11 @@ const FEATURES: { kind: 'skills' | 'goals' | 'trophy' | 'heart'; page: string; l
 ];
 
 /** Следующая вершина: карточка поверх гор. Все значения приходят из реальных целей и задач. */
-function NextPeakCard({ peak, onShowTask, onCreateGoal }: { peak: NextPeak | null; onShowTask: () => void; onCreateGoal: () => void }) {
+function NextPeakCard({ peaks, onShowTask, onChooseFocus }: { peaks: NextPeak[]; onShowTask: (peak: NextPeak) => void; onChooseFocus: () => void }) {
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+  const peak = peaks.find(item => item.goalId === selectedGoalId) ?? peaks[0] ?? null;
   return (
-    <aside className="peak-card" aria-label="Следующая вершина">
+    <aside className="peak-card" aria-label="Главные цели месяца">
       <div className="peak-card-head">
         <h2>Следующая вершина</h2>
         {peak && <span className="peak-card-count" aria-label={peak.total > 0 ? `Выполнено ${peak.done} из ${peak.total}` : `Прогресс ${peak.percent}%`}>{peak.counter}</span>}
@@ -108,31 +111,49 @@ function NextPeakCard({ peak, onShowTask, onCreateGoal }: { peak: NextPeak | nul
         </>
       ) : (
         <>
-          <p className="peak-card-goal">Выбери свою первую вершину</p>
-          <p className="peak-card-detail">Создай цель, и тропа к ней появится здесь.</p>
+          <p className="peak-card-goal">Три главные цели месяца</p>
+          <p className="peak-card-detail">Открой проект в своей сфере и назначь его главной целью месяца. Здесь появится следующий шаг.</p>
         </>
       )}
       <div className="peak-card-foot">
         <span className="peak-card-hint">
           <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="m2 19 6.5-10 4 6 2.5-3.5L22 19Z" fill="currentColor" opacity=".85" /><path d="m8.500 9 1.8 2.8-1.8-.6-1.6.9Z" fill="#fff" opacity=".9" /></svg>
-          {peak ? 'Ты ближе к своей цели!' : 'Начни с первого шага'}
+          {peak ? peak.percent >= 100 ? 'Вершина достигнута!' : 'Ты ближе к своей цели!' : 'Выбери свой фокус'}
         </span>
-        <button type="button" className="peak-card-button" onClick={peak ? onShowTask : onCreateGoal}>
-          {peak ? 'Показать задачу' : 'Создать цель'}
+        <button type="button" className="peak-card-button" onClick={() => peak ? onShowTask(peak) : onChooseFocus()}>
+          {peak ? peak.taskId ? 'Показать задачу' : 'Открыть цель' : 'Выбрать цели'}
           <Arrow />
         </button>
+      </div>
+      <div className="peak-focus-head"><span>Главные цели месяца</span><small>{peaks.length} из {MAX_MONTHLY_FOCUS}</small></div>
+      <div className="peak-focus-switch" role="group" aria-label="Переключить главную цель месяца">
+        {Array.from({ length: MAX_MONTHLY_FOCUS }, (_, index) => {
+          const item = peaks[index];
+          return item ? (
+            <button key={item.goalId} type="button" aria-pressed={peak?.goalId === item.goalId}
+              title={item.goalName} aria-label={`Главная цель ${index + 1}: ${item.goalName}`}
+              onClick={() => setSelectedGoalId(item.goalId)}>
+              <b>{index + 1}</b><span>{item.goalName}</span>
+            </button>
+          ) : (
+            <button key={`empty-${index}`} type="button" className="is-empty"
+              aria-label={`Назначить главную цель ${index + 1} в меню проекта`} onClick={onChooseFocus}>
+              <b>＋</b><span>Цель {index + 1}</span>
+            </button>
+          );
+        })}
       </div>
     </aside>
   );
 }
 
-export default function HomeBanner({ peak, demo, onContinue, onNavigate, onShowTask, onCreateGoal, onStart, extra }: {
-  peak: NextPeak | null;
+export default function HomeBanner({ peaks, demo, onContinue, onNavigate, onShowTask, onChooseFocus, onStart, extra }: {
+  peaks: NextPeak[];
   demo: boolean;
   onContinue: () => void;
   onNavigate: (page: string) => void;
-  onShowTask: () => void;
-  onCreateGoal: () => void;
+  onShowTask: (peak: NextPeak) => void;
+  onChooseFocus: () => void;
   onStart: () => void;
   extra?: ReactNode;
 }) {
@@ -161,7 +182,7 @@ export default function HomeBanner({ peak, demo, onContinue, onNavigate, onShowT
             ))}
           </ul>
         </div>
-        <NextPeakCard peak={peak} onShowTask={onShowTask} onCreateGoal={onCreateGoal} />
+        <NextPeakCard peaks={peaks} onShowTask={onShowTask} onChooseFocus={onChooseFocus} />
         {demo && <button type="button" className="peak-demo" onClick={onStart}>Демо · Начать свою игру →</button>}
       </div>
       {extra}

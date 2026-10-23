@@ -35,12 +35,18 @@
 .mrep-block{display:grid;gap:20px}.mrep-block h3{font-size:28px}
 .mrep-head-side{display:grid;gap:8px;min-width:220px}.mrep-head-side>span{font-weight:700;font-size:14px}.mrep-head>div>.mrep-pill{display:block;width:max-content;margin-bottom:10px}
 .mrep-cta{min-height:48px;padding:0 24px;border:0;border-radius:16px;background:#2f7de1;color:#fff;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit}
-.mrep-spheres-layout{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}.mrep-radar{flex:0 1 400px}
+.mrep-spheres-layout{display:grid;grid-template-columns:1fr;gap:22px;align-items:start;container-type:inline-size}
+.mrep-summary-column{display:grid;grid-template-columns:minmax(280px,.85fr) minmax(0,2fr);gap:22px;align-items:start;min-width:0}
+.mrep-summary-stack{display:grid;gap:16px;align-content:start;min-width:0}
+.mrep-summary-column .mrep-card{width:100%;min-width:0}
+.mrep-summary-column .mrep-row>div:first-child,.mrep-ach b{overflow-wrap:anywhere}
+.mrep-summary-column .mrep-row>div:first-child>b{flex-shrink:0}
+.mrep-radar{min-width:0}
 .mrep-radar svg{width:100%;height:auto}.mrep-radar .ring{fill:none;stroke:rgba(20,33,61,.15)}.mrep-radar .before{fill:none;stroke:#7b8aa6;stroke-width:2;stroke-dasharray:5 5}.mrep-radar .after{fill:rgba(47,125,225,.25);stroke:#2f7de1;stroke-width:2.5}.mrep-radar .dot{stroke:#fff;stroke-width:2}.mrep-radar text{font-size:12px;font-weight:700;fill:#3d4d68}
 .mrep-legend{display:flex;flex-wrap:wrap;gap:18px;font-size:13px;font-weight:700;color:#3d4d68}
 .mrep-legend span{display:inline-flex;align-items:center;gap:8px}.mrep-legend span::before{content:'';width:18px;height:10px;border-radius:3px;box-sizing:border-box}
 .mrep-legend .dash::before{height:0;border-top:2px dashed #7b8aa6}.mrep-legend .fill::before{background:rgba(47,125,225,.45);border:2px solid #2f7de1}.mrep-legend .gold::before{width:10px;height:10px;border-radius:50%;background:#e0a100}.mrep-legend .blue::before{height:8px;background:#2f7de1}
-.mrep-sphere-grid{flex:999 1 520px;min-width:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;align-content:start}
+.mrep-sphere-grid{min-width:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-content:start;align-items:start}
 .mrep-sphere{display:grid;gap:12px;align-content:start;padding:18px;border-radius:20px;background:rgba(255,255,255,.75);border:1.5px solid #d6e0ef}
 .mrep-sphere-head{display:flex;align-items:center;gap:10px}.mrep-sphere-head>i{flex:0 0 auto;width:14px;height:14px;border-radius:50%;background:var(--sphere)}
 .mrep-sphere-head>div:nth-child(2){flex:1;min-width:0;display:grid}.mrep-sphere-head>div:last-child{text-align:right;display:grid}
@@ -52,7 +58,6 @@
 .mrep-badge{padding:6px 14px;border-radius:999px;background:rgba(52,199,89,.16);color:#1f8a3e;font-weight:800;font-size:13px}
 .mrep-habit{display:grid;gap:8px;padding-top:14px;border-top:1px solid rgba(20,33,61,.1)}.mrep-habit>div:first-child{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.mrep-habit span{font-size:13px;color:#5b6b82;font-weight:600}
 .mrep-cells{display:flex;flex-wrap:wrap;gap:4px}.mrep-cells span{width:16px;height:16px;border-radius:5px;background:#dbe3f2}.mrep-cells .done{background:#34c759}.mrep-cells .missed{background:rgba(255,120,120,.5)}
-.mrep-col{flex:1 1 360px;min-width:0;display:grid;gap:24px;align-content:start}
 .mrep-ach{display:flex;align-items:center;gap:12px}.mrep-ach>span{width:40px;height:40px;border-radius:12px;background:rgba(244,197,87,.25);display:grid;place-items:center;color:#a87800;font-size:18px}.mrep-ach div{display:grid}.mrep-ach small{color:#5b6b82;font-weight:600}
 .mrep-compare{flex-direction:row;display:flex;flex-wrap:wrap;gap:32px}.mrep-compare-main{flex:2 1 520px;display:grid;gap:18px;min-width:0}
 .mrep-months{display:flex;align-items:flex-end;gap:14px;height:220px}.mrep-months>div{flex:1 1 0;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px}
@@ -66,7 +71,10 @@
 .mrep-value em{font-style:normal;font-weight:800;font-size:13px;padding:4px 12px;border-radius:999px;background:rgba(20,33,61,.06)}.mrep-value em.focus{background:rgba(255,193,7,.22);color:#8a6200}.mrep-value em.overload{background:rgba(130,90,230,.16);color:#6a43c2}.mrep-value em.ok{background:rgba(52,199,89,.16);color:#1f8a3e}
 .mrep-focus-note{padding:14px 18px;border-radius:16px;background:rgba(130,90,230,.1);border:1px solid rgba(130,90,230,.25)}
 
-@media(max-width:900px){.mrep-hero{grid-template-columns:1fr;padding:22px}.mrep-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.mrep-sphere-grid{grid-template-columns:1fr}.mrep-radar{flex:1 1 100%}.mrep-card{padding:18px}.mrep-value>b{flex:1 1 100%}}
+@container(min-width:1250px){.mrep-sphere-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:1100px){.mrep-summary-column,.mrep-summary-stack{display:contents}.mrep-radar{grid-row:1}.mrep-sphere-grid{grid-row:2}.mrep-goals{grid-row:3}.mrep-habits{grid-row:4}.mrep-achievements{grid-row:5}}
+@media(max-width:900px){.mrep-hero{grid-template-columns:1fr;padding:22px}.mrep-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.mrep-card{padding:18px}.mrep-value>b{flex:1 1 100%}}
+@media(max-width:650px){.mrep-sphere-grid{grid-template-columns:1fr}}
 :root[data-theme='dark'] .mrep{color:#f2f6ff}
 :root[data-theme='dark'] .mrep-hero{background:linear-gradient(135deg,#1b2860,#141b31 58%);border-color:rgba(148,163,255,.22)}
 :root[data-theme='dark'] .mrep-hero p,:root[data-theme='dark'] .mrep-days,:root[data-theme='dark'] .mrep-card header p,:root[data-theme='dark'] .mrep-head p,:root[data-theme='dark'] .mrep-small,:root[data-theme='dark'] .mrep-sphere-head span,:root[data-theme='dark'] .mrep-ring-box span,:root[data-theme='dark'] .mrep-ring-side span,:root[data-theme='dark'] .mrep-kpis span,:root[data-theme='dark'] .mrep-kpis small,:root[data-theme='dark'] .mrep-big,:root[data-theme='dark'] .mrep-row small,:root[data-theme='dark'] .mrep-habit span,:root[data-theme='dark'] .mrep-ach small,:root[data-theme='dark'] .mrep-insights span,:root[data-theme='dark'] .mrep-note,:root[data-theme='dark'] .mrep-bars span{color:#9aa7d4}

@@ -79,6 +79,7 @@ export default function MyResults({ state, onChange, notify, selectedMonth, onOp
   const plans = carriedPlans(state, month);
   const newPlans = review.nextPlans ?? [];
   const knownCounts = spheres.filter((s) => sphereReviewOf(review, s.id).tasksDone != null).length;
+  const totalTasks = spheres.reduce((total, sphere) => total + (sphereReviewOf(review, sphere.id).tasksDone ?? 0), 0);
   const series = moodSeries(state, month);
   const patch = (changes: Partial<MonthReview>) => onChange((s) => saveReview(s, month, changes));
   function toggleHints() {
@@ -147,7 +148,11 @@ export default function MyResults({ state, onChange, notify, selectedMonth, onOp
         <div><span className="kr-eyebrow">МОИ ИТОГИ · {completed ? 'СОХРАНЕНЫ' : 'ЛИЧНОЕ ЗАКЛЮЧЕНИЕ'}</span>
           <h2>Мой месяц.<br />Мои выводы.</h2>
           <p>Отметь сделанное, выбери главное и реши, что брать дальше. Без оценок за заполнение.</p></div>
-        <div className="kr-hero-aside"><span className="kr-hero-symbol" aria-hidden="true">↗</span><b>{knownCounts}</b><span>сфер с ручным учётом</span></div>
+        <div className="kr-hero-aside" role="group" aria-label="Итого задач по всем сферам">
+          <span className="kr-hero-symbol" aria-hidden="true">↗</span>
+          <b aria-live="polite" aria-atomic="true">{knownCounts ? totalTasks : '—'}</b>
+          <span>Итого задач<br />по всем сферам</span>
+        </div>
       </section>
       <div className="kr-review-tools">
         <label className="myr-switch"><input type="checkbox" role="switch" checked={hints} onChange={toggleHints} /><span aria-hidden="true" />Подсказки</label>

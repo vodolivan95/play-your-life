@@ -11,6 +11,7 @@ import { validReview, validMoodCheckins } from './keyResults.ts';
 import { validImportance } from './monthReport.ts';
 import type { GameState } from './game.ts';
 import { imageDocPattern, imageRefPattern, monthPattern } from './cloudSplit.ts';
+import { validTaskLabels } from './taskLabels.ts';
 
 type SavedState = Omit<GameState, 'profile' | 'mainGoalId'> &
   Partial<Pick<GameState, 'profile' | 'mainGoalId'>>;
@@ -68,6 +69,10 @@ export function validateState(value: unknown): asserts value is SavedState {
   };
   if (!record(value) || value.version !== 1) return fail();
   if (!validPersonalState(value)) return fail();
+  if (value.taskLabels !== undefined && !validTaskLabels(value.taskLabels)) return fail();
+  const taskLabelIds = new Set(
+    validTaskLabels(value.taskLabels) ? value.taskLabels.map((label) => label.id) : [],
+  );
   if (value.rooms !== undefined && !validRooms(value.rooms)) return fail();
   if (value.cityPurchases !== undefined) {
     if (
@@ -244,7 +249,8 @@ export function validateState(value: unknown): asserts value is SavedState {
           (number(q.weight) &&
             Number(q.weight) > 0 &&
             Number(q.weight) <= 1000)) &&
-        (q.notes === undefined || text(q.notes)),
+        (q.notes === undefined || text(q.notes)) &&
+        (q.labelId === undefined || taskLabelIds.has(String(q.labelId))),
     )
   )
     return fail();

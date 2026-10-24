@@ -43,6 +43,7 @@ import {
 } from '../monthlyFocus';
 import SphereIcon from './SphereIcon';
 import Icon from './Icon';
+import TaskLabelBadge from './TaskLabelBadge';
 import './GoalWorkspace.css';
 
 type Props = {
@@ -692,6 +693,7 @@ export default function GoalWorkspace(p: Props) {
           onClick={() => setDetail({ kind: 'task', task })}
         >
           <strong>{task.name}</strong>
+          <TaskLabelBadge labelId={task.labelId} labels={state.taskLabels} />
           <small>
             {task.dueAt ? shortDate(task.dueAt) : 'Без срока'}
             {task.required === false ? ' · Необязательная' : ''}

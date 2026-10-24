@@ -106,6 +106,8 @@ export function saveCustomQuest(
   const old = input.id
     ? state.quests.find((q) => q.id === input.id)
     : undefined;
+  if (input.labelId && !state.taskLabels?.some((label) => label.id === input.labelId))
+    throw new Error("Метка задачи не найдена.");
   if (old?.ownerId && old.ownerId !== ownerId)
     throw new Error("Это задача другого пользователя.");
   if (input.id && !old) throw new Error("Задача не найдена.");
@@ -173,6 +175,7 @@ export function saveCustomQuest(
     startsAt: input.startsAt || undefined,
     dueAt: input.dueAt || undefined,
     priority: input.priority ?? "normal",
+    labelId: Object.hasOwn(input, "labelId") ? input.labelId : old?.labelId,
     createdAt: old?.createdAt ?? new Date().toISOString(),
     done: false,
     rewardLocked: locked,

@@ -57,6 +57,7 @@ import HabitsPage from './components/HabitsPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import QuestWizard from './components/QuestWizard';
 import { saveCustomQuest, saveHabit } from './personalQuests';
+import TaskLabelBadge from './components/TaskLabelBadge';
 
 function Progress({
   value,
@@ -234,6 +235,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
     const info = spheres.find((s) => s.id === quest.sphere)!;
     const taskInfo = <>
       <strong>{quest.name}</strong>
+      <TaskLabelBadge labelId={quest.labelId} labels={state.taskLabels} />
       <small>{info.name}</small>
       {(quest.dueAt || quest.startsAt) && (
         <small
@@ -920,7 +922,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
             ) : null}
           </div>
         </dialog>
-        {modal === 'quest' && <QuestWizard initial={{ sphere: questSphere, ...questTemplate }} onClose={closeModal} onQuest={q => { const next = saveCustomQuest(state, q, userId ?? 'local'); setState(next); notify('Новая задача готова. Вперёд!'); }} onHabit={h => setState(saveHabit(state, h, userId ?? 'local'))} />}
+        {modal === 'quest' && <QuestWizard initial={{ sphere: questSphere, ...questTemplate }} taskLabels={state.taskLabels ?? []} onClose={closeModal} onQuest={(q, labels) => { setState(current => saveCustomQuest({ ...current, taskLabels: labels ?? current.taskLabels }, q, userId ?? 'local')); notify('Новая задача готова. Вперёд!'); }} onHabit={h => setState(saveHabit(state, h, userId ?? 'local'))} />}
         {quickSphere && (
           <SphereQuickView
             state={state}

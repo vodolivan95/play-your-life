@@ -172,9 +172,10 @@ export default function QuestBoard({
       {form && (
         <QuestWizard
           {...form}
+          taskLabels={state.taskLabels ?? []}
           onClose={() => setForm(null)}
-          onQuest={(q) =>
-            apply((s) => saveCustomQuest(s, q, ownerId), "Задача сохранена")
+          onQuest={(q, labels) =>
+            apply((s) => saveCustomQuest({ ...s, taskLabels: labels ?? s.taskLabels }, q, ownerId), "Задача сохранена")
           }
           onHabit={(h) =>
             apply((s) => saveHabit(s, h, ownerId), "Привычка сохранена")

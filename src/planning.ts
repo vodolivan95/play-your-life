@@ -316,6 +316,8 @@ export function saveTask(
   )
     throw new Error('Проверь название, сферу и сложность задачи.');
   if (input.goalId && !goal) throw new Error('Цель не найдена.');
+  if (input.labelId && !state.taskLabels?.some((label) => label.id === input.labelId))
+    throw new Error('Метка задачи не найдена.');
   const stage = input.stageId
     ? goal?.stages?.find((s) => s.id === input.stageId)
     : undefined;

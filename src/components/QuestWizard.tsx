@@ -7,6 +7,8 @@ import { SphereBuilding } from "./SphereCity";
 import GameArt from "./GameArt";
 import { inspectQuestPhoto } from "../questPhoto";
 import { sphereAssets } from '../sphereAssets';
+import type { TaskLabel } from '../game';
+import TaskCreationForm from './TaskCreationForm';
 
 type Draft = {
   name: string;
@@ -31,15 +33,18 @@ export default function QuestWizard({
   initial,
   onClose,
   onQuest,
+  taskLabels = [],
   onHabit,
 }: {
   quest?: Quest;
   habit?: Habit;
   habitMode?: boolean;
   initial?: Partial<Quest>;
+  taskLabels?: TaskLabel[];
   onClose: () => void;
   onQuest: (
     q: Partial<Quest> & Pick<Quest, "name" | "sphere" | "difficulty">,
+    labels?: TaskLabel[],
   ) => void;
   onHabit: (
     h: Pick<
@@ -196,6 +201,19 @@ export default function QuestWizard({
       setError((e as Error).message);
     }
   }
+  if (!habitMode)
+    return (
+      <TaskCreationForm
+        quest={quest}
+        initial={initial}
+        taskLabels={taskLabels}
+        onClose={onClose}
+        onSave={(task, labels) => {
+          onQuest(task, labels);
+          onClose();
+        }}
+      />
+    );
   return (
     <dialog
       className="pyl-quest-dialog"

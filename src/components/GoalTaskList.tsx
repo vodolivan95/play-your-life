@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { spheres } from '../game';
 import type { GameState, Quest } from '../game';
 import { taskContribution } from '../taskSettings';
+import TaskLabelBadge from './TaskLabelBadge';
 import './GoalTaskList.css';
 
 const filters = [['all', 'Все'], ['game', 'Игра'], ['ticktick', 'TickTick']] as const;
@@ -21,7 +22,7 @@ export default function GoalTaskList({ state, quests, today, onOpen, onProgress 
     return (
       <li key={q.id} className={q.done ? 'gtl-item is-done' : 'gtl-item'}>
         <button type="button" className="gtl-row" onClick={() => onOpen(q.id)}>
-          <span className="gtl-name">{q.tickTickSharedAt ? '⟳ ' : ''}{q.name}</span>
+          <span className="gtl-name"><span>{q.tickTickSharedAt ? '⟳ ' : ''}{q.name}</span><TaskLabelBadge labelId={q.labelId} labels={state.taskLabels} /></span>
           <span className={late ? 'gtl-due is-late' : 'gtl-due'}>{short(q.dueAt)}</span>
           <span className="gtl-xp">+{c.xp} XP</span>
         </button>

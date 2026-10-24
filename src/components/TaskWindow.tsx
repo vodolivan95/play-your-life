@@ -13,6 +13,7 @@ import {
   updateTaskSettings,
 } from '../taskSettings';
 import type { DuePreset, TaskPatch } from '../taskSettings';
+import TaskLabelBadge from './TaskLabelBadge';
 import './TaskWindow.css';
 
 const duePresets: [Exclude<DuePreset, 'date'>, string][] = [
@@ -114,6 +115,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
           <div>
             <small>{sphere ? `${sphere.icon} ${sphere.name}` : 'Сфера'} · 🪙 {c.coins}</small>
             <h2 id="twin-title">{task.name}</h2>
+            <TaskLabelBadge labelId={task.labelId} labels={state.taskLabels} />
           </div>
           <button type="button" className="twin-close" onClick={onClose} aria-label="Закрыть">✕</button>
         </header>

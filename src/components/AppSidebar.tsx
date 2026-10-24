@@ -8,7 +8,7 @@ import ThemeSwitch from './ThemeSwitch';
 import CityMiniLive from './CityMiniLive';
 import './AppMenu.css';
 
-/** Левое меню компьютера: логотип, игрок, тема под карточкой игрока, плоский список из 12 разделов и карта города. */
+/** Левое меню компьютера: логотип, игрок, тема под карточкой игрока, плоский список из 11 разделов и карта города. */
 export default function AppSidebar({ page, state, questCount, onNavigate }: { page: string; state: GameState; questCount: number; onNavigate: (id: string) => void }) {
   const [theme] = useMenuTheme();
   const isActive = (id: string) => page === id || (id === 'statistics' && page === 'monthly');

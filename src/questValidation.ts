@@ -1,6 +1,7 @@
 import { difficulties, legacyDifficultyXp } from "./game.ts";
 import { habitIcons, virtualRewards } from "./personalQuests.ts";
 import { validProjectImage } from "./projectImage.ts";
+import { validTaskLabels } from "./taskLabels.ts";
 const record = (v: unknown): v is Record<string, unknown> =>
   !!v && typeof v === "object" && !Array.isArray(v);
 const text = (v: unknown) => typeof v === "string";
@@ -41,6 +42,7 @@ export function validQuestExtension(q: Record<string, unknown>) {
     (q.ownerId === undefined || text(q.ownerId)) &&
     (q.createdAt === undefined || date(q.createdAt)) &&
     validProjectImage(q.coverImage) &&
+    (q.labelId === undefined || (text(q.labelId) && q.labelId.length <= 64)) &&
     (q.targetValue === undefined ||
       (number(q.targetValue) &&
         Number(q.targetValue) > 0 &&
@@ -83,6 +85,7 @@ export function validQuestExtension(q: Record<string, unknown>) {
 }
 export function validPersonalState(s: Record<string, unknown>) {
   return (
+    (s.taskLabels === undefined || validTaskLabels(s.taskLabels)) &&
     list(
       s.habits,
       "id",

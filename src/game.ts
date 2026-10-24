@@ -111,6 +111,7 @@ export const streakRewards: Record<number, number> = {
   100: 300,
   365: 1000,
 };
+export type TaskLabel = { id: string; name: string };
 export type Quest = {
   sourceType?: 'SYSTEM' | 'USER_CREATED';
   ownerId?: string;
@@ -142,6 +143,7 @@ export type Quest = {
   estimateMinutes?: number;
   notes?: string;
   priority?: 'low' | 'normal' | 'high';
+  labelId?: string;
   tickTickSharedAt?: string;
   tickTickSync?: false;
   repeat?: 'daily' | 'weekdays' | 'weekly' | 'monthly';
@@ -234,6 +236,7 @@ export type GameState = {
   xp: number;
   coins: number;
   quests: Quest[];
+  taskLabels?: TaskLabel[];
   goals: Goal[];
   spheres: Record<string, SphereState>;
   events: Event[];
@@ -464,6 +467,7 @@ export function initialState(): GameState {
     completed: 0,
     activeDates: [],
     streakClaims: [],
+    taskLabels: [],
     events: [],
     spheres: Object.fromEntries(
       spheres.map((s) => [

@@ -11,7 +11,7 @@
 .gtl-stage ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .gtl-row{width:100%;display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;text-align:left;font:inherit;padding:9px 12px;border-radius:12px;border:1px solid #d6deeb;background:#f1f5fb;color:inherit;cursor:pointer}
 .gtl-row:hover{border-color:#2f7de1}
-.gtl-name{font-weight:700;overflow:hidden;text-overflow:ellipsis}
+.gtl-name{min-width:0;display:flex;align-items:center;gap:6px;font-weight:700}.gtl-name>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gtl-due{font-size:12px;color:#5b6b82}.gtl-due.is-late{color:#e5484d;font-weight:700}
 .gtl-xp{font-size:12px;font-weight:800;color:#7c5cff}
 .gtl-empty{margin:0;padding:14px;border-radius:16px;border:1px dashed #b9c6da;color:#5b6b82}

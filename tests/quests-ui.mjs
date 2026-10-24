@@ -86,59 +86,53 @@ try {
       .first()
       .click();
     let d = page.locator(".pyl-quest-dialog");
-    await d.getByLabel("Название *").fill("Пробежать 10 км");
-    await d.getByRole("button", { name: "Далее →" }).click();
-    await d.getByRole("button", { name: "Спорт", exact: true }).click();
-    await d.getByRole("button", { name: "Далее →" }).click();
-    const fallback=d.locator('[data-quest-cover="master-city"]');
-    await fallback.waitFor();
-    assert.ok(await fallback.evaluate(async image=>{await image.decode();return image.naturalWidth===1280&&image.currentSrc.includes('/sphere-buildings/sport-building.jpg');}),'Обложка использует исходную фотографию Спорта, а не старый crop');
-    await d.locator('.pyl-photo-preview').screenshot({path:`work/quest-cover-${mobile?'mobile':'desktop'}.png`});
+    await d.getByLabel("Название задачи").fill("Пробежать 10 км");
+    await d.getByRole("button", { name: /Спорт/ }).click();
+    await d.getByRole("button", { name: /Очень сложная.*80 XP/ }).click();
+    assert.equal(await d.getByRole("img", { name: "Награда 80 XP" }).count(), 1);
+    assert.equal(await d.getByText("+80", { exact: true }).count(), 1);
+    await d.locator(".task-create-scroll").evaluate((element) => { element.scrollTop = 0; });
+    await d.screenshot({ path: `work/task-form-${mobile ? "mobile" : "web"}.png` });
+    if (mobile) {
+      await d.locator(".task-create-scroll").evaluate((element) => { element.scrollTop = element.scrollHeight; });
+      await d.screenshot({ path: "work/task-form-mobile-reward.png" });
+    }
     const uploaded=await page.evaluate(()=>{
       const canvas=document.createElement('canvas');canvas.width=1920;canvas.height=1200;
       const ctx=canvas.getContext('2d');const gradient=ctx.createLinearGradient(0,0,1920,1200);gradient.addColorStop(0,'#129de5');gradient.addColorStop(1,'#f7bf48');ctx.fillStyle=gradient;ctx.fillRect(0,0,1920,1200);
       return canvas.toDataURL('image/png').split(',')[1];
     });
-    await d.locator("input[type=file]").setInputFiles({
+    await d.locator(".task-create-photo-area input[type=file]").setInputFiles({
       name: "cover.png",
       mimeType: "image/png",
       buffer: Buffer.from(uploaded,"base64"),
     });
-    await d.locator(".pyl-photo-preview img").waitFor();
-    await page.waitForFunction(()=>document.querySelector('.pyl-photo-preview img')?.src.startsWith('blob:'));
-    assert.deepEqual(await d.locator('.pyl-photo-preview img').evaluate(async image=>{await image.decode();return [image.naturalWidth,image.naturalHeight];}),[1920,1200]);
-    assert.equal(await d.locator('.pyl-photo-preview img').evaluate(async image=>{const bytes=new Uint8Array(await (await fetch(image.src)).arrayBuffer());return btoa(Array.from(bytes,b=>String.fromCharCode(b)).join(''));}),uploaded,'Фото не перекодируется');
-    await d.getByRole("button", { name: "Далее →" }).click();
-    await d.getByLabel("Цель / количество *").fill("10");
-    await d.getByLabel("Единица измерения").fill("км");
-    await d.getByRole("button", { name: "Далее →" }).click();
-    await d.getByLabel("Лайфкоины").fill("101");
-    await d.getByRole("button", { name: "Далее →" }).click();
-    assert.equal(
-      (await d.getByText("Награда", { exact: false }).count()) > 0,
-      true,
-    );
-    await d.getByLabel("Лайфкоины").fill("100");
+    await d.locator(".task-create-photo-preview img").waitFor();
+    await page.waitForFunction(()=>document.querySelector('.task-create-photo-preview img')?.src.startsWith('blob:'));
+    assert.deepEqual(await d.locator('.task-create-photo-preview img').evaluate(async image=>{await image.decode();return [image.naturalWidth,image.naturalHeight];}),[1920,1200]);
+    assert.equal(await d.locator('.task-create-photo-preview img').evaluate(async image=>{const bytes=new Uint8Array(await (await fetch(image.src)).arrayBuffer());return btoa(Array.from(bytes,b=>String.fromCharCode(b)).join(''));}),uploaded,'Фото не перекодируется');
+    await d.getByRole("button", { name: "＋ Создать метку" }).click();
+    await d.getByLabel("Название новой метки").fill("Тренировка");
+    await d.getByRole("button", { name: "Добавить", exact: true }).click();
+    await d.getByLabel("Лайфкоины за задачу").fill("101");
+    await d.getByRole("button", { name: /Создать задачу/ }).click();
+    assert.equal(await d.getByLabel("Лайфкоины за задачу").evaluate((input) => input.validity.rangeOverflow), true);
+    assert.equal(await d.getByLabel("Лайфкоины за задачу").inputValue(), "101");
+    await d.getByLabel("Лайфкоины за задачу").fill("100");
     await d.getByLabel("Виртуальная награда").selectOption("plant_basic");
-    await d.getByRole("button", { name: "Далее →" }).click();
-    await d.getByRole("button", { name: "Создать задачу", exact: true }).click();
+    await d.getByRole("button", { name: "Создать задачу" }).click();
     const card = page
       .locator(".gtl-item")
       .filter({ hasText: "Пробежать 10 км" });
-    await card.getByRole("button", { name: "Продолжить", exact: true }).click();
-    await page.locator(".pyl-overlay input").fill("3");
-    await page
-      .getByRole("button", { name: "Сохранить прогресс", exact: true })
-      .click();
+    assert.equal(await card.getByText("Тренировка", { exact: true }).count(), 1);
     await card.locator(".gtl-row").click();
     await page.getByRole("dialog", { name: /Пробежать 10 км/ }).getByRole("button", { name: "Расширенные настройки" }).click();
     d = page.locator(".pyl-quest-dialog");
-    for (let i = 0; i < 4; i++)
-      await d.getByRole("button", { name: "Далее →" }).click();
-    assert.equal(await d.getByLabel("Лайфкоины").isDisabled(), true);
+    assert.equal(await d.getByLabel("Лайфкоины за задачу").isDisabled(), false);
     await d.getByRole("button", { name: "Закрыть", exact: true }).click();
     await card.getByRole("button", { name: "Продолжить", exact: true }).click();
-    await page.getByRole("button", { name: "Выполнить полностью" }).click();
+    await page.locator(".pyl-overlay input").fill("1");
+    await page.getByRole("button", { name: "Сохранить прогресс", exact: true }).click();
     await page.locator(".pyl-celebration button").click();
     await page.reload();
     await page

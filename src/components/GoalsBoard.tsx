@@ -21,6 +21,7 @@ import Icon from './Icon';
 import GameArt from './GameArt';
 import ProjectArt from './ProjectArt';
 import GoalWorkspace from './GoalWorkspace';
+import QuestWizard from './QuestWizard';
 import { goalProgressValue, stageMetrics } from '../goalWorkspace';
 import {
   deadlineLabel,
@@ -87,6 +88,7 @@ export default function GoalsBoard({
   const [sort, setSort] = useState<GoalSort>('due');
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [editor, setEditor] = useState<Editor | null>(null);
+  const [taskDraft, setTaskDraft] = useState<Partial<Quest> | null>(null);
   const monthNow = new Date();
   const currentMonthlyFocus = monthlyFocusGoals(state, monthNow);
   const monthlyFocusLimitReached =
@@ -525,7 +527,7 @@ export default function GoalsBoard({
       ) : (
         <GoalWorkspace ownerId={ownerId} key={`${goal.id}:${stageId ?? 'goal'}`} state={state} goal={goal} stageId={stageId} onChange={onChange}
           onEditGoal={() => setEditor({ kind: 'goal' })} onEditStage={stage => setEditor({ kind: 'stage', stage })}
-          onAddTask={stageId => setEditor({ kind: 'task', stageId })} onEditTask={task => setEditor({ kind: 'task', task })}
+          onAddTask={stageId => setTaskDraft({ sphere: goal.sphere, goalId: goal.id, stageId })} onEditTask={task => setEditor({ kind: 'task', task })}
           onTransfer={task => setEditor({ kind: 'transfer', task })} onInbox={() => setEditor({ kind: 'inbox' })} onNotify={onNotify} onSelect={onSelect} onSphere={onSphere} />
       )}
       <dialog
@@ -603,6 +605,22 @@ export default function GoalsBoard({
           {goal && editor?.kind === 'inbox' && <TickTickInboxContent key={`${goal.id}:${stageId ?? ''}`} state={state} onChange={onChange} scope={{ sphereId: goal.sphere, goalId: goal.id, stageId }} />}
         </div>
       </dialog>
+      {taskDraft && (
+        <QuestWizard
+          initial={taskDraft}
+          taskLabels={state.taskLabels ?? []}
+          onClose={() => setTaskDraft(null)}
+          onQuest={(input, labels) => {
+            onChange((current) => saveTask(
+              { ...current, taskLabels: labels ?? current.taskLabels },
+              input,
+            ));
+            setTaskDraft(null);
+            onNotify('Задача добавлена в план');
+          }}
+          onHabit={() => undefined}
+        />
+      )}
     </>
   );
 }

@@ -16,6 +16,8 @@ import TickTickTransfer from './TickTickTransfer';
 import Icon from './Icon';
 import ProjectArt from './ProjectArt';
 import LifePlanMap from './LifePlanMap';
+import TaskLabelBadge from './TaskLabelBadge';
+import QuestWizard from './QuestWizard';
 export default function LifePlanner({
   state,
   onChange,
@@ -32,6 +34,7 @@ export default function LifePlanner({
   const [scope, setScope] = useState<PlanScope>('month');
   const [anchor, setAnchor] = useState(dateKey);
   const [showDone, setShowDone] = useState(false);
+  const [taskDraft, setTaskDraft] = useState<Partial<Quest> | null>(null);
   const [editor, setEditor] = useState<
     { kind: 'task'; task?: Quest } | { kind: 'transfer' } | null
   >(() =>
@@ -108,6 +111,7 @@ export default function LifePlanner({
         </button>
         <div>
           <strong>{task.name}</strong>
+          <TaskLabelBadge labelId={task.labelId} labels={state.taskLabels} />
           <small>
             {sphere.icon} {goal?.name ?? sphere.name}
           </small>
@@ -151,7 +155,7 @@ export default function LifePlanner({
           </button>
           <button
             className="secondary-button"
-            onClick={() => setEditor({ kind: 'task' })}
+            onClick={() => setTaskDraft({ startsAt: `${anchor}T09:00` })}
           >
             Запланировать задачу
           </button>
@@ -387,6 +391,22 @@ export default function LifePlanner({
           )}
         </div>
       </dialog>
+      {taskDraft && (
+        <QuestWizard
+          initial={taskDraft}
+          taskLabels={state.taskLabels ?? []}
+          onClose={() => setTaskDraft(null)}
+          onQuest={(input, labels) => {
+            onChange((current) => saveTask(
+              { ...current, taskLabels: labels ?? current.taskLabels },
+              input,
+            ));
+            setTaskDraft(null);
+            onNotify('Задача запланирована');
+          }}
+          onHabit={() => undefined}
+        />
+      )}
     </div>
   );
 }

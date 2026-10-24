@@ -21,11 +21,43 @@ const sameOrigin = (address) => {
 
 const seed = initialState();
 seed.profile.onboardingComplete = true;
+if (process.env.SMOKE_PLAN_ONLY === '1') {
+  const start = new Date();
+  start.setHours(9, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 5);
+  const at = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T09:00:00`;
+  const goalId = 'mobile-plan-smoke-goal';
+  const stageId = 'mobile-plan-smoke-stage';
+  seed.goals = [{
+    ...seed.goals[0],
+    id: goalId,
+    name: 'Мобильная проверка длинного направления и переноса текста',
+    sphere: 'health',
+    current: 0,
+    target: 100,
+    startsAt: at(start),
+    dueAt: at(end),
+    stages: [{ id: stageId, name: 'Проверить сроки, диаграмму и перенос длинных названий', status: 'active', startsAt: at(start), dueAt: at(end) }],
+  }];
+  seed.quests = [{
+    ...seed.quests[0],
+    id: 'mobile-plan-smoke-task',
+    name: 'Проверить задачи, этапы и длинные подписи на маленьком экране',
+    sphere: 'health',
+    done: false,
+    goalId,
+    stageId,
+    startsAt: at(start),
+    dueAt: at(end),
+    estimateMinutes: 45,
+  }];
+}
 const seedJson = JSON.stringify(seed);
 
-const desktopMenu = ['Главная', 'Сферы жизни', 'Мои задачи', 'Привычки', 'Цели', 'План жизни', 'Дерево навыков', 'Достижения', 'Магазин', 'Город', 'Профиль', 'Ключевые итоги'];
+const desktopMenu = ['Главная', 'Сферы жизни', 'Мои задачи', 'Привычки', 'Цели', 'Дерево навыков', 'Достижения', 'Магазин', 'Город', 'Профиль', 'Ключевые итоги'];
 const mobileTabs = ['Главная', 'Привычки', 'Цели', 'Город'];
-const mobileMore = ['Мои задачи', 'Сферы жизни', 'План жизни', 'Дерево навыков', 'Достижения', 'Магазин', 'Профиль', 'Ключевые итоги'];
+const mobileMore = ['Мои задачи', 'Сферы жизни', 'Дерево навыков', 'Достижения', 'Магазин', 'Профиль', 'Ключевые итоги'];
 
 let browser;
 const problems = [];
@@ -40,7 +72,8 @@ try {
   assert.ok(ready, 'Сервер не запустился (для SMOKE_PREVIEW=1 сначала выполните npm run build)');
   browser = await chromium.launch({ executablePath: process.env.LIFEGAME_CHROMIUM_PATH || undefined, headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'] });
 
-  for (const mobile of [false, true]) {
+  const devices = process.env.SMOKE_PLAN_ONLY === '1' ? [true] : [false, true];
+  for (const mobile of devices) {
     const device = mobile ? 'телефон' : 'ПК';
     const context = await browser.newContext({
       viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 1000 },
@@ -86,6 +119,7 @@ try {
       await settle();
     };
     const openMore = async () => {
+      await page.evaluate(() => window.scrollTo(0, 0));
       await page.locator('.pyl-tabbar').getByRole('button', { name: /^Ещё/ }).click();
       await page.locator('.pyl-more').waitFor();
     };
@@ -108,7 +142,10 @@ try {
     await page.waitForSelector('main h1', { state: 'attached' });
     await settle(500);
 
-    for (const label of mobile ? [...mobileTabs, ...mobileMore] : desktopMenu) {
+    const sections = process.env.SMOKE_PLAN_ONLY === '1'
+      ? ['Мои задачи']
+      : mobile ? [...mobileTabs, ...mobileMore] : desktopMenu;
+    for (const label of sections) {
       await open(label);
 
       if (label === 'Сферы жизни') {
@@ -125,7 +162,40 @@ try {
         await settle();
       }
       if (label === 'Мои задачи') {
-        for (const tab of ['Список', 'Календарь', 'Входящие']) await click(page.locator('main'), new RegExp('^' + tab));
+        for (const tab of ['Список', 'Календарь', 'Входящие', 'План жизни']) await click(page.locator('main'), new RegExp('^' + tab));
+        const plan = page.locator('.life-planner');
+        await plan.waitFor();
+        assert.equal(await plan.locator('.lpm-card').count(), 4, 'карта, этапы и сводка сфер отображаются');
+        assert.ok(await plan.locator('.lpm-grid-scroll .lpm-cells').count() >= 10, 'шкала нагрузки и строки сфер отображаются');
+        assert.ok(await plan.locator('.plan-goal-row').count() > 0, 'цели видны и переносятся на узком экране');
+        assert.ok(await plan.locator('.planned-task').count() > 0, 'запланированные задачи отображаются');
+        if (mobile) {
+          const layout = await page.evaluate(() => ({
+            viewport: innerWidth,
+            document: document.documentElement.scrollWidth,
+            cards: [...document.querySelectorAll('.life-plan-intro, .lpm-card, .plan-toolbar, .planning-stats, .plan-goals, .planned-days, .unscheduled-tasks')].map((el) => ({
+              name: el.className,
+              right: Math.round(el.getBoundingClientRect().right),
+              scroll: el.scrollWidth,
+              client: el.clientWidth,
+            })),
+            timelines: [...document.querySelectorAll('.lpm-grid-scroll, .lpm-gantt-scroll')].map((el) => ({
+              overflow: getComputedStyle(el).overflowX,
+              scroll: el.scrollWidth,
+              client: el.clientWidth,
+            })),
+          }));
+          assert.ok(layout.document <= layout.viewport + 2, `план не должен расширять страницу: ${JSON.stringify(layout)}`);
+          assert.ok(layout.cards.every((card) => card.right <= layout.viewport + 2 && card.scroll <= card.client + 2), `карточки плана помещаются в экран: ${JSON.stringify(layout.cards)}`);
+          assert.ok(layout.timelines.length === 2 && layout.timelines.every((row) => row.overflow === 'auto' && row.scroll > row.client), 'шкалы дней и этапов прокручиваются внутри своих блоков');
+        }
+        await shot('life-plan');
+        if (mobile) await page.screenshot({ path: 'work/smoke/mobile-life-plan-full.png', fullPage: true });
+        for (const period of ['Квартал', 'Год', 'Месяц']) await click(plan.getByRole('group', { name: 'Период' }), period);
+        for (const scope of ['День', 'Неделя', 'Месяц', 'Год', 'Весь путь']) {
+          await plan.locator('.plan-scopes').getByRole('button', { name: scope, exact: true }).evaluate((el) => el.click());
+          await settle();
+        }
         await click(page.locator('main'), /^Календарь/);
         for (const view of ['День', 'Неделя', '2 недели', 'Месяц', 'Неделя']) await click(page.getByRole('group', { name: 'Вид календаря' }), view);
         await click(page.locator('.tcal'), 'Вперёд');

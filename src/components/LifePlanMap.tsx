@@ -69,7 +69,10 @@ export default function LifePlanMap({
       onNotify(error instanceof Error ? error.message : 'Не удалось выбрать');
     }
   }
-  const cols = { gridTemplateColumns: `repeat(${range.columns.length}, minmax(0, 1fr))` };
+  const cellColumns = {
+    gridTemplateColumns: `repeat(${range.columns.length}, minmax(0, 1fr))`,
+  };
+  const gridWidth = { minWidth: `max(100%, ${range.columns.length * 14}px)` };
   return (
     <section className="lpm" aria-label="Карта пересечений">
       <header className="lpm-head">
@@ -133,10 +136,11 @@ export default function LifePlanMap({
             <span>В этом периоде нет этапов и задач с датами.</span>
           )}
         </div>
-        <div className="lpm-grid">
+        <div className="lpm-grid-scroll">
+        <div className="lpm-grid" style={gridWidth}>
           <div className="lpm-row lpm-bars">
             <span className="lpm-name">Нагрузка</span>
-            <div className="lpm-cells" style={cols}>
+            <div className="lpm-cells" style={cellColumns}>
               {map.load.map((value, i) => (
                 <div
                   key={i}
@@ -171,7 +175,7 @@ export default function LifePlanMap({
                   <em style={{ background: sphere.color }} />
                   {sphere.name}
                 </span>
-                <div className="lpm-cells" style={cols}>
+                <div className="lpm-cells" style={cellColumns}>
                   {range.columns.map((col, i) => {
                     const n = map.bySphere[sphere.id]?.[i] ?? 0;
                     return (
@@ -191,6 +195,10 @@ export default function LifePlanMap({
             );
           })}
         </div>
+        </div>
+        <p className="lpm-hint lpm-mobile-hint">
+          На телефоне проведите по шкале вбок, чтобы увидеть все дни.
+        </p>
         <p className="lpm-hint">
           ★ — до {MAX_KEY_SPHERES} ключевых сфер месяца: они выделены золотом.
         </p>
@@ -223,7 +231,8 @@ export default function LifePlanMap({
             </button>
           </div>
         </div>
-        <div className="lpm-gantt">
+        <div className="lpm-gantt-scroll">
+        <div className="lpm-gantt" style={gridWidth}>
           {todayLeft !== null && (
             <i className="lpm-now" style={{ left: `${todayLeft}%` }}>
               <b>{short(today)}</b>
@@ -270,6 +279,10 @@ export default function LifePlanMap({
             </p>
           )}
         </div>
+        </div>
+        <p className="lpm-hint lpm-mobile-hint">
+          Проведите по шкале вбок, чтобы просмотреть даты этапов.
+        </p>
       </div>
 
       <div className="lpm-two">

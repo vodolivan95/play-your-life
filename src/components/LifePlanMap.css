@@ -26,7 +26,8 @@
 .lpm-card-head p { margin-top: 4px; font-size: 13px; color: var(--lpm-muted); }
 .lpm-peak { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-bottom: 10px; font-size: 14px; color: var(--lpm-muted); }
 .lpm-peak b { color: var(--lpm-peak); }
-.lpm-grid { display: grid; gap: 6px; }
+.lpm-grid-scroll, .lpm-gantt-scroll { min-width: 0; width: 100%; }
+.lpm-grid { display: grid; gap: 6px; min-width: 0; }
 .lpm-row { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 10px; align-items: center; padding: 3px 6px; border-radius: 12px; border: 1.5px solid transparent; }
 .lpm-row.is-key { border-color: var(--lpm-gold); background: var(--lpm-goldbg); box-shadow: 0 0 14px rgba(240, 172, 31, .25); }
 .lpm-name { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -42,6 +43,7 @@
 .lpm-bar-col span { width: 100%; border-radius: 4px 4px 0 0; background: var(--lpm-accent); }
 .lpm-bar-col span.is-peak { background: var(--lpm-peak); }
 .lpm-hint { margin-top: 10px; font-size: 12px; color: var(--lpm-muted); }
+.lpm-mobile-hint { display: none; }
 .lpm-gantt { position: relative; display: grid; gap: 6px; padding: 26px 0 4px; min-height: 60px; }
 .lpm-now { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px dashed var(--lpm-accent); font-style: normal; z-index: 2; pointer-events: none; }
 .lpm-now b { position: absolute; top: 0; left: 0; transform: translateX(-50%); padding: 2px 8px; border-radius: 999px; background: var(--lpm-accent); color: #fff; font-size: 11px; white-space: nowrap; }
@@ -63,6 +65,10 @@
 .lpm-warn { color: var(--lpm-gold); }
 @media (max-width: 760px) {
   .lpm-row { grid-template-columns: 1fr; gap: 4px; }
+  .lpm-grid-scroll, .lpm-gantt-scroll { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
+  .lpm-name { position: sticky; left: 0; z-index: 2; justify-self: start; width: max-content; max-width: 100%; padding: 2px 8px 2px 2px; border-radius: 8px; background: var(--lpm-card); }
+  .lpm-cells { padding: 2px 1px 4px; }
+  .lpm-mobile-hint { display: block; font-size: 11px; }
   .lpm-two { grid-template-columns: 1fr; }
   .lpm-head h2 { font-size: 24px; }
   .lpm-bar-col i { font-size: 8px; }

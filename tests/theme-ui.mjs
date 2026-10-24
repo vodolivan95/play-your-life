@@ -8,7 +8,7 @@ await mkdir('work/theme', { recursive: true });
 const port = 5177;
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { stdio: ['ignore', 'pipe', 'pipe'] });
 const url = `http://127.0.0.1:${port}/`;
-const pages = ['Главная', 'Сферы жизни', 'Мои задачи', 'Привычки', 'Цели', 'План жизни', 'Дерево навыков', 'Достижения', 'Магазин', 'Город', 'Профиль', 'Ключевые итоги'];
+const pages = ['Главная', 'Сферы жизни', 'Мои задачи', 'Привычки', 'Цели', 'Дерево навыков', 'Достижения', 'Магазин', 'Город', 'Профиль', 'Ключевые итоги'];
 let browser;
 try {
   let ready = false;
@@ -61,12 +61,22 @@ try {
         await nav.getByRole('button', { name: new RegExp('^' + label) }).first().click();
         await page.waitForTimeout(700);
         await page.screenshot({ path: `work/theme/${mobile ? 'mobile' : 'desktop'}-${name}-${String(i + 1).padStart(2, '0')}.png`, fullPage: !mobile });
+        if (!mobile && label === 'Мои задачи') {
+          await page.locator('.pyl-quest-modes').getByRole('button', { name: 'План жизни', exact: true }).click();
+          await page.waitForTimeout(700);
+          await page.screenshot({ path: `work/theme/desktop-${name}-plan.png`, fullPage: true });
+        }
       }
       if (mobile) {
         await page.locator('.pyl-tabbar').getByRole('button', { name: /^Ещё/ }).click();
         await page.waitForTimeout(400);
         await page.screenshot({ path: `work/theme/mobile-${name}-more.png` });
         await page.locator('.pyl-more-backdrop').click({ position: { x: 20, y: 20 } });
+        await page.locator('.pyl-tabbar').getByRole('button', { name: /^Ещё/ }).click();
+        await page.locator('.pyl-more').getByRole('button', { name: /^Мои задачи/ }).click();
+        await page.locator('.pyl-quest-modes').getByRole('button', { name: 'План жизни', exact: true }).click();
+        await page.waitForTimeout(700);
+        await page.screenshot({ path: `work/theme/mobile-${name}-plan.png` });
       }
     }
     // Выбор темы сохраняется после перезагрузки.

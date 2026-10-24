@@ -80,7 +80,7 @@ try {
       .getByRole("button", { name: "Продолжить игру на этом устройстве" })
       .click();
     await openTasks(page, mobile);
-    assert.equal(await page.locator(".pyl-quest-modes>button").count(), 3);
+    assert.equal(await page.locator(".pyl-quest-modes>button").count(), 4);
     await page
       .getByRole("button", { name: "＋ Новая задача" })
       .first()

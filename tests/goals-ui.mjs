@@ -628,10 +628,11 @@ try {
     );
     if (width < 600) {
       await page.locator('.pyl-tabbar').getByRole('button', { name: /^Ещё/ }).click();
-      await page.locator('.pyl-more').getByRole('button', { name: /^План жизни/ }).click();
+      await page.locator('.pyl-more').getByRole('button', { name: /^Мои задачи/ }).click();
     } else {
-      await page.locator('.sidebar').getByRole('button', { name: /^План жизни/ }).click();
+      await page.locator('.sidebar').getByRole('button', { name: /^Мои задачи/ }).click();
     }
+    await page.locator('.pyl-quest-modes').getByRole('button', { name: 'План жизни', exact: true }).click();
     await page.getByRole('button', { name: 'Запланировать задачу' }).click();
     const plannedTask = page.locator('.task-create-dialog');
     await plannedTask.getByRole('heading', { name: 'Создать задачу', exact: true }).waitFor();

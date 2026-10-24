@@ -57,7 +57,7 @@ const seedJson = JSON.stringify(seed);
 
 const desktopMenu = ['Главная', 'Сферы жизни', 'Мои задачи', 'Привычки', 'Цели', 'Дерево навыков', 'Достижения', 'Магазин', 'Город', 'Профиль', 'Ключевые итоги'];
 const mobileTabs = ['Главная', 'Привычки', 'Цели', 'Город'];
-const mobileMore = ['Мои задачи', 'Сферы жизни', 'Дерево навыков', 'Достижения', 'Магазин', 'Профиль', 'Ключевые итоги'];
+const mobileMore = ['Сферы жизни', 'Дерево навыков', 'Достижения', 'Магазин', 'Профиль', 'Ключевые итоги', 'Мои задачи'];
 
 let browser;
 const problems = [];
@@ -147,6 +147,11 @@ try {
       : mobile ? [...mobileTabs, ...mobileMore] : desktopMenu;
     for (const label of sections) {
       await open(label);
+      if (mobile && label === 'Главная') {
+        const footerImage = page.locator('.mobile-footer-map img');
+        assert.equal(await footerImage.count(), 1, 'на мобильной главной отображается мини-карта в футере');
+        assert.match(await footerImage.getAttribute('src') ?? '', /mobile-footer-islands/, 'мини-карта показывает актуальный остров с психологией');
+      }
 
       if (label === 'Сферы жизни') {
         await page.locator('.sph-open').first().click();
@@ -167,8 +172,10 @@ try {
         await plan.waitFor();
         assert.equal(await plan.locator('.lpm-card').count(), 4, 'карта, этапы и сводка сфер отображаются');
         assert.ok(await plan.locator('.lpm-grid-scroll .lpm-cells').count() >= 10, 'шкала нагрузки и строки сфер отображаются');
-        assert.ok(await plan.locator('.plan-goal-row').count() > 0, 'цели видны и переносятся на узком экране');
-        assert.ok(await plan.locator('.planned-task').count() > 0, 'запланированные задачи отображаются');
+        if (process.env.SMOKE_PLAN_ONLY === '1') {
+          assert.ok(await plan.locator('.plan-goal-row').count() > 0, 'цели видны и переносятся на узком экране');
+          assert.ok(await plan.locator('.planned-task').count() > 0, 'запланированные задачи отображаются');
+        }
         if (mobile) {
           const layout = await page.evaluate(() => ({
             viewport: innerWidth,

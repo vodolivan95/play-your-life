@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { difficulties, spheres } from "../game";
 import type { Quest } from "../game";
 import { habitIcons, virtualRewards } from "../personalQuests";
@@ -8,7 +8,7 @@ import GameArt from "./GameArt";
 import { inspectQuestPhoto } from "../questPhoto";
 import { sphereAssets } from '../sphereAssets';
 import type { TaskLabel } from '../game';
-import TaskCreationForm from './TaskCreationForm';
+const TaskCreationForm = lazy(() => import('./TaskCreationForm'));
 
 type Draft = {
   name: string;
@@ -203,16 +203,18 @@ export default function QuestWizard({
   }
   if (!habitMode)
     return (
-      <TaskCreationForm
-        quest={quest}
-        initial={initial}
-        taskLabels={taskLabels}
-        onClose={onClose}
-        onSave={(task, labels) => {
-          onQuest(task, labels);
-          onClose();
-        }}
-      />
+      <Suspense fallback={<dialog open className="pyl-quest-dialog"><p>Открываю форму задачи…</p></dialog>}>
+        <TaskCreationForm
+          quest={quest}
+          initial={initial}
+          taskLabels={taskLabels}
+          onClose={onClose}
+          onSave={(task, labels) => {
+            onQuest(task, labels);
+            onClose();
+          }}
+        />
+      </Suspense>
     );
   return (
     <dialog

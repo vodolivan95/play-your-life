@@ -529,12 +529,12 @@ try {
       .getByRole('button', { name: '＋ Добавить задачу', exact: true })
       .click();
     const taskEditor = page.locator('dialog[open]').filter({
-      has: page.getByRole('heading', { name: 'Новая задача', exact: true }),
+      has: page.getByRole('heading', { name: 'Создать задачу', exact: true }),
     });
     await taskEditor
       .getByLabel('Название задачи', { exact: true })
       .fill('Созданная задача');
-    await taskEditor.getByRole('button', { name: 'Сохранить задачу' }).click();
+    await taskEditor.getByRole('button', { name: /Создать задачу/ }).click();
     await workspace.getByRole('button', { name: /^Созданная задача/ }).click();
     await workspace
       .locator('dialog[open]')
@@ -626,10 +626,20 @@ try {
       ),
       1000000,
     );
+    if (width < 600) {
+      await page.locator('.pyl-tabbar').getByRole('button', { name: /^Ещё/ }).click();
+      await page.locator('.pyl-more').getByRole('button', { name: /^План жизни/ }).click();
+    } else {
+      await page.locator('.sidebar').getByRole('button', { name: /^План жизни/ }).click();
+    }
+    await page.getByRole('button', { name: 'Запланировать задачу' }).click();
+    const plannedTask = page.locator('.task-create-dialog');
+    await plannedTask.getByRole('heading', { name: 'Создать задачу', exact: true }).waitFor();
+    await plannedTask.getByRole('button', { name: 'Отмена' }).click();
     assert.equal(errors.length, 0, errors.join('\n'));
     await context.close();
     console.log(
-      `Цели и этапы ${width}px: URL, задачи, календарь, вкладки, создание/изменение/копирование/удаление, 68%, награды, перезагрузка и предел 100 — OK`,
+      `Цели, этапы и план ${width}px: URL, задачи, календарь, общая форма из цели/планировщика, 68%, награды, перезагрузка и предел 100 — OK`,
     );
   }
 } finally {

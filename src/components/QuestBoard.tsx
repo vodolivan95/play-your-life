@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import type { Dispatch, SetStateAction } from "react";
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { removeQuest, reopenQuest } from "../game";
 import type { GameState, Quest } from "../game";
 import {
@@ -23,11 +23,12 @@ import { TickTickContext } from "../tickTickContext";
 import "./QuestBoard.css";
 import "./TasksAside.css";
 
-type Mode = "inbox" | "list" | "calendar";
+type Mode = "inbox" | "list" | "calendar" | "plan";
 const modes: [Mode, string][] = [
   ["inbox", "Входящие"],
   ["list", "Список"],
   ["calendar", "Календарь"],
+  ["plan", "План жизни"],
 ];
 
 export default function QuestBoard({
@@ -39,6 +40,7 @@ export default function QuestBoard({
   notify,
   initialTaskId = null,
   onInitialTaskOpened,
+  planContent,
 }: {
   state: GameState;
   onChange: Dispatch<SetStateAction<GameState>>;
@@ -49,6 +51,7 @@ export default function QuestBoard({
   /** Задача, которую нужно открыть сразу (например, с кнопки «Показать задачу» на главной). */
   initialTaskId?: string | null;
   onInitialTaskOpened?: () => void;
+  planContent?: ReactNode;
 }) {
   const manager = useContext(TickTickContext);
   const [mode, setMode] = useState<Mode>("list"),
@@ -126,10 +129,9 @@ export default function QuestBoard({
             </button>
           ))}
         </nav>
-        <button className="primary-button" onClick={() => onCreate()}>
-          ＋ Новая задача
-        </button>
+        {mode !== "plan" && <button className="primary-button" onClick={() => onCreate()}>＋ Новая задача</button>}
       </header>
+      {mode === "plan" ? planContent : <>
       <TasksSummary quests={quests} today={today} />
       <div className="pyl-tasks-layout">
       <div className="pyl-tasks-main">
@@ -169,6 +171,7 @@ export default function QuestBoard({
       </div>
       <TasksAside quests={quests} connected={connected} />
       </div>
+      </>}
       {form && (
         <QuestWizard
           {...form}

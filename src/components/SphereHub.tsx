@@ -234,9 +234,7 @@ export function SphereScene({ state, id, tab, onTab, onBack, onQuest, onCity, on
           <span className="sph-res is-streak"><Glyph name="flame" size={16} />{d.streak}<small> {dayWord(d.streak)} подряд</small></span>
           <span className="sph-res is-day"><Glyph name="check" size={14} />{done}/{d.tasksToday.length}<small> заданий дня</small></span>
         </div>
-        <button type="button" className="sph-pin is-projects" onClick={() => onTab('projects')}><span><Glyph name="flag" size={15} />Проекты · {d.projects.length}</span></button>
         <button type="button" className="sph-pin is-enter" onClick={onCity}><span><Glyph name="door" size={15} />Войти в здание</span></button>
-        <button type="button" className="sph-pin is-tasks" onClick={() => onTab('quests')}><span><Glyph name="check" size={15} />Задачи · {open} сегодня</span></button>
         <div className="sph-scene-bottom">
           <div className="sph-scene-title">
             <LevelHex level={d.progress.level} />

@@ -389,10 +389,8 @@ button.radar-label:focus-visible { outline: 3px solid #ffc94a; outline-offset: 2
   .sph-res.is-xp i { width: 22px; height: 22px; }
   .sph-pin > span { min-height: 30px; padding: 0 10px; font-size: 12px; }
   .sph-pin::after { height: 14px; }
-  .sph-pin.is-projects { left: 6%; top: 96px; }
   .sph-pin.is-enter { left: 34%; top: 150px; }
-  .sph-pin.is-tasks { right: 5%; top: 104px; }
-  .sph-scene-bottom { left: 14px; right: 14px; bottom: 50px; }
+  .sph-scene-bottom { left: 14px; right: 14px; bottom: 62px; }
   .sph-hex { width: 58px; height: 58px; }
   .sph-scene-name h1 { font-size: 22px; }
   .sph-dock { width: auto; max-width: none; margin: -38px 8px 0; padding: 8px 6px; justify-content: space-between; gap: 2px; }

@@ -397,21 +397,6 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                       openGoal(goal.id);
                       setGoalOrigin(sphere.id);
                     }}
-                    onTemplate={(name, description) => {
-                      setState((current) =>
-                        saveGoal(current, {
-                          name,
-                          description,
-                          sphere: sphere.id,
-                          target: 100,
-                          reward: 100,
-                          progressMode: 'tasks',
-                        }),
-                      );
-                      notify(
-                        'Проект добавлен. Открой его, чтобы настроить этапы и задачи.',
-                      );
-                    }}
                   />
                 )}
                 <section
@@ -575,7 +560,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                   const taskBadge = questsForToday(state).filter((q) => !q.done).length + incomingForToday(tickTick.incoming).length;
                   const byId = (id: string) => navigation.find((n) => n.id === id)!;
                   const quickIds = ['tasks', 'quests', 'goals', 'spheres'];
-                  const progressIds = ['plan', 'tree', 'achievements', 'statistics'];
+                  const progressIds = ['tree', 'achievements', 'statistics'];
                   const systemIds = ['shop', 'city'];
                   return (
                     <>
@@ -657,16 +642,26 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                     navigate('home');
                   }}
                 />
-                <button
-                  className="secondary-button"
-                  onClick={() => navigate('plan')}
-                >
-                  Планирование и TickTick <Icon name="arrow" size={16} />
-                </button>
               </div>
             )}
             {page === 'quests' && <HabitsPage state={state} onChange={setState} ownerId={userId ?? 'local'} today={today} notify={notify} />}
-            {page === 'tasks' && <QuestBoard initialTaskId={pendingTask} onInitialTaskOpened={() => setPendingTask(null)} state={state} onChange={setState} ownerId={userId ?? 'local'} today={today} notify={notify} onCreate={q => { setQuestTemplate(q ?? null); setQuestSphere(q?.sphere ?? 'health'); setModal('quest'); }} />}
+            {page === 'tasks' && <QuestBoard
+              initialTaskId={pendingTask}
+              onInitialTaskOpened={() => setPendingTask(null)}
+              state={state}
+              onChange={setState}
+              ownerId={userId ?? 'local'}
+              today={today}
+              notify={notify}
+              onCreate={q => { setQuestTemplate(q ?? null); setQuestSphere(q?.sphere ?? 'health'); setModal('quest'); }}
+              planContent={<LifePlanner
+                state={state}
+                onChange={setState}
+                onGoal={(id) => { navigate('goals'); openGoal(id); }}
+                onNewGoal={() => setModal('goal')}
+                onNotify={notify}
+              />}
+            />}
             {page === 'goals' && (
               <GoalsBoard
                 ownerId={userId ?? 'local'}
@@ -688,18 +683,6 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                   } else openGoal(id);
                 }}
                 onNew={() => setModal('goal')}
-                onNotify={notify}
-              />
-            )}
-            {page === 'plan' && (
-              <LifePlanner
-                state={state}
-                onChange={setState}
-                onGoal={(id) => {
-                  navigate('goals');
-                  openGoal(id);
-                }}
-                onNewGoal={() => setModal('goal')}
                 onNotify={notify}
               />
             )}

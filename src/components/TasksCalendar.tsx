@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import type { CSSProperties, DragEvent } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import type { CSSProperties, DragEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { spheres } from '../game';
 import type { Quest } from '../game';
 import {
@@ -32,6 +32,15 @@ const longDate = (key: string) => {
   const date = parseDay(key);
   return `${date.getDate()} ${monthGenitive[date.getMonth()]}`;
 };
+const resizeStep = 5;
+const minDuration = 15;
+const clockOf = (minutes: number) => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+/** Время по положению курсора в колонке дня: привязка к 5 минутам, в пределах видимых часов. */
+const timeFromOffset = (y: number) => {
+  const raw = firstHour * 60 + (y / hourHeight) * 60;
+  const snapped = Math.round(raw / resizeStep) * resizeStep;
+  return Math.max(firstHour * 60, Math.min(lastHour * 60, snapped));
+};
 
 function Chip({ item, selected, onPick, label, onDragStart, onDragEnd, dragging }: { item: CalendarItem; selected: boolean; onPick: () => void; label?: string; onDragStart: (e: DragEvent) => void; onDragEnd: () => void; dragging: boolean }) {
   const { quest } = item;
@@ -59,12 +68,15 @@ export default function TasksCalendar({
   today,
   onOpen,
   onMove,
+  onResize,
 }: {
   quests: Quest[];
   today: string;
   onOpen: (quest: Quest) => void;
   /** Перенос задачи на другой день перетаскиванием: столько дней сдвинуть срок. */
   onMove?: (quest: Quest, days: number) => void;
+  /** Протяжка начала/конца задачи за стрелочку на краю блока: новые «ЧЧ:ММ» начала и конца в тот же день. */
+  onResize?: (quest: Quest, day: string, start: string, end: string) => void;
 }) {
   const [view, setView] = useState<CalendarView>('month');
   const [anchor, setAnchor] = useState(today);
@@ -72,6 +84,8 @@ export default function TasksCalendar({
   const [selectedId, setSelectedId] = useState('');
   const [draggedId, setDraggedId] = useState('');
   const [overDay, setOverDay] = useState('');
+  const [resize, setResize] = useState<{ id: string; day: string; edge: 'start' | 'end'; colTop: number; start: string; end: string } | null>(null);
+  const suppressClick = useRef(false);
   const items = useMemo(() => calendarItems(quests), [quests]);
   const startDrag = (item: CalendarItem) => (e: DragEvent) => {
     e.dataTransfer.effectAllowed = 'move';
@@ -96,6 +110,37 @@ export default function TasksCalendar({
     if (!item || item.day === day || !onMove) return;
     const days = Math.round((parseDay(day).getTime() - parseDay(item.day).getTime()) / 86400000);
     if (days) onMove(item.quest, days);
+  };
+  const beginResize = (item: CalendarItem, edge: 'start' | 'end') => (e: ReactPointerEvent<HTMLSpanElement>) => {
+    if (!onResize || !item.start || !item.end) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const col = (e.currentTarget.closest('.tcal-col') as HTMLElement | null)?.getBoundingClientRect();
+    if (!col) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    suppressClick.current = true;
+    setResize({ id: item.quest.id, day: item.day, edge, colTop: col.top, start: item.start, end: item.end });
+  };
+  const trackResize = (e: ReactPointerEvent<HTMLSpanElement>) => {
+    if (!resize) return;
+    e.preventDefault();
+    const minutes = timeFromOffset(e.clientY - resize.colTop);
+    setResize((r) => {
+      if (!r) return r;
+      if (r.edge === 'start') {
+        const start = clockOf(Math.min(minutes, minutesOf(r.end) - minDuration));
+        return { ...r, start };
+      }
+      const end = clockOf(Math.max(minutes, minutesOf(r.start) + minDuration));
+      return { ...r, end };
+    });
+  };
+  const finishResize = (e: ReactPointerEvent<HTMLSpanElement>) => {
+    if (!resize) return;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    onResize?.(items.find((x) => x.quest.id === resize.id)!.quest, resize.day, resize.start, resize.end);
+    setResize(null);
+    window.setTimeout(() => { suppressClick.current = false; }, 0);
   };
   const days = calendarDays(view, anchor);
   const anchorDate = parseDay(anchor);
@@ -281,23 +326,49 @@ export default function TasksCalendar({
                     onDrop={dropOnDay(day)}
                   >
                     {itemsForDay(items, day).filter((item) => item.start && item.end).map((item) => {
-                      const top = ((minutesOf(item.start!) - firstHour * 60) / 60) * hourHeight + 1;
-                      const height = Math.max(26, ((minutesOf(item.end!) - minutesOf(item.start!)) / 60) * hourHeight - 3);
+                      const live = resize?.id === item.quest.id ? resize : null;
+                      const start = live?.start ?? item.start!;
+                      const end = live?.end ?? item.end!;
+                      const top = ((minutesOf(start) - firstHour * 60) / 60) * hourHeight + 1;
+                      const height = Math.max(26, ((minutesOf(end) - minutesOf(start)) / 60) * hourHeight - 3);
                       const movable = !item.quest.done;
+                      const resizable = !item.quest.done && !!onResize;
                       return (
                         <button
                           key={item.quest.id}
                           type="button"
-                          className={`tcal-event${item.quest.done ? ' is-done' : ''}${selectedId === item.quest.id ? ' is-selected' : ''}${draggedId === item.quest.id ? ' is-dragging' : ''}`}
+                          className={`tcal-event${item.quest.done ? ' is-done' : ''}${selectedId === item.quest.id ? ' is-selected' : ''}${draggedId === item.quest.id ? ' is-dragging' : ''}${live ? ' is-resizing' : ''}${resizable ? ' is-resizable' : ''}`}
                           style={{ '--c': colorOf(item.quest), top, height } as CSSProperties}
-                          onClick={() => setSelectedId(item.quest.id)}
-                          draggable={movable}
+                          onClick={() => { if (!suppressClick.current) setSelectedId(item.quest.id); }}
+                          draggable={movable && !resize}
                           onDragStart={movable ? startDrag(item) : undefined}
                           onDragEnd={endDrag}
                           title={item.quest.tickTickSharedAt ? 'Перенос уйдёт в TickTick' : undefined}
                         >
+                          {resizable && (
+                            <span
+                              className="tcal-handle tcal-handle-start"
+                              aria-hidden="true"
+                              onPointerDown={beginResize(item, 'start')}
+                              onPointerMove={trackResize}
+                              onPointerUp={finishResize}
+                            >
+                              <svg width="14" height="8" viewBox="0 0 14 8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l5-4 5 4" /></svg>
+                            </span>
+                          )}
                           <b>{item.quest.name}</b>
-                          <span>{item.start} – {item.end}</span>
+                          <span>{start} – {end}</span>
+                          {resizable && (
+                            <span
+                              className="tcal-handle tcal-handle-end"
+                              aria-hidden="true"
+                              onPointerDown={beginResize(item, 'end')}
+                              onPointerMove={trackResize}
+                              onPointerUp={finishResize}
+                            >
+                              <svg width="14" height="8" viewBox="0 0 14 8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 2l5 4 5-4" /></svg>
+                            </span>
+                          )}
                         </button>
                       );
                     })}

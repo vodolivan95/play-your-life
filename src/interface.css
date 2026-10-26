@@ -661,8 +661,19 @@ h3 {
   background: #fff;
 }
 .profile-page {
-  max-width: 640px;
+  /* На всю ширину страницы (как остальные разделы, max-width задаёт <main>), а не отдельная узкая колонка. */
+  max-width: 100%;
   margin: auto;
+}
+.profile-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid #eff5fa;
+  color: #4b6178;
+  font-size: 13px;
 }
 .profile-hero {
   display: flex;

@@ -285,6 +285,7 @@
 :root[data-theme="dark"] .planner-summary { background: #1b3342; }
 :root[data-theme="dark"] .month-summary,
 :root[data-theme="dark"] .month-score-panel { background: #151d33; }
+:root[data-theme="dark"] .profile-settings-row { border-bottom: 1px solid #273251; color: #a3b4dc; }
 :root[data-theme="dark"] .profile-hero strong { color: #a4b5dc; }
 :root[data-theme="dark"] .profile-hero small { color: #8ec7eb; }
 :root[data-theme="dark"] .profile-tip { background: #141b30; border: 1px solid #3d2f6a; }

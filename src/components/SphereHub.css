@@ -253,7 +253,8 @@ button.radar-label:focus-visible { outline: 3px solid #ffc94a; outline-offset: 2
 .sph-pin.is-projects { left: 22%; top: 120px; color: #ffd56b; } .sph-pin.is-projects > span { background: #ffd56b; color: #2a1a00; }
 .sph-pin.is-enter { left: 46%; top: 190px; color: #fff; } .sph-pin.is-enter > span { background: #fff; color: #0f1a33; }
 .sph-pin.is-tasks { right: 16%; top: 140px; color: #7ee0b8; } .sph-pin.is-tasks > span { background: #7ee0b8; color: #06281d; }
-.sph-scene-bottom { position: absolute; z-index: 2; left: 24px; right: 24px; bottom: 22px; }
+/* Поднято выше (было 22px), чтобы уровень/имя сферы и шкала XP не перекрывались плавающим доком вкладок внизу сцены. */
+.sph-scene-bottom { position: absolute; z-index: 2; left: 24px; right: 24px; bottom: 50px; }
 .sph-scene-title { display: flex; align-items: center; gap: 14px; max-width: 560px; }
 .sph-scene-title > div { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .sph-scene-name { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
@@ -390,7 +391,7 @@ button.radar-label:focus-visible { outline: 3px solid #ffc94a; outline-offset: 2
   .sph-pin > span { min-height: 30px; padding: 0 10px; font-size: 12px; }
   .sph-pin::after { height: 14px; }
   .sph-pin.is-enter { left: 34%; top: 150px; }
-  .sph-scene-bottom { left: 14px; right: 14px; bottom: 62px; }
+  .sph-scene-bottom { left: 14px; right: 14px; bottom: 70px; }
   .sph-hex { width: 58px; height: 58px; }
   .sph-scene-name h1 { font-size: 22px; }
   .sph-dock { width: auto; max-width: none; margin: -38px 8px 0; padding: 8px 6px; justify-content: space-between; gap: 2px; }

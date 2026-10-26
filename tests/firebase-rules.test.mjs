@@ -424,7 +424,7 @@ test("начисление без журнала или с чужим ownerId з
 });
 
 test('SDK сохраняет цель, этапы, заметки, прогресс и однократные награды в той же игре', async () => {
-  const { saveGoal, saveStage, saveTask, moveStage } = await import('../src/planning.ts');
+  const { saveGoal, saveStage, saveTask, moveStage, finishStage } = await import('../src/planning.ts');
   const { goalProgressValue } = await import('../src/goalWorkspace.ts');
   const driver = firebaseSave(env.authenticatedContext('alice').firestore(), 'alice');
   const fresh = await driver.create(newAccountGame('Алиса'));
@@ -437,7 +437,13 @@ test('SDK сохраняет цель, этапы, заметки, прогре�
   const taskId = state.quests[0].id;
   const planned = await driver.save(state, fresh.revision);
   assert.ok(planned);
-  state = completeQuest(planned.state, taskId);
+  // goalProgressValue (0.61.1) учитывает оба этапа цели: второй (ручной, без задач)
+  // тоже нужно завершить явно, иначе цель не достигает 100% только из-за того,
+  // что выполнена единственная задача первого этапа. Завершаем его до
+  // completeQuest, чтобы награда цели выдалась естественно — в тот момент,
+  // когда действительно выполнены все условия обоих этапов.
+  state = finishStage(planned.state, goalId, secondId);
+  state = completeQuest(state, taskId);
   state = moveStage(state, goalId, secondId, 0);
   const completed = await driver.save(state, planned.revision);
   const reopened = firebaseSave(env.authenticatedContext('alice').firestore(), 'alice');

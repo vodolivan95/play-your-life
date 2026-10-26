@@ -689,8 +689,6 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
             {page === 'tree' && (
               <SkillTree
                 state={state}
-                onChange={setState}
-                notify={notify}
                 onOpenSphere={(id) => {
                   setSelected(id);
                   setPage('spheres');

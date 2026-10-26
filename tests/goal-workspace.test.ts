@@ -113,21 +113,25 @@ test('обязательность, веса и частичный прогре�
     stageId: a,
     required: false,
   });
-  assert.equal(goal(s, id).current, 37.5);
+  // Вес и частичный прогресс считаются внутри этапа «Первый» (37.5%/60% —
+  // см. stageMetrics ниже), а goal.current — среднее по всем этапам цели:
+  // второй этап фикстуры («Второй») без задач остаётся на 0%, пока его не
+  // завершили явно, поэтому общий процент цели вдвое ниже, чем у одного этапа.
+  assert.equal(goal(s, id).current, 18.75);
   assert.equal(
     stageMetrics(s, goal(s, id), goal(s, id).stages![0]).progress,
     37.5,
   );
   const xp = s.xp;
   s = progressQuest(s, q.id, 8, 'test');
-  assert.ok(Math.abs(goal(s, id).current - 60) < 0.000001);
+  assert.ok(Math.abs(goal(s, id).current - 30) < 0.000001);
   assert.equal(s.xp, xp);
   assert.equal(goal(s, id).rewarded, false);
 });
 test('автоматическое завершение, история и награды остаются однократными после перезагрузки', () => {
   const f = fixture();
   let s = f.s;
-  const { id, a } = f;
+  const { id, a, b } = f;
   s = saveTask(s, {
     name: 'Действие',
     sphere: 'english',
@@ -136,6 +140,11 @@ test('автоматическое завершение, история и на�
     stageId: a,
   });
   const task = s.quests.at(-1)!;
+  // Прогресс и награда цели учитывают все этапы, а не только задачи:
+  // второй этап («Второй», ручной, без задач) тоже нужно завершить явно,
+  // иначе goalProgressValue держит цель ниже 100% — так пустой «плановый»
+  // этап больше не даёт засчитать цель готовой раньше времени.
+  s = finishStage(s, id, b);
   const beforeXP = s.xp;
   s = completeQuest(s, task.id);
   assert.equal(goal(s, id).current, 100);
@@ -501,14 +510,21 @@ test('при загрузке старый расчёт по задачам ис
     goals: s.goals.map((g) => (g.id === f.id ? { ...g, current: 0 } : g)),
   };
   const migrated = migrateState(JSON.parse(JSON.stringify(raw)));
-  assert.equal(goal(migrated, f.id).current, 100);
+  // 50, а не 100: у цели фикстуры два этапа — «Первый» с выполненной задачей
+  // (100%) и «Второй» без задач, который никто не завершал (0%); миграция
+  // честно пересчитывает среднее по обоим, а не только по выполненным задачам.
+  assert.equal(goal(migrated, f.id).current, 50);
   assert.equal(migrated.goals[0].current, raw.goals[0].current);
   assert.equal(migrated.xp, s.xp);
   assert.deepEqual(migrated.events, JSON.parse(JSON.stringify(s.events)));
 });
 test('новая обязательная задача открывает этап повторно и не повторяет награду цели', () => {
   const f = fixture();
-  let s = saveTask(f.s, {
+  // Второй этап фикстуры («Второй», ручной, без задач) завершаем заранее —
+  // иначе цель никогда не доходит до 100% и награда не выдаётся вовсе,
+  // а тест проверяет именно однократность награды, а не это условие.
+  let s = finishStage(f.s, f.id, f.b);
+  s = saveTask(s, {
     name: 'Первый шаг',
     sphere: 'english',
     difficulty: 'Micro',

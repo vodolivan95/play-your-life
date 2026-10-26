@@ -704,7 +704,11 @@ export function syncGoalTasks(
       id: crypto.randomUUID(), sphere: goal.sphere, title: `Завершён этап: ${stage.name}`,
       xp: 0, date: timestamp, kind: 'planning', goalId, stageId: stage.id, goalProgress: current,
     }, ...next.events];
-    if (goal.progressMode === 'tasks' && required.length > 0 && required.every((q) => q.done) && !goal.rewarded) {
+    // Награда — только когда цель реально на 100% (goalProgressValue), а не просто
+    // когда выполнены все задачи: с этапами 100% требует завершения и их тоже —
+    // иначе цель засчитывалась бы готовой из-за одной выполненной задачи, даже
+    // если в ней остались незавершённые (в т.ч. пустые, для планирования) этапы.
+    if (goal.progressMode === 'tasks' && required.length > 0 && current === 100 && !goal.rewarded) {
       next = award(next, goal.sphere, goal.reward, `Цель: ${goal.name}`, {
         kind: 'goal', sourceId: goal.id, goalId, goalProgress: 100,
       });

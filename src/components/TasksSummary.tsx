@@ -1,14 +1,15 @@
 import { useContext } from 'react';
 import type { Quest } from '../game';
 import { TickTickContext } from '../tickTickContext';
-import { addDays, mondayOf } from '../tasksCalendar';
+import { addDays, calendarItem, mondayOf } from '../tasksCalendar';
 import { incomingForToday } from '../ticktickInbox';
 import './TasksSummary.css';
 
 export default function TasksSummary({ quests, today }: { quests: Quest[]; today: string }) {
   const manager = useContext(TickTickContext);
   const open = quests.filter((q) => !q.done);
-  const day = (q: Quest) => (q.dueAt ?? q.startsAt)?.slice(0, 10);
+  // День по местной зоне через calendarItem(), не по UTC-срезу строки (см. TasksAside.tsx).
+  const day = (q: Quest) => calendarItem(q)?.day;
   const weekEnd = addDays(mondayOf(today), 6);
   const weekStart = mondayOf(today);
   const tiles: [string, number, string][] = [

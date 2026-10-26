@@ -64,6 +64,34 @@ function fixture() {
 function goal(s: GameState, id: string) {
   return s.goals.find((g) => g.id === id)!;
 }
+// Регрессия аудита 26.10.2026 (AUD-002): syncGoalTasks (который обновляет
+// кэш goal.current) вызывается при завершении/удалении/отмене задачи, но не
+// при добавлении, изменении или удалении этапа (saveStage/removeStage). Все
+// экраны, кроме LifePlanner ("План жизни"), читают прогресс через
+// goalProgressValue(state, goal), который всегда живой — но goal.current сам
+// по себе мог после такой правки на время разойтись с ним. Тест фиксирует,
+// что немедленно после добавления/удаления этапа живой расчёт прогресса
+// меняется корректно и не зависит от того, обновился ли кэш.
+test('goalProgressValue остаётся верным сразу после добавления и удаления этапа (кэш goal.current не обязателен)', () => {
+  const f = fixture();
+  const { id, a } = f;
+  let s = f.s;
+  s = saveTask(s, { name: 'Шаг 1', sphere: 'english', difficulty: 'Micro', goalId: id, stageId: a, required: true });
+  const taskId = s.quests.find((q) => q.goalId === id)!.id;
+  s = completeQuest(s, taskId);
+  // Один завершённый этап из двух => 50%.
+  assert.equal(goalProgressValue(s, goal(s, id)), 50);
+  // Добавление нового пустого этапа для планирования будущего должно сразу
+  // понизить живой прогресс (три этапа, один завершён) — без завершения
+  // ещё одной задачи, которая раньше была единственным триггером
+  // пересчёта кэша goal.current.
+  s = saveStage(s, id, { name: 'Третий', status: 'planned' });
+  assert.equal(goalProgressValue(s, goal(s, id)), 100 / 3);
+  // Удаление этапа должно сразу вернуть прогресс к прежнему значению.
+  const addedStageId = goal(s, id).stages!.at(-1)!.id;
+  s = removeStage(s, id, addedStageId);
+  assert.equal(goalProgressValue(s, goal(s, id)), 50);
+});
 test('предел уровня остаётся 100; старые 68% и обложка переживают пустые этапы и миграцию', () => {
   assert.equal(MAX_SPHERE_LEVEL, 100);
   let s = updateGoal(initialState(), 'b2', 68);

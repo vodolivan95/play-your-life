@@ -141,6 +141,43 @@ test("SDK сохраняет выполненный квест и XP между 
   );
 });
 
+// Регрессия аудита 26.10.2026 (AUD-001): validRecord() в firestore.rules не
+// включал сферу "psychology" (десятая сфера, добавлена в 0.53.0) в свой
+// список допустимых значений — облачное сохранение любой задачи или привычки
+// этой сферы отклонялось правилами (permission-denied) сразу после первого
+// такого квеста, хотя клиент не показывал ошибки валидации. Тест ловит это,
+// сохраняя и выполняя квест сферы "psychology" через настоящий драйвер.
+test("SDK сохраняет выполненный квест сферы «psychology» (десятая сфера, 0.53.0)", async () => {
+  const alice = firebaseSave(
+    env.authenticatedContext("alice").firestore(),
+    "alice",
+  );
+  const fresh = await alice.create(newAccountGame("Алиса"));
+  const withQuest = {
+    ...fresh.state,
+    quests: [
+      {
+        id: "reflect",
+        name: "Дневник мыслей",
+        sphere: "psychology",
+        xp: 20,
+        difficulty: "Simple",
+        done: false,
+      },
+    ],
+  };
+  const planned = await alice.save(withQuest, fresh.revision);
+  const completed = completeQuest(planned.state, "reflect");
+  await alice.save(completed, planned.revision);
+  const anotherSession = firebaseSave(
+    env.authenticatedContext("alice").firestore(),
+    "alice",
+  );
+  const loaded = await anotherSession.load();
+  assert.equal(loaded.state.spheres.psychology.xp, 20);
+  assert.equal(loaded.state.quests[0].done, true);
+});
+
 import {
   saveCustomQuest,
   saveHabit,

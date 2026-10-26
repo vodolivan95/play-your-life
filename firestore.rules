@@ -12,7 +12,7 @@ service cloud.firestore {
           && r.type in ['quest','habit'] && r.coins is int && r.coins >= 0
           && r.xp is int && r.xp in [5,10,20,35,40,50,80]
           && r.item in ['', 'plant_basic','book_basic','cup_basic','crown_basic','key_basic','medal_basic']
-          && r.sphere in ['health','sport','growth','english','finance','together','driving','tasks','hobby']
+          && r.sphere in ['health','sport','growth','english','finance','together','driving','tasks','hobby','psychology']
           && r.locked is bool && r.completed is bool && r.active is bool
           && r.progress is number && r.progress >= 0 && (r.progress == 0 || r.locked) && r.claims is map
           && r.offset is int && r.offset >= -720 && r.offset <= 840

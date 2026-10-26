@@ -122,7 +122,7 @@ export function SphereProjects({
         </div>
         {!finished && (
           <div className="project-tags">
-            <span>{goalStatus(goal)}</span>
+            <span>{goalStatus(state, goal)}</span>
             <span>
               {goal.progressMode === 'tasks' ? 'Поэтапно' : 'По результату'}
             </span>

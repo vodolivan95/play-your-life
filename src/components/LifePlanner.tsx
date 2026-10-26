@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { completeQuest, dateKey, isOverdue, reopenQuest, spheres } from '../game';
 import type { GameState, Quest } from '../game';
+import { goalProgressValue } from '../goalWorkspace';
 import {
   formatDate,
   isGoalTask,
@@ -263,15 +264,15 @@ export default function LifePlanner({
             <div>
               <strong>{goal.name}</strong>
               <small>
-                {goalStatus(goal)} · {formatDate(goal.dueAt)}
+                {goalStatus(state, goal)} · {formatDate(goal.dueAt)}
               </small>
               <div className="progress">
                 <span
-                  style={{ width: `${(goal.current / goal.target) * 100}%` }}
+                  style={{ width: `${goalProgressValue(state, goal)}%` }}
                 />
               </div>
             </div>
-            <b>{Math.round((goal.current / goal.target) * 100)}%</b>
+            <b>{Math.round(goalProgressValue(state, goal))}%</b>
             <Icon name="arrow" size={17} />
           </button>
         ))}

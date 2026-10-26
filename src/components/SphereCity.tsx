@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react';
 import { spheres } from '../game';
 import type { GameState, Goal } from '../game';
 import { formatDate, goalStatus } from '../planning';
+import { goalProgressValue } from '../goalWorkspace';
 import GameArt from './GameArt';
 import Icon from './Icon';
 import ProjectArt from './ProjectArt';
@@ -75,8 +76,11 @@ export function SphereProjects({
   onNew: () => void;
 }) {
   const goals = state.goals.filter((g) => g.sphere === id);
-  const active = goals.filter((g) => g.current < g.target);
-  const completed = goals.filter((g) => g.current >= g.target);
+  // Прогресс проекта всегда считается заново по текущим задачам (goalProgressValue),
+  // а не по сохранённому goal.current — так он остаётся полностью динамичным:
+  // добавление или удаление задачи сразу меняет процент цели.
+  const active = goals.filter((g) => goalProgressValue(state, g) < 100);
+  const completed = goals.filter((g) => goalProgressValue(state, g) >= 100);
   function card(goal: Goal) {
     const tasks = state.quests.filter((q) => q.goalId === goal.id);
     const done = tasks.filter((q) => q.done).length;
@@ -85,11 +89,8 @@ export function SphereProjects({
         !tasks.some((q) => q.stageId === stage.id) ||
         tasks.some((q) => q.stageId === stage.id && !q.done),
     );
-    const percent = Math.min(
-      100,
-      Math.round((goal.current / goal.target) * 100),
-    );
-    const finished = goal.current >= goal.target;
+    const percent = Math.min(100, Math.round(goalProgressValue(state, goal)));
+    const finished = percent >= 100;
     const { color } = projectStyle(goal.name, id);
     return (
       <article

@@ -115,8 +115,8 @@ function Radar({ state, onQuick }: { state: GameState; onQuick: (id: string) => 
             aria-label={`${r.name}: LVL ${r.level}. Открыть окно сферы`}
             style={
               {
-                left: `${50 + Math.cos(angle) * 37}%`,
-                top: `${50 + Math.sin(angle) * 40}%`,
+                left: `${50 + Math.cos(angle) * 39}%`,
+                top: `${50 + Math.sin(angle) * 42}%`,
                 "--sphere-color": r.color,
               } as CSSProperties
             }

@@ -12,17 +12,61 @@
 .tas-ring{fill:none;stroke:#34c759;stroke-width:10;stroke-linecap:round}
 .tas-progress text{font-size:22px;font-weight:900;fill:#14213d}
 .tas-row{display:flex;justify-content:space-between;align-items:center}
-.tas-row b{font-size:12px;font-weight:800;color:#8a97ab}.tas-row b.is-ok{color:#34c759}
-.tas-list{display:flex;justify-content:space-between;gap:10px;font-size:13px;min-height:30px;align-items:center}
-.tas-list span{color:#3d4d68;font-weight:700}
-.tas-stats{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin:0;padding:12px;border-radius:14px;background:rgba(47,125,225,.08);font-size:12px}
-.tas-stats dt{color:#5b6b82}.tas-stats dd{margin:0;font-weight:800}
-.tas-actions{display:flex;gap:8px;flex-wrap:wrap}
-.tas-actions button{min-height:44px;padding:0 16px;border-radius:12px;border:1.5px solid #d6e0ef;background:transparent;color:inherit;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
-:root[data-theme='dark'] .tas-card{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);color:#f2f6ff}
-:root[data-theme='dark'] .tas-card p,:root[data-theme='dark'] .tas-progress span,:root[data-theme='dark'] .tas-stats dt{color:#9fb0cc}
-:root[data-theme='dark'] .tas-card ol,:root[data-theme='dark'] .tas-list span{color:#c5d2ea}
+.tas-count{font-size:12px;font-weight:800;color:#2f7de1;background:rgba(47,125,225,.12);border-radius:999px;padding:2px 9px}
+
+.tas-focus{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.tas-focus li{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:10px;padding-top:10px;border-top:1px solid #e3eaf5}
+.tas-focus li:first-child{padding-top:0;border-top:none}
+.tas-focus-time{display:grid;gap:1px;font-size:10.5px;color:#8a97ab;line-height:1.3}
+.tas-focus-time b{font-size:13px;font-weight:800;color:#14213d}
+.tas-focus-name{font-size:13px;font-weight:700;color:#3d4d68;line-height:1.3;min-width:0}
+.tas-focus-name small{display:block;font-weight:500;color:#8a97ab;font-size:11px;margin-top:1px}
+.tas-focus-dot{width:8px;height:8px;border-radius:50%;flex:none;justify-self:end}
+
+.tas-bars{display:grid;gap:8px}
+.tas-bar-row{display:grid;grid-template-columns:70px 1fr 18px;align-items:center;gap:8px}
+.tas-bar-sphere{font-size:11.5px;color:#5b6b82;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tas-bar-track{height:7px;border-radius:5px;background:#e3eaf5;overflow:hidden;display:block}
+.tas-bar-fill{height:100%;display:block;border-radius:5px}
+.tas-bar-count{font-size:11.5px;font-weight:800;color:#5b6b82;text-align:right}
+
+.tas-streak{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-radius:16px;background:rgba(255,255,255,.7);border:1.5px solid #d6e0ef;font-size:13px;color:#5b6b82}
+.tas-streak span:first-child{display:flex;align-items:center;gap:8px}
+.tas-streak b{font-size:15px;font-weight:800;color:#14213d}
+
+.tas-donut-wrap{display:flex;align-items:center;gap:14px}
+.tas-legend{list-style:none;margin:0;padding:0;display:grid;gap:5px;flex:1;min-width:0}
+.tas-legend li{display:flex;align-items:center;gap:6px;font-size:11.5px;color:#5b6b82}
+.tas-legend li b{margin-left:auto;color:#14213d;font-weight:800;font-size:11.5px}
+.tas-insight{background:rgba(47,125,225,.08);border-radius:12px;padding:10px 12px}
+
+.tas-coins{font-size:26px;font-weight:900;color:#14213d;display:flex;align-items:baseline;gap:6px}
+.tas-coins span{font-size:12px;font-weight:600;color:#8a97ab}
+
+.tas-goals{display:grid;gap:12px}
+.tas-goal{display:grid;gap:5px}
+.tas-goal-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.tas-goal-top span{font-size:13px;font-weight:700;color:#3d4d68;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tas-goal-top b{font-size:11.5px;font-weight:700;color:#8a97ab;flex:none}
+.tas-goal-track{height:6px;border-radius:4px;background:#e3eaf5;overflow:hidden;display:block}
+.tas-goal-fill{height:100%;display:block;border-radius:4px}
+
+:root[data-theme='dark'] .tas-card,:root[data-theme='dark'] .tas-streak{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);color:#f2f6ff}
+:root[data-theme='dark'] .tas-card p,:root[data-theme='dark'] .tas-progress span,:root[data-theme='dark'] .tas-streak{color:#9fb0cc}
+:root[data-theme='dark'] .tas-card ol{color:#c5d2ea}
 :root[data-theme='dark'] .tas-ring-bg{stroke:rgba(255,255,255,.14)}
 :root[data-theme='dark'] .tas-progress text{fill:#f2f6ff}
-:root[data-theme='dark'] .tas-stats{background:rgba(255,255,255,.07)}
-:root[data-theme='dark'] .tas-actions button{border-color:rgba(255,255,255,.18)}
+:root[data-theme='dark'] .tas-count{color:#8db4ff;background:rgba(141,180,255,.16)}
+:root[data-theme='dark'] .tas-focus li{border-color:rgba(255,255,255,.1)}
+:root[data-theme='dark'] .tas-focus-time{color:#8296bb}
+:root[data-theme='dark'] .tas-focus-time b,:root[data-theme='dark'] .tas-streak b,:root[data-theme='dark'] .tas-coins{color:#f2f6ff}
+:root[data-theme='dark'] .tas-focus-name{color:#c5d2ea}
+:root[data-theme='dark'] .tas-focus-name small{color:#8296bb}
+:root[data-theme='dark'] .tas-bar-sphere,:root[data-theme='dark'] .tas-bar-count{color:#9fb0cc}
+:root[data-theme='dark'] .tas-bar-track,:root[data-theme='dark'] .tas-goal-track{background:rgba(255,255,255,.12)}
+:root[data-theme='dark'] .tas-legend li{color:#9fb0cc}
+:root[data-theme='dark'] .tas-legend li b{color:#f2f6ff}
+:root[data-theme='dark'] .tas-insight{background:rgba(141,180,255,.1)}
+:root[data-theme='dark'] .tas-coins span{color:#8296bb}
+:root[data-theme='dark'] .tas-goal-top span{color:#c5d2ea}
+:root[data-theme='dark'] .tas-goal-top b{color:#8296bb}

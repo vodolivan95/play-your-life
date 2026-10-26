@@ -378,15 +378,16 @@ try {
     await partialDialog
       .getByRole('button', { name: 'Сохранить прогресс' })
       .click();
+    // Общий прогресс — среднее по трём этапам: 50/0/0 округляется до 17%.
     await workspace
-      .getByRole('img', { name: 'Общий прогресс цели: 25%' })
+      .getByRole('img', { name: 'Общий прогресс цели: 17%' })
       .waitFor();
     await workspace.getByRole('img', { name: 'Прогресс этапа: 50%' }).waitFor();
     await workspace
       .getByRole('button', { name: 'Выполнить: Выучить слова', exact: true })
       .click();
     await workspace
-      .getByRole('img', { name: 'Общий прогресс цели: 50%' })
+      .getByRole('img', { name: 'Общий прогресс цели: 33%' })
       .waitFor();
     await workspace
       .getByRole('img', { name: 'Прогресс этапа: 100%' })
@@ -410,7 +411,7 @@ try {
     );
     await workspace
       .locator('.gw-banner')
-      .getByRole('img', { name: 'Общий прогресс цели: 50%' })
+      .getByRole('img', { name: 'Общий прогресс цели: 33%' })
       .waitFor();
     await tabs.getByRole('button', { name: 'Этапы', exact: true }).click();
     await workspace
@@ -474,6 +475,27 @@ try {
       'Обзор',
     ])
       await tabs.getByRole('button', { name, exact: true }).click();
+    // Пустой ручной этап входит в среднее, поэтому проект завершён только
+    // после явного завершения этапа и выполнения оставшейся задачи.
+    await workspace.getByRole('link', { name: 'Перейти к цели →' }).click();
+    // Две другие стадии для проверки завершения проекта подготавливаются
+    // доменными функциями; ниже UI-сценарий проверяет последнюю задачу и награду.
+    await page.evaluate(async ({ id, b, c }) => {
+      const { saveStage, finishStage } = await import('/src/planning.ts');
+      let state = JSON.parse(localStorage.getItem('play-your-life-v1'));
+      const goal = state.goals.find((item) => item.id === id);
+      state = finishStage(state, id, b);
+      const stageC = state.goals.find((item) => item.id === id).stages.find((item) => item.id === c);
+      state = saveStage(state, id, { ...stageC, status: 'active', completionMode: 'manual' });
+      state = finishStage(state, id, c);
+      localStorage.setItem('play-your-life-v1', JSON.stringify(state));
+    }, ids);
+    await page.reload();
+    await page
+      .getByRole('button', { name: 'Продолжить игру на этом устройстве' })
+      .click();
+    await workspace.waitFor();
+    await tabs.getByRole('button', { name: 'Задачи', exact: true }).click();
     await workspace
       .getByRole('button', { name: 'Выполнить: Посмотреть фильм', exact: true })
       .click();
@@ -489,7 +511,6 @@ try {
         .length,
       1,
     );
-    await workspace.getByRole('link', { name: 'Перейти к цели →' }).click();
     await workspace.locator('.gw-motivation').click();
     d = workspace.locator('dialog[open]');
     await d.getByLabel('Текст').fill('Моя настоящая мотивация');
@@ -581,6 +602,19 @@ try {
         .length,
       1,
     );
+    await page.evaluate(async ({ id, c }) => {
+      const { saveStage } = await import('/src/planning.ts');
+      let state = JSON.parse(localStorage.getItem('play-your-life-v1'));
+      const goal = state.goals.find((item) => item.id === id);
+      const stage = goal.stages.find((item) => item.id === c);
+      state = saveStage(state, id, { ...stage, status: 'locked', completionMode: 'tasks', completedAt: undefined });
+      localStorage.setItem('play-your-life-v1', JSON.stringify(state));
+    }, ids);
+    await page.reload();
+    await page
+      .getByRole('button', { name: 'Продолжить игру на этом устройстве' })
+      .click();
+    await workspace.waitFor();
     await page.evaluate((ids) => {
       location.hash = `/goals/${ids.id}/stages/${ids.c}`;
     }, ids);

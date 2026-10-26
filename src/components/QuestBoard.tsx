@@ -166,10 +166,17 @@ export default function QuestBoard({
               notify((e as Error).message);
             }
           }}
+          onResize={(q, day, start, end) => {
+            try {
+              onChange(updateTaskSettings(state, q.id, { startsAt: `${day}T${start}`, dueAt: `${day}T${end}` }));
+            } catch (e) {
+              notify((e as Error).message);
+            }
+          }}
         />
       )}
       </div>
-      <TasksAside quests={quests} connected={connected} />
+      <TasksAside state={state} quests={quests} today={today} />
       </div>
       </>}
       {form && (

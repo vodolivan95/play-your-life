@@ -176,7 +176,7 @@ export default function QuestBoard({
         />
       )}
       </div>
-      <TasksAside quests={quests} connected={connected} />
+      <TasksAside state={state} quests={quests} today={today} />
       </div>
       </>}
       {form && (

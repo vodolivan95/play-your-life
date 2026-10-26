@@ -135,10 +135,10 @@ try {
       assert.equal(await page.locator('.pyl-more').count(), 0);
       await page.locator('.pyl-tabbar').getByRole('button', { name:'Главная', exact:true }).click();
       await page.locator('main.screen-home').waitFor();
-      await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+      await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; scrollTo(0, document.documentElement.scrollHeight); });
       const wordmark = await page.locator('.mobile-city-footer .play-wordmark').boundingBox();
       const nav = await page.locator('.pyl-tabbar').boundingBox();
-      assert.ok(wordmark.y + wordmark.height <= nav.y, 'Fixed navigation must not cover the footer wordmark');
+assert.ok(wordmark.y + wordmark.height <= nav.y, 'Fixed navigation must not cover the footer wordmark');
       await page.locator('.mobile-city-footer').screenshot({ path: `work/logo-menu-${suffix}.png` });
       await page.screenshot({ path:`work/logo-footer-screen-${suffix}.png` });
     }

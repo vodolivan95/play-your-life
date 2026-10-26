@@ -187,7 +187,7 @@ export function SphereProjects({
             {tasks.length > 8 && <small>+{tasks.length - 8}</small>}
           </div>
           <button className="primary-button" onClick={() => onOpen(goal)}>
-            {finished ? 'Итоги' : 'Открыть'}
+            {finished ? (goal.projectReview ? 'Практика навыка' : 'Завершить проект') : 'Открыть'}
           </button>
         </div>
         {goal.dueAt && (

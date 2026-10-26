@@ -771,3 +771,7 @@
 .skt-mode button {
   min-height: 44px;
 }
+
+.skt-progression-note { margin: 12px 0 0; color: var(--skt-text-3); line-height: 1.55; font-size: 13px; }
+.skt-panel .skt-stepper { justify-content: flex-start; }
+.skt-panel .skt-stepper > div { text-align: left; }

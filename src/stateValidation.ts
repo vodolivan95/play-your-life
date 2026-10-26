@@ -106,6 +106,18 @@ export function validateState(value: unknown): asserts value is SavedState {
   if (value.city !== undefined && !validCity(value.city)) return fail();
   if (value.skillTrees !== undefined && !validSkillTrees(value.skillTrees))
     return fail();
+  if (value.skillTreeResetVersion !== undefined && value.skillTreeResetVersion !== 1)
+    return fail();
+  if (value.practiceSessions !== undefined && (!list(value.practiceSessions, (p) => {
+    if (!text(p.goalId) || !text(p.sourceTaskId) || !text(p.skillNodeId) ||
+      !text(p.sphere) || !sphereIds.includes(p.sphere) || !text(p.taskName) ||
+      !p.taskName.trim() || p.taskName.length > 200 || !date(p.createdAt) ||
+      !optionalDate(p.completedAt) || !Array.isArray(p.subtasks) || p.subtasks.length > 50) return false;
+    const steps = p.subtasks as unknown[];
+    return steps.every((step) => record(step) && text(step.id) && !!step.id && step.id.length <= 80 &&
+      text(step.title) && !!step.title.trim() && step.title.length <= 200 && typeof step.done === 'boolean') &&
+      new Set(steps.map((step) => (step as Record<string, unknown>).id)).size === steps.length;
+  }) || (value.practiceSessions as unknown[]).length > 500)) return fail();
   if (value.monthlyFocus !== undefined && !validMonthlyFocus(value.monthlyFocus))
     return fail();
   if (value.keySpheres !== undefined && !validKeySpheres(value.keySpheres))
@@ -269,6 +281,11 @@ export function validateState(value: unknown): asserts value is SavedState {
         number(g.reward) &&
         typeof g.rewarded === 'boolean' &&
         date(g.created) &&
+        (g.projectReview === undefined || (record(g.projectReview) &&
+          date(g.projectReview.completedAt) && text(g.projectReview.skillNodeId) && !!g.projectReview.skillNodeId &&
+          text(g.projectReview.skillName) && !!g.projectReview.skillName.trim() && g.projectReview.skillName.length <= 40 &&
+          ['continue', 'branch', 'new'].includes(g.projectReview.placement as string) &&
+          [g.projectReview.whatWorked, g.projectReview.challenge, g.projectReview.takeaway].every(optionalText))) &&
         optionalDate(g.startsAt) &&
         optionalDate(g.dueAt) &&
         (g.description === undefined || text(g.description)) &&

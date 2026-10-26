@@ -36,6 +36,9 @@ import {
 import { questCoins, progressQuest } from '../personalQuests';
 import { sphereProgress, MAX_SPHERE_LEVEL } from '../sphereProgress';
 import { sphereAssets } from '../sphereAssets';
+import { startPracticeSession, togglePracticeStep, completePracticeSession } from '../skillPractice';
+import { skillTreeOf, nodeLevel, practiceLevelInfo } from '../skillTree';
+import ProjectCompletionDialog from './ProjectCompletionDialog';
 import {
   MAX_MONTHLY_FOCUS,
   monthlyFocusGoals,
@@ -510,7 +513,9 @@ export default function GoalWorkspace(p: Props) {
   const stages = goal.stages ?? [];
   const tasks = state.quests.filter((q) => q.goalId === goal.id);
   const goalProgress = goalProgressValue(state, goal);
-  const [tab, setTab] = useState('overview');
+  const practiceSessions = (state.practiceSessions ?? []).filter((session) => session.goalId === goal.id);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [tab, setTab] = useState(goal.projectReview ? 'tasks' : 'overview');
   const [filter, setFilter] = useState('all');
   const [now, setNow] = useState(() => Date.now());
   const monthNow = new Date(now);
@@ -618,6 +623,28 @@ export default function GoalWorkspace(p: Props) {
         : 'Цель убрана из главных целей месяца.',
     );
   }
+  function beginPractice(task: Quest) {
+    if (mutate((s) => startPracticeSession(s, goal.id, task.id))) {
+      setTab('tasks');
+      setDetail(null);
+      p.onNotify('Создан отдельный повтор задачи. Он не меняет прогресс проекта и не выдаёт награды.');
+    }
+  }
+  function finishPractice(sessionId: string) {
+    if (mutate((s) => completePracticeSession(s, sessionId)))
+      p.onNotify('Повтор сохранён. Уровень навыка растёт по завершённым практикам.');
+  }
+  function togglePractice(sessionId: string, stepId: string) {
+    mutate((s) => togglePracticeStep(s, sessionId, stepId));
+  }
+  const practiceNode = goal.projectReview
+    ? skillTreeOf(state, goal.sphere).nodes.find((node) => node.id === goal.projectReview?.skillNodeId)
+    : undefined;
+  const practiceLevel = practiceNode ? nodeLevel(state, practiceNode) : 0;
+  const practiceInfo = practiceNode
+    ? practiceLevelInfo(practiceSessions.filter((session) => !!session.completedAt && session.skillNodeId === practiceNode.id).length, practiceNode.levels)
+    : undefined;
+
   const stageLink = (s: GoalStage, text: ReactNode, className = '') => {
     const label =
       className === 'gw-stage-enter' ? `Открыть этап: ${s.name}` : undefined;
@@ -1121,6 +1148,16 @@ export default function GoalWorkspace(p: Props) {
               Перейти к цели →
             </a>
           )}
+          {!stage && !goal.projectReview && (
+            <button className="primary-button gw-finish-project" disabled={goalProgress < 100} onClick={() => setReviewOpen(true)}>
+              Завершить проект
+            </button>
+          )}
+          {!stage && goal.projectReview && (
+            <button className="text-button gw-practice-link" onClick={() => setTab('tasks')}>
+              Навык: {goal.projectReview.skillName} · практика →
+            </button>
+          )}
         </div>
       </section>
       {stageId && (!stage || stageAccess(state, goal, stage)) ? (
@@ -1264,6 +1301,34 @@ export default function GoalWorkspace(p: Props) {
                   </Card>
                   <Timeline stage={stage} onEdit={() => p.onEditStage(stage)} />
                 </>
+              )}
+              {!stage && tab === 'tasks' && goal.projectReview && (
+                <Card title={`Практика навыка: ${goal.projectReview.skillName}`} icon="↻" className="gw-practice-card">
+                  <p className="gw-muted">Уровень {practiceLevel} из {practiceNode?.levels ?? 5}. {practiceInfo?.max ? 'Максимальный уровень достигнут.' : `До следующего уровня осталось ${Math.max(0, (practiceInfo?.required ?? 0) - (practiceInfo?.practiced ?? 0))} повтора(ов).`} Повторы не дают XP или лайфкоины и не меняют исходные задачи.</p>
+                  {practiceSessions.filter((session) => !session.completedAt).map((session) => (
+                    <article className="gw-practice-session" key={session.id}>
+                      <strong>{session.taskName}</strong>
+                      {session.subtasks.map((step) => (
+                        <label className="gw-practice-step" key={step.id}>
+                          <input type="checkbox" checked={step.done} onChange={() => togglePractice(session.id, step.id)} />
+                          <span>{step.title}</span>
+                        </label>
+                      ))}
+                      <button className="primary-button" disabled={session.subtasks.some((step) => !step.done)} onClick={() => finishPractice(session.id)}>
+                        {session.subtasks.length ? 'Завершить повтор' : 'Отметить повтор выполненным'}
+                      </button>
+                    </article>
+                  ))}
+                  {practiceSessions.some((session) => session.completedAt) && (
+                    <details className="gw-practice-history">
+                      <summary>История повторов: {practiceSessions.filter((session) => session.completedAt).length}</summary>
+                      {practiceSessions.filter((session) => session.completedAt).slice().reverse().slice(0, 8).map((session) => (
+                        <p key={session.id}>✓ {session.taskName} · {shortDate(session.completedAt)}</p>
+                      ))}
+                    </details>
+                  )}
+                  {!practiceSessions.length && <p className="gw-muted">Открой выполненную задачу ниже и нажми «Практиковать снова».</p>}
+                </Card>
               )}
               {tab === 'tasks' || (stage && tab === 'overview') ? (
                 <Card
@@ -1562,6 +1627,9 @@ export default function GoalWorkspace(p: Props) {
                 {questCoins(viewedTask)} лайфкоинов
               </p>
               <p>{viewedTask.done ? '✓ Выполнена' : 'В плане'}</p>
+              {viewedTask.done && goal.projectReview && (
+                <button className="primary-button" onClick={() => beginPractice(viewedTask)}>↻ Практиковать снова</button>
+              )}
               {!viewedTask.done &&
                 viewedTask.targetValue &&
                 viewedTask.targetValue > 1 && (
@@ -1657,6 +1725,15 @@ export default function GoalWorkspace(p: Props) {
           )}
         </div>
       </dialog>
+      {reviewOpen && !goal.projectReview && (
+        <ProjectCompletionDialog
+          state={state}
+          goal={goal}
+          onSave={(next) => p.onChange(next)}
+          onClose={() => setReviewOpen(false)}
+          onNotify={p.onNotify}
+        />
+      )}
     </div>
   );
 }

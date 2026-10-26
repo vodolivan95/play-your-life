@@ -433,7 +433,7 @@ export default function GoalsBoard({
                   className="primary-button gl-plan"
                   onClick={() => onSelect(g.id)}
                 >
-                  План цели
+                  {isGoalDone(g) ? (g.projectReview ? 'Открыть практику' : 'Завершить проект') : 'План цели'}
                   <Icon name="arrow" size={16} />
                 </button>
               </section>

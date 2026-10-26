@@ -165,6 +165,15 @@ export type GoalStage = {
   startsAt?: string;
   dueAt?: string;
 };
+export type ProjectReview = {
+  completedAt: string;
+  skillNodeId: string;
+  skillName: string;
+  placement: 'continue' | 'branch' | 'new';
+  whatWorked?: string;
+  challenge?: string;
+  takeaway?: string;
+};
 export type Goal = {
   image?: string;
   id: string;
@@ -184,6 +193,7 @@ export type Goal = {
   progressMode?: 'manual' | 'tasks';
   manualProgress?: { current: number; target: number };
   stages?: GoalStage[];
+  projectReview?: ProjectReview;
 };
 export type SphereState = {
   xp: number;
@@ -226,6 +236,9 @@ export type GameState = {
   cityPurchases?: import('./city').CityPurchase[];
   sphereProgressionModel?: typeof SPHERE_PROGRESSION_MODEL;
   skillTrees?: import('./skillTree').SkillTrees;
+  /** One-time reset of test skill trees for every account. */
+  skillTreeResetVersion?: 1;
+  practiceSessions?: import('./skillPractice.ts').SkillPracticeSession[];
   monthlyFocus?: import('./monthlyFocus').MonthlyFocus;
   keySpheres?: import('./lifePlanMap').KeySpheres;
   city?: import('./city').CityState;
@@ -371,9 +384,13 @@ export function migrateState(
   for (const s of spheres)
     if (!filledSpheres[s.id])
       filledSpheres[s.id] = { xp: 0, score: 0, highScore: 0, previousScore: 0 };
+  const resetOldSkillTrees = state.skillTreeResetVersion !== 1;
   return {
     ...state,
     spheres: filledSpheres,
+    skillTreeResetVersion: 1,
+    skillTrees: resetOldSkillTrees ? {} : (state.skillTrees ?? {}),
+    practiceSessions: state.practiceSessions ?? [],
     sphereProgressionModel: SPHERE_PROGRESSION_MODEL,
     quests: state.quests.map((q) => q.sourceType === 'USER_CREATED' && !q.done && Object.hasOwn(difficulties, q.difficulty) && q.xp !== difficulties[q.difficulty as keyof typeof difficulties] ? { ...q, xp: difficulties[q.difficulty as keyof typeof difficulties] } : q),
     goals: state.goals.map(g => g.progressMode === 'tasks' && state.quests.some(q => q.goalId === g.id && q.required !== false) ? { ...g, current: goalProgressValue(state, g), target: 100 } : g),
@@ -454,6 +471,9 @@ export function longestStreak(dates: string[], now = new Date()) {
 export function initialState(): GameState {
   return {
     version: 1,
+    skillTreeResetVersion: 1,
+    practiceSessions: [],
+    skillTrees: {},
     sphereProgressionModel: SPHERE_PROGRESSION_MODEL,
     profile: { ...defaultProfile },
     mainGoalId: 'b2',

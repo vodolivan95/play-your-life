@@ -442,6 +442,10 @@
 :root[data-theme="dark"] .gw-statistics th,
 :root[data-theme="dark"] .gw-statistics td { border-bottom: 1px solid #283352; }
 :root[data-theme="dark"] .gw-empty h3 { color: #95b9df; }
+:root[data-theme="dark"] .gw-practice-card { border-color: #2f5a6a; background: linear-gradient(145deg, #141c31, #151d33); }
+:root[data-theme="dark"] .gw-practice-session { border: 1px solid #374c62; background: #151d33; }
+:root[data-theme="dark"] .gw-practice-step { color: #b6c4e3; }
+:root[data-theme="dark"] .gw-practice-history { color: #9dafda; }
 
 /* components/GoalsOverview.css */
 :root[data-theme="dark"] .gl-tile { background: #151d33; }

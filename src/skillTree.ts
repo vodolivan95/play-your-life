@@ -41,6 +41,8 @@ export type SkillNode = {
   requiresId?: string;
   requiresLevel?: number;
   goalId?: string;
+  /** Project that awarded this skill; growth comes from separate practice sessions. */
+  sourceGoalId?: string;
 };
 export type SphereSkillTree = { branches: SkillBranch[]; nodes: SkillNode[] };
 export type SkillTrees = Record<string, SphereSkillTree>;
@@ -56,6 +58,7 @@ export type SkillNodeInput = {
   requiresId?: string;
   requiresLevel?: number;
   goalId?: string;
+  sourceGoalId?: string;
 };
 export type SkillStatus = 'max' | 'learning' | 'available' | 'locked';
 
@@ -99,10 +102,28 @@ export function sphereLevelOf(state: Pick<GameState, 'spheres'>, sphere: string)
 }
 
 /** A node bound to a goal grows with the goal; otherwise it is paid with points. */
+export function practiceLevelInfo(completed: number, levels: number) {
+  let level = 1;
+  let remaining = Math.max(0, Math.floor(completed));
+  while (level < levels) {
+    const required = level + 2;
+    if (remaining < required) return { level, practiced: remaining, required, max: false };
+    remaining -= required;
+    level += 1;
+  }
+  return { level, practiced: 0, required: 0, max: true };
+}
+
 export function nodeLevel(
-  state: Pick<GameState, 'goals' | 'quests'>,
+  state: Pick<GameState, 'goals' | 'quests' | 'practiceSessions'>,
   node: SkillNode,
 ) {
+  if (node.sourceGoalId) {
+    const count = (state.practiceSessions ?? []).filter(
+      (session) => session.skillNodeId === node.id && !!session.completedAt,
+    ).length;
+    return practiceLevelInfo(count, node.levels).level;
+  }
   if (!node.goalId) return node.level;
   const goal = state.goals.find((g) => g.id === node.goalId);
   if (!goal) return node.level;
@@ -122,7 +143,7 @@ export function skillPointsSpent(
   sphere: string,
 ) {
   return skillTreeOf(state, sphere)
-    .nodes.filter((n) => !n.goalId)
+    .nodes.filter((n) => !n.goalId && !n.sourceGoalId)
     .reduce((sum, n) => sum + n.level * n.cost, 0);
 }
 
@@ -336,6 +357,11 @@ export function saveNode(
       if (!goal || goal.sphere !== sphere)
         throw new Error('Выбери цель этой же сферы.');
     }
+    if (input.sourceGoalId) {
+      const goal = state.goals.find((g) => g.id === input.sourceGoalId);
+      if (!goal || goal.sphere !== sphere || input.goalId)
+        throw new Error('Источник навыка должен быть проектом этой же сферы.');
+    }
     const node: SkillNode = {
       id,
       branchId: input.branchId,
@@ -344,10 +370,11 @@ export function saveNode(
       tier: input.tier,
       ...(lane !== 0 ? { lane } : {}),
       levels: input.levels,
-      level: input.goalId ? 0 : Math.min(old?.level ?? 0, input.levels),
+      level: input.sourceGoalId ? 1 : input.goalId ? 0 : Math.min(old?.level ?? 0, input.levels),
       cost: input.cost,
       ...(input.requiresId ? { requiresId: input.requiresId, requiresLevel } : {}),
       ...(input.goalId ? { goalId: input.goalId } : {}),
+      ...(input.sourceGoalId ? { sourceGoalId: input.sourceGoalId } : {}),
     };
     return {
       ...tree,
@@ -359,6 +386,59 @@ export function saveNode(
   if (skillPointsSpent(next, sphere) > skillPointsTotal(next, sphere))
     throw new Error('Не хватает очков для такой цены уровня.');
   return next;
+}
+
+/** Add a project-earned skill at the bottom of a new branch, above a parent, or beside it as a fork. */
+export function addAcquiredSkill(
+  state: GameState,
+  sphere: string,
+  input: {
+    goalId: string;
+    name: string;
+    placement: 'continue' | 'branch' | 'new';
+    parentNodeId?: string;
+    branchName?: string;
+  },
+) {
+  let next = state;
+  let branchId: string;
+  let tier = 1;
+  let lane = 0;
+  let requiresId: string | undefined;
+  if (input.placement === 'new') {
+    next = addBranch(state, sphere, input.branchName?.trim() || input.name);
+    branchId = skillTreeOf(next, sphere).branches.at(-1)!.id;
+  } else {
+    const tree = skillTreeOf(state, sphere);
+    const parent = tree.nodes.find((node) => node.id === input.parentNodeId);
+    if (!parent) throw new Error('Выбери навык, от которого продолжить дерево.');
+    branchId = parent.branchId;
+    requiresId = parent.id;
+    const preferred = input.placement === 'branch' ? [1, -1, 2, -2, 0] : [0, -1, 1, -2, 2];
+    let found = false;
+    for (let row = parent.tier + 1; row <= MAX_SKILL_TIER && !found; row += 1) {
+      const occupied = new Set(tree.nodes.filter((node) => node.branchId === branchId && node.tier === row).map((node) => node.lane ?? 0));
+      const available = preferred.find((candidate) => !occupied.has(candidate));
+      if (available !== undefined) {
+        tier = row;
+        lane = available;
+        found = true;
+      }
+    }
+    if (!found) throw new Error('В этой ветке нет свободного места для нового навыка.');
+  }
+  next = saveNode(next, sphere, {
+    branchId,
+    name: input.name,
+    icon: sphere,
+    tier,
+    lane,
+    levels: 5,
+    cost: 1,
+    ...(requiresId ? { requiresId, requiresLevel: 1 } : {}),
+    sourceGoalId: input.goalId,
+  });
+  return { state: next, nodeId: skillTreeOf(next, sphere).nodes.at(-1)!.id };
 }
 
 export function removeNode(state: GameState, sphere: string, nodeId: string) {
@@ -407,6 +487,8 @@ export function raiseSkill(state: GameState, sphere: string, nodeId: string) {
   if (!node) throw new Error('Навык не найден.');
   if (node.goalId)
     throw new Error('Уровень этого навыка растёт вместе с целью.');
+  if (node.sourceGoalId)
+    throw new Error('Этот навык растёт через проект и повторную практику.');
   const lock = nodeLock(state, sphere, node);
   if (lock) throw new Error(`Навык закрыт. ${lock}.`);
   if (node.level >= node.levels) throw new Error('Навык уже на максимуме.');
@@ -426,6 +508,8 @@ export function lowerSkill(state: GameState, sphere: string, nodeId: string) {
   if (!node) throw new Error('Навык не найден.');
   if (node.goalId)
     throw new Error('Уровень этого навыка растёт вместе с целью.');
+  if (node.sourceGoalId)
+    throw new Error('Этот навык растёт через проект и повторную практику.');
   if (node.level <= 0) throw new Error('Очки в этот навык не вложены.');
   const blocker = tree.nodes.find(
     (n) =>
@@ -482,7 +566,9 @@ export function validSkillTrees(value: unknown): value is SkillTrees {
         int(n.cost, 1, MAX_SKILL_COST) &&
         (n.requiresId === undefined || id(n.requiresId)) &&
         (n.requiresLevel === undefined || int(n.requiresLevel, 1, MAX_SKILL_LEVELS)) &&
-        (n.goalId === undefined || id(n.goalId)),
+        (n.goalId === undefined || id(n.goalId)) &&
+        (n.sourceGoalId === undefined || id(n.sourceGoalId)) &&
+        !(n.goalId && n.sourceGoalId),
     );
     if (!ok) return false;
     const list = nodes as SkillNode[];

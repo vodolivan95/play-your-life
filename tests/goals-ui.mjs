@@ -483,7 +483,6 @@ try {
     await page.evaluate(async ({ id, b, c }) => {
       const { saveStage, finishStage } = await import('/src/planning.ts');
       let state = JSON.parse(localStorage.getItem('play-your-life-v1'));
-      const goal = state.goals.find((item) => item.id === id);
       state = finishStage(state, id, b);
       const stageC = state.goals.find((item) => item.id === id).stages.find((item) => item.id === c);
       state = saveStage(state, id, { ...stageC, status: 'active', completionMode: 'manual' });

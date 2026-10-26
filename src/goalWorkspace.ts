@@ -22,11 +22,31 @@ export function goalProgressValue(
   const tasks = state.quests.filter(
     (q) => q.goalId === goal.id && q.required !== false,
   );
-  if (goal.progressMode === 'tasks' && tasks.length)
-    return weightedProgress(tasks);
+  if (goal.progressMode === 'tasks' && tasks.length) {
+    const stages = goal.stages ?? [];
+    if (!stages.length) return weightedProgress(tasks);
+    // Прогресс цели с этапами считается по этапам, а не по сумме всех задач:
+    // каждый этап даёт свою долю (100%, если завершён, иначе прогресс его
+    // собственных задач — 0%, если задач в нём ещё нет). Так этап, заведённый
+    // заранее для планирования будущего без задач, не даёт цели показать
+    // 100%, пока сам этап не завершён.
+    const parts = stages.map((stage) => {
+      const metrics = stageMetrics(state, goal, stage);
+      return metrics.complete ? 100 : metrics.progress;
+    });
+    const unassigned = tasks.filter(
+      (q) => !q.stageId || !stages.some((s) => s.id === q.stageId),
+    );
+    if (unassigned.length) parts.push(weightedProgress(unassigned));
+    return parts.reduce((a, b) => a + b, 0) / parts.length;
+  }
   return Math.max(0, Math.min(100, (goal.current / goal.target) * 100));
 }
-export function stageMetrics(state: GameState, goal: Goal, stage: GoalStage) {
+export function stageMetrics(
+  state: Pick<GameState, 'quests'>,
+  goal: Goal,
+  stage: GoalStage,
+) {
   const tasks = state.quests.filter(
     (q) => q.goalId === goal.id && q.stageId === stage.id,
   );

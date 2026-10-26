@@ -146,6 +146,54 @@ import {
   saveHabit,
   completeHabit,
 } from "../src/personalQuests.ts";
+test("сфера «Психология»: сохранение задачи и привычки с наградой не блокируется правилами Firestore", async () => {
+  // Регрессия: firestore.rules допускал только девять исходных сфер в validRecord().
+  // Сфера «Психология» (с версии 0.53.0) не входила в список, поэтому Firestore Rules
+  // отклоняли (permission-denied) любую запись economyRecords с sphere === 'psychology' —
+  // то есть выполнение любой задачи или привычки в этой сфере не могло сохраниться.
+  const db = env.authenticatedContext("alice").firestore(),
+    driver = firebaseSave(db, "alice");
+  const fresh = await driver.create(newAccountGame("Алиса"));
+  let s = saveCustomQuest(
+    fresh.state,
+    {
+      name: "Сессия с психологом",
+      sphere: "psychology",
+      difficulty: "Medium",
+      rewardCoins: 5,
+    },
+    "alice",
+  );
+  let row = await driver.save(s, fresh.revision);
+  await assert.doesNotReject(async () => {
+    row = await driver.save(completeQuest(row.state, s.quests[0].id), row.revision);
+  }, "Выполнение задачи сферы «Психология» должно сохраняться");
+  assert.equal(row.state.quests[0].done, true);
+  assert.equal(row.state.coins, 5);
+  assert.equal(row.state.spheres.psychology.xp, row.state.quests[0].xp);
+  s = saveHabit(
+    row.state,
+    {
+      title: "Дневник эмоций",
+      sphere: "psychology",
+      iconId: "water",
+      targetValue: 1,
+      unit: "запись",
+      weekdays: [0, 1, 2, 3, 4, 5, 6],
+      rewardCoins: 3,
+    },
+    "alice",
+  );
+  row = await driver.save(s, row.revision);
+  await assert.doesNotReject(async () => {
+    row = await driver.save(
+      completeHabit(row.state, s.habits[0].id, "alice"),
+      row.revision,
+    );
+  }, "Выполнение привычки сферы «Психология» должно сохраняться");
+  assert.equal(row.state.coins, 8);
+  assert.equal(row.state.habitCompletions.length, 1);
+});
 test("квест: транзакционный лимит, лайфкоины и журнал, повтор и подделка баланса запрещены", async () => {
   const db = env.authenticatedContext("alice").firestore(),
     driver = firebaseSave(db, "alice");

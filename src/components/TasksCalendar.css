@@ -150,6 +150,16 @@
 .tcal-event.is-selected { box-shadow: 0 0 0 2px var(--t-text); }
 .tcal-event[draggable="true"] { cursor: grab; }
 .tcal-event.is-dragging { opacity: 0.4; }
+.tcal-event.is-resizable { padding-top: 11px; padding-bottom: 11px; }
+.tcal-event.is-resizing { z-index: 5; box-shadow: 0 0 0 2px var(--c), 0 10px 22px color-mix(in srgb, var(--c) 35%, transparent); }
+/* Стрелочка в стиле Apple: наведи на край задачи в календаре и потяни, чтобы сдвинуть время начала или конца. */
+.tcal-handle { position: absolute; left: 50%; transform: translateX(-50%); width: 30px; height: 11px; display: flex; align-items: center; justify-content: center; border-radius: 6px; color: var(--c); background: color-mix(in srgb, var(--c) 16%, var(--t-pill)); opacity: 0; transition: opacity 0.12s ease, background 0.12s ease; cursor: ns-resize; touch-action: none; }
+.tcal-handle-start { top: 1px; }
+.tcal-handle-end { bottom: 1px; }
+.tcal-event.is-resizable:hover .tcal-handle,
+.tcal-event.is-resizable:focus-within .tcal-handle,
+.tcal-event.is-resizing .tcal-handle { opacity: 1; }
+.tcal-handle:hover { background: color-mix(in srgb, var(--c) 30%, var(--t-pill)); }
 .tcal-detail { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 16px 20px; }
 .tcal-detail-bar { width: 6px; align-self: stretch; border-radius: 3px; background: var(--c); }
 .tcal-detail > div { flex: 1 1 260px; min-width: 0; display: grid; gap: 4px; }

@@ -90,30 +90,31 @@
 }
 .radar-label {
   position: absolute;
+  z-index: 1;
   transform: translate(-50%, -50%);
-  width: 82px;
+  width: 70px;
   display: flex;
   align-items: center;
   gap: 3px;
-  padding: 5px;
+  padding: 4px 5px;
   border-radius: 10px;
   background: #f7fcffed;
   border: 1px solid #e1effa;
   box-shadow: 0 3px 10px #5281a70b;
 }
 .radar-label > span {
-  width: 21px;
-  height: 21px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
 }
 .radar-label strong {
   display: block;
-  font-size: 8px;
-  line-height: 1.2;
+  font-size: 7.5px;
+  line-height: 1.15;
   overflow-wrap: anywhere;
 }
 .radar-label small {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--sphere-color);
   font-weight: 750;
 }
@@ -543,8 +544,8 @@
 .app-shell .spheres-overview .radar-legend > span { display:inline-flex; align-items:center; gap:5px; }
 .app-shell .spheres-overview .radar-legend i { width:8px; height:8px; background:#1697ff; border-radius:50%; }
 .app-shell .spheres-overview .radar-legend > span:last-child i { background:#c8e2ff; }
-.app-shell .spheres-overview .radar-label { width:clamp(86px,26%,108px); background:linear-gradient(135deg,#fff,#eff8ff); border:1px solid #dfedff; box-shadow:0 2px 7px #83b8ee26; padding:6px; }
-.app-shell .spheres-overview .radar-label strong { font-size:9px; overflow-wrap:normal; }
+.app-shell .spheres-overview .radar-label { width:clamp(70px,22%,92px); background:linear-gradient(135deg,#fff,#eff8ff); border:1px solid #dfedff; box-shadow:0 2px 7px #83b8ee26; padding:4px 5px; }
+.app-shell .spheres-overview .radar-label strong { font-size:8px; overflow-wrap:normal; }
 .app-shell .spheres-overview .radar-label small { font-size:11px; }
 .app-shell .spheres-overview .balance-insights > div { position:relative; min-height:86px; padding:11px 37px 10px 36px; gap:4px; }
 .app-shell .spheres-overview .balance-insights strong { font-size:12px; }
@@ -576,15 +577,16 @@
 @media(max-width:1450px) and (min-width:1361px) { .app-shell .spheres-overview .radar-and-insights { grid-template-columns:minmax(0,1fr) 125px; }.app-shell .spheres-overview .balance-insights > div { padding:10px 8px 10px 33px; }.insight-bars,.insight-sphere-art { display:none; } }
 @media(max-width:1360px) { .app-shell .spheres-overview .spheres-summary { grid-template-columns:minmax(190px,.85fr) minmax(350px,1.9fr); }.focus-heading { grid-column:1/-1; } }
 @media(max-width:1000px) { .app-shell .spheres-overview .spheres-summary { grid-template-columns:1fr; } }
-@media(max-width:760px) { .app-shell .spheres-overview .radar-and-insights { display:block; }.app-shell .spheres-overview .radar-label { width:82px; padding:5px 3px; }.app-shell .spheres-overview .radar-label > span { width:18px; height:18px; }.app-shell .spheres-overview .radar-label strong { font-size:8px; }.app-shell .spheres-overview .radar-label small { font-size:10px; }.app-shell .spheres-overview .balance-insights > div { padding:33px 9px 9px; min-height:120px; }.insight-symbol { top:7px; left:9px; }.insight-bars,.insight-sphere-art { display:none; }.app-shell .spheres-overview .focus-copy { padding-right:85px; }.app-shell .spheres-overview .life-balance-panel > .sphere-building { height:165px; }.app-shell .spheres-overview .life-balance-value { font-size:44px; } }
+@media(max-width:760px) { .app-shell .spheres-overview .radar-and-insights { display:block; }.app-shell .spheres-overview .radar-label { width:70px; padding:4px 3px; }.app-shell .spheres-overview .radar-label > span { width:18px; height:18px; }.app-shell .spheres-overview .radar-label strong { font-size:8px; }.app-shell .spheres-overview .radar-label small { font-size:10px; }.app-shell .spheres-overview .balance-insights > div { padding:33px 9px 9px; min-height:120px; }.insight-symbol { top:7px; left:9px; }.insight-bars,.insight-sphere-art { display:none; }.app-shell .spheres-overview .focus-copy { padding-right:85px; }.app-shell .spheres-overview .life-balance-panel > .sphere-building { height:165px; }.app-shell .spheres-overview .life-balance-value { font-size:44px; } }
 .app-shell .spheres-overview .life-balance-value { font-size:clamp(28px,2.5vw,42px); }
 .app-shell .spheres-overview .balance-insights b { font-size:18px; }
 .app-shell .spheres-overview .radar-label small { font-size:9px; white-space:nowrap; }
-.app-shell .spheres-overview .radar-label { width:108px; }
+/* Ширина подписей «паутины» уменьшена, чтобы с десятью сферами (включая «Психологию») подписи не накладывались друг на друга у полюсов эллипса. */
+.app-shell .spheres-overview .radar-label { width:92px; }
 .app-shell .spheres-overview .district-caption small { display:block; font-size:9px; color:#526b8b; margin-top:4px; }
 .app-shell .spheres-overview .district-caption span { font-size:10px; }
 .home-sphere small { display:block; }
-@media(max-width:760px) { .app-shell .spheres-overview .radar-label { width:84px; }.app-shell .spheres-overview .radar-label small { font-size:8px; }.app-shell .spheres-overview .life-balance-value { font-size:34px; }.app-shell .spheres-overview .balance-insights b { font-size:15px; } }
+@media(max-width:760px) { .app-shell .spheres-overview .radar-label { width:70px; }.app-shell .spheres-overview .radar-label small { font-size:8px; }.app-shell .spheres-overview .life-balance-value { font-size:34px; }.app-shell .spheres-overview .balance-insights b { font-size:15px; } }
 
 .app-shell .spheres-overview .insight-gap b { font-size:14px; white-space:nowrap; }
 

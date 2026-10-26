@@ -4,6 +4,7 @@ import HomeDashboard from './components/HomeDashboard';
 import DashboardHeader from './components/DashboardHeader';
 import MobileCityFooter from './components/MobileCityFooter';
 import AppSidebar from './components/AppSidebar';
+import ThemeSwitch from './components/ThemeSwitch';
 import MobileNav from './components/MobileNav';
 import { navigation } from './navigation';
 import { CityAppearanceContext } from './cityAppearanceContext';
@@ -556,6 +557,20 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                     <small>Достижения</small>
                   </button>
                 </div>
+                <div className="profile-section">
+                  <span className="profile-section-label">Настройки</span>
+                  <section className="panel profile-menu profile-settings">
+                    <div className="profile-settings-row">
+                      <span>Тема оформления</span>
+                      <ThemeSwitch />
+                    </div>
+                    <button onClick={() => setModal('profile')}>
+                      <Icon name="settings" />
+                      <strong>Настройки персонажа</strong>
+                      <Icon name="arrow" size={17} />
+                    </button>
+                  </section>
+                </div>
                 {(() => {
                   const taskBadge = questsForToday(state).filter((q) => !q.done).length + incomingForToday(tickTick.incoming).length;
                   const byId = (id: string) => navigation.find((n) => n.id === id)!;
@@ -609,11 +624,6 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                               </button>
                             );
                           })}
-                          <button onClick={() => setModal('profile')}>
-                            <Icon name="settings" />
-                            <strong>Настройки персонажа</strong>
-                            <Icon name="arrow" size={17} />
-                          </button>
                         </section>
                       </div>
                     </>

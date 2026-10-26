@@ -36,9 +36,10 @@
 .home-ticktick-status { display:flex; justify-content:space-between; gap:10px; color:#8190a4; font-size:10px; border-bottom:1px solid #edf3f9; padding-bottom:10px; }
 .home-ticktick-status button { color:#167fc2; font-size:10px; background:transparent; border:0; }
 .home-today .quest-row { padding:12px 0; }
-.home-today .quest-info strong { font-size:11px; }
-.home-today .quest-info small { font-size:9px; }
-.home-today .xp-tag { font-size:10px; }
+/* Шрифт задач на главной увеличен на 1.5pt (≈2px) только в веб-версии; на телефоне — прежний размер, см. медиа-запрос ниже. */
+.home-today .quest-info strong { font-size:13px; }
+.home-today .quest-info small { font-size:11px; }
+.home-today .xp-tag { font-size:12px; }
 .home-all-tasks { display:block; margin:14px 0 0 auto; }
 .home-empty { display:flex; align-items:center; gap:12px; padding:14px 0; color:#4d6784; font-size:12px; }
 .home-today .home-empty { display:block; }
@@ -101,7 +102,7 @@
 .app-page-home main > .page-heading { display:none; }
 @media(max-width:1200px) { .home-sphere-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .dashboard-header { gap:8px; } .dashboard-metric { padding:8px; } .dashboard-date { font-size:10px; padding:10px; } .home-weather strong { font-size:9px; } }
 @media(max-width:900px) { .home-dashboard { grid-template-columns:minmax(0,1fr); } .home-dashboard-main { grid-row:3; } .home-dashboard-side { display:grid; grid-template-columns:1fr 1fr; } .home-player { min-height:180px; } .home-player-identity { grid-template-columns:70px 1fr; } }
-@media(max-width:760px) { .app-shell .main-wrap > .topbar { padding:12px 14px; } .dashboard-header { display:grid; grid-template-columns:1fr 1fr auto; gap:9px; } .dashboard-date { grid-column:1; width:fit-content; padding:8px; } .dashboard-avatar { grid-column:3; grid-row:1; } .home-weather { grid-column:1; grid-row:2; margin:0; } .dashboard-metric { padding:6px 8px; gap:5px; grid-row:2; } .dashboard-metric > span { font-size:18px; } .dashboard-metric strong { font-size:12px; } .dashboard-metric small { font-size:8px; } .dashboard-notifications { grid-column:2; grid-row:1; justify-self:end; } .dashboard-metric:last-of-type { grid-column:3; } .home-dashboard { gap:13px; } .home-dashboard .home-panel { padding:15px; border-radius:15px; } .home-dashboard-side { grid-template-columns:1fr; } .home-sphere-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .home-sphere > .sphere-building { height:60px; } .home-section-title h2 { font-size:14px; } .home-section-title > button { font-size:9px; } .home-today .quest-row { gap:8px; } .home-today .quest-info strong { font-size:11px; } .home-today .xp-tag { font-size:9px; } .home-player-stats > span { grid-template-columns:25px 1fr; } }
+@media(max-width:760px) { .app-shell .main-wrap > .topbar { padding:12px 14px; } .dashboard-header { display:grid; grid-template-columns:1fr 1fr auto; gap:9px; } .dashboard-date { grid-column:1; width:fit-content; padding:8px; } .dashboard-avatar { grid-column:3; grid-row:1; } .home-weather { grid-column:1; grid-row:2; margin:0; } .dashboard-metric { padding:6px 8px; gap:5px; grid-row:2; } .dashboard-metric > span { font-size:18px; } .dashboard-metric strong { font-size:12px; } .dashboard-metric small { font-size:8px; } .dashboard-notifications { grid-column:2; grid-row:1; justify-self:end; } .dashboard-metric:last-of-type { grid-column:3; } .home-dashboard { gap:13px; } .home-dashboard .home-panel { padding:15px; border-radius:15px; } .home-dashboard-side { grid-template-columns:1fr; } .home-sphere-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .home-sphere > .sphere-building { height:60px; } .home-section-title h2 { font-size:14px; } .home-section-title > button { font-size:9px; } .home-today .quest-row { gap:8px; } .home-today .quest-info strong { font-size:11px; } .home-today .quest-info small { font-size:9px; } .home-today .xp-tag { font-size:9px; } .home-player-stats > span { grid-template-columns:25px 1fr; } }
 @media(max-width:380px) { .home-sphere-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .dashboard-date { font-size:9px; } .home-weather > span { font-size:20px; } .home-weather strong { font-size:8px; } .home-weather small { font-size:8px; } }
 
 

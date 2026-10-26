@@ -1,10 +1,10 @@
-import { spheres, streak as calcStreak, hasClockTime } from '../game';
+import { spheres, streak as calcStreak } from '../game';
 import type { GameState, Quest } from '../game';
 import { goalProgressValue } from '../goalWorkspace';
 import { isGoalDone } from '../goalsOverview';
 import { pluralDays } from '../goalsOverview';
 import { questCoins } from '../personalQuests';
-import { addDays, mondayOf } from '../tasksCalendar';
+import { addDays, calendarItem, mondayOf } from '../tasksCalendar';
 import './TasksAside.css';
 
 const steps = [
@@ -14,12 +14,19 @@ const steps = [
   'Цели и этапы живут только в игре и в TickTick не уходят.',
 ];
 
+/**
+ * День и время по местной зоне, не по UTC-срезу строки: `dueAt`/`startsAt` могут быть
+ * у полуночи в другом часовом поясе (например, TickTick), и наивный `.slice(0, 10)`
+ * на самой строке уже один раз откатывал календарный день на соседние сутки (0.48.3,
+ * 0.48.5) — тот же класс ошибки, что и в «перенесённая на завтра задача видна как
+ * сегодняшняя». `calendarItem()` уже решает это через `dateKey(new Date(value))`,
+ * как и сам календарь задач, — переиспользуем его вместо отдельного вычисления.
+ */
 function questDay(q: Quest) {
-  return (q.dueAt ?? q.startsAt)?.slice(0, 10);
+  return calendarItem(q)?.day;
 }
 function questTime(q: Quest) {
-  const at = q.startsAt ?? q.dueAt;
-  return at && hasClockTime(at) ? at.slice(11, 16) : null;
+  return calendarItem(q)?.start ?? null;
 }
 function countdown(day: string, time: string | null, now: Date) {
   const target = new Date(`${day}T${time ?? '23:59'}:00`);

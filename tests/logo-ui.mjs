@@ -141,6 +141,8 @@ try {
         document.scrollingElement.scrollTop = document.scrollingElement.scrollHeight;
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       });
+      await page.locator('main.screen-home').evaluate(element => element.scrollIntoView({ block: 'end' }));
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       const wordmark = await page.locator('.mobile-city-footer .play-wordmark').boundingBox();
       const nav = await page.locator('.pyl-tabbar').boundingBox();
       assert.ok(

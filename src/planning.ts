@@ -68,8 +68,19 @@ export function durationLabel(startsAt?: string, dueAt?: string) {
     ? `${Number(hours.toFixed(1))} ч`
     : `${Math.ceil(hours / 24)} дн.`;
 }
-export function goalStatus(goal: Goal, now = new Date()) {
-  return goal.current >= goal.target
+export function goalStatus(
+  state: Pick<GameState, 'quests'>,
+  goal: Goal,
+  now = new Date(),
+) {
+  // До 0.62.x использовалось goal.current напрямую: для целей с этапами
+  // (progressMode 'tasks') это кэш, который обновляет syncGoalTasks только
+  // при завершении/удалении задачи — добавление, изменение или удаление
+  // этапа его не трогает (см. goalWorkspace.ts, стр. 5.2/31.1 аудита
+  // 26.10.2026, AUD-002), так что статус мог разойтись с живым прогрессом
+  // на экранах, использующих goalProgressValue. goalProgressValue верна для
+  // обоих режимов цели.
+  return goalProgressValue(state, goal) >= 100
     ? 'Достигнута'
     : goal.dueAt && new Date(goal.dueAt) < now
       ? 'Срок прошёл'

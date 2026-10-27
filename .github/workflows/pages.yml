@@ -1,7 +1,18 @@
 name: Deploy to GitHub Pages
 
+# До аудита 26.10.2026 (AUD-003) этот workflow запускался прямо на push в
+# main и публиковал сайт по своим собственным узким проверкам (юнит-тесты +
+# npm run check), не дожидаясь результатов "Project checks" (ci.yml) —
+# браузерных/Playwright-сценариев (квесты, календарь, цели, темы, сферы,
+# TickTick, "Город", раздел-смоук, "Ключевые итоги", "Отчёт месяца") и
+# проверки Firestore-правил на эмуляторе. Публикация могла уйти в прод, даже
+# если эти сценарии были красными. Теперь деплой запускается только после
+# того, как "Project checks" завершится на том же коммите main с успехом —
+# через workflow_run, а не параллельно с ним.
 on:
-  push:
+  workflow_run:
+    workflows: ["Project checks"]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -14,6 +25,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     env:
       VITE_BASE_PATH: /play-your-life/
@@ -21,6 +33,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # На workflow_run надо собрать именно тот коммит, для которого
+          # "Project checks" только что отработал — HEAD main к этому
+          # моменту мог уже уйти вперёд.
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:

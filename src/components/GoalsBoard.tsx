@@ -308,7 +308,7 @@ export default function GoalsBoard({
                     <div className="gl-tags">
                       <span className="gl-tag">{sphere.name}</span>
                       <span className={`gl-tag ${late ? 'is-late' : ''}`}>
-                        {goalStatus(g)}
+                        {goalStatus(state, g)}
                       </span>
                       {isMain && <span className="gl-tag is-main">★ Главная</span>}
                       {isMonthlyFocus && (

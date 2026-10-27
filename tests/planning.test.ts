@@ -206,6 +206,34 @@ test('этапы и задачи проверяются относительно
   assert.equal(ungrouped.quests.length, s.quests.length);
   assert.equal(ungrouped.xp, xp);
 });
+// Регрессия аудита 27.10.2026 (AUD-006, вторая волна AUD-002): goal.current —
+// кэш, обновлявшийся только при выполнении/удалении задачи (syncGoalTasks).
+// Добавление или удаление самого этапа меняет живой goalProgressValue(), но до
+// этой правки кэш оставался прежним — isGoalDone()/карточки целей/карта плана/
+// месячный отчёт, читающие goal.current напрямую, показывали цель достигнутой
+// (или наоборот) даже после структурного изменения, не трогавшего задачи.
+test('goal.current остаётся верным после добавления и удаления этапа, а не только после задач', () => {
+  let s = plan();
+  const id = goal(s).id;
+  s = saveStage(s, id, { name: 'Этап 1' });
+  const stage1 = goal(s).stages![0];
+  s = add(s, 'Единственная задача', { stageId: stage1.id });
+  s = completeQuest(s, s.quests.at(-1)!.id);
+  assert.equal(goal(s).current, 100, 'цель с одним выполненным этапом — 100%');
+  s = saveStage(s, id, { name: 'Этап 2 (под планирование)' });
+  assert.equal(
+    goal(s).current,
+    50,
+    'новый незавершённый этап без задач должен сразу снизить кэш прогресса, а не только живой расчёт',
+  );
+  const stage2 = goal(s).stages![1];
+  s = removeStage(s, id, stage2.id);
+  assert.equal(
+    goal(s).current,
+    100,
+    'удаление незавершённого этапа должно вернуть кэш прогресса к прежним 100%',
+  );
+});
 test('задачу можно перенести между целями; готовые действия неизменны', () => {
   let s = add(plan());
   const old = goal(s).id;

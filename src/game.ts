@@ -421,7 +421,8 @@ export function migrateState(
       (profile.mode === 'demo' || profile.mode === 'personal')
         ? {
             ...profile,
-            name: profile.name.trim().slice(0, 30),
+            // Не обрезать импортированные имена молча: миграция не должна терять данные.
+            name: profile.name.trim(),
             onboardingComplete: profile.onboardingComplete ?? true,
           }
         : { ...defaultProfile, onboardingComplete: true },

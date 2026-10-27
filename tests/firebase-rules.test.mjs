@@ -505,6 +505,10 @@ test("архив и обложки доступны только владель�
   const month = doc(db, "players", "alice", "history", "2026-07");
   const image = doc(db, "players", "alice", "images", "goal-b2-0a1b2c3d");
   await assertSucceeds(setDoc(month, { events: [], updatedAt: serverTimestamp() }));
+  await assertSucceeds(setDoc(month, { events: [{ id: "legacy" }], updatedAt: serverTimestamp() }));
+  const versioned = doc(db, "players", "alice", "history", "2026-07-1-0a1b2c3d");
+  await assertSucceeds(setDoc(versioned, { events: [{ id: "v1" }], updatedAt: serverTimestamp() }));
+  await assertFails(updateDoc(versioned, { events: [{ id: "v2" }], updatedAt: serverTimestamp() }));
   await assertSucceeds(setDoc(image, { data: cover, updatedAt: serverTimestamp() }));
   await assertSucceeds(setDoc(image, { data: cover, updatedAt: serverTimestamp() }));
   await assertFails(setDoc(image, { data: cover + "B", updatedAt: serverTimestamp() }));
@@ -555,4 +559,35 @@ test("SDK переносит старую историю и обложки в п
   assert.equal(again.state.goals[0].image, undefined);
   assert.equal((await getDoc(doc(db, "players", "alice", "images", main.state.imageRefs["goal:g1"]))).exists(), false);
   assert.equal(again.state.events.length, 2);
+});
+
+test("конкурентные изменения одного архивного месяца не повреждают историю победившей ревизии", async () => {
+  const db = env.authenticatedContext("archive-race").firestore();
+  const seedDriver = firebaseSave(db, "archive-race");
+  const fresh = await seedDriver.create(newAccountGame("Алиса"));
+  const old = new Date(Date.now() - 120 * 86400000).toISOString();
+  const seeded = await seedDriver.save({
+    ...fresh.state,
+    events: [{ id: "race-event", sphere: "health", title: "Исходное событие", xp: 0, date: old, kind: "planning" }],
+  }, fresh.revision);
+  assert.ok(seeded);
+
+  const driverA = firebaseSave(db, "archive-race");
+  const driverB = firebaseSave(db, "archive-race");
+  const [loadedA, loadedB] = await Promise.all([driverA.load(), driverB.load()]);
+  const stateA = { ...loadedA.state, events: loadedA.state.events.map((event) => ({ ...event, title: "Правка устройства A" })) };
+  const stateB = { ...loadedB.state, events: loadedB.state.events.map((event) => ({ ...event, title: "Правка устройства B" })) };
+  const [savedA, savedB] = await Promise.all([
+    driverA.save(stateA, loadedA.revision),
+    driverB.save(stateB, loadedB.revision),
+  ]);
+  assert.notEqual(Boolean(savedA), Boolean(savedB), "должна пройти ровно одна устаревшая запись");
+  const winner = savedA ?? savedB;
+  const current = await firebaseSave(db, "archive-race").load();
+  assert.equal(current.state.events[0].title, winner.state.events[0].title);
+  const stored = (await getDoc(doc(db, "players", "archive-race"))).data();
+  for (const [month, signature] of Object.entries(stored.state.historyIndex)) {
+    const archiveId = `${month}-${signature}`;
+    assert.ok((await getDoc(doc(db, "players", "archive-race", "history", archiveId))).exists());
+  }
 });

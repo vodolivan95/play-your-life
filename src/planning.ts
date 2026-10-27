@@ -270,8 +270,16 @@ export function saveStage(
         : g,
     ),
   };
+  // Регрессия аудита 27.10.2026 (AUD-006, вторая волна AUD-002): goal.current —
+  // кэш, который раньше обновлял только syncGoalTasks() при выполнении/удалении
+  // задачи. Добавление или правка самого этапа меняли живой goalProgressValue()
+  // (например, цель была на 100% по старым этапам, а новый пустой этап под
+  // планирование сразу снижает реальный процент), но кэш оставался прежним —
+  // и isGoalDone()/карточки целей/карта плана/месячный отчёт, которые читают
+  // goal.current напрямую, продолжали показывать старое значение. Синхронизируем
+  // здесь же, сразу после правки этапов, как это уже делает saveTask().
   return planEvent(
-    next,
+    syncGoalTasks(next, goalId),
     goalId,
     old
       ? old.dueAt !== stage.dueAt || old.startsAt !== stage.startsAt
@@ -286,28 +294,35 @@ export function removeStage(
   goalId: string,
   stageId: string,
 ): GameState {
-  return {
-    ...state,
-    goals: state.goals.map((g) =>
-      g.id === goalId
-        ? {
-            ...g,
-            stages: (g.stages ?? [])
-              .filter((s) => s.id !== stageId)
-              .map((s) =>
-                s.prerequisiteId === stageId
-                  ? { ...s, prerequisiteId: undefined }
-                  : s,
-              ),
-          }
-        : g,
-    ),
-    quests: state.quests.map((q) =>
-      q.goalId === goalId && q.stageId === stageId
-        ? { ...q, stageId: undefined }
-        : q,
-    ),
-  };
+  // См. комментарий в saveStage() выше (AUD-006) — удаление этапа тоже должно
+  // обновлять кэш goal.current, иначе цель может «зависнуть» показанной как
+  // достигнутая (или наоборот) после удаления этапа, который на самом деле
+  // решал исход goalProgressValue().
+  return syncGoalTasks(
+    {
+      ...state,
+      goals: state.goals.map((g) =>
+        g.id === goalId
+          ? {
+              ...g,
+              stages: (g.stages ?? [])
+                .filter((s) => s.id !== stageId)
+                .map((s) =>
+                  s.prerequisiteId === stageId
+                    ? { ...s, prerequisiteId: undefined }
+                    : s,
+                ),
+            }
+          : g,
+      ),
+      quests: state.quests.map((q) =>
+        q.goalId === goalId && q.stageId === stageId
+          ? { ...q, stageId: undefined }
+          : q,
+      ),
+    },
+    goalId,
+  );
 }
 export function saveTask(
   state: GameState,

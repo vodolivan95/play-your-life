@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, posix as posixPath } from 'node:path';
 
 /**
  * Проверки качества проекта: версия везде одна, в репозиторий не попали секреты и мусор,
@@ -87,6 +87,44 @@ test('каждый тест подключён: юнит-тесты в npm test,
   assert.deepEqual(forgotten, [], 'эти UI-тесты не запускаются в CI');
   assert.match(ci, /npm run check:budgets/, 'вес сборки проверяется в CI');
   assert.match(ci, /npm run test:smoke-ui/, 'обход разделов запускается в CI');
+});
+
+test('деплой моста TickTick (ticktick.yml) триггерится на все файлы src/, от которых реально зависит Worker', () => {
+  // Регрессия аудита 26.10.2026 (AUD-004): .github/workflows/ticktick.yml деплоит Cloudflare
+  // Worker только при push, трогающем список путей в on.push.paths — этот список вручную
+  // подогнан под текущие импорты integrations/ticktick/worker.ts из src/ и ничем не проверяется
+  // автоматически. Это уже один раз ломало прод (версия 0.49.2→0.49.3: src/ticktickHabits.ts
+  // не входил в paths, фикс привычек TickTick смержился в main и обновил GitHub Pages, но
+  // живой Worker остался со старым кодом). Этот тест обходит реальный граф импортов Worker'а
+  // (рекурсивно, включая файлы внутри integrations/ticktick/) и проверяет, что каждый файл
+  // src/, от которого Worker зависит, явно перечислен в paths — так забытая зависимость
+  // ломает `npm test`, а не прод-деплой без единой ошибки.
+  const workflow = read('.github/workflows/ticktick.yml');
+  const pathsBlock = workflow.match(/paths:\n([\s\S]*?)\n\s*\n/)?.[1] ?? '';
+  const declaredPaths = new Set(
+    [...pathsBlock.matchAll(/^\s*-\s+(\S+)\s*$/gm)].map(([, path]) => path),
+  );
+  assert.ok(declaredPaths.size > 0, 'не удалось прочитать on.push.paths из ticktick.yml');
+
+  const visited = new Set<string>();
+  const srcDependencies = new Set<string>();
+  const queue = ['integrations/ticktick/worker.ts'];
+  while (queue.length) {
+    const current = queue.shift()!;
+    if (visited.has(current)) continue;
+    visited.add(current);
+    const code = read(current);
+    const dir = posixPath.dirname(current);
+    for (const [, specifier] of code.matchAll(/\bfrom\s+['"](\.\.?\/[^'"]+)['"]/g)) {
+      const resolved = posixPath.normalize(posixPath.join(dir, specifier));
+      if (resolved.startsWith('src/')) srcDependencies.add(resolved);
+      else if (resolved.startsWith('integrations/ticktick/')) queue.push(resolved);
+    }
+  }
+  assert.ok(srcDependencies.size > 0, 'Worker не импортирует ничего из src/ — проверьте сам тест');
+
+  const missing = [...srcDependencies].filter((path) => !declaredPaths.has(path));
+  assert.deepEqual(missing, [], 'эти файлы src/, от которых зависит Worker, не триггерят его деплой в ticktick.yml');
 });
 
 test('в коде приложения нет отладочных остатков', () => {

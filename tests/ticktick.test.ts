@@ -852,3 +852,33 @@ test('remotePayload: срок с конкретным временем уход�
   assert.equal(payload.isAllDay, false);
   assert.equal(new Date(payload.dueDate!).getTime(), new Date(dueAt).getTime());
 });
+test('правка не связанного с приоритетом поля не повышает «Нет» приоритет TickTick до «Среднего»', async () => {
+  let { state, connection } = setup();
+  const api = upstream();
+  let applied = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
+  state = applied.state;
+  connection = applied.connection;
+  const id = state.quests[0].id;
+  const rid = connection.links[id].remoteId;
+  // В TickTick задачу перевели на «Нет приоритета» (0). Игра не может отличить его от «Среднего» (3) —
+  // localFingerprint()/remoteFingerprint() дают 'normal' для обоих, поэтому это не выглядит изменением.
+  api.tasks.set(rid, { ...api.tasks.get(rid)!, priority: 0 });
+  // Правим только название — приоритет в игре не трогаем.
+  state = saveTask(state, { ...state.quests[0], name: 'Переименовано в игре' });
+  applied = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
+  assert.equal(api.tasks.get(rid)!.title, 'Переименовано в игре');
+  // Приоритет в самом TickTick остаётся «Нет» (0), а не пересчитанным из местного 'normal' в «Средний» (3).
+  assert.equal(api.tasks.get(rid)!.priority, 0);
+});
+test('явная правка приоритета в игре по-прежнему уходит в TickTick', async () => {
+  let { state, connection } = setup();
+  const api = upstream();
+  let applied = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
+  state = applied.state;
+  connection = applied.connection;
+  const id = state.quests[0].id;
+  const rid = connection.links[id].remoteId;
+  state = saveTask(state, { ...state.quests[0], priority: 'high' });
+  applied = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
+  assert.equal(api.tasks.get(rid)!.priority, 5);
+});

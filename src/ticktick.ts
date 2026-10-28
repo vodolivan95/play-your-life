@@ -477,12 +477,20 @@ async function syncTickTickProject(
       // With no comparable baseline, keep the established whole-task local-wins rule.
       conflicts.push(...syncFields);
     }
+    // Игра знает только три уровня приоритета, и у TickTick «Нет» (0) и «Средний» (3) читаются
+    // в игре одинаково как 'normal' — localFingerprint() не может их различить. Если приоритет в
+    // игре в этот обмен не менялся, при отправке другой правки (имя, срок, заметка) берём точное
+    // значение TickTick как есть, а не пересчитанное из 'normal' обратно в 3 — иначе правка любого
+    // другого поля задачи без приоритета («Нет») молча проставляла бы ей в TickTick «Средний».
+    const priorityEdited = localValues && baseLocal ? localValues.priority !== baseLocal.priority : localChanged;
+    const keepRemotePriority = (payload: ReturnType<typeof remotePayload>, from: RemoteTask) =>
+      priorityEdited || from.priority === undefined ? payload : { ...payload, priority: from.priority };
     let reopenedInTickTick = false;
     if (locallyReopened && remoteWasCompleted) {
       remote = await request<RemoteTask>(
         `/api/task/${encodeURIComponent(remote.id)}`,
         'POST',
-        { ...remotePayload(merged, state, connection), id: remote.id, status: 0 },
+        { ...keepRemotePriority(remotePayload(merged, state, connection), remote), id: remote.id, status: 0 },
       );
       if (!remote.id)
         throw new Error('TickTick не подтвердил отмену выполнения задачи.');
@@ -498,7 +506,7 @@ async function syncTickTickProject(
       remote = await request<RemoteTask>(
         `/api/task/${encodeURIComponent(remote.id)}`,
         'POST',
-        { ...remotePayload(merged, state, connection), id: remote.id },
+        { ...keepRemotePriority(remotePayload(merged, state, connection), remote), id: remote.id },
       );
       if (!remote.id)
         throw new Error('Изменение задачи не подтверждено TickTick.');

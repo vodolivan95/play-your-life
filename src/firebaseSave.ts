@@ -10,6 +10,7 @@ import type { Firestore } from "firebase/firestore";
 import {
   assembleFromCloud,
   cloudWrites,
+  historyDocumentId,
   isCloudForm,
   monthSignature,
   splitForCloud,
@@ -68,8 +69,14 @@ export function assertDocumentFits(payload: Record<string, unknown>) {
 }
 export function firebaseSave(database: Firestore, userId: string): SaveDriver {
   const ref = doc(database, "players", userId);
-  const historyRef = (month: string) =>
-    doc(database, "players", userId, "history", month);
+  const historyRef = (month: string, signature?: string) =>
+    doc(
+      database,
+      "players",
+      userId,
+      "history",
+      signature ? historyDocumentId(month, signature) : month,
+    );
   const imageRef = (id: string) => doc(database, "players", userId, "images", id);
   // Архивные месяцы и обложки не меняются без смены подписи, поэтому их можно не перечитывать.
   const monthCache = new Map<string, Event[]>();
@@ -87,7 +94,9 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
           history[month] = cached;
           return;
         }
-        const snapshot = await getDocFromServer(historyRef(month));
+        let snapshot = await getDocFromServer(historyRef(month, signature));
+        // Старые аккаунты используют изменяемый путь YYYY-MM; читаем его до их следующего save.
+        if (!snapshot.exists()) snapshot = await getDocFromServer(historyRef(month));
         const events = snapshot.exists() ? snapshot.data().events : undefined;
         if (Array.isArray(events)) {
           history[month] = events as Event[];
@@ -122,10 +131,33 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
         if (months.has(month)) continue;
         months.add(month);
         const events = JSON.parse(JSON.stringify(part.history[month])) as Event[];
+        const signature = part.stored.historyIndex?.[month];
+        if (!signature)
+          throw new Error(`Не найдена подпись архива за ${month}.`);
         writes.push(
-          setDoc(historyRef(month), { events, updatedAt: serverTimestamp() }).then(
-            () => monthCache.set(month, events),
-          ),
+          (async () => {
+            const ref = historyRef(month, signature);
+            const serialized = JSON.stringify(events);
+            const existing = await getDocFromServer(ref);
+            if (existing.exists()) {
+              if (JSON.stringify(existing.data().events) !== serialized)
+                throw new Error(`Архив за ${month} уже существует с другим содержимым.`);
+              monthCache.set(month, events);
+              return;
+            }
+            try {
+              await setDoc(ref, { events, updatedAt: serverTimestamp() });
+            } catch (error) {
+              // Другой клиент мог одновременно создать ту же неизменяемую версию.
+              const raced = await getDocFromServer(ref);
+              if (
+                !raced.exists() ||
+                JSON.stringify(raced.data().events) !== serialized
+              )
+                throw error;
+            }
+            monthCache.set(month, events);
+          })(),
         );
       }
       for (const id of changed.images) {

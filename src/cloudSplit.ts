@@ -3,7 +3,7 @@
  *
  * В памяти, в локальных черновиках и в резервных копиях игра всегда полная.
  * Только при записи в Firestore старые события уходят в архив по месяцам
- * (`players/{uid}/history/{ГГГГ-ММ}`), а обложки целей, задач и картинки своих наград — в отдельные документы
+ * (`players/{uid}/history/{YYYY-MM-signature}`), а обложки целей, задач и картинки своих наград — в отдельные документы
  * (`players/{uid}/images/{id}`). В основном документе остаются указатели
  * `historyIndex` и `imageRefs`. При загрузке игра собирается обратно.
  */
@@ -43,6 +43,11 @@ export function fingerprint(text: string) {
 export function monthSignature(events: Event[]) {
   const sorted = [...events].sort((a, b) => a.id.localeCompare(b.id));
   return `${events.length}-${fingerprint(JSON.stringify(sorted))}`;
+}
+
+/** Идентификатор версии архива: параллельная запись не перезаписывает чужое содержимое. */
+export function historyDocumentId(month: string, signature: string) {
+  return `${month}-${signature}`;
 }
 
 export function eventMonth(event: Event) {

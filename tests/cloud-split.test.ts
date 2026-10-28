@@ -3,7 +3,9 @@ import { test } from 'node:test';
 import {
   assembleFromCloud,
   cloudWrites,
+  historyDocumentId,
   HISTORY_KEEP_DAYS,
+  monthSignature,
   isCloudForm,
   splitForCloud,
   unusedImages,
@@ -124,4 +126,13 @@ test('картинка своей награды уходит в отдельн�
   assert.ok(part.stored.imageRefs?.['reward:custom-0123456789ab']);
   validateState(part.stored);
   assert.deepEqual(assembleFromCloud(part.stored, part.history, part.images), full);
+});
+
+test('разные версии истории месяца получают разные неизменяемые document IDs', () => {
+  const first = [event('same', 100)];
+  const second = [{ ...first[0], title: 'Исправленное событие' }];
+  const id1 = historyDocumentId('2026-06', monthSignature(first));
+  const id2 = historyDocumentId('2026-06', monthSignature(second));
+  assert.notEqual(id1, id2);
+  assert.match(id1, /^2026-06-1-[0-9a-f]{8}$/);
 });

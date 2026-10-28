@@ -1,7 +1,7 @@
 {
   "name": "play-your-life",
   "private": true,
-  "version": "0.62.6",
+  "version": "0.62.7",
   "type": "module",
   "engines": {
     "node": ">=24 <25"
@@ -48,6 +48,7 @@
     "eslint-plugin-react-hooks": "^7.0.0",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "lightningcss": "^1.33.0",
     "playwright": "^1.64.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.0",

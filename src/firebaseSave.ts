@@ -49,6 +49,23 @@ function clean(state: GameState, now = new Date()) {
     throw new Error("Сохранение слишком большое. Скачайте резервную копию.");
   return result;
 }
+/**
+ * Жёсткий предел Firestore — 1 048 576 байт на документ. `clean()` выше проверяет
+ * только `state`, а в документ уходят ещё `economyRecords`/`rewardProofs` —
+ * карта, которая растёт с каждой новой задачей/привычкой и сейчас никогда не
+ * уменьшается (решение, что с этим делать, требует отдельной, аккуратной правки
+ * `firestore.rules`: это единственная защита от повторной выплаты уже
+ * начисленной награды, её нельзя просто обрезать). До такой правки — хотя бы
+ * понятная ошибка здесь, а не непонятный отказ Firestore у предела документа.
+ */
+export const DOCUMENT_SIZE_LIMIT = 950000;
+export function assertDocumentFits(payload: Record<string, unknown>) {
+  const size = new TextEncoder().encode(JSON.stringify(payload)).length;
+  if (size > DOCUMENT_SIZE_LIMIT)
+    throw new Error(
+      "Сохранение в аккаунте выросло до предела Firestore (учёт наград за много лет использования). Скачайте резервную копию и сообщите об этом — часть истории нужно будет перенести в архив отдельной доработкой.",
+    );
+}
 export function firebaseSave(database: Firestore, userId: string): SaveDriver {
   const ref = doc(database, "players", userId);
   const historyRef = (month: string) =>
@@ -285,12 +302,20 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
         }
         if (progress?.({ state: savedState, revision: expected + 1 }, false) === false)
           throw new Error("Сохранение остановлено: игру закрыли.");
+        const cleanState = clean(savedState, now);
+        assertDocumentFits({
+          state: cleanState,
+          rewardProofs,
+          economyRecords: nextRecords,
+          recordChanges: changes,
+          revision: expected + 1,
+        });
         const row = await runTransaction(database, async (transaction) => {
           const snapshot = await transaction.get(ref);
           if (!snapshot.exists() || snapshot.data().revision !== expected)
             return null;
           transaction.update(ref, {
-            state: clean(savedState, now),
+            state: cleanState,
             rewardProofs,
             economyRecords: nextRecords,
             recordChanges: changes,

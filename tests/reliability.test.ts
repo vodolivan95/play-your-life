@@ -115,6 +115,20 @@ test('Сегодня исключает будущие и вчерашние в�
     false,
   );
 });
+test('Сегодня не показывает задачу с далёким сроком только из-за раннего начала интервала', () => {
+  // Регрессия: задача TickTick с «с … до …» (startsAt — ранняя дата начала
+  // плана, dueAt — далёкий реальный срок) раньше показывалась на главной
+  // каждый день от начала интервала до срока, а не только в день срока.
+  const today = new Date(2026, 9, 29, 12);
+  const start = new Date(2026, 9, 1, 0).toISOString();
+  const dueFar = new Date(2026, 10, 7, 0).toISOString();
+  const state = initialState();
+  state.quests[2] = { ...state.quests[2], startsAt: start, dueAt: dueFar };
+  assert.equal(
+    questsForToday(state, today).some((q) => q.id === state.quests[2].id),
+    false,
+  );
+});
 test('старые выполненные задачи используют историю, новые получают дату выполнения', () => {
   const state = completeQuest(initialState(), 'english-1');
   assert.equal(dateKey(new Date(state.quests[0].completedAt!)), dateKey());

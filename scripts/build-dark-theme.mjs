@@ -18,6 +18,7 @@ const sources = [
   'components/GoalWorkspace.css',
   'components/GoalsOverview.css',
   'components/LifeCity.css',
+  'components/ProjectCompletionDialog.css',
   'components/ProjectImagePicker.css',
   'components/QuestBoard.css',
   'components/RewardShop.css',

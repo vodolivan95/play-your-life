@@ -512,6 +512,17 @@
 :root[data-theme="dark"] .city-simulation-controls select { border: 1px solid #364a63; background: #151d33; color: #a3bdd7; }
 :root[data-theme="dark"] .city-simulation-controls button[aria-pressed=true] { background: #1b2941; color: #a3bbf1; border-color: #2f426a; }
 
+/* components/ProjectCompletionDialog.css */
+:root[data-theme="dark"] .project-review-dialog { border: 1px solid #384a61; color: #d2dbee; background: #151d33; }
+:root[data-theme="dark"] .project-review-close { color: #8da3d4; background: #141b30; }
+:root[data-theme="dark"] .project-review-eyebrow { color: #9bd9f5; }
+:root[data-theme="dark"] .project-review-form textarea,
+:root[data-theme="dark"] .project-review-form input,
+:root[data-theme="dark"] .project-review-form select { border: 1px solid #3c495d; color: #d2dbee; background: #141c32; }
+:root[data-theme="dark"] .project-review-skill input { background: #141c31; }
+:root[data-theme="dark"] .project-review-placement { border: 1px solid #3c4b5d; background: #141c31; }
+:root[data-theme="dark"] .project-review-placement > small { color: #879dd1; }
+
 /* components/ProjectImagePicker.css */
 :root[data-theme="dark"] .project-image-picker { border: 1px solid #375162; }
 :root[data-theme="dark"] .project-image-picker legend { color: #9aadd9; }

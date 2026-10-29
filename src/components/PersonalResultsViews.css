@@ -137,13 +137,13 @@
   font-size: 9px;
 }
 
-.key-results .prv-result-field,
+.key-results .prv-results-field,
 .key-results .prv-evidence label {
   display: grid;
   gap: 8px;
 }
 
-.key-results .prv-result-field > span,
+.key-results .prv-results-field > .prv-results-label,
 .key-results .prv-evidence label > span {
   font-size: 13px;
   font-weight: 800;
@@ -151,17 +151,30 @@
 
 .key-results .prv textarea { min-height: 102px; }
 
+.key-results .prv-results-rows textarea { min-height: 54px; }
+
 .key-results .prv textarea:focus {
   border-color: var(--kr-blue);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--kr-blue) 12%, transparent);
 }
 
-.key-results .prv-result-field small,
 .key-results .prv-evidence small {
   justify-self: end;
   color: var(--kr-muted);
   font-size: 11px;
   line-height: 1;
+}
+
+.key-results .prv-results-rows { margin-top: -2px; }
+
+.key-results .prv-results-rows .kr-new-plan {
+  grid-template-columns: 28px minmax(0, 1fr) 35px;
+}
+
+.key-results .prv-add-result,
+.key-results .prv-results-field .kr-add-plan {
+  margin-top: 4px;
+  justify-self: start;
 }
 
 .key-results .prv-evidence {
@@ -736,17 +749,46 @@
   letter-spacing: -0.02em;
 }
 
-.key-results .prv-year-victory,
+.key-results .prv-year-trophies {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.key-results .prv-year-trophy {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+}
+
+.key-results .prv-year-trophy-icon {
+  flex: 0 0 auto;
+  font-size: 15px;
+  line-height: 1.47;
+  filter: drop-shadow(0 1px 3px color-mix(in srgb, var(--kr-accent) 55%, transparent));
+}
+
+.key-results .prv-year-trophy-text {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  font-size: 13px;
+  font-weight: 780;
+  line-height: 1.47;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--kr-accent) 60%, white) 0%, var(--kr-accent) 45%, color-mix(in srgb, var(--kr-accent) 70%, #7a4a00) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: color-mix(in srgb, var(--kr-accent) 70%, #7a4a00);
+  -webkit-text-fill-color: transparent;
+}
+
 .key-results .prv-year-evidence {
   margin-bottom: 0;
   font-size: 13px;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
   line-height: 1.47;
-}
-
-.key-results .prv-year-victory {
-  font-weight: 760;
 }
 
 .key-results .prv-year-evidence {

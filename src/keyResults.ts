@@ -11,6 +11,8 @@ export type SphereReview = {
   achieved: string;
   /** Явно записанная ключевая победа; пустая строка намеренно отличается от отсутствующего поля. */
   keyResult?: string;
+  /** Список отдельных побед месяца. Присутствие поля (даже пустого массива) отключает чтение keyResult/achieved. */
+  keyResults?: string[];
   /** Необязательное подтверждение ключевой победы. */
   resultEvidence?: string;
   failed: string;
@@ -63,6 +65,9 @@ const SHORT_LIMIT = 200;
 const PLAN_ID_LIMIT = 120;
 export const MAX_NEXT_PLANS = 40;
 export const MAX_PLAN_CHECKS = 80;
+/** Не больше 12 отдельных побед на сферу за месяц — столько же, сколько у общих wins. */
+export const MAX_KEY_RESULTS = 12;
+export const KEY_RESULT_LIMIT = 300;
 // Список сфер читается лениво: game.ts и stateValidation.ts импортируют друг друга.
 const sphereIds = () => spheres.map((s) => s.id);
 
@@ -132,6 +137,10 @@ export function validSphereReview(value: unknown): boolean {
     record(value) &&
     [value.achieved, value.failed, value.next].every((t) => str(t, TEXT_LIMIT)) &&
     (value.keyResult === undefined || str(value.keyResult, TEXT_LIMIT)) &&
+    (value.keyResults === undefined ||
+      (Array.isArray(value.keyResults) &&
+        value.keyResults.length <= MAX_KEY_RESULTS &&
+        value.keyResults.every((t) => str(t, KEY_RESULT_LIMIT)))) &&
     (value.resultEvidence === undefined || str(value.resultEvidence, TEXT_LIMIT)) &&
     [value.ifWhen, value.ifThen].every((t) => str(t, SHORT_LIMIT)) &&
     (value.score === null || (typeof value.score === 'number' && Number.isInteger(value.score) && value.score >= 1 && value.score <= 10)) &&
@@ -188,7 +197,11 @@ export function reviewOf(state: GameState, month: string): MonthReview {
     spheres: Object.fromEntries(
       Object.entries(saved.spheres).map(([id, review]) => [
         id,
-        { ...review, task: review.task ? { ...review.task } : review.task },
+        {
+          ...review,
+          task: review.task ? { ...review.task } : review.task,
+          ...(review.keyResults === undefined ? {} : { keyResults: [...review.keyResults] }),
+        },
       ]),
     ),
     gratitude: [...saved.gratitude],
@@ -201,7 +214,13 @@ export function reviewOf(state: GameState, month: string): MonthReview {
 }
 export function sphereReviewOf(review: MonthReview, sphere: string): SphereReview {
   const saved = review.spheres[sphere];
-  return saved ? { ...saved, task: saved.task ? { ...saved.task } : saved.task } : blankSphereReview();
+  return saved
+    ? {
+        ...saved,
+        task: saved.task ? { ...saved.task } : saved.task,
+        ...(saved.keyResults === undefined ? {} : { keyResults: [...saved.keyResults] }),
+      }
+    : blankSphereReview();
 }
 
 function clipped(value: unknown, max: number): unknown {
@@ -250,11 +269,18 @@ function clean(review: MonthReview): MonthReview {
   } else delete next.planChecks;
   for (const [id, r] of Object.entries(review.spheres)) {
     if (!sphereIds().includes(id)) continue;
-    const { keyResult, resultEvidence, ...oldFields } = r;
+    const { keyResult, keyResults, resultEvidence, ...oldFields } = r;
     next.spheres[id] = {
       ...oldFields,
       achieved: r.achieved.slice(0, TEXT_LIMIT),
       ...(keyResult === undefined ? {} : { keyResult: clipped(keyResult, TEXT_LIMIT) as string }),
+      ...(keyResults === undefined
+        ? {}
+        : {
+            keyResults: (Array.isArray(keyResults)
+              ? keyResults.slice(0, MAX_KEY_RESULTS).map((t) => clipped(t, KEY_RESULT_LIMIT))
+              : keyResults) as string[],
+          }),
       ...(resultEvidence === undefined ? {} : { resultEvidence: clipped(resultEvidence, TEXT_LIMIT) as string }),
       failed: r.failed.slice(0, TEXT_LIMIT),
       next: r.next.slice(0, TEXT_LIMIT),

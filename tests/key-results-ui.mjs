@@ -202,7 +202,12 @@ try {
       await clickTab(page, 'Ключевой результат', '.prv-victories');
       const healthVictory = page.locator('.prv-victory-card').filter({ hasText: 'Здоровье' });
       assert.equal(await healthVictory.count(), 1, 'Есть форма ключевого результата для здоровья');
-      await healthVictory.getByLabel('Ключевой результат').fill('Наладил сон и восстановление');
+      await healthVictory.getByLabel('Результат 1 в сфере «Здоровье»').fill('Наладил сон и восстановление');
+      // Плюсик добавляет отдельную строку для ещё одной победы без потери первой.
+      await healthVictory.getByRole('button', { name: '＋ Добавить победу' }).click();
+      assert.equal(await healthVictory.locator('.prv-result-row').count(), 2, 'Плюсик добавляет вторую строку победы');
+      await healthVictory.getByRole('button', { name: 'Убрать результат 2' }).click();
+      assert.equal(await healthVictory.locator('.prv-result-row').count(), 1, 'Крестик убирает лишнюю строку обратно');
       await healthVictory.locator('summary').click();
       await healthVictory.getByLabel('Подтверждение результата в сфере «Здоровье»').fill('Пять вечеров лёг спать до 23:00.');
       await healthVictory.getByText('Ручная отметка: 4 задачи за месяц.').waitFor();

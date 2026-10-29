@@ -273,13 +273,17 @@ function CloudGame({ user }: { user: User }) {
     };
     // Живая подписка: изменение с другого устройства приходит сразу, без ожидания минутного опроса.
     // Свои записи не вызывают лишних чтений: их номер версии движок уже знает.
+    // flush(), а не refresh(): если на этом устройстве уже есть несохранённые правки,
+    // refresh() их не трогает (молча ничего не делает при dirty) — тогда автослияние
+    // с чужой версией ждало бы следующей правки или минутного таймера. flush() сам
+    // ведёт себя как refresh(), когда правок нет, и пробует слияние сразу, когда есть.
     const live = onSnapshot(
       doc(database, 'players', user.uid),
       (snap) => {
         if (snap.metadata.fromCache || snap.metadata.hasPendingWrites) return;
         const revision = snap.get('revision');
         if (typeof revision === 'number' && revision > engine.knownRevision)
-          void engine.refresh();
+          void engine.flush();
       },
       () => {
         /* Нет сети или доступа: сохранение продолжает работать по таймеру и при возврате на вкладку. */

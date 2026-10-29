@@ -121,21 +121,65 @@ test('без сети и локальной копии существующая 
   assert.equal(cloud.row!.state.xp, 150);
   a.dispose();
 });
-test('конфликт устройств сохраняет обе игры и требует явного выбора', async () => {
+test('правки двух устройств с одной общей точкой сливаются автоматически, без вопроса игроку', async () => {
+  const cloud = driver(),
+    a = new AccountSave('a', cloud.api, new MemoryStorage(), 'tab');
+  await a.start(factory);
+  const localQuest = {
+    id: 'q-local', name: 'С телефона', sphere: 'english', xp: 20,
+    done: true, difficulty: 'Medium',
+  };
+  a.change({ ...a.current.state!, xp: 20, quests: [localQuest] });
+  // «Другое устройство» сохранило свою правку поверх той же версии (revision 1).
+  const remoteQuest = {
+    id: 'q-remote', name: 'С компьютера', sphere: 'health', xp: 30,
+    done: true, difficulty: 'Hard',
+  };
+  cloud.replace({
+    state: { ...factory(), xp: 30, quests: [remoteQuest] },
+    revision: 2,
+  });
+  await a.flush();
+  // Конфликтного экрана больше нет — обе задачи на месте, суммы накопительных
+  // полей (xp) сложены, а не затёрты одна другой.
+  assert.equal(a.current.status, 'saved');
+  assert.equal(a.current.remote, null);
+  assert.equal(a.current.state!.xp, 50);
+  assert.deepEqual(
+    a.current.state!.quests.map((q) => q.id).sort(),
+    ['q-local', 'q-remote'],
+  );
+  assert.equal(cloud.row!.state.xp, 50);
+  a.dispose();
+});
+/**
+ * Облачная версия, которую структурное автослияние (`src/stateMerge.ts`) не сможет
+ * принять: независимо от xp здесь портится сфера «health» (highScore меньше score),
+ * что отклонит `validateState()` после слияния. Так тест ниже проверяет настоящий,
+ * неразрешимый автоматически конфликт — расхождение одного только xp теперь
+ * сливается само по себе (см. тест выше).
+ */
+function unmergeable(state: GameState): GameState {
+  return {
+    ...state,
+    spheres: { ...state.spheres, health: { xp: 0, score: 5, highScore: 3, previousScore: 0 } },
+  };
+}
+test('когда автослияние невозможно (структурно несовместимые правки), остаётся ручной выбор, а не тихая порча данных', async () => {
   const cloud = driver(),
     a = new AccountSave('a', cloud.api, new MemoryStorage(), 'tab');
   await a.start(factory);
   a.change({ ...a.current.state!, xp: 20 });
-  cloud.replace({ state: { ...factory(), xp: 50 }, revision: 2 });
+  cloud.replace({ state: unmergeable({ ...factory(), xp: 50 }), revision: 2 });
   await a.flush();
+  // Автослияние честно не берётся за эту пару (результат не прошёл бы validateState) —
+  // игра не закрывает глаза молча и не шлёт в облако испорченное состояние, а ждёт
+  // явного выбора, как и раньше.
   assert.equal(a.current.status, 'conflict');
   assert.equal(a.current.state!.xp, 20);
   assert.equal(a.current.remote!.state.xp, 50);
-  a.change({ ...factory(), xp: 999 });
-  assert.equal(a.current.state!.xp, 20);
   await a.chooseLocal();
   assert.equal(cloud.row!.state.xp, 20);
-  assert.equal(cloud.row!.revision, 3);
   a.dispose();
 });
 test('принятие облачной версии оставляет резервную копию местных изменений', async () => {
@@ -144,8 +188,9 @@ test('принятие облачной версии оставляет резе
     a = new AccountSave('a', cloud.api, storage, 'tab');
   await a.start(factory);
   a.change({ ...a.current.state!, xp: 20 });
-  cloud.replace({ state: { ...factory(), xp: 90 }, revision: 2 });
+  cloud.replace({ state: unmergeable({ ...factory(), xp: 90 }), revision: 2 });
   await a.flush();
+  assert.equal(a.current.status, 'conflict');
   await a.chooseRemote();
   assert.equal(a.current.state!.xp, 90);
   assert.ok(

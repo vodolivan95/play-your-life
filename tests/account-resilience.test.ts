@@ -37,6 +37,19 @@ class MemoryStorage implements Storage {
   }
 }
 const factory = () => newAccountGame('Игрок');
+/**
+ * Облачная версия, которую структурное автослияние (`src/stateMerge.ts`) не сможет
+ * принять: независимо от xp здесь портится сфера «health» (highScore меньше score),
+ * что отклонит `validateState()` после слияния. Так тесты ниже проверяют настоящий,
+ * неразрешимый автоматически конфликт, а не просто расхождение xp (которое теперь
+ * сливается само по себе — см. `tests/account.test.ts`).
+ */
+function unmergeable(state: GameState): GameState {
+  return {
+    ...state,
+    spheres: { ...state.spheres, health: { xp: 0, score: 5, highScore: 3, previousScore: 0 } },
+  };
+}
 /** Облако, в котором можно заранее назначить сбои конкретных вызовов. */
 function cloud(initial: SaveRow | null = null) {
   let row = initial;
@@ -235,7 +248,10 @@ test('страховочных копий хранится не больше т�
     a = await open(c, storage, 'tab');
   for (let i = 1; i <= 6; i++) {
     a.change({ ...a.current.state!, xp: i });
-    c.replace({ state: { ...factory(), xp: 100 + i }, revision: (c.row?.revision ?? 0) + 1 });
+    c.replace({
+      state: unmergeable({ ...factory(), xp: 100 + i }),
+      revision: (c.row?.revision ?? 0) + 1,
+    });
     await a.flush();
     assert.equal(a.current.status, 'conflict');
     await a.chooseRemote(true);
@@ -249,7 +265,7 @@ test('выбор версии устройства оставляет копию
     storage = new MemoryStorage(),
     a = await open(c, storage, 'tab');
   a.change({ ...a.current.state!, xp: 20 });
-  c.replace({ state: { ...factory(), xp: 500 }, revision: 2 });
+  c.replace({ state: unmergeable({ ...factory(), xp: 500 }), revision: 2 });
   await a.flush();
   assert.equal(a.current.status, 'conflict');
   await a.chooseLocal();
@@ -265,7 +281,7 @@ test('чужая запись с другим содержимым по-преж
     storage = new MemoryStorage(),
     a = await open(c, storage, 'tab');
   a.change({ ...a.current.state!, xp: 8 });
-  c.replace({ state: { ...factory(), xp: 700 }, revision: 2 });
+  c.replace({ state: unmergeable({ ...factory(), xp: 700 }), revision: 2 });
   await a.flush();
   assert.equal(a.current.status, 'conflict');
   assert.equal(c.row!.state.xp, 700);

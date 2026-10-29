@@ -251,6 +251,170 @@ export function yearTransactions(state: GameState, year: string): FinanceTransac
 
 export { monthKey, monthLabel, yearKey };
 
+// Реестр регулярных и разовых платежей (коммуналка, подписки, кредиты) — отдельно от
+// операций выше: здесь не факт прошлой траты, а план будущего платежа с датой и
+// периодичностью. Перенесён из согласованного с Иваном прототипа Claude Design
+// («Финансы — редизайн вкладки», артборд «Реестр платежей»).
+export type PaymentInterval = number | 'once' | 'unknown';
+// число — раз в столько месяцев; 'once' — разовый платёж без повторения;
+// 'unknown' — повторяется, но периодичность пока не указана.
+
+export type PaymentGroup = 'housing' | 'subs' | 'credit' | 'other';
+
+export const paymentGroupLabels: Record<PaymentGroup, string> = {
+  housing: 'Жильё',
+  subs: 'Подписки',
+  credit: 'Кредиты',
+  other: 'Разовые',
+};
+
+export const paymentIntervalChoices: { interval: PaymentInterval; label: string }[] = [
+  { interval: 1, label: 'Ежемесячно' },
+  { interval: 3, label: 'Раз в 3 месяца' },
+  { interval: 6, label: 'Раз в полгода' },
+  { interval: 12, label: 'Ежегодно' },
+  { interval: 'once', label: 'Разово' },
+];
+
+export function paymentIntervalLabel(interval: PaymentInterval): string {
+  if (interval === 'unknown') return 'Уточнить период';
+  if (interval === 'once') return 'Разово';
+  const found = paymentIntervalChoices.find((c) => c.interval === interval);
+  return found ? found.label : `Раз в ${interval} мес.`;
+}
+
+export type PaymentEntry = {
+  id: string;
+  name: string;
+  icon: string;
+  /** Сумма в рублях; null — сумма пока не известна («уточнить»). */
+  amount: number | null;
+  interval: PaymentInterval;
+  /** 'YYYY-MM-DD'; пустая строка — дата следующего платежа пока не известна (ждёт
+   * внешней синхронизации, например кредитная карта до подключения ZenMoney). */
+  nextDate: string;
+  group: PaymentGroup;
+  autopay: boolean;
+  note?: string;
+  createdAt: string;
+};
+
+export const MAX_FINANCE_PAYMENTS = 200;
+const MAX_PAYMENT_NAME = 60;
+
+export function payments(state: GameState): PaymentEntry[] {
+  return state.financePayments ?? [];
+}
+
+/** Платёж без известной даты считается ждущим синхронизации — он не попадает в
+ * «Ближайшие 7 дней» и всегда уходит в конец отсортированного списка. */
+export function isPendingPayment(p: PaymentEntry): boolean {
+  return p.nextDate === '';
+}
+
+/** Целых дней до следующего платежа; Infinity — дата не известна (см. isPendingPayment). */
+export function daysUntilPayment(nextDate: string, now = new Date()): number {
+  if (!nextDate) return Infinity;
+  const target = new Date(`${nextDate}T00:00:00`).getTime();
+  const today = new Date(`${now.toISOString().slice(0, 10)}T00:00:00`).getTime();
+  return Math.round((target - today) / 86400000);
+}
+
+/** От ближней даты к сегодняшнему дню сверху; платежи без даты — всегда внизу. */
+export function sortedPayments(list: PaymentEntry[], now = new Date()): PaymentEntry[] {
+  return [...list].sort((a, b) => daysUntilPayment(a.nextDate, now) - daysUntilPayment(b.nextDate, now));
+}
+
+export function paymentsDueSoon(list: PaymentEntry[], now = new Date(), withinDays = 7): PaymentEntry[] {
+  return sortedPayments(list, now).filter((p) => {
+    const days = daysUntilPayment(p.nextDate, now);
+    return days >= 0 && days <= withinDays;
+  });
+}
+
+export type PaymentInput = {
+  name: string;
+  icon: string;
+  amount: number | null;
+  interval: PaymentInterval;
+  nextDate: string;
+  group: PaymentGroup;
+  autopay: boolean;
+  note?: string;
+};
+
+const paymentDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+const isPaymentGroup = (v: unknown): v is PaymentGroup =>
+  v === 'housing' || v === 'subs' || v === 'credit' || v === 'other';
+const isPaymentInterval = (v: unknown): v is PaymentInterval =>
+  v === 'once' || v === 'unknown' || (typeof v === 'number' && Number.isInteger(v) && v > 0 && v <= 36);
+
+function validPaymentInput(input: PaymentInput) {
+  const name = input.name.trim();
+  const icon = input.icon.trim();
+  return (
+    !!name &&
+    name.length <= MAX_PAYMENT_NAME &&
+    !!icon &&
+    icon.length <= 8 &&
+    (input.amount === null ||
+      (Number.isFinite(input.amount) && input.amount > 0 && input.amount <= MAX_FINANCE_AMOUNT)) &&
+    isPaymentInterval(input.interval) &&
+    (input.nextDate === '' || paymentDatePattern.test(input.nextDate)) &&
+    isPaymentGroup(input.group) &&
+    (input.note === undefined || input.note.length <= MAX_FINANCE_NOTE)
+  );
+}
+
+export function addPayment(state: GameState, input: PaymentInput, now = new Date()): GameState {
+  if (!validPaymentInput(input)) throw new Error('Проверь название, сумму, период и дату платежа.');
+  const list = payments(state);
+  if (list.length >= MAX_FINANCE_PAYMENTS) throw new Error('Слишком много платежей в реестре.');
+  const item: PaymentEntry = {
+    id: crypto.randomUUID(),
+    name: input.name.trim(),
+    icon: input.icon.trim(),
+    amount: input.amount,
+    interval: input.interval,
+    nextDate: input.nextDate,
+    group: input.group,
+    autopay: input.autopay,
+    note: input.note?.trim() || undefined,
+    createdAt: now.toISOString(),
+  };
+  return { ...state, financePayments: [...list, item] };
+}
+
+export function updatePayment(state: GameState, id: string, input: PaymentInput): GameState {
+  if (!validPaymentInput(input)) throw new Error('Проверь название, сумму, период и дату платежа.');
+  const list = payments(state);
+  if (!list.some((p) => p.id === id)) return state;
+  return {
+    ...state,
+    financePayments: list.map((p) =>
+      p.id === id
+        ? {
+            ...p,
+            name: input.name.trim(),
+            icon: input.icon.trim(),
+            amount: input.amount,
+            interval: input.interval,
+            nextDate: input.nextDate,
+            group: input.group,
+            autopay: input.autopay,
+            note: input.note?.trim() || undefined,
+          }
+        : p,
+    ),
+  };
+}
+
+export function removePayment(state: GameState, id: string): GameState {
+  const list = payments(state);
+  if (!list.some((p) => p.id === id)) return state;
+  return { ...state, financePayments: list.filter((p) => p.id !== id) };
+}
+
 const idPattern = /^[A-Za-z0-9_-]{1,80}$/;
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const isKind = (v: unknown): v is FinanceKind => v === 'expense' || v === 'income';
@@ -305,6 +469,44 @@ export function validFinanceTransactions(
       typeof item.createdAt !== 'string' ||
       !Number.isFinite(new Date(item.createdAt).getTime()) ||
       (item.source !== 'manual' && item.source !== 'zenmoney')
+    )
+      return false;
+    if (ids.has(item.id)) return false;
+    ids.add(item.id);
+  }
+  return true;
+}
+
+export function validFinancePayments(value: unknown): value is PaymentEntry[] {
+  if (!Array.isArray(value) || value.length > MAX_FINANCE_PAYMENTS) return false;
+  const ids = new Set<string>();
+  for (const item of value) {
+    if (
+      !isRecord(item) ||
+      typeof item.id !== 'string' ||
+      !idPattern.test(item.id) ||
+      typeof item.name !== 'string' ||
+      !item.name.trim() ||
+      item.name.length > MAX_PAYMENT_NAME ||
+      typeof item.icon !== 'string' ||
+      !item.icon ||
+      item.icon.length > 8 ||
+      !(
+        item.amount === null ||
+        (typeof item.amount === 'number' &&
+          Number.isFinite(item.amount) &&
+          item.amount > 0 &&
+          item.amount <= MAX_FINANCE_AMOUNT)
+      ) ||
+      !isPaymentInterval(item.interval) ||
+      typeof item.nextDate !== 'string' ||
+      (item.nextDate !== '' && !datePattern.test(item.nextDate)) ||
+      !isPaymentGroup(item.group) ||
+      typeof item.autopay !== 'boolean' ||
+      (item.note !== undefined &&
+        (typeof item.note !== 'string' || item.note.length > MAX_FINANCE_NOTE)) ||
+      typeof item.createdAt !== 'string' ||
+      !Number.isFinite(new Date(item.createdAt).getTime())
     )
       return false;
     if (ids.has(item.id)) return false;

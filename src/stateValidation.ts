@@ -12,7 +12,12 @@ import { validImportance } from './monthReport.ts';
 import type { GameState } from './game.ts';
 import { imageDocPattern, imageRefPattern, monthPattern } from './cloudSplit.ts';
 import { validTaskLabels } from './taskLabels.ts';
-import { defaultFinanceCategories, validFinanceCategories, validFinanceTransactions } from './finance.ts';
+import {
+  defaultFinanceCategories,
+  validFinanceCategories,
+  validFinancePayments,
+  validFinanceTransactions,
+} from './finance.ts';
 
 type SavedState = Omit<GameState, 'profile' | 'mainGoalId'> &
   Partial<Pick<GameState, 'profile' | 'mainGoalId'>>;
@@ -84,6 +89,8 @@ export function validateState(value: unknown): asserts value is SavedState {
     value.financeTransactions !== undefined &&
     !validFinanceTransactions(value.financeTransactions, financeCategoryIds)
   )
+    return fail();
+  if (value.financePayments !== undefined && !validFinancePayments(value.financePayments))
     return fail();
   if (value.rooms !== undefined && !validRooms(value.rooms)) return fail();
   if (value.cityPurchases !== undefined) {

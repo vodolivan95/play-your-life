@@ -36,6 +36,8 @@ import type {
 } from '../finance';
 import { monthKey, monthLabel, moveMonth, validMonth } from '../monthly';
 import { validYear, yearKey, yearLabel } from '../yearReport';
+import { matchBrand } from '../brands';
+import BrandIcon from '../brandIcons';
 import Icon from './Icon';
 import './FinancePage.css';
 
@@ -437,7 +439,13 @@ export default function FinancePage({
                     <div className="fin-payment-row" key={p.id}>
                       <div className="fin-row">
                         <button type="button" className="fin-row-main" onClick={() => (editing ? closePaymentForm() : openEditPayment(p))}>
-                          <span className="fin-row-icon" aria-hidden="true">{p.icon}</span>
+                          {matchBrand(p.name) ? (
+                            <span className="fin-row-icon fin-brand-icon" aria-hidden="true">
+                              <BrandIcon name={p.name} size={17} />
+                            </span>
+                          ) : (
+                            <span className="fin-row-icon" aria-hidden="true">{p.icon}</span>
+                          )}
                           <span className="fin-row-text">
                             <strong>{p.name}</strong>
                             <small>

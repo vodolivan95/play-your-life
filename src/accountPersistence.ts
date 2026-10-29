@@ -2,6 +2,8 @@ import type { GameState } from './game.ts';
 import { restoreBackup } from './backup.ts';
 import { saveError } from './saveError.ts';
 import { fingerprint } from './stateFingerprint.ts';
+import { mergeStates } from './stateMerge.ts';
+import { validateState } from './stateValidation.ts';
 export type SaveRow = { state: GameState; revision: number };
 /**
  * Запись в облако может состоять из нескольких коммитов. Драйвер сообщает о каждом:
@@ -42,10 +44,18 @@ const MAX_WAIT_MS = 5000;
 const SENT_LIMIT = 24;
 /** Сколько раз подряд можно пересесть на новую версию облака, если там лежит наша же запись. */
 const REBASE_LIMIT = 3;
+/** Сколько раз подряд можно попытаться автоматически слить правки с другим устройством. */
+const MERGE_LIMIT = 3;
 /** Сколько страховочных копий каждого вида оставлять. */
 const RECOVERY_KEEP = 3;
 const SAVED_TEXT = 'Прогресс сохранён в аккаунте';
-type Draft = SaveRow & { userId: string; savedAt: number; sent: number[] };
+type Draft = SaveRow & {
+  userId: string;
+  savedAt: number;
+  sent: number[];
+  /** Версия, от которой начались эти правки — нужна для автослияния при восстановлении черновика. */
+  base?: GameState;
+};
 type DraftCopy = { draft: Draft; key: string; raw: string };
 type RecoveryKind = 'recovery' | 'retired';
 /**
@@ -70,6 +80,8 @@ export class AccountSave {
   /** Черновики, найденные при запуске: самый новый первым. После сохранения они убираются. */
   private copies: DraftCopy[] = [];
   private revision = 0;
+  /** Версия, подтверждённая облаком последней — опорная точка для автослияния при конфликте. */
+  private base: GameState | null = null;
   /** Отпечатки версий, про которые известно, что их записали мы (или они были в облаке до наших правок). */
   private sent: number[] = [];
   private dirty = false;
@@ -142,12 +154,22 @@ export class AccountSave {
       const sent: number[] = Array.isArray(d.sent)
         ? d.sent.filter((n: unknown) => typeof n === 'number' && Number.isFinite(n))
         : [];
+      let base: GameState | undefined;
+      if (d.base !== undefined) {
+        try {
+          const b = restoreBackup(JSON.stringify(d.base));
+          if (b.profile.mode === 'personal') base = b;
+        } catch {
+          /* Без базы автослияние при восстановлении этого черновика просто не сработает. */
+        }
+      }
       return {
         userId: this.userId,
         state,
         revision: d.revision,
         savedAt: d.savedAt,
         sent: sent.slice(-SENT_LIMIT),
+        base,
       };
     } catch {
       return null;
@@ -186,6 +208,7 @@ export class AccountSave {
       state: this.snapshot.state,
       savedAt: this.clock,
       sent: this.sent,
+      base: this.base ?? undefined,
     });
     try {
       this.storage.setItem(this.draftKey, text);
@@ -227,8 +250,23 @@ export class AccountSave {
   /** Принимает облачную строку как новую опорную точку: номер версии, копия, отпечатки. */
   private adopt(row: SaveRow) {
     this.revision = row.revision;
+    this.base = row.state;
     this.cache(row);
     this.remember(row.state);
+  }
+  /**
+   * Пробует слить три версии (общий предок + обе разошедшиеся правки) в одну и
+   * проверяет результат так же строго, как перед обычной отправкой. При любой
+   * проблеме возвращает null — тогда остаётся прежний путь, окно ручного выбора.
+   */
+  private tryAutoMerge(base: GameState, local: GameState, remote: SaveRow): GameState | null {
+    try {
+      const merged = mergeStates(base, local, remote.state);
+      validateState(merged);
+      return merged;
+    } catch {
+      return null;
+    }
   }
   /** Сохраняет прежнюю версию в отдельную копию; хранятся только самые свежие. */
   private keepRecovery(state: GameState | null, kind: RecoveryKind) {
@@ -331,6 +369,22 @@ export class AccountSave {
       this.emit({ state: recovered.state, localSaved: true });
       // Облако изменено другим устройством, только если там лежит не наша запись.
       if (recovered.revision !== remote.revision && !this.known(remote)) {
+        // Если у черновика сохранилась общая точка отсчёта — пробуем слить правки
+        // обоих устройств автоматически, как при обычном расхождении во время работы.
+        const merged =
+          recovered.base && this.tryAutoMerge(recovered.base, recovered.state, remote);
+        if (merged) {
+          this.adopt(remote);
+          this.dirty = true;
+          this.emit({
+            state: merged,
+            status: 'pending',
+            message: 'Объединяем правки с обоих устройств…',
+          });
+          this.persistDraft();
+          void this.flush();
+          return;
+        }
         this.cache(remote);
         this.emit({
           status: 'conflict',
@@ -445,7 +499,8 @@ export class AccountSave {
     } else this.persistDraft();
   }
   private async run() {
-    let rebases = 0;
+    let rebases = 0,
+      merges = 0;
     while (
       this.active &&
       this.dirty &&
@@ -480,6 +535,18 @@ export class AccountSave {
           rebases++;
           this.adopt(remote);
           continue;
+        }
+        if (remote && this.base && merges < MERGE_LIMIT) {
+          // Облако действительно изменило другое устройство — пробуем слить правки,
+          // а не сразу останавливаться и спрашивать игрока.
+          const merged = this.tryAutoMerge(this.base, state, remote);
+          if (merged) {
+            merges++;
+            this.adopt(remote);
+            this.emit({ state: merged, status: 'saving', message: 'Сохраняем в аккаунте…' });
+            this.persistDraft();
+            continue;
+          }
         }
         this.emit({
           status: 'conflict',
@@ -522,6 +589,12 @@ export class AccountSave {
     // Облачная версия будет заменена: оставляем её копию на случай, если выбор окажется ошибкой.
     this.keepRecovery(remote.state, 'recovery');
     this.adopt(remote);
+    // `adopt()` для записи поверх нужен только номер версии — отброшенная игроком
+    // облачная версия не должна становиться опорной точкой для будущих автослияний
+    // (иначе её накопительные поля, например xp, снова примешаются к локальным при
+    // следующем конфликте, хотя игрок уже явно отказался от этой версии). Опорная
+    // точка — само сохраняемое сейчас состояние устройства.
+    this.base = this.snapshot.state;
     this.dirty = true;
     this.emit({
       status: 'pending',

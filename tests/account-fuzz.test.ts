@@ -67,6 +67,8 @@ class FakeCloud {
   lossAfter = 0;
   foreign = 0;
   overwrites = 0;
+  /** Самый большой xp, который успела записать «чужая» сторона — маркер её честного вклада. */
+  maxForeignXp = -Infinity;
   /** Версии до этой пользователь разрешил заменить, выбрав «сохранить версию устройства». */
   allowUpTo = -1;
   /** Простой драйвер: один коммит, без сообщений о шагах и без своего приведения игры. */
@@ -86,7 +88,13 @@ class FakeCloud {
     if (
       previous?.state.profile.name.startsWith(FOREIGN) &&
       !state.profile.name.startsWith(FOREIGN) &&
-      previous.revision > this.allowUpTo
+      previous.revision > this.allowUpTo &&
+      // Автослияние (`src/stateMerge.ts`) законно сливает поля по отдельности — имя
+      // чужого устройства не обязано выжить как строка (это принятый компромисс:
+      // «обе стороны поменяли одно и то же поле → побеждает текущее устройство»),
+      // но её честно заработанный xp обязан: неполноценное слияние, которое его
+      // потеряло, а не включило в общую сумму, — вот настоящая тихая порча данных.
+      state.xp < this.maxForeignXp
     )
       this.overwrites++;
     this.row = { state, revision: (previous?.revision ?? 0) + 1 };
@@ -96,9 +104,11 @@ class FakeCloud {
     if (!this.row) return;
     this.foreign++;
     const state = this.row.state;
+    const xp = 10000 + this.foreign;
+    this.maxForeignXp = Math.max(this.maxForeignXp, xp);
     this.write({
       ...state,
-      xp: 10000 + this.foreign,
+      xp,
       profile: { ...state.profile, name: `${FOREIGN}${this.foreign}` },
     });
   }
@@ -191,7 +201,11 @@ async function scenario(seed: number, mode: Mode) {
     const state = engine.current.state;
     if (!state || engine.current.status === 'conflict') return false;
     counter++;
-    engine.change({ ...state, xp: counter, coins: counter % 5 });
+    // Как в настоящей игре: xp только растёт (`award()` никогда не уменьшает его), а
+    // не перезаписывается произвольным числом — иначе трёхстороннее автослияние
+    // (которое рассчитано именно на накопительные поля) проверялось бы на сценарии,
+    // невозможном в реальной игре.
+    engine.change({ ...state, xp: state.xp + 1, coins: (state.coins + 1) % 5 });
     return true;
   };
   const resolve = async () => {

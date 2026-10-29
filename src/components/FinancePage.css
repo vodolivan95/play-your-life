@@ -81,7 +81,8 @@
 
 .fin-payment-filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; }
 .fin-payment-filters button { flex: 0 0 auto; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border); background: none; font-size: 12px; font-weight: 600; color: #50607a; white-space: nowrap; }
-.fin-payment-filters button.active { background: #1c2a44; color: #fff; border-color: #1c2a44; }
+.fin-payment-filters button.active { border: 1.5px solid #4d8bff; background: linear-gradient(135deg, rgba(77,139,255,.22), rgba(155,123,255,.18)); color: #1c2a44; font-weight: 800; }
+:root[data-theme="dark"] .fin-payment-filters button.active { color: #fff; }
 
 .fin-payment-row .fin-row-main { gap: 10px; flex-wrap: wrap; }
 .fin-payment-badge { font-size: 10px; font-weight: 700; color: #50607a; background: var(--chip-bg, #eef2f9); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }

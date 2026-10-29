@@ -3,8 +3,8 @@ import type { CSSProperties, Dispatch, SetStateAction } from 'react';
 import { spheres } from '../game';
 import type { GameState } from '../game';
 import { monthKey, monthLabel, validMonth } from '../monthly';
-import { patchSphereReview, reviewOf, sphereReviewOf } from '../keyResults';
-import { personalTimeline, personalYear, victoryOf } from '../personalResults';
+import { MAX_KEY_RESULTS, KEY_RESULT_LIMIT, patchSphereReview, reviewOf, sphereReviewOf } from '../keyResults';
+import { keyResultsOf, personalTimeline, personalYear, writtenKeyResults } from '../personalResults';
 import Statistics from './Statistics';
 import './PersonalResultsViews.css';
 
@@ -126,7 +126,7 @@ export function VictoryResults({
 }) {
   const review = reviewOf(state, month);
   const [evidenceOpen, setEvidenceOpen] = useState<Record<string, boolean>>({});
-  const written = spheres.filter((sphere) => victoryOf(review, sphere.id).trim()).length;
+  const written = spheres.filter((sphere) => writtenKeyResults(review, sphere.id).length > 0).length;
 
   return (
     <div className="prv prv-victories">
@@ -147,7 +147,11 @@ export function VictoryResults({
       <div className="prv-victory-list">
         {spheres.map((sphere) => {
           const sphereReview = sphereReviewOf(review, sphere.id);
-          const result = victoryOf(review, sphere.id);
+          const stored = keyResultsOf(review, sphere.id);
+          const rows = stored.length > 0 ? stored : [''];
+          const isVirtual = stored.length === 0;
+          const setResults = (next: string[]) =>
+            onChange((current) => patchSphereReview(current, month, sphere.id, { keyResults: next }));
           const evidence = sphereReview.resultEvidence ?? '';
           const open = evidenceOpen[sphere.id] ?? Boolean(evidence);
           const tasks = sphereReview.tasksDone;
@@ -168,21 +172,48 @@ export function VictoryResults({
                 <span className="kr-pill">ЛИЧНЫЙ ИТОГ</span>
               </header>
 
-              <label className="prv-result-field">
-                <span>Ключевой результат</span>
-                <textarea
-                  value={result}
-                  maxLength={2000}
-                  rows={3}
-                  placeholder="Например: вернулся к регулярным тренировкам два раза в неделю"
-                  onChange={(event) =>
-                    onChange((current) =>
-                      patchSphereReview(current, month, sphere.id, { keyResult: event.target.value }),
-                    )
-                  }
-                />
-                <small>{result.length} / 2000</small>
-              </label>
+              <div className="prv-results-field" role="group" aria-label={`Ключевые результаты в сфере «${sphere.name}»`}>
+                <span className="prv-results-label">Ключевые результаты</span>
+                <div className="kr-new-plans prv-results-rows">
+                  {rows.map((text, index) => (
+                    <div className="kr-new-plan prv-result-row" key={`${sphere.id}-kr-${index}`}>
+                      <span className="kr-plan-index">{String(index + 1).padStart(2, '0')}</span>
+                      <label>
+                        <span className="sr-only">Результат {index + 1} в сфере «{sphere.name}»</span>
+                        <textarea
+                          value={text}
+                          maxLength={KEY_RESULT_LIMIT}
+                          rows={2}
+                          placeholder="Например: вернулся к регулярным тренировкам два раза в неделю"
+                          onChange={(event) => {
+                            const next = isVirtual ? [] : [...stored];
+                            next[index] = event.target.value;
+                            setResults(next);
+                          }}
+                        />
+                      </label>
+                      {!isVirtual && (
+                        <button
+                          className="kr-remove-plan"
+                          type="button"
+                          aria-label={`Убрать результат ${index + 1}`}
+                          onClick={() => setResults(stored.filter((_, i) => i !== index))}
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <button
+                  className="kr-secondary kr-add-plan"
+                  type="button"
+                  disabled={stored.length >= MAX_KEY_RESULTS}
+                  onClick={() => setResults([...stored, ''])}
+                >
+                  ＋ Добавить победу
+                </button>
+              </div>
 
               <details
                 className="prv-evidence"
@@ -515,9 +546,9 @@ export function YearResults({
               const item = selected.data.months.find((candidate) => candidate.month === key);
               const future = item?.future ?? key > currentMonth;
               const tasks = item?.tasks ?? null;
-              const victory = item?.victory.trim() ?? '';
+              const victories = item?.victories ?? [];
               const evidence = evidenceFor(state, key, sphere).trim();
-              const empty = !future && tasks === null && !victory && !evidence;
+              const empty = !future && tasks === null && victories.length === 0 && !evidence;
               return (
                 <article className={`prv-year-month${future ? ' is-future' : ''}${key === currentMonth ? ' is-current' : ''}`}
                   data-year-reveal="" style={{ '--prv-delay': `${(index % 3) * 65}ms` } as CSSProperties} key={`${sphere}-${key}`}>
@@ -533,7 +564,16 @@ export function YearResults({
                         <span>Ручные задачи</span>
                         <b>{tasks === null ? 'Не указано' : `${tasks} ${pluralTasks(tasks)}`}</b>
                       </p>
-                      {victory && <p className="prv-year-victory">{victory}</p>}
+                      {victories.length > 0 && (
+                        <ul className="prv-year-trophies" aria-label={`Победы месяца в сфере «${selected.item.name}»`}>
+                          {victories.map((text, trophyIndex) => (
+                            <li className="prv-year-trophy" key={`${sphere}-${key}-trophy-${trophyIndex}`}>
+                              <span className="prv-year-trophy-icon" aria-hidden="true">🏆</span>
+                              <span className="prv-year-trophy-text">{text}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                       {evidence && <p className="prv-year-evidence">{evidence}</p>}
                       {empty && <p className="kr-muted">Ничего не записано.</p>}
                       <button className="prv-month-link" type="button" onClick={() => onOpenMonth(key)}>

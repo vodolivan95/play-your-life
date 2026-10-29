@@ -3,10 +3,26 @@ import type { MonthReview } from './keyResults.ts';
 import { reviewOf, sphereReviewOf } from './keyResults.ts';
 import { monthKey, monthLabel, moveMonth, validMonth } from './monthly.ts';
 
+/**
+ * Необработанный список побед для редактирования, с откатом к старым полям.
+ * Пустые строки сохраняются (например, черновик строки, пока её не заполнили).
+ */
+export function keyResultsOf(review: MonthReview, sphere: string): string[] {
+  const r = review.spheres[sphere];
+  if (!r) return [];
+  if (r.keyResults !== undefined) return r.keyResults;
+  if (r.keyResult !== undefined) return r.keyResult.trim() ? [r.keyResult] : [];
+  return r.achieved && r.achieved.trim() ? [r.achieved] : [];
+}
+
+/** Только заполненные победы — для отображения, счётчиков и годовой хроники. */
+export function writtenKeyResults(review: MonthReview, sphere: string): string[] {
+  return keyResultsOf(review, sphere).map((t) => t.trim()).filter(Boolean);
+}
+
 /** Победа новой формы приоритетнее старого achieved даже тогда, когда она намеренно пуста. */
 export function victoryOf(review: MonthReview, sphere: string): string {
-  const result = review.spheres[sphere];
-  return result?.keyResult ?? result?.achieved ?? '';
+  return writtenKeyResults(review, sphere).join(' · ');
 }
 
 export type PersonalMonth = {
@@ -14,6 +30,8 @@ export type PersonalMonth = {
   label: string;
   tasks: number | null;
   victory: string;
+  /** Отдельные записанные победы месяца — каждая показывается кубком в годовой хронике. */
+  victories: string[];
   evidence: string;
   current: boolean;
   future: boolean;
@@ -24,7 +42,7 @@ function personalMonthOf(state: GameState, month: string, sphere: string, now: D
   const current = month === currentMonth;
   const future = month > currentMonth;
   if (future) {
-    return { month, label: monthLabel(month), tasks: null, victory: '', evidence: '', current: false, future: true };
+    return { month, label: monthLabel(month), tasks: null, victory: '', victories: [], evidence: '', current: false, future: true };
   }
   const review = reviewOf(state, month);
   const sphereReview = sphereReviewOf(review, sphere);
@@ -33,6 +51,7 @@ function personalMonthOf(state: GameState, month: string, sphere: string, now: D
     label: monthLabel(month),
     tasks: sphereReview.tasksDone ?? null,
     victory: victoryOf(review, sphere),
+    victories: writtenKeyResults(review, sphere),
     evidence: sphereReview.resultEvidence ?? '',
     current,
     future: false,

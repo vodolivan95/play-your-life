@@ -131,11 +131,16 @@ service cloud.firestore {
         && request.resource.data.get('recordChanges', []).size() == 0;
       allow update: if owner() && valid()
         && request.resource.data.revision == resource.data.revision + 1 && economyValid();
-      // Архив событий старше 60 дней: один документ на месяц. Не влияет на лайфкоины и XP.
+      // Новые архивы адресуются подписью содержимого и неизменяемы; YYYY-MM оставлен для старых клиентов.
       match /history/{month} {
         allow get: if owner();
         allow list, delete: if false;
-        allow create, update: if owner() && month.matches('^[0-9]{4}-[0-9]{2}$')
+        allow create: if owner() && month.matches('^[0-9]{4}-[0-9]{2}(-[0-9]{1,7}-[0-9a-f]{8})?$')
+          && request.resource.data.keys().hasOnly(['events','updatedAt'])
+          && request.resource.data.keys().hasAll(['events','updatedAt'])
+          && request.resource.data.events is list
+          && request.resource.data.updatedAt == request.time;
+        allow update: if owner() && month.matches('^[0-9]{4}-[0-9]{2}$')
           && request.resource.data.keys().hasOnly(['events','updatedAt'])
           && request.resource.data.keys().hasAll(['events','updatedAt'])
           && request.resource.data.events is list

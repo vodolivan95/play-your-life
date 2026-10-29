@@ -120,6 +120,13 @@ test('профиль и выбранная главная цель сохран�
   assert.deepEqual(loaded, state);
   assert.equal(loaded.mainGoalId, 'second');
 });
+test('миграция профиля не обрезает длинное имя и не теряет его окончание', () => {
+  const state = initialState();
+  const longName = 'Иван — имя профиля длинее тридцати символов';
+  state.profile = { ...state.profile, name: longName };
+  const restored = migrateState(JSON.parse(JSON.stringify(state)));
+  assert.equal(restored.profile.name, longName);
+});
 test('невалидные данные не создают новую игру', () => {
   assert.throws(() => personalState({ ...profile, name: '   ' }, scores, goal));
   assert.throws(() => personalState(profile, { ...scores, sport: 10 }, goal));

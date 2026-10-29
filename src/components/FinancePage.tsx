@@ -133,10 +133,9 @@ export default function FinancePage({
   const filteredPayments = paymentFilter === 'all' ? allPayments : allPayments.filter((p) => p.group === paymentFilter);
   const sortedFilteredPayments = sortedPayments(filteredPayments);
   const upcoming = sortedPayments(allPayments).find((p) => !isPendingPayment(p));
-  const knownAmounts = allPayments.filter((p) => p.amount !== null);
-  const biggestPayment = knownAmounts.length
-    ? knownAmounts.reduce((max, p) => ((p.amount ?? 0) > (max.amount ?? 0) ? p : max))
-    : null;
+  const thisMonthPayments = allPayments.filter((p) => p.nextDate.slice(0, 7) === monthKey());
+  const thisMonthPaymentsTotal = thisMonthPayments.reduce((sum, p) => sum + (p.amount ?? 0), 0);
+  const thisMonthPaymentsUnknown = thisMonthPayments.filter((p) => p.amount === null).length;
 
   function todayKey() {
     const d = new Date();
@@ -394,9 +393,13 @@ export default function FinancePage({
               <em>{upcoming ? `${paymentDayLabel(upcoming.nextDate)} · ${upcoming.name}` : 'реестр пуст'}</em>
             </div>
             <div className="panel fin-kpi">
-              <span>Крупнейший платёж</span>
-              <b>{biggestPayment ? money(biggestPayment.amount ?? 0) : '—'}</b>
-              <em>{biggestPayment ? `${biggestPayment.name}, ${paymentIntervalLabel(biggestPayment.interval).toLowerCase()}` : 'нет известных сумм'}</em>
+              <span>Подписки в этом месяце</span>
+              <b>{thisMonthPayments.length ? money(thisMonthPaymentsTotal) : '—'}</b>
+              <em>
+                {thisMonthPayments.length
+                  ? `${thisMonthPayments.length} ${wordRecords(thisMonthPayments.length)}${thisMonthPaymentsUnknown ? `, ${thisMonthPaymentsUnknown} без суммы` : ''}`
+                  : 'в этом месяце платежей нет'}
+              </em>
             </div>
             <div className="panel fin-kpi">
               <span>Платежей в реестре</span>

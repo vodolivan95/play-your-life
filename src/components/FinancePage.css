@@ -34,7 +34,7 @@
 
 .fin-rows { display: flex; flex-direction: column; gap: 4px; }
 .fin-row { display: flex; align-items: center; gap: 6px; }
-.fin-row-main { flex: 1; display: flex; align-items: center; gap: 12px; padding: 9px 6px; border-radius: 10px; text-align: left; }
+.fin-row-main { flex: 1; display: flex; align-items: center; gap: 12px; padding: 9px 6px; border-radius: 10px; text-align: left; border: 0; background: none; color: inherit; font: inherit; }
 .fin-row-main:hover { background: var(--chip-bg, #f4f7fc); }
 .fin-row-icon { font-size: 19px; width: 30px; text-align: center; }
 .fin-row-text { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
@@ -65,7 +65,7 @@
 .fin-category-grid { display: flex; flex-wrap: wrap; gap: 8px; }
 .fin-category-grid button { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--border); background: none; font-size: 12px; }
 .fin-category-grid button.active { background: #1c2a44; color: #fff; border-color: #1c2a44; }
-.fin-new-category { color: #50607a; }
+.fin-new-category { border: 0; background: none; color: #50607a; font: inherit; }
 .fin-new-category-form { display: flex; gap: 6px; align-items: center; }
 .fin-icon-input { width: 48px; flex: 0 0 48px; text-align: center; padding: 10px 4px; border-radius: 11px; border: 1px solid var(--border); font-size: 16px; }
 .fin-new-category-form input:not(.fin-icon-input) { flex: 1; padding: 10px 12px; border-radius: 11px; border: 1px solid var(--border); font-size: 13px; }

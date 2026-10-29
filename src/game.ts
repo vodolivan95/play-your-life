@@ -847,8 +847,13 @@ export function questsForToday(state: GameState, now = new Date()): Quest[] {
             ))?.date;
         return !!completedAt && dateKey(new Date(completedAt)) === today;
       }
-      const start = q.startsAt ?? q.dueAt;
-      return !start || dateKey(new Date(start)) <= today;
+      // Срок задачи (`dueAt`) — то, что реально определяет «пора сегодня/просрочено»:
+      // так же эта дата показывается в карточке задачи (QuestRow). Раньше здесь
+      // проверялся `startsAt` в приоритете: задача с ранним началом интервала
+      // («с … до …») и далёким сроком показывалась на главной каждый день от
+      // начала интервала до самого срока, а не только в день срока.
+      const due = q.dueAt ?? q.startsAt;
+      return !due || dateKey(new Date(due)) <= today;
     })
     .sort((a, b) => {
       if (a.done !== b.done) return Number(a.done) - Number(b.done);

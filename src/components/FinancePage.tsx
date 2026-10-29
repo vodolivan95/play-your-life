@@ -3,18 +3,37 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { GameState } from '../game';
 import {
   addCategory,
+  addPayment,
   addTransaction,
   categoryBreakdown,
   financeCategories,
   financeYears,
+  isPendingPayment,
   monthTransactions,
+  paymentGroupLabels,
+  paymentIntervalChoices,
+  paymentIntervalLabel,
+  payments,
+  paymentsDueSoon,
+  removePayment,
   removeTransaction,
+  sortedPayments,
+  daysUntilPayment,
   totals,
+  updatePayment,
   updateTransaction,
   yearMonthlySeries,
   yearTransactions,
 } from '../finance';
-import type { FinanceKind, FinanceTransaction, TransactionInput } from '../finance';
+import type {
+  FinanceKind,
+  FinanceTransaction,
+  PaymentEntry,
+  PaymentGroup,
+  PaymentInput,
+  PaymentInterval,
+  TransactionInput,
+} from '../finance';
 import { monthKey, monthLabel, moveMonth, validMonth } from '../monthly';
 import { validYear, yearKey, yearLabel } from '../yearReport';
 import Icon from './Icon';
@@ -24,8 +43,22 @@ const money = (n: number) =>
   `${Math.round(n).toLocaleString('ru-RU')} ₽`;
 const dayLabel = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+const paymentDayLabel = (iso: string) =>
+  new Date(`${iso}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+function daysLeftLabel(days: number) {
+  if (days < 0) return `просрочен на ${Math.abs(days)} ${wordDays(Math.abs(days))}`;
+  if (days === 0) return 'сегодня';
+  return `через ${days} ${wordDays(days)}`;
+}
+function wordDays(n: number) {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return 'день';
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return 'дня';
+  return 'дней';
+}
 
-type View = 'month' | 'year';
+type View = 'month' | 'year' | 'payments';
 
 type FormState = {
   type: FinanceKind;
@@ -38,6 +71,24 @@ type FormState = {
 function blankForm(type: FinanceKind, date: string, categoryId: string): FormState {
   return { type, amount: '', categoryId, date, note: '' };
 }
+
+type PaymentFormState = {
+  name: string;
+  icon: string;
+  amount: string;
+  unknown: boolean;
+  interval: PaymentInterval;
+  nextDate: string;
+  group: PaymentGroup;
+  autopay: boolean;
+  note: string;
+};
+
+function blankPaymentForm(date: string): PaymentFormState {
+  return { name: '', icon: '💳', amount: '', unknown: false, interval: 1, nextDate: date, group: 'subs', autopay: true, note: '' };
+}
+
+const paymentFilterIds: ('all' | PaymentGroup)[] = ['all', 'housing', 'subs', 'credit', 'other'];
 
 /** «Финансы»: личный учёт трат и доходов (реальные деньги). Не связано с лайфкоинами/XP. */
 export default function FinancePage({
@@ -55,6 +106,9 @@ export default function FinancePage({
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState | null>(null);
   const [newCategoryOpen, setNewCategoryOpen] = useState(false);
+  const [paymentFilter, setPaymentFilter] = useState<'all' | PaymentGroup>('all');
+  const [paymentEditId, setPaymentEditId] = useState<string | null>(null);
+  const [paymentForm, setPaymentForm] = useState<PaymentFormState | null>(null);
 
   const categories = financeCategories(state);
   const years = financeYears(state);
@@ -73,6 +127,16 @@ export default function FinancePage({
   const yearCategories = categoryBreakdown(state, yearList, 'expense');
   const series = yearMonthlySeries(state, year);
   const maxMonthExpense = Math.max(1, ...series.map((m) => m.expense));
+
+  const allPayments = payments(state);
+  const dueSoon = paymentsDueSoon(allPayments);
+  const filteredPayments = paymentFilter === 'all' ? allPayments : allPayments.filter((p) => p.group === paymentFilter);
+  const sortedFilteredPayments = sortedPayments(filteredPayments);
+  const upcoming = sortedPayments(allPayments).find((p) => !isPendingPayment(p));
+  const knownAmounts = allPayments.filter((p) => p.amount !== null);
+  const biggestPayment = knownAmounts.length
+    ? knownAmounts.reduce((max, p) => ((p.amount ?? 0) > (max.amount ?? 0) ? p : max))
+    : null;
 
   function todayKey() {
     const d = new Date();
@@ -125,16 +189,71 @@ export default function FinancePage({
 
   const formCategories = form ? categories.filter((c) => c.type === form.type) : [];
 
+  function openCreatePayment() {
+    setPaymentEditId(null);
+    setPaymentForm(blankPaymentForm(todayKey()));
+  }
+  function openEditPayment(p: PaymentEntry) {
+    setPaymentEditId(p.id);
+    setPaymentForm({
+      name: p.name,
+      icon: p.icon,
+      amount: p.amount === null ? '' : String(p.amount),
+      unknown: p.nextDate === '',
+      interval: p.interval,
+      nextDate: p.nextDate || todayKey(),
+      group: p.group,
+      autopay: p.autopay,
+      note: p.note ?? '',
+    });
+  }
+  function closePaymentForm() {
+    setPaymentForm(null);
+    setPaymentEditId(null);
+  }
+  function savePayment() {
+    if (!paymentForm) return;
+    const input: PaymentInput = {
+      name: paymentForm.name,
+      icon: paymentForm.icon,
+      amount: paymentForm.unknown || !paymentForm.amount ? null : Number(paymentForm.amount.replace(',', '.')),
+      interval: paymentForm.unknown ? 'unknown' : paymentForm.interval,
+      nextDate: paymentForm.unknown ? '' : paymentForm.nextDate,
+      group: paymentForm.group,
+      autopay: paymentForm.autopay,
+      note: paymentForm.note.trim() || undefined,
+    };
+    try {
+      onChange((s) => (paymentEditId ? updatePayment(s, paymentEditId, input) : addPayment(s, input)));
+      notify(paymentEditId ? 'Платёж обновлён' : 'Платёж добавлен в реестр');
+      closePaymentForm();
+    } catch (e) {
+      notify(e instanceof Error ? e.message : 'Проверь название, сумму, период и дату.');
+    }
+  }
+  function removePaymentEntry(id: string) {
+    onChange((s) => removePayment(s, id));
+    notify('Платёж удалён из реестра');
+    if (paymentEditId === id) closePaymentForm();
+  }
+
   return (
     <div className="fin">
       <div className="fin-top">
-        <div className="fin-tabs" role="tablist" aria-label="Период">
+        <div className="fin-tabs" role="tablist" aria-label="Раздел">
           <button type="button" role="tab" aria-selected={view === 'month'} className={view === 'month' ? 'active' : ''} onClick={() => setView('month')}>Помесячно</button>
           <button type="button" role="tab" aria-selected={view === 'year'} className={view === 'year' ? 'active' : ''} onClick={() => setView('year')}>По году</button>
+          <button type="button" role="tab" aria-selected={view === 'payments'} className={view === 'payments' ? 'active' : ''} onClick={() => setView('payments')}>Платежи</button>
         </div>
-        <button type="button" className="primary-button fin-add" onClick={() => openCreate('expense')}>
-          <Icon name="plus" size={16} /> Добавить запись
-        </button>
+        {view === 'payments' ? (
+          <button type="button" className="primary-button fin-add" onClick={openCreatePayment}>
+            <Icon name="plus" size={16} /> Добавить платёж
+          </button>
+        ) : (
+          <button type="button" className="primary-button fin-add" onClick={() => openCreate('expense')}>
+            <Icon name="plus" size={16} /> Добавить запись
+          </button>
+        )}
       </div>
 
       {view === 'month' ? (
@@ -198,7 +317,7 @@ export default function FinancePage({
             )}
           </section>
         </>
-      ) : (
+      ) : view === 'year' ? (
         <>
           <div className="fin-nav">
             <label className="fin-year-select">
@@ -249,6 +368,100 @@ export default function FinancePage({
 
           <CategoryBreakdown title="На что ушли траты за год" rows={yearCategories} total={yearTotals.expense} />
         </>
+      ) : (
+        <>
+          {dueSoon.length > 0 && (
+            <section className="fin-soon">
+              <h2>Ближайшие 7 дней</h2>
+              <div className="fin-soon-strip">
+                {dueSoon.map((p) => (
+                  <div className="fin-soon-item" key={p.id}>
+                    <span aria-hidden="true">{p.icon}</span>
+                    <span className="fin-soon-text">
+                      <strong>{p.name}</strong>
+                      <small>{p.amount === null ? 'уточнить' : money(p.amount)} · {daysLeftLabel(daysUntilPayment(p.nextDate))}</small>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <div className="fin-kpis">
+            <div className="panel fin-kpi">
+              <span>Следующий платёж</span>
+              <b>{upcoming ? (upcoming.amount === null ? 'уточнить' : money(upcoming.amount)) : '—'}</b>
+              <em>{upcoming ? `${paymentDayLabel(upcoming.nextDate)} · ${upcoming.name}` : 'реестр пуст'}</em>
+            </div>
+            <div className="panel fin-kpi">
+              <span>Крупнейший платёж</span>
+              <b>{biggestPayment ? money(biggestPayment.amount ?? 0) : '—'}</b>
+              <em>{biggestPayment ? `${biggestPayment.name}, ${paymentIntervalLabel(biggestPayment.interval).toLowerCase()}` : 'нет известных сумм'}</em>
+            </div>
+            <div className="panel fin-kpi">
+              <span>Платежей в реестре</span>
+              <b>{allPayments.length}</b>
+              <em>регулярных и разовых</em>
+            </div>
+          </div>
+
+          <section className="panel fin-list">
+            <div className="section-heading">
+              <div><h2>Реестр</h2><p>Коммуналка, подписки и другие обязательства</p></div>
+              <span className="count-chip">{filteredPayments.length}</span>
+            </div>
+            <div className="fin-payment-filters">
+              {paymentFilterIds.map((id) => (
+                <button
+                  type="button"
+                  key={id}
+                  className={paymentFilter === id ? 'active' : ''}
+                  onClick={() => setPaymentFilter(id)}
+                >
+                  {id === 'all' ? 'Все' : paymentGroupLabels[id]}
+                </button>
+              ))}
+            </div>
+            {sortedFilteredPayments.length === 0 ? (
+              <p className="fin-empty">Пока нет платежей в этой категории. Добавь первый.</p>
+            ) : (
+              <div className="fin-rows">
+                {sortedFilteredPayments.map((p) => {
+                  const pending = isPendingPayment(p);
+                  const days = daysUntilPayment(p.nextDate);
+                  const editing = paymentEditId === p.id && paymentForm;
+                  return (
+                    <div className="fin-payment-row" key={p.id}>
+                      <div className="fin-row">
+                        <button type="button" className="fin-row-main" onClick={() => (editing ? closePaymentForm() : openEditPayment(p))}>
+                          <span className="fin-row-icon" aria-hidden="true">{p.icon}</span>
+                          <span className="fin-row-text">
+                            <strong>{p.name}</strong>
+                            <small>
+                              {pending
+                                ? '⏳ ждёт синхронизации'
+                                : `след. платёж ${paymentDayLabel(p.nextDate)} · ${p.autopay ? 'автосписание' : 'вручную'}`}
+                            </small>
+                          </span>
+                          <span className="fin-payment-badge">{paymentIntervalLabel(p.interval)}</span>
+                          <span className={pending ? 'fin-row-amount fin-payment-status' : days < 0 ? 'fin-row-amount negative' : 'fin-row-amount'}>
+                            {pending ? 'ждёт' : daysLeftLabel(days)}
+                          </span>
+                          <strong className={p.amount === null ? 'fin-payment-amount unknown' : 'fin-payment-amount'}>
+                            {p.amount === null ? 'уточнить' : money(p.amount)}
+                          </strong>
+                        </button>
+                        <button type="button" className="icon-button" aria-label={`Удалить платёж: ${p.name}`} onClick={() => removePaymentEntry(p.id)}>
+                          <Icon name="trash" size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </>
       )}
 
       {form && (
@@ -291,6 +504,72 @@ export default function FinancePage({
               {editId && <button type="button" className="icon-button outlined" aria-label="Удалить запись" onClick={() => remove(editId)}><Icon name="trash" size={16} /></button>}
               <button type="button" className="secondary-button" onClick={closeForm}>Отмена</button>
               <button type="button" className="primary-button" disabled={!form.categoryId || !form.amount} onClick={save}>{editId ? 'Сохранить' : 'Добавить'}</button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {paymentForm && (
+        <div className="fin-modal-backdrop" role="presentation" onClick={closePaymentForm}>
+          <section className="panel fin-modal" role="dialog" aria-label={paymentEditId ? 'Изменить платёж' : 'Новый платёж'} onClick={(e) => e.stopPropagation()}>
+            <div className="section-heading">
+              <h2>{paymentEditId ? 'Изменить платёж' : 'Новый платёж'}</h2>
+              <button type="button" className="icon-button" aria-label="Закрыть" onClick={closePaymentForm}><Icon name="close" size={18} /></button>
+            </div>
+            <label className="fin-field">Название
+              <input value={paymentForm.name} onChange={(e) => setPaymentForm({ ...paymentForm, name: e.target.value })} maxLength={60} placeholder="Например, VPN" autoFocus />
+            </label>
+            <label className="fin-field">Иконка (эмодзи)
+              <input value={paymentForm.icon} onChange={(e) => setPaymentForm({ ...paymentForm, icon: e.target.value })} maxLength={4} className="fin-icon-input" />
+            </label>
+            <div className="fin-field">
+              <span>Группа</span>
+              <div className="fin-category-grid">
+                {(['housing', 'subs', 'credit', 'other'] as PaymentGroup[]).map((g) => (
+                  <button type="button" key={g} className={paymentForm.group === g ? 'active' : ''} onClick={() => setPaymentForm({ ...paymentForm, group: g })}>
+                    {paymentGroupLabels[g]}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <label className="fin-checkbox">
+              <input type="checkbox" checked={paymentForm.unknown} onChange={(e) => setPaymentForm({ ...paymentForm, unknown: e.target.checked })} />
+              Сумма и дата пока не известны (например, ждёт синхронизации с другим сервисом)
+            </label>
+            {!paymentForm.unknown && (
+              <>
+                <label className="fin-field">Сумма, ₽ (необязательно, если пока не известна)
+                  <input inputMode="decimal" placeholder="уточнить" value={paymentForm.amount} onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })} />
+                </label>
+                <div className="fin-field">
+                  <span>Периодичность</span>
+                  <div className="fin-category-grid">
+                    {paymentIntervalChoices.map((c) => (
+                      <button type="button" key={String(c.interval)} className={paymentForm.interval === c.interval ? 'active' : ''} onClick={() => setPaymentForm({ ...paymentForm, interval: c.interval })}>
+                        {c.label}
+                      </button>
+                    ))}
+                    <button type="button" className={paymentForm.interval === 'unknown' ? 'active' : ''} onClick={() => setPaymentForm({ ...paymentForm, interval: 'unknown' })}>
+                      Уточнить период
+                    </button>
+                  </div>
+                </div>
+                <label className="fin-field">Следующий платёж
+                  <input type="date" value={paymentForm.nextDate} onChange={(e) => setPaymentForm({ ...paymentForm, nextDate: e.target.value })} />
+                </label>
+                <label className="fin-checkbox">
+                  <input type="checkbox" checked={paymentForm.autopay} onChange={(e) => setPaymentForm({ ...paymentForm, autopay: e.target.checked })} />
+                  Списывается автоматически
+                </label>
+              </>
+            )}
+            <label className="fin-field">Заметка (необязательно)
+              <input value={paymentForm.note} onChange={(e) => setPaymentForm({ ...paymentForm, note: e.target.value })} maxLength={300} />
+            </label>
+            <div className="fin-modal-actions">
+              {paymentEditId && <button type="button" className="icon-button outlined" aria-label="Удалить платёж" onClick={() => removePaymentEntry(paymentEditId)}><Icon name="trash" size={16} /></button>}
+              <button type="button" className="secondary-button" onClick={closePaymentForm}>Отмена</button>
+              <button type="button" className="primary-button" disabled={!paymentForm.name.trim()} onClick={savePayment}>{paymentEditId ? 'Сохранить' : 'Добавить'}</button>
             </div>
           </section>
         </div>

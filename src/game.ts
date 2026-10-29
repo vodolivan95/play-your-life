@@ -253,6 +253,7 @@ export type GameState = {
   /** Личный учёт трат и доходов (реальные деньги), вкладка «Финансы»: см. finance.ts. */
   financeTransactions?: import('./finance').FinanceTransaction[];
   financeCategories?: import('./finance').FinanceCategory[];
+  financePayments?: import('./finance').PaymentEntry[];
   goals: Goal[];
   spheres: Record<string, SphereState>;
   events: Event[];

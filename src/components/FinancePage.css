@@ -67,3 +67,24 @@
 .fin-icon-input { width: 48px; flex: 0 0 48px; text-align: center; padding: 10px 4px; border-radius: 11px; border: 1px solid var(--border); font-size: 16px; }
 .fin-new-category-form input:not(.fin-icon-input) { flex: 1; padding: 10px 12px; border-radius: 11px; border: 1px solid var(--border); font-size: 13px; }
 .fin-modal-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+.fin-checkbox { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #50607a; }
+.fin-checkbox input { width: 16px; height: 16px; }
+
+.fin-soon { display: flex; flex-direction: column; gap: 10px; }
+.fin-soon h2 { margin: 0; font-size: 13px; font-weight: 700; color: #50607a; text-transform: uppercase; letter-spacing: .04em; }
+.fin-soon-strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.fin-soon-item { flex: 0 0 auto; min-width: 180px; display: flex; align-items: center; gap: 10px; background: #fbbf2414; border: 1px solid #fbbf2440; border-radius: 14px; padding: 10px 14px; }
+.fin-soon-item > span:first-child { font-size: 18px; width: 30px; text-align: center; }
+.fin-soon-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fin-soon-text strong { font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fin-soon-text small { font-size: 11px; color: #a9731f; font-weight: 600; }
+
+.fin-payment-filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; }
+.fin-payment-filters button { flex: 0 0 auto; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border); background: none; font-size: 12px; font-weight: 600; color: #50607a; white-space: nowrap; }
+.fin-payment-filters button.active { background: #1c2a44; color: #fff; border-color: #1c2a44; }
+
+.fin-payment-row .fin-row-main { gap: 10px; flex-wrap: wrap; }
+.fin-payment-badge { font-size: 10px; font-weight: 700; color: #50607a; background: var(--chip-bg, #eef2f9); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.fin-payment-status { color: #7a879e; font-weight: 600; font-size: 11px; }
+.fin-payment-amount { font-size: 13px; font-weight: 700; white-space: nowrap; }
+.fin-payment-amount.unknown { font-style: italic; font-weight: 600; color: #7a879e; }

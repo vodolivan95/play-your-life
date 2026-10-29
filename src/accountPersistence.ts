@@ -264,7 +264,11 @@ export class AccountSave {
       const merged = mergeStates(base, local, remote.state);
       validateState(merged);
       return merged;
-    } catch {
+    } catch (error) {
+      // Причина молча терялась и было невозможно понять, почему автослияние не
+      // сработало в конкретном случае у игрока — само слияние бросило ошибку или
+      // результат не прошёл validateState(). Теперь видно в консоли разработчика.
+      console.error('Автослияние не удалось, показываю окно ручного выбора:', error);
       return null;
     }
   }

@@ -205,9 +205,9 @@ try {
       await healthVictory.getByLabel('Результат 1 в сфере «Здоровье»').fill('Наладил сон и восстановление');
       // Плюсик добавляет отдельную строку для ещё одной победы без потери первой.
       await healthVictory.getByRole('button', { name: '＋ Добавить победу' }).click();
-      assert.equal(await healthVictory.getByLabel(/^Результат \d в сфере «Здоровье»$/).count(), 2, 'Плюсик добавляет вторую строку победы');
+      assert.equal(await healthVictory.locator('.prv-result-row').count(), 2, 'Плюсик добавляет вторую строку победы');
       await healthVictory.getByRole('button', { name: 'Убрать результат 2' }).click();
-      assert.equal(await healthVictory.getByLabel(/^Результат \d в сфере «Здоровье»$/).count(), 1, 'Крестик убирает лишнюю строку обратно');
+      assert.equal(await healthVictory.locator('.prv-result-row').count(), 1, 'Крестик убирает лишнюю строку обратно');
       await healthVictory.locator('summary').click();
       await healthVictory.getByLabel('Подтверждение результата в сфере «Здоровье»').fill('Пять вечеров лёг спать до 23:00.');
       await healthVictory.getByText('Ручная отметка: 4 задачи за месяц.').waitFor();

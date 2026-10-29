@@ -1,6 +1,6 @@
 import type { MenuIconId } from './menuIcons';
 
-/** Одиннадцать разделов приложения: плоский список в боковом меню и источник заголовков страниц. «Ключевые итоги» (бывшие «Итоги месяца» и «Статистика») — внизу под «Профилем»; страница «Итоги месяца» открывается из неё. */
+/** Двенадцать разделов приложения: плоский список в боковом меню и источник заголовков страниц. «Ключевые итоги» (бывшие «Итоги месяца» и «Статистика») — внизу под «Профилем»; страница «Итоги месяца» открывается из неё. «Финансы» — личный учёт трат и доходов (реальные деньги), отдельно от игровой сферы «Финансы» (`finance` в сферах). */
 export const navigation: { id: MenuIconId; label: string; icon: string }[] = [
   { id: 'home', label: 'Главная', icon: 'home' },
   { id: 'spheres', label: 'Сферы жизни', icon: 'spheres' },
@@ -12,5 +12,6 @@ export const navigation: { id: MenuIconId; label: string; icon: string }[] = [
   { id: 'shop', label: 'Магазин', icon: 'shop' },
   { id: 'city', label: 'Город', icon: 'city' },
   { id: 'profile', label: 'Профиль', icon: 'profile' },
+  { id: 'budget', label: 'Финансы', icon: 'budget' },
   { id: 'statistics', label: 'Ключевые итоги', icon: 'statistics' },
 ];

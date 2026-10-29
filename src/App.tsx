@@ -23,6 +23,7 @@ import Statistics from './components/Statistics';
 import RewardShop from './components/RewardShop';
 import Onboarding, { ProfileEditor } from './components/Onboarding';
 import KeyResults from './components/KeyResults';
+import FinancePage from './components/FinancePage';
 import GoalsBoard from './components/GoalsBoard';
 import SkillTree from './components/SkillTree';
 import LifePlanner from './components/LifePlanner';
@@ -482,6 +483,9 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 ownerId={userId ?? 'local'}
                 notify={notify}
               />
+            )}
+            {page === 'budget' && (
+              <FinancePage state={state} onChange={setState} notify={notify} />
             )}
             {page === 'profile' && (
               <div className="profile-page">

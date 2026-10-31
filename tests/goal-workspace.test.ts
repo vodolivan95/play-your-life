@@ -15,6 +15,9 @@ import {
   duplicateStage,
   removeStage,
   finishStage,
+  addGoalCheckpoint,
+  toggleGoalCheckpoint,
+  removeGoalCheckpoint,
 } from '../src/planning.ts';
 import {
   goalProgressValue,
@@ -25,6 +28,7 @@ import {
   nextGoalTask,
   goalHistory,
   stageDays,
+  goalPaceStatus,
 } from '../src/goalWorkspace.ts';
 import { goalRoute, readGoalRoute } from '../src/goalRoutes.ts';
 import { validateState } from '../src/stateValidation.ts';
@@ -579,4 +583,71 @@ test('новая обязательная задача открывает эта
     goalHistory(s, goal(s, f.id)).filter((e) => e.kind === 'goal').length,
     1,
   );
+});
+test('проект на паузе сохраняется и проходит валидацию', () => {
+  const f = fixture();
+  let s = saveGoal(f.s, { ...goal(f.s, f.id), paused: true });
+  assert.equal(goal(s, f.id).paused, true);
+  validateState(JSON.parse(JSON.stringify(s)));
+  s = saveGoal(s, { ...goal(s, f.id), paused: false });
+  assert.equal(goal(s, f.id).paused, false);
+});
+test('фокус на неделю — свободный текст проекта, сохраняется и проходит валидацию', () => {
+  const f = fixture();
+  const s = saveGoal(f.s, { ...goal(f.s, f.id), weeklyFocus: 'Закрыть первый этап' });
+  assert.equal(goal(s, f.id).weeklyFocus, 'Закрыть первый этап');
+  validateState(JSON.parse(JSON.stringify(s)));
+});
+test('контрольные точки: добавление, отметка и удаление', () => {
+  const f = fixture();
+  let s = addGoalCheckpoint(f.s, f.id, '  Сдать первый тест  ');
+  assert.equal(goal(s, f.id).checkpoints!.length, 1);
+  assert.equal(goal(s, f.id).checkpoints![0].text, 'Сдать первый тест');
+  assert.equal(goal(s, f.id).checkpoints![0].done, false);
+  validateState(JSON.parse(JSON.stringify(s)));
+  const checkpointId = goal(s, f.id).checkpoints![0].id;
+  s = toggleGoalCheckpoint(s, f.id, checkpointId);
+  assert.equal(goal(s, f.id).checkpoints![0].done, true);
+  s = toggleGoalCheckpoint(s, f.id, checkpointId);
+  assert.equal(goal(s, f.id).checkpoints![0].done, false);
+  s = removeGoalCheckpoint(s, f.id, checkpointId);
+  assert.equal(goal(s, f.id).checkpoints!.length, 0);
+});
+test('контрольные точки: пустой текст и превышение лимита отклоняются', () => {
+  const f = fixture();
+  assert.throws(() => addGoalCheckpoint(f.s, f.id, '   '));
+  assert.throws(() => addGoalCheckpoint(f.s, f.id, 'x'.repeat(201)));
+  let s = f.s;
+  for (let i = 0; i < 12; i++) s = addGoalCheckpoint(s, f.id, `Точка ${i}`);
+  assert.equal(goal(s, f.id).checkpoints!.length, 12);
+  assert.throws(() => addGoalCheckpoint(s, f.id, 'Лишняя'));
+});
+test('состояние проекта: без срока или начала — недостаточно данных', () => {
+  const f = fixture();
+  const status = goalPaceStatus(f.s, goal(f.s, f.id));
+  assert.equal(status.status, 'unknown');
+  assert.equal(status.timeProgress, null);
+});
+test('состояние проекта: сравнивает прогресс с прошедшей долей срока', () => {
+  const f = fixture();
+  const now = new Date('2026-02-01T00:00:00Z');
+  let s = saveGoal(f.s, {
+    ...goal(f.s, f.id),
+    startsAt: '2026-01-01T00:00:00Z',
+    dueAt: '2026-03-01T00:00:00Z', // 60 дней; 1 февраля — 31 день, ~52% срока
+  });
+  // Прогресс 0% при ~52% прошедшего срока — отставание.
+  assert.equal(goalPaceStatus(s, goal(s, f.id), now).status, 'behind');
+  s = saveTask(s, {
+    name: 'Шаг',
+    sphere: 'english',
+    difficulty: 'Micro',
+    goalId: f.id,
+    stageId: f.a,
+  });
+  s = completeQuest(s, s.quests.at(-1)!.id);
+  s = finishStage(s, f.id, f.a);
+  s = finishStage(s, f.id, f.b);
+  // Оба этапа завершены — прогресс 100%, точно не отставание.
+  assert.equal(goalPaceStatus(s, goal(s, f.id), now).status, 'on-track');
 });

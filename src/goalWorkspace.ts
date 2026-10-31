@@ -229,6 +229,49 @@ export function goalHistory(
       : []),
   ].sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
 }
+export type GoalPaceStatus = 'ahead' | 'on-track' | 'behind' | 'unknown';
+export const goalPaceLabels: Record<GoalPaceStatus, string> = {
+  ahead: 'Опережение графика',
+  'on-track': 'По графику',
+  behind: 'Отставание от графика',
+  unknown: 'Недостаточно данных',
+};
+/**
+ * Сравнивает % прогресса проекта с % прошедшего от его срока времени —
+ * показывает, идёт ли проект с опережением, по графику или с отставанием.
+ * Требует срок начала и окончания; без них (или без завершённого прогресса
+ * по времени) статус не определён. Работает для любой сферы и режима
+ * прогресса (задачи или числовой результат) — не зависит от конкретных
+ * этапов или задач.
+ */
+export function goalPaceStatus(
+  state: Pick<GameState, 'quests'>,
+  goal: Goal,
+  now = new Date(),
+): { status: GoalPaceStatus; timeProgress: number | null; progress: number } {
+  const progress = goalProgressValue(state, goal);
+  const start = goal.startsAt ?? goal.created;
+  if (!start || !goal.dueAt)
+    return { status: 'unknown', timeProgress: null, progress };
+  const startMs = Date.parse(start);
+  const endMs = Date.parse(goal.dueAt);
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs)
+    return { status: 'unknown', timeProgress: null, progress };
+  const timeProgress = Math.max(
+    0,
+    Math.min(100, ((now.getTime() - startMs) / (endMs - startMs)) * 100),
+  );
+  const delta = progress - timeProgress;
+  const status: GoalPaceStatus =
+    progress >= 100
+      ? 'on-track'
+      : delta >= 8
+        ? 'ahead'
+        : delta <= -8
+          ? 'behind'
+          : 'on-track';
+  return { status, timeProgress, progress };
+}
 export function goalActivityStreak(
   state: GameState,
   goal: Goal,

@@ -174,6 +174,14 @@ export type ProjectReview = {
   challenge?: string;
   takeaway?: string;
 };
+export type GoalCheckpoint = {
+  id: string;
+  text: string;
+  done: boolean;
+};
+export const MAX_GOAL_CHECKPOINTS = 12;
+export const GOAL_CHECKPOINT_TEXT_MAX = 200;
+export const GOAL_WEEKLY_FOCUS_MAX = 300;
 export type Goal = {
   image?: string;
   id: string;
@@ -194,6 +202,12 @@ export type Goal = {
   manualProgress?: { current: number; target: number };
   stages?: GoalStage[];
   projectReview?: ProjectReview;
+  /** Проект на паузе: задачи не завершаются, срок и серия активности не учитываются. */
+  paused?: boolean;
+  /** Свободный текст — на чём сфокусироваться на этой неделе (отдельно от «Главных проектов месяца»). */
+  weeklyFocus?: string;
+  /** Контрольные точки — измеримые промежуточные результаты проекта, независимо от этапов/задач. */
+  checkpoints?: GoalCheckpoint[];
 };
 export type SphereState = {
   xp: number;

@@ -12,7 +12,7 @@ export default function TrafficSystem({ runtime, time, paused, speed }: { runtim
     if (!paused) elapsed.current += dt * speed * runtime.current.trafficSpeed;
     cars.current?.children.forEach((car, i) => {
       const distance = (elapsed.current * 2 + i * 14) % 196;
-      let x = 0, z = 0, angle = 0;
+      let x: number, z: number, angle = 0;
       if (distance < 50) { x = -25 + distance; z = -25; angle = Math.PI / 2; }
       else if (distance < 98) { x = 25; z = -25 + distance - 50; }
       else if (distance < 148) { x = 25 - (distance - 98); z = 25; angle = -Math.PI / 2; }

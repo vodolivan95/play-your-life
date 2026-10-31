@@ -8,10 +8,10 @@ import ThemeSwitch from './components/ThemeSwitch';
 import MobileNav from './components/MobileNav';
 import { navigation } from './navigation';
 import { CityAppearanceContext } from './cityAppearanceContext';
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction, ReactNode } from 'react';
 import Icon from './components/Icon';
-import LifeCity from './components/LifeCity';
+const LifeCity = lazy(() => import('./components/LifeCity'));
 import GameArt from './components/GameArt';
 import Avatar from './components/Avatar';
 import DataBackup from './components/DataBackup';
@@ -459,19 +459,21 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
               />
             )}
             {page === 'city' && (
-              <LifeCity
-                enter={cityEnter}
-                onEntered={() => setCityEnter(null)}
-                onChange={setState}
-                notify={notify}
-                state={state}
-                onOpen={(id) => {
-                  setSelected(id);
-                  setPage('spheres');
-                  setSphereTab('overview');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-              />
+              <Suspense fallback={<p role="status">Загружаем город…</p>}>
+                <LifeCity
+                  enter={cityEnter}
+                  onEntered={() => setCityEnter(null)}
+                  onChange={setState}
+                  notify={notify}
+                  state={state}
+                  onOpen={(id) => {
+                    setSelected(id);
+                    setPage('spheres');
+                    setSphereTab('overview');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                />
+              </Suspense>
             )}
             {page === 'shop' && (
               <RewardShop state={state} onChange={setState} notify={notify} />

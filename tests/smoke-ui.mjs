@@ -55,9 +55,9 @@ if (process.env.SMOKE_PLAN_ONLY === '1') {
 }
 const seedJson = JSON.stringify(seed);
 
-const desktopMenu = ['Главная', 'Сферы жизни', 'Мои задачи', 'Привычки', 'Цели', 'Дерево навыков', 'Достижения', 'Магазин', 'Город', 'Профиль', 'Ключевые итоги'];
+const desktopMenu = ['Главная', 'Сферы жизни', 'Мои задачи', 'Привычки', 'Цели', 'Финансы', 'Дерево навыков', 'Достижения', 'Магазин', 'Город', 'Профиль', 'Ключевые итоги'];
 const mobileTabs = ['Главная', 'Привычки', 'Цели', 'Город'];
-const mobileMore = ['Сферы жизни', 'Дерево навыков', 'Достижения', 'Магазин', 'Профиль', 'Ключевые итоги', 'Мои задачи'];
+const mobileMore = ['Сферы жизни', 'Финансы', 'Дерево навыков', 'Достижения', 'Магазин', 'Профиль', 'Ключевые итоги', 'Мои задачи'];
 
 let browser;
 const problems = [];
@@ -87,6 +87,11 @@ try {
     const page = await context.newPage();
     let where = 'запуск';
     const fail = (text) => problems.push(`${device} · ${where}: ${text}`);
+    const cityChunkRequests = [];
+    page.on('request', (request) => {
+      const path = new URL(request.url()).pathname;
+      if (/\/components\/LifeCity\.tsx$|\/assets\/LifeCity-[^/]+\.js$/.test(path)) cityChunkRequests.push(path);
+    });
     page.on('pageerror', (error) => fail(`ошибка скрипта: ${error.message}`));
     page.on('console', (message) => {
       if (message.type() === 'error' && sameOrigin(message.location().url || url)) fail(`console.error: ${message.text().slice(0, 300)}`);
@@ -141,12 +146,14 @@ try {
     await page.getByRole('button', { name: 'Продолжить игру на этом устройстве' }).click();
     await page.waitForSelector('main h1', { state: 'attached' });
     await settle(500);
+    assert.equal(cityChunkRequests.length, 0, 'страница города не загружается при первом открытии приложения');
 
     const sections = process.env.SMOKE_PLAN_ONLY === '1'
       ? ['Мои задачи']
       : mobile ? [...mobileTabs, ...mobileMore] : desktopMenu;
     for (const label of sections) {
       await open(label);
+      if (label === 'Город') assert.ok(cityChunkRequests.length > 0, 'городской чанк загружается при переходе в «Город»');
       if (mobile && label === 'Главная') {
         const footerImage = page.locator('.mobile-footer-map img');
         assert.equal(await footerImage.count(), 1, 'на мобильной главной отображается мини-карта в футере');

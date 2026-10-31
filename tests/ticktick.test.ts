@@ -855,7 +855,7 @@ test('remotePayload: срок с конкретным временем уход�
 test('правка не связанного с приоритетом поля не повышает «Нет» приоритет TickTick до «Среднего»', async () => {
   let { state, connection } = setup();
   const api = upstream();
-  let applied = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
+  const applied = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
   state = applied.state;
   connection = applied.connection;
   const id = state.quests[0].id;
@@ -865,7 +865,7 @@ test('правка не связанного с приоритетом поля 
   api.tasks.set(rid, { ...api.tasks.get(rid)!, priority: 0 });
   // Правим только название — приоритет в игре не трогаем.
   state = saveTask(state, { ...state.quests[0], name: 'Переименовано в игре' });
-  applied = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
+  await syncTickTick(state, connection, api.request);
   assert.equal(api.tasks.get(rid)!.title, 'Переименовано в игре');
   // Приоритет в самом TickTick остаётся «Нет» (0), а не пересчитанным из местного 'normal' в «Средний» (3).
   assert.equal(api.tasks.get(rid)!.priority, 0);
@@ -873,12 +873,12 @@ test('правка не связанного с приоритетом поля 
 test('явная правка приоритета в игре по-прежнему уходит в TickTick', async () => {
   let { state, connection } = setup();
   const api = upstream();
-  let applied = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
+  const applied = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
   state = applied.state;
   connection = applied.connection;
   const id = state.quests[0].id;
   const rid = connection.links[id].remoteId;
   state = saveTask(state, { ...state.quests[0], priority: 'high' });
-  applied = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
+  await syncTickTick(state, connection, api.request);
   assert.equal(api.tasks.get(rid)!.priority, 5);
 });

@@ -281,7 +281,7 @@ try {
   await ctx.setOffline(true);
   await page.locator('.sph-scene').getByRole('button',{name:'Разобрать входящие',exact:true}).click();
   const offlineInboxDialog=page.getByRole('dialog',{name:'Разобрать входящие: Английский',exact:true});
-  await offlineInboxDialog.getByText(/Нет сети/i).waitFor();
+  await offlineInboxDialog.getByText(/Изменения задач сохранены в игре/i).waitFor();
   await offlineInboxDialog.getByRole('region',{name:'Настройки TickTick'}).waitFor();
   await ctx.setOffline(false);
   console.log('TickTick flow UI passed: inbox accept, scope from sphere/goal/stage, native dialog switch, demo and offline states. Mock services only.');

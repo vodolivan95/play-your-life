@@ -39,7 +39,7 @@ export default function KeyResults({
     setTab('mine');
   }
   function tabKey(event: KeyboardEvent<HTMLButtonElement>, index: number) {
-    let next = index;
+    let next: number;
     if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
     else if (event.key === 'ArrowLeft') next = (index + tabs.length - 1) % tabs.length;
     else if (event.key === 'Home') next = 0;

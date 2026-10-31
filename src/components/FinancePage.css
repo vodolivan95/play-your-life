@@ -28,6 +28,7 @@
 .fin-category-name { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
 .fin-category-name i { font-style: normal; }
 .fin-category-track { height: 7px; border-radius: 5px; background: var(--chip-bg, #eef2f9); overflow: hidden; }
+:root[data-theme="dark"] .fin-category-track { background: #141b30; }
 .fin-category-track i { display: block; height: 100%; background: linear-gradient(90deg, #ef8a86, #c5423e); border-radius: 5px; }
 .fin-category-row strong { font-size: 13px; text-align: right; }
 .fin-category-row b { font-size: 12px; color: #7a879e; text-align: right; }
@@ -47,6 +48,7 @@
 .fin-bars { display: flex; align-items: flex-end; gap: 6px; height: 160px; padding-top: 8px; }
 .fin-bar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; border: 0; background: none; }
 .fin-bar-track { flex: 1; width: 100%; max-width: 26px; display: flex; align-items: flex-end; background: var(--chip-bg, #eef2f9); border-radius: 6px; overflow: hidden; }
+:root[data-theme="dark"] .fin-bar-track { background: #141b30; }
 .fin-bar-track i { display: block; width: 100%; min-height: 2px; background: linear-gradient(180deg, #ef8a86, #c5423e); border-radius: 6px; }
 .fin-bar small { font-size: 10px; color: #7a879e; }
 .fin-bar.current .fin-bar-track { box-shadow: 0 0 0 2px #5c8af4; }
@@ -90,6 +92,7 @@
 
 .fin-payment-row .fin-row-main { gap: 10px; flex-wrap: wrap; }
 .fin-payment-badge { font-size: 10px; font-weight: 700; color: #50607a; background: var(--chip-bg, #eef2f9); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+:root[data-theme="dark"] .fin-payment-badge { background: #141b30; color: #97aad7; }
 .fin-payment-status { color: #7a879e; font-weight: 600; font-size: 11px; }
 .fin-payment-amount { font-size: 13px; font-weight: 700; white-space: nowrap; }
 .fin-payment-amount.unknown { font-style: italic; font-weight: 600; color: #7a879e; }

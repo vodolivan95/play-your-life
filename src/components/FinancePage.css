@@ -35,8 +35,9 @@
 .fin-rows { display: flex; flex-direction: column; gap: 4px; }
 .fin-row { display: flex; align-items: center; gap: 6px; }
 .fin-row-main { flex: 1; display: flex; align-items: center; gap: 12px; padding: 9px 6px; border-radius: 10px; text-align: left; border: 0; background: none; color: inherit; font: inherit; }
-.fin-row-main:hover { background: var(--chip-bg, #f4f7fc); }
+.fin-row-main:hover, .fin-row-main:focus-visible { background: rgba(127, 142, 174, .16); }
 .fin-row-icon { font-size: 19px; width: 30px; text-align: center; }
+.fin-brand-icon { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.06); flex: 0 0 auto; }
 .fin-row-text { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .fin-row-text small { color: #7a879e; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fin-row-amount { font-size: 13px; font-weight: 700; white-space: nowrap; }

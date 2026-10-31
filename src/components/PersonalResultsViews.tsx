@@ -545,10 +545,8 @@ export function YearResults({
             {yearMonths.map((key, index) => {
               const item = selected.data.months.find((candidate) => candidate.month === key);
               const future = item?.future ?? key > currentMonth;
-              const tasks = item?.tasks ?? null;
               const victories = item?.victories ?? [];
               const evidence = evidenceFor(state, key, sphere).trim();
-              const empty = !future && tasks === null && victories.length === 0 && !evidence;
               return (
                 <article className={`prv-year-month${future ? ' is-future' : ''}${key === currentMonth ? ' is-current' : ''}`}
                   data-year-reveal="" style={{ '--prv-delay': `${(index % 3) * 65}ms` } as CSSProperties} key={`${sphere}-${key}`}>
@@ -560,11 +558,7 @@ export function YearResults({
                     <p className="kr-muted">Ещё не наступил</p>
                   ) : (
                     <>
-                      <p className="prv-year-count">
-                        <span>Ручные задачи</span>
-                        <b>{tasks === null ? 'Не указано' : `${tasks} ${pluralTasks(tasks)}`}</b>
-                      </p>
-                      {victories.length > 0 && (
+                      {victories.length > 0 ? (
                         <ul className="prv-year-trophies" aria-label={`Победы месяца в сфере «${selected.item.name}»`}>
                           {victories.map((text, trophyIndex) => (
                             <li className="prv-year-trophy" key={`${sphere}-${key}-trophy-${trophyIndex}`}>
@@ -573,9 +567,10 @@ export function YearResults({
                             </li>
                           ))}
                         </ul>
+                      ) : (
+                        <p className="kr-muted">Победы не записаны. Число задач — в таблице выше.</p>
                       )}
                       {evidence && <p className="prv-year-evidence">{evidence}</p>}
-                      {empty && <p className="kr-muted">Ничего не записано.</p>}
                       <button className="prv-month-link" type="button" onClick={() => onOpenMonth(key)}>
                         Открыть месяц
                       </button>

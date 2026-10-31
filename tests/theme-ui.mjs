@@ -8,7 +8,7 @@ await mkdir('work/theme', { recursive: true });
 const port = 5177;
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { stdio: ['ignore', 'pipe', 'pipe'] });
 const url = `http://127.0.0.1:${port}/`;
-const pages = ['Главная', 'Сферы жизни', 'Мои задачи', 'Привычки', 'Цели', 'Дерево навыков', 'Достижения', 'Магазин', 'Город', 'Профиль', 'Ключевые итоги'];
+const pages = ['Главная', 'Сферы жизни', 'Мои задачи', 'Привычки', 'Проекты', 'Дерево навыков', 'Достижения', 'Магазин', 'Город', 'Профиль', 'Ключевые итоги'];
 let browser;
 try {
   let ready = false;
@@ -55,7 +55,7 @@ try {
       }
       assert.equal(await theme(), name);
       assert.equal(await bodyLight(), name === 'light', `Фон страницы соответствует теме ${name}`);
-      const list = mobile ? ['Главная', 'Привычки', 'Цели', 'Город'] : pages;
+      const list = mobile ? ['Главная', 'Привычки', 'Проекты', 'Город'] : pages;
       for (const [i, label] of list.entries()) {
         const nav = mobile ? page.locator('.pyl-tabbar') : page.locator('.sidebar');
         await nav.getByRole('button', { name: new RegExp('^' + label) }).first().click();

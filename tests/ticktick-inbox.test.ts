@@ -199,7 +199,7 @@ test('выбор сферы, цели и этапа: задача создаёт
   const update = accepted.remoteUpdate as { content: string; id: string };
   assert.equal(update.id, 't1');
   assert.match(update.content, /^Заметка из TickTick\n\n— PLAY YOUR LIFE —/);
-  assert.match(update.content, /Цель: Разговорный английский/);
+  assert.match(update.content, /Проект: Разговорный английский/);
   assert.match(update.content, /Этап: Первый месяц/);
   assert.match(update.content, /\[PYL:task-1\]$/);
   // Исходное состояние не изменено.
@@ -254,7 +254,7 @@ test('ошибки выбора не меняют состояние', () => {
         sphere: 'english',
         goalId: 'нет-такой-цели',
       }),
-    /цель/i,
+    /проект/i,
   );
   assert.throws(
     () =>
@@ -296,7 +296,7 @@ test('сроки задачи из TickTick проверяются по срок
         sphere: 'english',
         goalId: enId,
       }),
-    /срок цели/,
+    /срок проекта/,
   );
   const ok = findIncomingTasks(
     connection,

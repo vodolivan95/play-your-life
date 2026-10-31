@@ -134,7 +134,7 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
     if (patch.stageId === null) q.stageId = undefined;
     else {
       const goal = state.goals.find((g) => g.id === old.goalId);
-      if (!goal?.stages?.some((s) => s.id === patch.stageId)) throw new Error('Этап не найден в цели задачи.');
+      if (!goal?.stages?.some((s) => s.id === patch.stageId)) throw new Error('Этап не найден в проекте задачи.');
       q.stageId = patch.stageId;
     }
   }

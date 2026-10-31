@@ -429,7 +429,7 @@ function Statistics({
         {data.totalXP > 0 ? (
           <>
             <DataChart
-              label="Накопленный XP по событиям этой цели"
+              label="Накопленный XP по событиям этого проекта"
               maximum={Math.max(1, data.totalXP)}
               extent={dates}
               series={[{ name: 'XP', color: '#f3b02a', points: points('xp') }]}
@@ -457,7 +457,7 @@ function Statistics({
           </>
         ) : (
           <p className="gw-muted">
-            Для этой цели ещё нет записанных начислений XP.
+            Для этого проекта ещё нет записанных начислений XP.
           </p>
         )}
       </Card>
@@ -468,7 +468,7 @@ function Statistics({
               label={
                 stageId
                   ? 'Процент этапа по сохранённым событиям'
-                  : 'Процент цели по сохранённым событиям'
+                  : 'Процент проекта по сохранённым событиям'
               }
               maximum={100}
               percent
@@ -523,7 +523,7 @@ export default function GoalWorkspace(p: Props) {
   const isMonthlyFocus = currentMonthlyFocus.some((item) => item.id === goal.id);
   const monthlyFocusLimitReached =
     currentMonthlyFocus.length >= MAX_MONTHLY_FOCUS;
-  const monthlyFocusLimitMessage = `В этом месяце уже выбрано ${MAX_MONTHLY_FOCUS} из ${MAX_MONTHLY_FOCUS} главных целей. Сначала уберите одну из них.`;
+  const monthlyFocusLimitMessage = `В этом месяце уже выбрано ${MAX_MONTHLY_FOCUS} из ${MAX_MONTHLY_FOCUS} главных проектов. Сначала уберите один из них.`;
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 60000);
     return () => window.clearInterval(timer);
@@ -601,7 +601,7 @@ export default function GoalWorkspace(p: Props) {
       toggleMonthlyFocus(state, goal.id, monthNow);
     } catch (e) {
       p.onNotify(
-        e instanceof Error ? e.message : 'Не удалось изменить главные цели месяца.',
+        e instanceof Error ? e.message : 'Не удалось изменить главные проекты месяца.',
       );
       return;
     }
@@ -619,8 +619,8 @@ export default function GoalWorkspace(p: Props) {
     });
     p.onNotify(
       shouldAdd
-        ? 'Цель выбрана главной целью месяца.'
-        : 'Цель убрана из главных целей месяца.',
+        ? 'Проект выбран главным проектом месяца.'
+        : 'Проект убран из главных проектов месяца.',
     );
   }
   function beginPractice(task: Quest) {
@@ -766,7 +766,7 @@ export default function GoalWorkspace(p: Props) {
   function rewards() {
     return (
       <Card
-        title={stage ? 'Награды за этап' : 'Награды за достижение цели'}
+        title={stage ? 'Награды за этап' : 'Награды за достижение проекта'}
         icon="🏆"
         className="gw-rewards"
       >
@@ -781,7 +781,7 @@ export default function GoalWorkspace(p: Props) {
             </b>
             <strong>
               {(stage ? stage.achievementTitle : goal.achievementTitle) ||
-                (stage ? 'Результат этапа' : 'Достижение цели')}
+                (stage ? 'Результат этапа' : 'Достижение проекта')}
             </strong>
             <span className="gw-rarity">
               {(stage ? stage.rarity : goal.rarity)
@@ -799,8 +799,8 @@ export default function GoalWorkspace(p: Props) {
               ? 'Этап завершён. Награды задач учтены.'
               : 'Награды выдаются при выполнении задач.'
             : goal.rewarded
-              ? 'Награда цели уже получена.'
-              : 'Награда XP выдаётся один раз при достижении цели.'}
+              ? 'Награда проекта уже получена.'
+              : 'Награда XP выдаётся один раз при достижении проекта.'}
         </p>
       </Card>
     );
@@ -809,7 +809,7 @@ export default function GoalWorkspace(p: Props) {
     return (
       <section className="gw-roadmap-section">
         <div className="gw-section-heading">
-          <h2>Путь к цели</h2>
+          <h2>Путь к проекту</h2>
           <div>
             <button className="text-button" onClick={() => setExpanded([])}>
               Свернуть все этапы
@@ -916,7 +916,7 @@ export default function GoalWorkspace(p: Props) {
           {!stages.length && (
             <div className="gw-empty">
               <span>🎯</span>
-              <h3>Большая цель начинается с первого этапа</h3>
+              <h3>Большой проект начинается с первого этапа</h3>
               <p>Создайте этап и добавьте реальные задачи.</p>
               <button
                 className="primary-button"
@@ -1005,7 +1005,7 @@ export default function GoalWorkspace(p: Props) {
           onClick={() => {
             if (
               window.confirm(
-                'Удалить этап? Его задачи останутся в цели без этапа. XP и история сохранятся.',
+                'Удалить этап? Его задачи останутся в проекте без этапа. XP и история сохранятся.',
               )
             ) {
               mutate((s) =>
@@ -1029,7 +1029,7 @@ export default function GoalWorkspace(p: Props) {
   return (
     <div className="gw-workspace">
       <nav className="gw-breadcrumbs" aria-label="Навигационная цепочка">
-        <button onClick={() => p.onSelect(null)}>Цели</button>
+        <button onClick={() => p.onSelect(null)}>Проекты</button>
         <span>›</span>
         <a href={`#${goalRoute(goal.id)}`}>{goal.name}</a>
         {stage && (
@@ -1052,13 +1052,13 @@ export default function GoalWorkspace(p: Props) {
           alt=""
         />
         <div className="gw-banner-tools">
-          <button aria-label="Изменить обложку цели" onClick={p.onEditGoal}>
+          <button aria-label="Изменить обложку проекта" onClick={p.onEditGoal}>
             ✎
           </button>
           <details>
-            <summary aria-label="Дополнительные действия цели">⋮</summary>
+            <summary aria-label="Дополнительные действия проекта">⋮</summary>
             <div>
-              <button onClick={p.onEditGoal}>Настроить цель</button>
+              <button onClick={p.onEditGoal}>Настроить проект</button>
               <button onClick={() => p.onTransfer()}>Задачи в TickTick</button>
               <button onClick={p.onInbox}>Разобрать входящие</button>
               <button
@@ -1077,8 +1077,8 @@ export default function GoalWorkspace(p: Props) {
                 onClick={toggleGoalMonthlyFocus}
               >
                 {isMonthlyFocus
-                  ? 'Убрать из главных целей месяца'
-                  : 'Сделать главной целью месяца'}
+                  ? 'Убрать из главных проектов месяца'
+                  : 'Сделать главным проектом месяца'}
               </button>
               {!isMonthlyFocus && monthlyFocusLimitReached && (
                 <small className="gw-monthly-focus-limit">
@@ -1090,7 +1090,7 @@ export default function GoalWorkspace(p: Props) {
                 onClick={() => {
                   if (
                     window.confirm(
-                      'Удалить цель? Задачи, заработанный XP и история сохранятся.',
+                      'Удалить проект? Задачи, заработанный XP и история сохранятся.',
                     )
                   ) {
                     mutate((s) => deleteGoal(s, goal.id));
@@ -1098,7 +1098,7 @@ export default function GoalWorkspace(p: Props) {
                   }
                 }}
               >
-                Удалить цель
+                Удалить проект
               </button>
             </div>
           </details>
@@ -1113,7 +1113,7 @@ export default function GoalWorkspace(p: Props) {
           <div className="gw-banner-metrics">
             {isMonthlyFocus && (
               <span>
-                ★ Главная цель месяца
+                ★ Главный проект месяца
                 <small>Выбрана на текущий месяц</small>
               </span>
             )}
@@ -1141,11 +1141,11 @@ export default function GoalWorkspace(p: Props) {
           </div>
         </div>
         <div className="gw-banner-progress">
-          <ProgressRing value={goalProgress} label="Общий прогресс цели" />
-          <small>Общий прогресс цели</small>
+          <ProgressRing value={goalProgress} label="Общий прогресс проекта" />
+          <small>Общий прогресс проекта</small>
           {stageId && (
             <a className="primary-button" href={`#${goalRoute(goal.id)}`}>
-              Перейти к цели →
+              Перейти к проекту →
             </a>
           )}
           {!stage && !goal.projectReview && (
@@ -1165,7 +1165,7 @@ export default function GoalWorkspace(p: Props) {
           <p>
             {stage
               ? stageAccess(state, goal, stage)
-              : 'Проверьте ссылку или откройте существующий этап из цели.'}
+              : 'Проверьте ссылку или откройте существующий этап из проекта.'}
           </p>
           {stage && (
             <button
@@ -1176,7 +1176,7 @@ export default function GoalWorkspace(p: Props) {
             </button>
           )}
           <a className="primary-button" href={`#${goalRoute(goal.id)}`}>
-            Перейти к цели →
+            Перейти к проекту →
           </a>
         </Card>
       ) : (
@@ -1206,7 +1206,7 @@ export default function GoalWorkspace(p: Props) {
           )}
           <nav
             className="gw-tabs"
-            aria-label={stage ? 'Разделы этапа' : 'Разделы цели'}
+            aria-label={stage ? 'Разделы этапа' : 'Разделы проекта'}
           >
             {(stage
               ? [
@@ -1279,7 +1279,7 @@ export default function GoalWorkspace(p: Props) {
                   ) : (
                     <p>
                       {tasks.length && tasks.every((q) => q.done)
-                        ? 'Все задачи выполнены. Добавьте следующий этап или подтвердите достижение цели.'
+                        ? 'Все задачи выполнены. Добавьте следующий этап или подтвердите достижение проекта.'
                         : 'Сейчас нет доступных задач. Добавьте задачу или проверьте даты и условия этапов.'}
                     </p>
                   )}
@@ -1335,7 +1335,7 @@ export default function GoalWorkspace(p: Props) {
                   title={
                     stage
                       ? `Задачи этапа (${group!.done} из ${group!.total})`
-                      : 'Все задачи цели'
+                      : 'Все задачи проекта'
                   }
                 >
                   <div className="gw-task-toolbar">
@@ -1397,7 +1397,7 @@ export default function GoalWorkspace(p: Props) {
               )}
               {!stage && tab === 'rewards' && rewards()}
               {!stage && tab === 'history' && (
-                <Card title="История цели">{historyList()}</Card>
+                <Card title="История проекта">{historyList()}</Card>
               )}
               {!stage &&
                 goal.progressMode === 'tasks' &&
@@ -1410,7 +1410,7 @@ export default function GoalWorkspace(p: Props) {
                       mutate((s) => syncGoalTasks(s, goal.id, true))
                     }
                   >
-                    Подтвердить достижение цели
+                    Подтвердить достижение проекта
                   </button>
                 )}
               {!stage &&
@@ -1474,13 +1474,13 @@ export default function GoalWorkspace(p: Props) {
               ) : (
                 <>
                   {tab !== 'rewards' && rewards()}
-                  <Card title="Почему эта цель важна для меня" icon="♥">
+                  <Card title="Почему этот проект важен для меня" icon="♥">
                     <button
                       className="gw-motivation"
                       onClick={() => setDetail({ kind: 'motivation' })}
                     >
                       {goal.motivation ||
-                        'Добавьте свою причину — она поможет двигаться к цели.'}
+                        'Добавьте свою причину — она поможет двигаться к проекту.'}
                       <span>✎</span>
                     </button>
                   </Card>
@@ -1507,7 +1507,7 @@ export default function GoalWorkspace(p: Props) {
                       <span>›</span>
                     </button>
                   </Card>
-                  <Card title="История цели">
+                  <Card title="История проекта">
                     {historyList(4)}
                     <button
                       className="text-button"
@@ -1548,11 +1548,11 @@ export default function GoalWorkspace(p: Props) {
           </button>
           {detail?.kind === 'reward' && (
             <>
-              <h2>🏆 {stage ? 'Награды этапа' : 'Награды цели'}</h2>
+              <h2>🏆 {stage ? 'Награды этапа' : 'Награды проекта'}</h2>
               <p>
                 {stage
                   ? 'Награды этапа — это награды его задач; они начисляются при выполнении и не повторяются при завершении этапа.'
-                  : `За достижение цели предусмотрено ${goal.reward} XP. Лайфкоины начисляются за задачи по существующим правилам.`}
+                  : `За достижение проекта предусмотрено ${goal.reward} XP. Лайфкоины начисляются за задачи по существующим правилам.`}
               </p>
               <p>
                 За задачи: {xp} XP · {coins} лайфкоинов.
@@ -1563,8 +1563,8 @@ export default function GoalWorkspace(p: Props) {
                     ? 'Этап завершён'
                     : 'Этап ещё не завершён'
                   : goal.rewarded
-                    ? 'Награда цели получена'
-                    : 'Награда цели ещё не получена'}
+                    ? 'Награда проекта получена'
+                    : 'Награда проекта ещё не получена'}
               </p>
               {(stage ? stage.achievementTitle : goal.achievementTitle) && (
                 <strong>
@@ -1591,7 +1591,7 @@ export default function GoalWorkspace(p: Props) {
               <h2>
                 {detail.kind === 'notes'
                   ? 'Заметки этапа'
-                  : 'Почему эта цель важна для меня'}
+                  : 'Почему этот проект важен для меня'}
               </h2>
               <label>
                 Текст
@@ -1614,7 +1614,7 @@ export default function GoalWorkspace(p: Props) {
           )}
           {detail?.kind === 'task' && !viewedTask && (
             <p className="gw-muted">
-              Эта задача больше не находится в цели. Закройте окно и выберите
+              Эта задача больше не находится в проекте. Закройте окно и выберите
               доступный шаг.
             </p>
           )}

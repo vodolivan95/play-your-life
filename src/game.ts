@@ -343,7 +343,7 @@ export function personalState(
         scores[s.id] <= 9,
     )
   )
-    throw new Error('Проверь имя, цель и оценки сфер.');
+    throw new Error('Проверь имя, проект и оценки сфер.');
   const id = crypto.randomUUID();
   return {
     ...initialState(),
@@ -734,7 +734,7 @@ export function syncGoalTasks(
     // иначе цель засчитывалась бы готовой из-за одной выполненной задачи, даже
     // если в ней остались незавершённые (в т.ч. пустые, для планирования) этапы.
     if (goal.progressMode === 'tasks' && required.length > 0 && current === 100 && !goal.rewarded) {
-      next = award(next, goal.sphere, goal.reward, `Цель: ${goal.name}`, {
+      next = award(next, goal.sphere, goal.reward, `Проект: ${goal.name}`, {
         kind: 'goal', sourceId: goal.id, goalId, goalProgress: 100,
       });
       next.goals = next.goals.map((g) => g.id === goalId ? { ...g, rewarded: true } : g);
@@ -784,14 +784,14 @@ export function updateGoal(
   const done = current >= goal.target;
   const next =
     done && !goal.rewarded
-      ? award(state, goal.sphere, goal.reward, `Цель: ${goal.name}`, {
+      ? award(state, goal.sphere, goal.reward, `Проект: ${goal.name}`, {
           kind: 'goal', sourceId: goal.id, goalId: goal.id, goalProgress: 100,
         })
       : { ...state };
   next.goals = next.goals.map((g) =>
     g.id === id ? { ...g, current, rewarded: g.rewarded || done } : g,
   );
-  if (!(done && !goal.rewarded)) next.events = [{ id: crypto.randomUUID(), sphere: goal.sphere, title: `Изменён результат цели: ${current} / ${goal.target}`, xp: 0, date: new Date().toISOString(), kind: 'planning', goalId: goal.id, goalProgress: current / goal.target * 100 }, ...next.events];
+  if (!(done && !goal.rewarded)) next.events = [{ id: crypto.randomUUID(), sphere: goal.sphere, title: `Изменён результат проекта: ${current} / ${goal.target}`, xp: 0, date: new Date().toISOString(), kind: 'planning', goalId: goal.id, goalProgress: current / goal.target * 100 }, ...next.events];
   return next;
 }
 let storageProblem = '';
@@ -1285,18 +1285,18 @@ const baseAchievements: Achievement[] = [
 
   // ---- Цели ----
   {
-    category: 'Цели',
+    category: 'Проекты',
     tier: 'gold',
     name: 'Новый горизонт',
     icon: '🏔️',
-    description: 'Заверши большую цель',
+    description: 'Заверши большой проект',
     unlocked: (s: GameState) =>
       Boolean(s.hasCompletedGoal) || s.goals.some((g) => g.rewarded) || s.events.some((e) => e.kind === 'goal'),
     progress: (s: GameState) =>
       p(Math.max(0, ...s.goals.map((g) => (g.target ? g.current / g.target : 0)))),
   },
   {
-    category: 'Цели',
+    category: 'Проекты',
     tier: 'silver',
     name: 'Стратег',
     icon: '♟️',
@@ -1305,65 +1305,65 @@ const baseAchievements: Achievement[] = [
     progress: (s: GameState) => p(playerProgress(s).level / 12),
   },
   {
-    category: 'Цели',
+    category: 'Проекты',
     tier: 'bronze',
-    name: 'Вторая цель',
+    name: 'Второй проект',
     icon: '🚩',
-    description: 'Заведи вторую цель',
+    description: 'Заведи второй проект',
     unlocked: (s: GameState) => s.goals.length >= 2,
     progress: (s: GameState) => p(s.goals.length / 2),
   },
   {
-    category: 'Цели',
+    category: 'Проекты',
     tier: 'gold',
     name: 'Целеустремлённый',
     icon: '🎯',
-    description: 'Заверши 5 целей',
+    description: 'Заверши 5 проектов',
     unlocked: (s: GameState) => s.goals.filter((g) => g.rewarded).length >= 5,
     progress: (s: GameState) => p(s.goals.filter((g) => g.rewarded).length / 5),
   },
   {
-    category: 'Цели',
+    category: 'Проекты',
     tier: 'platinum',
     name: 'Архитектор жизни',
     icon: '🏛️',
-    description: 'Заверши 10 целей',
+    description: 'Заверши 10 проектов',
     unlocked: (s: GameState) => s.goals.filter((g) => g.rewarded).length >= 10,
     progress: (s: GameState) => p(s.goals.filter((g) => g.rewarded).length / 10),
   },
   {
-    category: 'Цели',
+    category: 'Проекты',
     tier: 'bronze',
     name: 'Первый этап',
     icon: '🪜',
-    description: 'Заверши первый этап цели',
+    description: 'Заверши первый этап проекта',
     unlocked: (s: GameState) => completedStages(s) >= 1,
     progress: (s: GameState) => p(completedStages(s) / 1),
   },
   {
-    category: 'Цели',
+    category: 'Проекты',
     tier: 'silver',
     name: 'Этап за этапом',
     icon: '🪜',
-    description: 'Заверши 20 этапов целей',
+    description: 'Заверши 20 этапов проектов',
     unlocked: (s: GameState) => completedStages(s) >= 20,
     progress: (s: GameState) => p(completedStages(s) / 20),
   },
   {
-    category: 'Цели',
+    category: 'Проекты',
     tier: 'silver',
     name: 'Большая пятёрка',
     icon: '🗂️',
-    description: 'Веди 5 целей одновременно',
+    description: 'Веди 5 проектов одновременно',
     unlocked: (s: GameState) => s.goals.filter((g) => !g.rewarded).length >= 5,
     progress: (s: GameState) => p(s.goals.filter((g) => !g.rewarded).length / 5),
   },
   {
-    category: 'Цели',
+    category: 'Проекты',
     tier: 'silver',
     name: 'Долгая игра',
     icon: '⏳',
-    description: 'Веди одну цель дольше 6 месяцев',
+    description: 'Веди один проект дольше 6 месяцев',
     unlocked: (s: GameState) => longestOpenGoalDays(s) >= 180,
     progress: (s: GameState) => p(longestOpenGoalDays(s) / 180),
   },

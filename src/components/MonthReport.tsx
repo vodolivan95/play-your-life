@@ -48,7 +48,7 @@ export default function MonthReport({
   const kpis = [
     { label: 'XP за месяц', value: String(s.xp), unit: 'XP', note: change === null ? 'нет данных для сравнения' : `${change >= 0 ? '+' : ''}${change}% к прошлому` },
     { label: 'Задач выполнено', value: String(s.quests), unit: '', note: `было ${r.previousQuests}` },
-    { label: 'Целей достигнуто', value: String(s.goals), unit: '', note: s.goals ? 'Отличный результат' : 'в этом месяце пока нет' },
+    { label: 'Проектов достигнуто', value: String(s.goals), unit: '', note: s.goals ? 'Отличный результат' : 'в этом месяце пока нет' },
     { label: 'Активных дней', value: String(s.activeDays), unit: `из ${r.daysPassed}`, note: `лучшая серия ${s.longest} дн.` },
     { label: 'Привычки', value: r.habits.rate === null ? '—' : `${r.habits.rate}%`, unit: '', note: r.habits.rate === null ? 'привычек пока нет' : `${r.habits.totalMade} из ${r.habits.totalDue} отметок` },
   ];
@@ -102,7 +102,7 @@ export default function MonthReport({
       </section>
 
       {s.partial && (
-        <p className="mrep-note">ⓘ Подробный учёт задач, целей и оценок сфер {s.trackingSince ? `ведётся с ${new Date(s.trackingSince).toLocaleDateString('ru-RU')}` : 'ещё не начат'}. Старые записи могут быть неполными; их XP включён в общий результат.</p>
+        <p className="mrep-note">ⓘ Подробный учёт задач, проектов и оценок сфер {s.trackingSince ? `ведётся с ${new Date(s.trackingSince).toLocaleDateString('ru-RU')}` : 'ещё не начат'}. Старые записи могут быть неполными; их XP включён в общий результат.</p>
       )}
 
       <div className="mrep-two">
@@ -175,8 +175,8 @@ export default function MonthReport({
             </div>
             <div className="mrep-summary-stack">
               <section className="mrep-card mrep-goals">
-                <header><div><h3>Главные цели</h3><p>Где сейчас прогресс.</p></div></header>
-                {r.goals.length === 0 && <p className="mrep-small">Целей пока нет.</p>}
+                <header><div><h3>Главные проекты</h3><p>Где сейчас прогресс.</p></div></header>
+                {r.goals.length === 0 && <p className="mrep-small">Проектов пока нет.</p>}
                 {r.goals.map((g) => (
                   <div className="mrep-row" key={g.id}>
                     <div><span>{g.name}</span><b>{g.percent}%</b></div>
@@ -198,7 +198,7 @@ export default function MonthReport({
               </section>
               <section className="mrep-card mrep-achievements">
                 <header><div><h3>Достижения месяца</h3></div></header>
-                {r.achievements.length === 0 && <p className="mrep-small">Достигнутые цели месяца появятся здесь.</p>}
+                {r.achievements.length === 0 && <p className="mrep-small">Достигнутые проекты месяца появятся здесь.</p>}
                 {r.achievements.map((a) => (
                   <div className="mrep-ach" key={a.name + a.date}><span>★</span><div><b>{a.name}</b><small>{a.date}</small></div></div>
                 ))}

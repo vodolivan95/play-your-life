@@ -110,7 +110,7 @@ export function SphereProjects({
             <h3>
               <button onClick={() => onOpen(goal)}>{goal.name}</button>
             </h3>
-            <p>{goal.description || 'Каждая задача — шаг к твоей цели.'}</p>
+            <p>{goal.description || 'Каждая задача — шаг к твоему проекту.'}</p>
           </div>
           <button
             className="project-menu"
@@ -158,7 +158,7 @@ export function SphereProjects({
             <b>
               {next?.name ||
                 (finished
-                  ? 'Цель достигнута'
+                  ? 'Проект завершён'
                   : tasks.find((q) => !q.done)?.name || 'Добавить первый шаг')}
             </b>
             <span className="xp-tag">

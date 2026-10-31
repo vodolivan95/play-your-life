@@ -30,7 +30,7 @@ export function TickTickInboxContent({ state, onChange, scope }: {
   return <div className="ticktick-inbox-dialog-body">
     <h2>Разобрать входящие</h2>
     <p className="muted">{sphere?.name}{goal ? ` → ${goal.name}` : ''}{stage ? ` → ${stage.name}` : ''}</p>
-    <p className="score-note">Выбери цель и этап этой сферы, затем нажми «Принять в игру». Задача останется связанной с TickTick; за импорт награда не начисляется.</p>
+    <p className="score-note">Выбери проект и этап этой сферы, затем нажми «Принять в игру». Задача останется связанной с TickTick; за импорт награда не начисляется.</p>
     {!online && state.profile.mode !== 'demo' && <p className="empty" role="status">Нет сети. Подключись к интернету, чтобы обновить и принять входящие TickTick.</p>}
     {!active && <p className="empty" role="status">{state.profile.mode === 'demo'
       ? 'В демо-игре входящие недоступны. Войди в личный аккаунт и подключи TickTick.'

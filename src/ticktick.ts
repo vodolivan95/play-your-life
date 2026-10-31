@@ -239,7 +239,7 @@ export function remotePayload(
     task.notes?.trim() ?? '',
     '',
     '— PLAY YOUR LIFE —',
-    goal ? `Цель: ${goal.name}` : '',
+    goal ? `Проект: ${goal.name}` : '',
     stage ? `Этап: ${stage.name}` : '',
     task.estimateMinutes ? `Выделить: ${task.estimateMinutes} мин` : '',
     `[PYL:${task.id}]`,
@@ -819,7 +819,7 @@ export function applyTickTickResult(state: GameState, result: TickTickResult) {
         if (change.previousRemote)
           rejected.set(change.id, change.previousRemote);
         warnings.push(
-          `${local.name}: ${error instanceof Error ? error.message : 'проверь сроки цели'}`,
+          `${local.name}: ${error instanceof Error ? error.message : 'проверь сроки проекта'}`,
         );
       }
     } else if (unchangedSinceRead) {

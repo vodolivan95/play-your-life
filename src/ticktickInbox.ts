@@ -188,13 +188,13 @@ export function acceptIncomingTask(
 ): IncomingAccepted {
   if (!choice.goalId) return acceptSingleTask(state, connection, incoming, choice, taskId, ownerId);
   const goal = state.goals.find((g) => g.id === choice.goalId);
-  if (!goal) throw new Error('Выбери цель или «Без цели».');
+  if (!goal) throw new Error('Выбери проект или «Без проекта».');
   if (goal.sphere !== choice.sphere)
-    throw new Error('Эта цель относится к другой сфере.');
+    throw new Error('Этот проект относится к другой сфере.');
   const stage = choice.stageId
     ? goal.stages?.find((s) => s.id === choice.stageId)
     : undefined;
-  if (choice.stageId && !stage) throw new Error('Этап не найден в выбранной цели.');
+  if (choice.stageId && !stage) throw new Error('Этап не найден в выбранном проекте.');
   if (state.quests.some((q) => q.id === taskId))
     throw new Error('Задача уже добавлена.');
   const fields = withChoiceTime(remoteFields(incoming.remote), choice);

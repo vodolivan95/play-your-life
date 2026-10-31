@@ -146,12 +146,12 @@ export default function LifePlanner({
           <br />к сегодняшнему шагу.
         </h2>
         <p>
-          Свяжи цели, этапы и задачи. Выдели время для того, что делает твою
+          Свяжи проекты, этапы и задачи. Выдели время для того, что делает твою
           жизнь твоей.
         </p>
         <div>
           <button className="primary-button" onClick={onNewGoal}>
-            Новая цель
+            Новый проект
             <Icon name="plus" size={16} />
           </button>
           <button
@@ -222,7 +222,7 @@ export default function LifePlanner({
       <div className="planning-stats">
         <div>
           <b>{period.goals.length}</b>
-          <span>Целей в периоде</span>
+          <span>Проектов в периоде</span>
         </div>
         <div>
           <b>{period.tasks.filter((q) => !q.done).length}</b>
@@ -236,10 +236,10 @@ export default function LifePlanner({
       <section className="panel plan-goals">
         <div className="section-heading">
           <div>
-            <h2>Направления и цели</h2>
+            <h2>Направления и проекты</h2>
             <p>
               {scope === 'all'
-                ? 'Весь твой путь, включая цели без срока.'
+                ? 'Весь твой путь, включая проекты без срока.'
                 : `${period.start.toLocaleDateString('ru-RU')} — ${new Date(period.end.getTime() - 1).toLocaleDateString('ru-RU')}`}
             </p>
           </div>
@@ -278,7 +278,7 @@ export default function LifePlanner({
         ))}
         {period.goals.length === 0 && (
           <p className="plan-empty">
-            В этом периоде пока нет целей со сроком. Открой «Весь путь» или
+            В этом периоде пока нет проектов со сроком. Открой «Весь путь» или
             добавь направление.
           </p>
         )}
@@ -287,7 +287,7 @@ export default function LifePlanner({
         <div className="section-heading">
           <div>
             <h2>Реальные шаги</h2>
-            <p>Выполнение здесь обновляет цель, XP и итоги месяца.</p>
+            <p>Выполнение здесь обновляет проект, XP и итоги месяца.</p>
           </div>
           <label className="show-done">
             <input
@@ -344,7 +344,7 @@ export default function LifePlanner({
           <div className="section-heading">
             <div>
               <h2>Пока без даты</h2>
-              <p>Добавь дату или свяжи задачу с целью кнопкой изменения.</p>
+              <p>Добавь дату или свяжи задачу с проектом кнопкой изменения.</p>
             </div>
             <span className="count-chip">{period.unscheduled.length}</span>
           </div>

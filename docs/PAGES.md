@@ -19,7 +19,7 @@ VITE_BASE_PATH=/play-your-life/ npm run check
 VITE_BASE_PATH=/play-your-life/ npm run preview
 ```
 
-Откройте <http://localhost:4173/play-your-life/>. Цели и этапы используют адреса после `#`, например `#/goals/g/stages/s`; прямую ссылку можно обновить без серверных настроек SPA.
+Откройте <http://localhost:4173/play-your-life/>. Проекты и этапы используют адреса после `#`, например `#/goals/g/stages/s`; прямую ссылку можно обновить без серверных настроек SPA.
 
 ## Сайт и игровые данные — раздельные вещи
 

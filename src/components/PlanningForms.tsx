@@ -89,7 +89,7 @@ export function GoalForm({
   return (
     <form className="planning-form" onSubmit={submit}>
       <div className="eyebrow">НАПРАВЛЕНИЕ ТВОЕЙ ЖИЗНИ</div>
-      <h2>{initial ? 'Настроить цель' : 'Новая цель'}</h2>
+      <h2>{initial ? 'Настроить проект' : 'Новый проект'}</h2>
       <ProjectImagePicker
         image={image}
         onChange={setImage}
@@ -133,7 +133,7 @@ export function GoalForm({
         />
       </label>
       <label>
-        Почему эта цель важна для меня
+        Почему этот проект важен для меня
         <textarea
           name="motivation"
           maxLength={2000}
@@ -271,12 +271,12 @@ export function GoalForm({
         </label>
       ) : (
         <p className="score-note">
-          Прогресс растёт по выполненным задачам цели. Каждый шаг приносит свой
-          XP, достижение всей цели — отдельную награду.
+          Прогресс растёт по выполненным задачам проекта. Каждый шаг приносит свой
+          XP, достижение всего проекта — отдельную награду.
         </p>
       )}
       <label>
-        Награда за цель
+        Награда за проект
         <select name="reward" defaultValue={initial?.reward ?? 200}>
           {[100, 200, 300, 400, 500].map((xp) => (
             <option value={xp} key={xp}>
@@ -295,7 +295,7 @@ export function GoalForm({
         disabled={imageBusy}
         className="primary-button submit-button"
       >
-        {initial ? 'Сохранить цель' : 'Создать цель'}
+        {initial ? 'Сохранить проект' : 'Создать проект'}
         <Icon name="arrow" size={17} />
       </button>
     </form>
@@ -486,7 +486,7 @@ export function StageForm({
         </label>
       </fieldset>
       <p className="score-note">
-        Даты можно оставить пустыми. Срок цели: {formatDate(goal.dueAt)}.
+        Даты можно оставить пустыми. Срок проекта: {formatDate(goal.dueAt)}.
       </p>
       {error && (
         <p role="alert" className="form-error">
@@ -604,13 +604,13 @@ export function TaskForm({
           required
           maxLength={100}
           defaultValue={initial?.name ?? ''}
-          placeholder="Конкретное действие, которое приблизит цель"
+          placeholder="Конкретное действие, которое приблизит проект"
         />
       </label>
       <label>
-        Цель
+        Проект
         <select
-          aria-label="Связать с целью"
+          aria-label="Связать с проектом"
           value={chosenGoal}
           onChange={(e) => updateParent(e.target.value, '')}
         >
@@ -726,7 +726,7 @@ export function TaskForm({
       </label>
       {goal && (
         <p className="score-note">
-          Задача относится к сфере цели. Срок цели: {formatDate(goal.dueAt)}.
+          Задача относится к сфере проекта. Срок проекта: {formatDate(goal.dueAt)}.
         </p>
       )}
       <label className="gw-check-label">

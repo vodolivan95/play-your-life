@@ -12,7 +12,7 @@ import './AppMenu.css';
 const moreIds: MenuIconId[] = ['tasks', 'spheres', 'budget', 'tree', 'achievements', 'shop', 'statistics', 'profile'];
 
 /**
- * Нижняя панель телефона: Главная, Привычки, выпуклая «Цели» по центру, Город и «Ещё».
+ * Нижняя панель телефона: Главная, Привычки, выпуклая «Проекты» по центру, Город и «Ещё».
  * «Ещё» открывает шторку с остальными разделами, карточкой игрока и переключателем темы.
  */
 export default function MobileNav({ page, state, onNavigate }: { page: string; state: GameState; onNavigate: (id: string) => void }) {
@@ -78,7 +78,7 @@ export default function MobileNav({ page, state, onNavigate }: { page: string; s
           onClick={() => go('goals')}
         >
           <span className="pyl-tab-orb"><img src={menuIconSrc('goals')} alt="" width={40} height={40} /></span>
-          Цели
+          Проекты
         </button>
         {tab('city', 'Город')}
         <button

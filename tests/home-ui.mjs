@@ -49,24 +49,24 @@ try {
     assert.equal(await page.locator('.home-today, .home-streak').count(), 2);
     assert.equal(await page.locator('.hys-sphere-row').count(), 10);
     assert.equal(await page.locator('.peak-focus-switch button').count(), 3);
-    await page.getByRole('button', { name: 'Главная цель 2: Фокус Б', exact: true }).click();
+    await page.getByRole('button', { name: 'Главный проект 2: Фокус Б', exact: true }).click();
     assert.match(await page.locator('.peak-card-goal').innerText(), /Фокус Б/);
-    assert.equal(await page.getByRole('button', { name: 'Главная цель 2: Фокус Б', exact: true }).getAttribute('aria-pressed'), 'true');
-    await page.getByRole('button', { name: 'Открыть цель', exact: true }).click();
+    assert.equal(await page.getByRole('button', { name: 'Главный проект 2: Фокус Б', exact: true }).getAttribute('aria-pressed'), 'true');
+    await page.getByRole('button', { name: 'Открыть проект', exact: true }).click();
     await page.locator('.gw-banner h2').filter({ hasText: 'Фокус Б' }).waitFor();
     await page.locator('.gw-banner-tools summary').click();
-    await page.getByRole('button', { name: 'Убрать из главных целей месяца', exact: true }).click();
+    await page.getByRole('button', { name: 'Убрать из главных проектов месяца', exact: true }).click();
     await page.waitForFunction(id => !JSON.parse(localStorage.getItem('play-your-life-v1')).monthlyFocus.goalIds.includes(id), ids[1]);
     // После снятия третье место свободно, можно назначить другой проект.
     await page.evaluate(id => { location.hash = `/goals/${id}`; }, ids[3]);
     await page.locator('.gw-banner h2').filter({ hasText: 'Запасная цель' }).waitFor();
     await page.locator('.gw-banner-tools summary').click();
-    await page.getByRole('button', { name: 'Сделать главной целью месяца', exact: true }).click();
+    await page.getByRole('button', { name: 'Сделать главным проектом месяца', exact: true }).click();
     await page.waitForFunction(id => JSON.parse(localStorage.getItem('play-your-life-v1')).monthlyFocus.goalIds.includes(id), ids[3]);
     await page.evaluate(id => { location.hash = `/goals/${id}`; }, ids[1]);
     await page.locator('.gw-banner h2').filter({ hasText: 'Фокус Б' }).waitFor();
     await page.locator('.gw-banner-tools summary').click();
-    assert.equal(await page.getByRole('button', { name: 'Сделать главной целью месяца', exact: true }).isDisabled(), true, 'Четвёртая цель запрещена');
+    assert.equal(await page.getByRole('button', { name: 'Сделать главным проектом месяца', exact: true }).isDisabled(), true, 'Четвёртая цель запрещена');
     // Аккаунт только в профиле, после возврата сохраняется новый выбор.
     await page.evaluate(() => { location.hash = '#profile'; });
     await page.locator('.profile-account .account-bar').waitFor();
@@ -74,7 +74,7 @@ try {
     await page.evaluate(() => { location.hash = ''; });
     await page.locator('.home-dashboard').waitFor();
     assert.equal(await page.locator('.account-bar').count(), 0);
-    await page.getByRole('button', { name: 'Главная цель 1: Фокус А', exact: true }).click();
+    await page.getByRole('button', { name: 'Главный проект 1: Фокус А', exact: true }).click();
     await page.getByRole('button', { name: 'Показать задачу', exact: true }).click();
     await page.locator('.twin').waitFor();
     assert.equal(await page.locator('.twin').getByLabel('Название', { exact: true }).inputValue(), 'Шаг фокуса А');

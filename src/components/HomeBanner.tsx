@@ -88,7 +88,7 @@ function FeatureIcon({ kind }: { kind: 'skills' | 'goals' | 'trophy' | 'heart' }
 
 const FEATURES: { kind: 'skills' | 'goals' | 'trophy' | 'heart'; page: string; lines: [string, string] }[] = [
   { kind: 'skills', page: 'tree', lines: ['Развивай', 'навыки'] },
-  { kind: 'goals', page: 'goals', lines: ['Выполняй', 'цели'] },
+  { kind: 'goals', page: 'goals', lines: ['Выполняй', 'проекты'] },
   { kind: 'trophy', page: 'achievements', lines: ['Получай', 'достижения'] },
   { kind: 'heart', page: 'profile', lines: ['Создавай', 'лучшую версию себя'] },
 ];
@@ -98,7 +98,7 @@ function NextPeakCard({ peaks, onShowTask, onChooseFocus }: { peaks: NextPeak[];
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const peak = peaks.find(item => item.goalId === selectedGoalId) ?? peaks[0] ?? null;
   return (
-    <aside className="peak-card" aria-label="Главные цели месяца">
+    <aside className="peak-card" aria-label="Главные проекты месяца">
       <div className="peak-card-head">
         <h2>Следующая вершина</h2>
         {peak && <span className="peak-card-count" aria-label={peak.total > 0 ? `Выполнено ${peak.done} из ${peak.total}` : `Прогресс ${peak.percent}%`}>{peak.counter}</span>}
@@ -111,34 +111,34 @@ function NextPeakCard({ peaks, onShowTask, onChooseFocus }: { peaks: NextPeak[];
         </>
       ) : (
         <>
-          <p className="peak-card-goal">Три главные цели месяца</p>
-          <p className="peak-card-detail">Открой проект в своей сфере и назначь его главной целью месяца. Здесь появится следующий шаг.</p>
+          <p className="peak-card-goal">Три главных проекта месяца</p>
+          <p className="peak-card-detail">Открой проект в своей сфере и назначь его главным проектом месяца. Здесь появится следующий шаг.</p>
         </>
       )}
       <div className="peak-card-foot">
         <span className="peak-card-hint">
           <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="m2 19 6.5-10 4 6 2.5-3.5L22 19Z" fill="currentColor" opacity=".85" /><path d="m8.500 9 1.8 2.8-1.8-.6-1.6.9Z" fill="#fff" opacity=".9" /></svg>
-          {peak ? peak.percent >= 100 ? 'Вершина достигнута!' : 'Ты ближе к своей цели!' : 'Выбери свой фокус'}
+          {peak ? peak.percent >= 100 ? 'Вершина достигнута!' : 'Ты ближе к своему проекту!' : 'Выбери свой фокус'}
         </span>
         <button type="button" className="peak-card-button" onClick={() => peak ? onShowTask(peak) : onChooseFocus()}>
-          {peak ? peak.taskId ? 'Показать задачу' : 'Открыть цель' : 'Выбрать цели'}
+          {peak ? peak.taskId ? 'Показать задачу' : 'Открыть проект' : 'Выбрать проекты'}
           <Arrow />
         </button>
       </div>
-      <div className="peak-focus-head"><span>Главные цели месяца</span><small>{peaks.length} из {MAX_MONTHLY_FOCUS}</small></div>
-      <div className="peak-focus-switch" role="group" aria-label="Переключить главную цель месяца">
+      <div className="peak-focus-head"><span>Главные проекты месяца</span><small>{peaks.length} из {MAX_MONTHLY_FOCUS}</small></div>
+      <div className="peak-focus-switch" role="group" aria-label="Переключить главный проект месяца">
         {Array.from({ length: MAX_MONTHLY_FOCUS }, (_, index) => {
           const item = peaks[index];
           return item ? (
             <button key={item.goalId} type="button" aria-pressed={peak?.goalId === item.goalId}
-              title={item.goalName} aria-label={`Главная цель ${index + 1}: ${item.goalName}`}
+              title={item.goalName} aria-label={`Главный проект ${index + 1}: ${item.goalName}`}
               onClick={() => setSelectedGoalId(item.goalId)}>
               <b>{index + 1}</b><span>{item.goalName}</span>
             </button>
           ) : (
             <button key={`empty-${index}`} type="button" className="is-empty"
-              aria-label={`Назначить главную цель ${index + 1} в меню проекта`} onClick={onChooseFocus}>
-              <b>＋</b><span>Цель {index + 1}</span>
+              aria-label={`Назначить главный проект ${index + 1} в меню проекта`} onClick={onChooseFocus}>
+              <b>＋</b><span>Проект {index + 1}</span>
             </button>
           );
         })}
@@ -168,7 +168,7 @@ export default function HomeBanner({ peaks, demo, onContinue, onNavigate, onShow
           <p className="peak-sub">Маленькие шаги — большие результаты</p>
           <button type="button" className="peak-cta" onClick={onContinue}>
             <span className="peak-cta-play"><Play /></span>
-            <span className="peak-cta-text"><strong>Продолжить путь</strong><small>К своим целям</small></span>
+            <span className="peak-cta-text"><strong>Продолжить путь</strong><small>К своим проектам</small></span>
             <Arrow className="peak-cta-arrow" />
           </button>
           <ul className="peak-features">

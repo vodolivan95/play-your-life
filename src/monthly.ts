@@ -139,7 +139,7 @@ export function monthlySummary(
   const breakdown = [
     { kind: 'quest', label: 'Задачи', xp: 0 },
     { kind: 'score', label: 'Архивные награды', xp: 0 },
-    { kind: 'goal', label: 'Большие цели', xp: 0 },
+    { kind: 'goal', label: 'Большие проекты', xp: 0 },
     { kind: 'streak', label: 'Награды за серии', xp: 0 },
     { kind: 'legacy', label: 'Старые записи', xp: 0 },
   ].map((row) => ({

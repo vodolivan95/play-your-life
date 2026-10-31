@@ -111,13 +111,13 @@ function Row({ item, state, busy, listName, scope, onAccept, onDismiss, onDelete
         {spheres.filter((s) => !scope || s.id === scope.sphereId).map((s) => <button key={s.id} type="button" className="ticktick-chip" aria-pressed={sphere === s.id} disabled={busy || Boolean(scope)}
           onClick={() => { setSphere(s.id); setGoalId(''); setStageId(''); setSingle(false); setAdding(false); }}>{s.icon} {s.name}</button>)}
       </div>
-      <span className="ticktick-inbox-label" id={`goal-${item.remote.id}`}>Цель</span>
+      <span className="ticktick-inbox-label" id={`goal-${item.remote.id}`}>Проект</span>
       <div className="ticktick-inbox-chips" role="group" aria-labelledby={`goal-${item.remote.id}`}>
         <button type="button" className="ticktick-chip" aria-pressed={single} disabled={busy}
-          onClick={() => { setSingle(true); setGoalId(''); setStageId(''); setAdding(false); }}>Без цели</button>
+          onClick={() => { setSingle(true); setGoalId(''); setStageId(''); setAdding(false); }}>Без проекта</button>
         {goals.map((g) => <button key={g.id} type="button" className="ticktick-chip" aria-pressed={goalId === g.id} disabled={busy}
           onClick={() => { setSingle(false); setGoalId(g.id); setStageId(''); setAdding(false); }}>{g.name}</button>)}
-        {!addingGoal && <button type="button" className="ticktick-chip ticktick-chip-add" disabled={busy} onClick={() => setAddingGoal(true)}>＋ Новая цель</button>}
+        {!addingGoal && <button type="button" className="ticktick-chip ticktick-chip-add" disabled={busy} onClick={() => setAddingGoal(true)}>＋ Новый проект</button>}
         {addingGoal && <form className="ticktick-stage-form" onSubmit={(e) => {
           e.preventDefault();
           void run(async () => {
@@ -128,12 +128,12 @@ function Row({ item, state, busy, listName, scope, onAccept, onDismiss, onDelete
             setGoalDraft(''); setAddingGoal(false);
           });
         }}>
-          <input value={goalDraft} maxLength={100} autoFocus placeholder="Название цели" aria-label="Название новой цели" onChange={(e) => setGoalDraft(e.target.value)} />
-          <button className="primary-button" type="submit" disabled={busy || !goalDraft.trim()}>Создать цель</button>
+          <input value={goalDraft} maxLength={100} autoFocus placeholder="Название проекта" aria-label="Название нового проекта" onChange={(e) => setGoalDraft(e.target.value)} />
+          <button className="primary-button" type="submit" disabled={busy || !goalDraft.trim()}>Создать проект</button>
           <button className="text-button" type="button" onClick={() => { setAddingGoal(false); setGoalDraft(''); }}>Отмена</button>
         </form>}
       </div>
-      {single && <p className="muted ticktick-inbox-hint">Одиночная задача без цели тоже синхронизируется с TickTick: название, срок, заметка, выполнение и удаление.</p>}
+      {single && <p className="muted ticktick-inbox-hint">Одиночная задача без проекта тоже синхронизируется с TickTick: название, срок, заметка, выполнение и удаление.</p>}
       {goal && <>
         <span className="ticktick-inbox-label" id={`stage-${item.remote.id}`}>Этап</span>
         <div className="ticktick-inbox-chips" role="group" aria-labelledby={`stage-${item.remote.id}`}>

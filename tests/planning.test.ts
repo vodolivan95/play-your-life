@@ -314,7 +314,7 @@ test('передача содержит даты и этап, исключает
   });
   const snapshot = JSON.stringify(s);
   const text = planTransferText([s.quests.at(-1)!], s);
-  assert.match(text, /Цель: Мой путь/);
+  assert.match(text, /Проект: Мой путь/);
   assert.match(text, /Этап: Основы/);
   assert.match(text, /Начало:/);
   assert.match(text, /Срок:/);

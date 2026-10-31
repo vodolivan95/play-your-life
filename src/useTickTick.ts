@@ -141,7 +141,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
       if (result.stopped?.endsWith('(401)')) setConnected(false);
       held = result.held;
       const lines = [...(held && automatic ? [summarizeHeldRemovals(held)] : []), ...applied.warnings];
-      setStatus(lines.length ? lines.join('\n') : 'Связанные задачи целей синхронизированы.');
+      setStatus(lines.length ? lines.join('\n') : 'Связанные задачи проектов синхронизированы.');
     } catch (error) {
       if (error instanceof Error && error.message.endsWith('(401)')) setConnected(false);
       setStatus(error instanceof Error ? error.message : 'Не удалось синхронизировать.');

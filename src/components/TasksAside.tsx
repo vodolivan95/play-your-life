@@ -9,9 +9,9 @@ import './TasksAside.css';
 
 const steps = [
   'Задача из TickTick приходит во входящие, пока ты её не разберёшь.',
-  'Ты выбираешь сферу, цель и этап. Цель можно создать на месте.',
+  'Ты выбираешь сферу, проект и этап. Проект можно создать на месте.',
   'Отметка в игре отмечает задачу и в TickTick. Награда приходит один раз.',
-  'Цели и этапы живут только в игре и в TickTick не уходят.',
+  'Проекты и этапы живут только в игре и в TickTick не уходят.',
 ];
 
 /**
@@ -185,9 +185,9 @@ export default function TasksAside({ state, quests, today }: { state: GameState;
       </section>
 
       <section className="tas-card">
-        <strong>Цели в работе</strong>
+        <strong>Проекты в работе</strong>
         {activeGoals.length === 0 ? (
-          <p>Нет целей в работе — заведи первую на доске целей.</p>
+          <p>Нет проектов в работе — заведи первый на доске проектов.</p>
         ) : (
           <div className="tas-goals">
             {activeGoals.map(({ goal, percent: p, sphere }) => (

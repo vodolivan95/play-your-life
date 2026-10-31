@@ -415,8 +415,10 @@
 :root[data-theme="dark"] .gw-task-toolbar label { color: #8ca1d3; }
 :root[data-theme="dark"] .gw-task-toolbar select { border: 1px solid #355264; background: #141c31; }
 :root[data-theme="dark"] .gw-next-step small { color: #a4bedd; }
-:root[data-theme="dark"] .gw-motivation { background: #141b30; color: #b6c6d7; }
-:root[data-theme="dark"] .gw-motivation span { color: #90d3ff; }
+:root[data-theme="dark"] .gw-motivation,
+:root[data-theme="dark"] .gw-weekly-focus-btn { background: #141b30; color: #b6c6d7; }
+:root[data-theme="dark"] .gw-motivation span,
+:root[data-theme="dark"] .gw-weekly-focus-btn span { color: #90d3ff; }
 :root[data-theme="dark"] .gw-sphere > span { color: #91d9ff; }
 :root[data-theme="dark"] .gw-meter { background: #1a3140; }
 :root[data-theme="dark"] .gw-history li:before { background: #1f2f39; }

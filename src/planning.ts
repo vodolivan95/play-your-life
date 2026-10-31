@@ -1,5 +1,11 @@
 import { validProjectImage } from './projectImage.ts';
-import { dateKey, difficulties, syncGoalTasks } from './game.ts';
+import {
+  dateKey,
+  difficulties,
+  syncGoalTasks,
+  MAX_GOAL_CHECKPOINTS,
+  GOAL_CHECKPOINT_TEXT_MAX,
+} from './game.ts';
 import {
   stageMetrics,
   stageAccess,
@@ -217,6 +223,78 @@ export function saveGoal(
         : 'Изменены настройки проекта',
     );
   return next;
+}
+function findGoal(state: GameState, goalId: string): Goal {
+  const goal = state.goals.find((g) => g.id === goalId);
+  if (!goal) throw new Error('Проект не найден.');
+  return goal;
+}
+/** Контрольная точка — измеримый промежуточный результат проекта, отдельно от этапов и задач. */
+export function addGoalCheckpoint(
+  state: GameState,
+  goalId: string,
+  text: string,
+): GameState {
+  const goal = findGoal(state, goalId);
+  const trimmed = text.trim();
+  if (!trimmed || trimmed.length > GOAL_CHECKPOINT_TEXT_MAX)
+    throw new Error('Проверь текст контрольной точки.');
+  const checkpoints = goal.checkpoints ?? [];
+  if (checkpoints.length >= MAX_GOAL_CHECKPOINTS)
+    throw new Error(`Не больше ${MAX_GOAL_CHECKPOINTS} контрольных точек на проект.`);
+  return {
+    ...state,
+    goals: state.goals.map((g) =>
+      g.id === goalId
+        ? {
+            ...g,
+            checkpoints: [
+              ...checkpoints,
+              { id: crypto.randomUUID(), text: trimmed, done: false },
+            ],
+          }
+        : g,
+    ),
+  };
+}
+export function toggleGoalCheckpoint(
+  state: GameState,
+  goalId: string,
+  checkpointId: string,
+): GameState {
+  const goal = findGoal(state, goalId);
+  if (!goal.checkpoints?.some((c) => c.id === checkpointId))
+    throw new Error('Контрольная точка не найдена.');
+  return {
+    ...state,
+    goals: state.goals.map((g) =>
+      g.id === goalId
+        ? {
+            ...g,
+            checkpoints: g.checkpoints!.map((c) =>
+              c.id === checkpointId ? { ...c, done: !c.done } : c,
+            ),
+          }
+        : g,
+    ),
+  };
+}
+export function removeGoalCheckpoint(
+  state: GameState,
+  goalId: string,
+  checkpointId: string,
+): GameState {
+  const goal = findGoal(state, goalId);
+  if (!goal.checkpoints?.some((c) => c.id === checkpointId))
+    throw new Error('Контрольная точка не найдена.');
+  return {
+    ...state,
+    goals: state.goals.map((g) =>
+      g.id === goalId
+        ? { ...g, checkpoints: g.checkpoints!.filter((c) => c.id !== checkpointId) }
+        : g,
+    ),
+  };
 }
 export function saveStage(
   state: GameState,

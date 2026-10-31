@@ -10,6 +10,7 @@ import { validKeySpheres } from './lifePlanMap.ts';
 import { validReview, validMoodCheckins } from './keyResults.ts';
 import { validImportance } from './monthReport.ts';
 import type { GameState } from './game.ts';
+import { MAX_GOAL_CHECKPOINTS, GOAL_CHECKPOINT_TEXT_MAX, GOAL_WEEKLY_FOCUS_MAX } from './game.ts';
 import { imageDocPattern, imageRefPattern, monthPattern } from './cloudSplit.ts';
 import { validTaskLabels } from './taskLabels.ts';
 import {
@@ -345,7 +346,23 @@ export function validateState(value: unknown): asserts value is SavedState {
               optionalDate(stage.completedAt) &&
               optionalDate(stage.startsAt) &&
               optionalDate(stage.dueAt),
-          )),
+          )) &&
+        (g.paused === undefined || typeof g.paused === 'boolean') &&
+        (g.weeklyFocus === undefined ||
+          (text(g.weeklyFocus) &&
+            (g.weeklyFocus as string).length <= GOAL_WEEKLY_FOCUS_MAX)) &&
+        (g.checkpoints === undefined ||
+          (list(
+            g.checkpoints,
+            (c) =>
+              text(c.id) &&
+              !!c.id &&
+              text(c.text) &&
+              !!(c.text as string).trim() &&
+              (c.text as string).length <= GOAL_CHECKPOINT_TEXT_MAX &&
+              typeof c.done === 'boolean',
+          ) &&
+            (g.checkpoints as unknown[]).length <= MAX_GOAL_CHECKPOINTS)),
     )
   )
     return fail();

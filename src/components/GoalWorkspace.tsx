@@ -19,6 +19,8 @@ import {
   nextGoalTask,
   goalHistory,
   goalActivityStreak,
+  goalPaceStatus,
+  goalPaceLabels,
 } from '../goalWorkspace';
 import { goalStatistics, chartCoordinates } from '../goalStatistics';
 import type { ProgressPoint } from '../goalStatistics';
@@ -32,7 +34,11 @@ import {
   finishStage,
   deleteGoal,
   planEvent,
+  addGoalCheckpoint,
+  toggleGoalCheckpoint,
+  removeGoalCheckpoint,
 } from '../planning';
+import { MAX_GOAL_CHECKPOINTS, GOAL_CHECKPOINT_TEXT_MAX, GOAL_WEEKLY_FOCUS_MAX } from '../game';
 import { questCoins, progressQuest } from '../personalQuests';
 import { sphereProgress, MAX_SPHERE_LEVEL } from '../sphereProgress';
 import { sphereAssets } from '../sphereAssets';
@@ -546,7 +552,7 @@ export default function GoalWorkspace(p: Props) {
     }
   }, [activeId]);
   const [detail, setDetail] = useState<{
-    kind: 'reward' | 'motivation' | 'notes' | 'task';
+    kind: 'reward' | 'motivation' | 'notes' | 'weeklyFocus' | 'task';
     task?: Quest;
   } | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -669,6 +675,10 @@ export default function GoalWorkspace(p: Props) {
     );
   };
   function finish(task: Quest) {
+    if (goal.paused) {
+      p.onNotify('Проект на паузе. Возобновите проект, чтобы завершать задачи.');
+      return false;
+    }
     const parent = stages.find((s) => s.id === task.stageId);
     if (
       parent &&
@@ -1041,6 +1051,20 @@ export default function GoalWorkspace(p: Props) {
           </>
         )}
       </nav>
+      {goal.paused && !stage && (
+        <div className="gw-paused-banner">
+          <span>Проект на паузе — срок и серия активности не учитываются</span>
+          <button
+            className="primary-button"
+            onClick={() => {
+              if (mutate((s) => saveGoal(s, { ...goal, paused: false })))
+                p.onNotify('Проект возобновлён.');
+            }}
+          >
+            Возобновить проект
+          </button>
+        </div>
+      )}
       <section className={`gw-banner ${stageId ? 'gw-banner-compact' : ''}`}>
         <img
           className="gw-banner-image"
@@ -1059,6 +1083,19 @@ export default function GoalWorkspace(p: Props) {
             <summary aria-label="Дополнительные действия проекта">⋮</summary>
             <div>
               <button onClick={p.onEditGoal}>Настроить проект</button>
+              <button
+                onClick={() => {
+                  const next = !goal.paused;
+                  if (mutate((s) => saveGoal(s, { ...goal, paused: next })))
+                    p.onNotify(
+                      next
+                        ? 'Проект на паузе — срок и серия активности не учитываются.'
+                        : 'Проект возобновлён.',
+                    );
+                }}
+              >
+                {goal.paused ? '▶ Возобновить проект' : 'Ⅱ Поставить на паузу'}
+              </button>
               <button onClick={() => p.onTransfer()}>Задачи в TickTick</button>
               <button onClick={p.onInbox}>Разобрать входящие</button>
               <button
@@ -1250,6 +1287,64 @@ export default function GoalWorkspace(p: Props) {
           <div className="gw-columns">
             <div className="gw-main">
               {!stage && (tab === 'overview' || tab === 'stages') && roadmap()}
+              {!stage && tab === 'overview' && (
+                <Card title="Контрольные точки" icon="◆" className="gw-checkpoints">
+                  <p className="gw-muted">
+                    Измеримые промежуточные результаты проекта — отдельно от
+                    этапов и задач.
+                  </p>
+                  <ul className="gw-checkpoint-list">
+                    {(goal.checkpoints ?? []).map((c) => (
+                      <li key={c.id} className={c.done ? 'gw-checkpoint-done' : ''}>
+                        <button
+                          className="gw-checkpoint-check"
+                          aria-label={`${c.done ? 'Снять отметку' : 'Отметить выполненной'}: ${c.text}`}
+                          onClick={() =>
+                            mutate((s) => toggleGoalCheckpoint(s, goal.id, c.id))
+                          }
+                        >
+                          {c.done ? '✓' : ''}
+                        </button>
+                        <span>{c.text}</span>
+                        <button
+                          className="gw-icon-button"
+                          aria-label={`Удалить контрольную точку: ${c.text}`}
+                          onClick={() =>
+                            mutate((s) => removeGoalCheckpoint(s, goal.id, c.id))
+                          }
+                        >
+                          ×
+                        </button>
+                      </li>
+                    ))}
+                    {!goal.checkpoints?.length && (
+                      <li className="gw-muted">Контрольных точек пока нет.</li>
+                    )}
+                  </ul>
+                  {(goal.checkpoints?.length ?? 0) < MAX_GOAL_CHECKPOINTS && (
+                    <form
+                      className="gw-checkpoint-form"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const form = e.currentTarget;
+                        const text = String(new FormData(form).get('text') ?? '');
+                        if (mutate((s) => addGoalCheckpoint(s, goal.id, text)))
+                          form.reset();
+                      }}
+                    >
+                      <input
+                        name="text"
+                        placeholder="Например: сдать первый тест"
+                        maxLength={GOAL_CHECKPOINT_TEXT_MAX}
+                        required
+                      />
+                      <button className="text-button" type="submit">
+                        ＋ Добавить контрольную точку
+                      </button>
+                    </form>
+                  )}
+                </Card>
+              )}
               {!stage && tab === 'overview' && (
                 <Card title="Следующий шаг" icon="⚡" className="gw-next-step">
                   {nextTask ? (
@@ -1474,6 +1569,34 @@ export default function GoalWorkspace(p: Props) {
               ) : (
                 <>
                   {tab !== 'rewards' && rewards()}
+                  <Card title="Состояние проекта" icon="◐">
+                    {(() => {
+                      const pace = goalPaceStatus(state, goal, new Date(now));
+                      return (
+                        <>
+                          <span className={`gw-pace gw-pace-${pace.status}`}>
+                            {pace.status === 'unknown' ? '⚪' : pace.status === 'ahead' ? '🟢' : pace.status === 'behind' ? '🔴' : '🔵'}{' '}
+                            {goalPaceLabels[pace.status]}
+                          </span>
+                          <p className="gw-muted">
+                            {pace.timeProgress === null
+                              ? 'Укажите срок начала и окончания проекта, чтобы сравнить прогресс со временем.'
+                              : `Прогресс ${Math.round(pace.progress)}% при ${Math.round(pace.timeProgress)}% прошедшего срока.`}
+                          </p>
+                        </>
+                      );
+                    })()}
+                  </Card>
+                  <Card title="Фокус на эту неделю" icon="◎">
+                    <button
+                      className="gw-motivation"
+                      onClick={() => setDetail({ kind: 'weeklyFocus' })}
+                    >
+                      {goal.weeklyFocus ||
+                        'На чём сфокусироваться на этой неделе, чтобы продвинуть проект?'}
+                      <span>✎</span>
+                    </button>
+                  </Card>
                   <Card title="Почему этот проект важен для меня" icon="♥">
                     <button
                       className="gw-motivation"
@@ -1531,7 +1654,9 @@ export default function GoalWorkspace(p: Props) {
               ? 'Подробности награды'
               : detail?.kind === 'notes'
                 ? 'Заметки этапа'
-                : 'Личная мотивация'
+                : detail?.kind === 'weeklyFocus'
+                  ? 'Фокус на эту неделю'
+                  : 'Личная мотивация'
         }
         onCancel={() => setDetail(null)}
         onClick={(e) => {
@@ -1573,7 +1698,9 @@ export default function GoalWorkspace(p: Props) {
               )}
             </>
           )}
-          {(detail?.kind === 'motivation' || detail?.kind === 'notes') && (
+          {(detail?.kind === 'motivation' ||
+            detail?.kind === 'notes' ||
+            detail?.kind === 'weeklyFocus') && (
             <form
               className="planning-form"
               onSubmit={(e) => {
@@ -1584,26 +1711,36 @@ export default function GoalWorkspace(p: Props) {
                     ? mutate((s) =>
                         saveStage(s, goal.id, { ...stage, notes: text }),
                       )
-                    : mutate((s) => saveGoal(s, { ...goal, motivation: text }));
+                    : detail.kind === 'weeklyFocus'
+                      ? mutate((s) =>
+                          saveGoal(s, { ...goal, weeklyFocus: text }),
+                        )
+                      : mutate((s) => saveGoal(s, { ...goal, motivation: text }));
                 if (saved) setDetail(null);
               }}
             >
               <h2>
                 {detail.kind === 'notes'
                   ? 'Заметки этапа'
-                  : 'Почему этот проект важен для меня'}
+                  : detail.kind === 'weeklyFocus'
+                    ? 'Фокус на эту неделю'
+                    : 'Почему этот проект важен для меня'}
               </h2>
               <label>
                 Текст
                 <textarea
                   autoFocus
                   name="text"
-                  maxLength={2000}
+                  maxLength={
+                    detail.kind === 'weeklyFocus' ? GOAL_WEEKLY_FOCUS_MAX : 2000
+                  }
                   rows={8}
                   defaultValue={
                     detail.kind === 'notes'
                       ? (stage?.notes ?? '')
-                      : (goal.motivation ?? '')
+                      : detail.kind === 'weeklyFocus'
+                        ? (goal.weeklyFocus ?? '')
+                        : (goal.motivation ?? '')
                   }
                 />
               </label>

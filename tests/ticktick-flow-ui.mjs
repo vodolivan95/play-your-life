@@ -137,7 +137,7 @@ try {
   // 1. Одиночная задача без цели.
   const row = t => inbox.locator('li',{hasText:t});
   await row('Купить билеты').getByRole('button',{name:'Разобрать'}).click();
-  await row('Купить билеты').getByRole('button',{name:'Без цели'}).click();
+  await row('Купить билеты').getByRole('button',{name:'Без проекта'}).click();
   await row('Купить билеты').getByRole('button',{name:'Принять в игру'}).click();
   // 2. Задача в новую цель и новый этап.
   await row('Записаться к врачу').getByRole('button',{name:'Разобрать'}).click();
@@ -203,7 +203,7 @@ try {
   await page.goto(harness(uid)+'#/goals/goal-1/stages/stage-1');
   const workspace = page.locator('.gw-workspace');
   await workspace.waitFor();
-  await workspace.locator('summary[aria-label="Дополнительные действия цели"]').click();
+  await workspace.locator('summary[aria-label="Дополнительные действия проекта"]').click();
   await workspace.getByRole('button',{name:'Разобрать входящие',exact:true}).click();
   const goalInboxDialog = page.getByRole('dialog',{name:'Разобрать входящие: Английский',exact:true});
   await goalInboxDialog.waitFor();
@@ -212,19 +212,19 @@ try {
   const goalRow = goalInbox.locator('li',{hasText:'Разобрать из сферы'});
   await goalRow.waitFor();
   await goalRow.getByRole('button',{name:'Разобрать',exact:true}).click();
-  const goalChoices = goalRow.getByRole('group',{name:'Цель'});
+  const goalChoices = goalRow.getByRole('group',{name:'Проект'});
   const stageChoices = goalRow.getByRole('group',{name:'Этап'});
   assert.equal(await goalChoices.getByRole('button',{name:'Вылечить зубы',exact:true}).getAttribute('aria-pressed'),'true');
   assert.equal(await stageChoices.getByRole('button',{name:'Первый визит',exact:true}).getAttribute('aria-pressed'),'true');
   await goalChoices.getByRole('button',{name:'Бросить курить',exact:true}).click();
   assert.equal(await goalChoices.getByRole('button',{name:'Бросить курить',exact:true}).getAttribute('aria-pressed'),'true');
-  await goalChoices.getByRole('button',{name:'Без цели',exact:true}).click();
-  assert.equal(await goalChoices.getByRole('button',{name:'Без цели',exact:true}).getAttribute('aria-pressed'),'true');
-  await goalChoices.getByRole('button',{name:'＋ Новая цель',exact:true}).click();
-  await goalRow.getByLabel('Название новой цели').fill('Цель из входящих');
-  await goalRow.getByRole('button',{name:'Создать цель',exact:true}).click();
-  await goalChoices.getByRole('button',{name:'Цель из входящих',exact:true}).waitFor();
-  assert.equal(await goalChoices.getByRole('button',{name:'Цель из входящих',exact:true}).getAttribute('aria-pressed'),'true');
+  await goalChoices.getByRole('button',{name:'Без проекта',exact:true}).click();
+  assert.equal(await goalChoices.getByRole('button',{name:'Без проекта',exact:true}).getAttribute('aria-pressed'),'true');
+  await goalChoices.getByRole('button',{name:'＋ Новый проект',exact:true}).click();
+  await goalRow.getByLabel('Название нового проекта').fill('Проект из входящих');
+  await goalRow.getByRole('button',{name:'Создать проект',exact:true}).click();
+  await goalChoices.getByRole('button',{name:'Проект из входящих',exact:true}).waitFor();
+  assert.equal(await goalChoices.getByRole('button',{name:'Проект из входящих',exact:true}).getAttribute('aria-pressed'),'true');
   const newStageChoices = goalRow.getByRole('group',{name:'Этап'});
   await newStageChoices.getByRole('button',{name:'＋ Новый этап',exact:true}).click();
   await goalRow.getByLabel('Название нового этапа').fill('Этап из входящих');
@@ -233,11 +233,11 @@ try {
   await goalRow.getByRole('button',{name:'Принять в игру',exact:true}).click();
   await page.waitForFunction(uid=>{
     const s=JSON.parse(localStorage.getItem('ticktick-fixture-game:'+uid));
-    const g=s.goals.find(g=>g.name==='Цель из входящих');
+    const g=s.goals.find(g=>g.name==='Проект из входящих');
     return Boolean(g?.stages?.some(stage=>stage.name==='Этап из входящих')&&s.quests.some(q=>q.name==='Разобрать из сферы'&&q.goalId===g.id&&q.stageId===g.stages.find(stage=>stage.name==='Этап из входящих').id));
   },uid,{timeout:15000});
   st = await stateOf(page,uid);
-  const importedGoal = st.goals.find(g=>g.name==='Цель из входящих');
+  const importedGoal = st.goals.find(g=>g.name==='Проект из входящих');
   const importedTask = st.quests.find(q=>q.name==='Разобрать из сферы');
   assert.equal(importedTask.goalId,importedGoal.id);
   assert.equal(importedTask.stageId,importedGoal.stages.find(s=>s.name==='Этап из входящих').id);

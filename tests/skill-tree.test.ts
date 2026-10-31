@@ -185,7 +185,7 @@ test('навык с целью растёт от прогресса цели и 
   s = saveNode(s, 'english', node(branch.id, 'Практика', 1, { goalId: goal.id, levels: 4 }));
   const linked = () => skillTreeOf(s, 'english').nodes[0];
   assert.equal(nodeLevel(s, linked()), 0);
-  assert.throws(() => raiseSkill(s, 'english', linked().id), /цел/);
+  assert.throws(() => raiseSkill(s, 'english', linked().id), /проект/);
   s = { ...s, quests: s.quests.map((q, i) => (q.goalId === goal.id && i === s.quests.findIndex((x) => x.goalId === goal.id) ? { ...q, done: true } : q)) };
   assert.ok(nodeLevel(s, linked()) >= 1);
   assert.equal(skillPointsSpent(s, 'english'), 0);

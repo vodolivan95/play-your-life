@@ -320,7 +320,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 </h1>
                 <p>
                   {page === 'home'
-                    ? 'Каждый маленький шаг приближает тебя к большой цели.'
+                    ? 'Каждый маленький шаг приближает тебя к большому проекту.'
                     : sphere
                       ? 'Развивай свою ветку. Замечай каждый шаг вперёд.'
                       : 'Твой следующий уровень начинается с одного действия.'}
@@ -826,7 +826,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
             modal === 'quest'
               ? 'Создание задачи'
               : modal === 'goal'
-                ? 'Создание цели'
+                ? 'Создание проекта'
                 : modal === 'profile'
                   ? 'Настройки персонажа'
                   : modal === 'streak'
@@ -889,7 +889,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 onSave={(input) => {
                   setState(saveGoal(state, input));
                   setModal(null);
-                  notify('Цель добавлена в твой план');
+                  notify('Проект добавлен в твой план');
                 }}
               />
             ) : modal === 'streak' ? (

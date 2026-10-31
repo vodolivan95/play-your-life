@@ -201,7 +201,7 @@ export default function Onboarding({
         <div className="welcome-features">
           <span>⚡ Задачи и XP</span>
           <span>🌱 10 сфер жизни</span>
-          <span>🎯 Твои цели</span>
+          <span>🎯 Твои проекты</span>
         </div>
         <button
           className="primary-button submit-button"
@@ -241,7 +241,7 @@ export default function Onboarding({
           ? 'Выбери имя и своего персонажа.'
           : step === 2
             ? 'Каждая сфера развивается отдельно за накопленный XP.'
-            : 'Выбери одну цель, которая важна именно тебе.'}
+            : 'Выбери один проект, который важен именно тебе.'}
       </p>
       {step === 1 && (
         <>
@@ -265,7 +265,7 @@ export default function Onboarding({
       {step === 3 && (
         <>
           <label>
-            Главная цель
+            Главный проект
             <input
               autoFocus
               required
@@ -302,7 +302,7 @@ export default function Onboarding({
             />
           </label>
           <p className="score-note">
-            Если цель сложно измерить, используй 100: каждое значение будет
+            Если проект сложно измерить, используй 100: каждое значение будет
             процентом. За достижение — 200 XP.
           </p>
           <div className="start-summary">
@@ -311,13 +311,13 @@ export default function Onboarding({
             </span>
             <div>
               <strong>{name.trim()}, твоё приключение начинается!</strong>
-              <small>Уровень 1 · 0 XP · Прогресс цели 0%</small>
+              <small>Уровень 1 · 0 XP · Прогресс проекта 0%</small>
             </div>
           </div>
           {profile.onboardingComplete && (
             <label className="reset-consent">
               <input type="checkbox" required />
-              Начать с нуля. Текущие демо-задачи, XP, цели и история будут
+              Начать с нуля. Текущие демо-задачи, XP, проекты и история будут
               заменены моей новой игрой.
             </label>
           )}

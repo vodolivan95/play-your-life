@@ -67,7 +67,7 @@ export default function GoalsBoard({
   onSelect,
   onNew,
   onNotify,
-  backLabel = '← Все цели',
+  backLabel = '← Все проекты',
   stageId,
   onSphere,
   ownerId,
@@ -93,7 +93,7 @@ export default function GoalsBoard({
   const currentMonthlyFocus = monthlyFocusGoals(state, monthNow);
   const monthlyFocusLimitReached =
     currentMonthlyFocus.length >= MAX_MONTHLY_FOCUS;
-  const monthlyFocusLimitMessage = `В этом месяце уже выбрано ${MAX_MONTHLY_FOCUS} из ${MAX_MONTHLY_FOCUS} главных целей. Сначала уберите одну из них.`;
+  const monthlyFocusLimitMessage = `В этом месяце уже выбрано ${MAX_MONTHLY_FOCUS} из ${MAX_MONTHLY_FOCUS} главных проектов. Сначала уберите один из них.`;
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (editor) dialog.current?.showModal();
@@ -106,7 +106,7 @@ export default function GoalsBoard({
     state.goals[0];
   const tasks = state.quests.filter((q) => q.goalId === goal?.id && !!goal);
   function main(id: string) {
-    onChange((s) => ({ ...s, mainGoalId: id })); onNotify('Главная цель выбрана');
+    onChange((s) => ({ ...s, mainGoalId: id })); onNotify('Главный проект выбран');
   }
   function toggleGoalMonthlyFocus(id: string) {
     const isMonthlyFocus = currentMonthlyFocus.some((goal) => goal.id === id);
@@ -118,7 +118,7 @@ export default function GoalsBoard({
       toggleMonthlyFocus(state, id, monthNow);
     } catch (e) {
       onNotify(
-        e instanceof Error ? e.message : 'Не удалось изменить главные цели месяца.',
+        e instanceof Error ? e.message : 'Не удалось изменить главные проекты месяца.',
       );
       return;
     }
@@ -136,8 +136,8 @@ export default function GoalsBoard({
     });
     onNotify(
       shouldAdd
-        ? 'Цель выбрана главной целью месяца.'
-        : 'Цель убрана из главных целей месяца.',
+        ? 'Проект выбран главным проектом месяца.'
+        : 'Проект убран из главных проектов месяца.',
     );
   }
   const visibleGoals = sortGoals(
@@ -162,8 +162,8 @@ export default function GoalsBoard({
         <div>
           <p className="muted">
             {goal
-              ? 'Большая цель становится понятными шагами.'
-              : 'Сферы жизни → цели → этапы → задачи.'}
+              ? 'Большой проект становится понятными шагами.'
+              : 'Сферы жизни → проекты → этапы → задачи.'}
           </p>
           {goal && (
             <button
@@ -175,10 +175,10 @@ export default function GoalsBoard({
           )}
         </div>
         <button className="primary-button" onClick={onNew}>
-          <Icon name="plus" size={17} /> Новая цель
+          <Icon name="plus" size={17} /> Новый проект
         </button>
       </div>
-      {selectedId && !goal && <div className="panel"><h2>Цель не найдена</h2><p>Проверьте ссылку или выберите цель из своей игры.</p><button className="text-button" onClick={() => onSelect(null)}>Все цели →</button></div>}
+      {selectedId && !goal && <div className="panel"><h2>Проект не найден</h2><p>Проверьте ссылку или выберите проект из своей игры.</p><button className="text-button" onClick={() => onSelect(null)}>Все проекты →</button></div>}
       {!goal && (
         <>
           <div className="gl-summary">
@@ -186,7 +186,7 @@ export default function GoalsBoard({
               <i className="gl-ico is-blue"><TileIcon kind="target" /></i>
               <div>
                 <b>{summary.active}</b>
-                <span>Активные цели</span>
+                <span>Активные проекты</span>
               </div>
             </div>
             <div className="gl-tile">
@@ -234,7 +234,7 @@ export default function GoalsBoard({
               ))}
             </div>
             {usedSpheres.length > 0 && (
-              <div className="gl-chips" role="group" aria-label="Сфера цели">
+              <div className="gl-chips" role="group" aria-label="Сфера проекта">
                 {[{ id: 'all', name: 'Все сферы' }, ...usedSpheres].map((sp) => (
                   <button
                     key={sp.id}
@@ -313,7 +313,7 @@ export default function GoalsBoard({
                       {isMain && <span className="gl-tag is-main">★ Главная</span>}
                       {isMonthlyFocus && (
                         <span className="gl-tag is-monthly-focus">
-                          ★ Главная цель месяца
+                          ★ Главный проект месяца
                         </span>
                       )}
                     </div>
@@ -345,7 +345,7 @@ export default function GoalsBoard({
                   <div
                     className="gl-bar"
                     role="progressbar"
-                    aria-label={`Прогресс цели «${g.name}»`}
+                    aria-label={`Прогресс проекта «${g.name}»`}
                     aria-valuemin={0}
                     aria-valuemax={100}
                     aria-valuenow={progress(g)}
@@ -361,9 +361,9 @@ export default function GoalsBoard({
                         <b>{next.text}</b>
                       </>
                     ) : isGoalDone(g) ? (
-                      'Цель достигнута'
+                      'Проект завершён'
                     ) : (
-                      'Добавьте первый шаг в плане цели'
+                      'Добавьте первый шаг в плане проекта'
                     )}
                   </p>
                   <span className="gl-reward">
@@ -377,7 +377,7 @@ export default function GoalsBoard({
                     aria-pressed={isMain}
                     onClick={() => main(g.id)}
                   >
-                    {isMain ? '★ Главная цель' : '☆ Сделать главной'}
+                    {isMain ? '★ Главный проект' : '☆ Сделать главным'}
                   </button>
                   <button
                     className="text-button main-goal-button"
@@ -391,8 +391,8 @@ export default function GoalsBoard({
                     onClick={() => toggleGoalMonthlyFocus(g.id)}
                   >
                     {isMonthlyFocus
-                      ? 'Убрать из главных целей месяца'
-                      : 'Сделать главной целью месяца'}
+                      ? 'Убрать из главных проектов месяца'
+                      : 'Сделать главным проектом месяца'}
                   </button>
                   {!isMonthlyFocus && monthlyFocusLimitReached && (
                     <small className="gl-monthly-focus-limit">
@@ -416,7 +416,7 @@ export default function GoalsBoard({
                           onChange(next);
                           if (next.xp > state.xp)
                             onNotify(
-                              `Цель достигнута! +${next.xp - state.xp} XP`,
+                              `Проект завершён! +${next.xp - state.xp} XP`,
                             );
                         }}
                       />
@@ -433,7 +433,7 @@ export default function GoalsBoard({
                   className="primary-button gl-plan"
                   onClick={() => onSelect(g.id)}
                 >
-                  {isGoalDone(g) ? (g.projectReview ? 'Открыть практику' : 'Завершить проект') : 'План цели'}
+                  {isGoalDone(g) ? (g.projectReview ? 'Открыть практику' : 'Завершить проект') : 'План проекта'}
                   <Icon name="arrow" size={16} />
                 </button>
               </section>
@@ -447,13 +447,13 @@ export default function GoalsBoard({
                   ? 'Твои победы ещё впереди'
                   : 'Начни с того, что важно'}
               </h3>
-              <p>Поставь цель, выбери срок и добавь первый реальный шаг.</p>
+              <p>Поставь проект, выбери срок и добавь первый реальный шаг.</p>
             </div>
           )}
         </div>
         {preview && (
-          <aside className="gl-side" aria-label="Кратко о выбранной цели">
-            <div className="gl-side-kicker">Выбранная цель</div>
+          <aside className="gl-side" aria-label="Кратко о выбранном проекте">
+            <div className="gl-side-kicker">Выбранный проект</div>
             <h2>{preview.name}</h2>
             <p className="gl-side-meta">
               {spheres.find((sp) => sp.id === preview.sphere)?.name} ·{' '}
@@ -511,14 +511,14 @@ export default function GoalsBoard({
               <p className="gl-side-empty">Открытых задач нет.</p>
             )}
             <div className="gl-side-reward">
-              🏆 Награда за цель: <b>{preview.reward} XP</b>
+              🏆 Награда за проект: <b>{preview.reward} XP</b>
               {preview.rewarded ? ' · получена' : ''}
             </div>
             <button
               className="primary-button gl-plan"
               onClick={() => onSelect(preview.id)}
             >
-              Открыть план цели
+              Открыть план проекта
               <Icon name="arrow" size={16} />
             </button>
           </aside>
@@ -541,7 +541,7 @@ export default function GoalsBoard({
               ? 'Настройка задачи'
               : editor?.kind === 'transfer'
                 ? 'Подключение TickTick'
-                : 'Настройка цели'
+                : 'Настройка проекта'
         }
         ref={dialog}
         onCancel={() => setEditor(null)}
@@ -563,7 +563,7 @@ export default function GoalsBoard({
               onSave={(input) => {
                 onChange(saveGoal(state, input));
                 setEditor(null);
-                onNotify('Цель обновлена');
+                onNotify('Проект обновлён');
               }}
             />
           )}

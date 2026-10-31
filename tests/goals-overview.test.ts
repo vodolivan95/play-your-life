@@ -57,7 +57,7 @@ test('склонение дней и подпись срока', () => {
   );
   assert.equal(
     deadlineLabel({ ...near, current: near.target }, now),
-    'Цель достигнута',
+    'Проект завершён',
   );
 });
 

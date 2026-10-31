@@ -6,7 +6,7 @@ export const navigation: { id: MenuIconId; label: string; icon: string }[] = [
   { id: 'spheres', label: 'Сферы жизни', icon: 'spheres' },
   { id: 'tasks', label: 'Мои задачи', icon: 'tasks' },
   { id: 'quests', label: 'Привычки', icon: 'quests' },
-  { id: 'goals', label: 'Цели', icon: 'goals' },
+  { id: 'goals', label: 'Проекты', icon: 'goals' },
   { id: 'budget', label: 'Финансы', icon: 'budget' },
   { id: 'tree', label: 'Дерево навыков', icon: 'tree' },
   { id: 'achievements', label: 'Достижения', icon: 'trophy' },

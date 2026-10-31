@@ -33,9 +33,9 @@ export default function GoalTaskList({ state, quests, today, onOpen, onProgress 
     );
   };
   return (
-    <section className="gtl" aria-label="Задачи по целям и этапам">
+    <section className="gtl" aria-label="Задачи по проектам и этапам">
       <div className="gtl-head">
-        <h2>Задачи по целям</h2>
+        <h2>Задачи по проектам</h2>
         <div className="gtl-tools">
           <label className="gtl-done"><input type="checkbox" checked={showDone} onChange={(e) => setShowDone(e.target.checked)} /> Выполненные</label>
           <div className="gtl-filter" role="group" aria-label="Источник задач">
@@ -66,7 +66,7 @@ export default function GoalTaskList({ state, quests, today, onOpen, onProgress 
       })}
       {loose.length > 0 && (
         <article className="gtl-goal">
-          <h3>Без цели</h3>
+          <h3>Без проекта</h3>
           <div className="gtl-stage"><ul>{loose.map(row)}</ul></div>
         </article>
       )}

@@ -355,7 +355,7 @@ export function saveNode(
     if (input.goalId) {
       const goal = state.goals.find((g) => g.id === input.goalId);
       if (!goal || goal.sphere !== sphere)
-        throw new Error('Выбери цель этой же сферы.');
+        throw new Error('Выбери проект этой же сферы.');
     }
     if (input.sourceGoalId) {
       const goal = state.goals.find((g) => g.id === input.sourceGoalId);
@@ -486,7 +486,7 @@ export function raiseSkill(state: GameState, sphere: string, nodeId: string) {
   const node = skillTreeOf(state, sphere).nodes.find((n) => n.id === nodeId);
   if (!node) throw new Error('Навык не найден.');
   if (node.goalId)
-    throw new Error('Уровень этого навыка растёт вместе с целью.');
+    throw new Error('Уровень этого навыка растёт вместе с проектом.');
   if (node.sourceGoalId)
     throw new Error('Этот навык растёт через проект и повторную практику.');
   const lock = nodeLock(state, sphere, node);
@@ -507,7 +507,7 @@ export function lowerSkill(state: GameState, sphere: string, nodeId: string) {
   const node = tree.nodes.find((n) => n.id === nodeId);
   if (!node) throw new Error('Навык не найден.');
   if (node.goalId)
-    throw new Error('Уровень этого навыка растёт вместе с целью.');
+    throw new Error('Уровень этого навыка растёт вместе с проектом.');
   if (node.sourceGoalId)
     throw new Error('Этот навык растёт через проект и повторную практику.');
   if (node.level <= 0) throw new Error('Очки в этот навык не вложены.');

@@ -81,11 +81,11 @@ export function goalStatus(
   // на экранах, использующих goalProgressValue. goalProgressValue верна для
   // обоих режимов цели.
   return goalProgressValue(state, goal) >= 100
-    ? 'Достигнута'
+    ? 'Достигнут'
     : goal.dueAt && new Date(goal.dueAt) < now
       ? 'Срок прошёл'
       : goal.startsAt && new Date(goal.startsAt) > now
-        ? 'Запланирована'
+        ? 'Запланирован'
         : 'В процессе';
 }
 function checkRange(
@@ -101,12 +101,12 @@ function checkRange(
   if (parent?.startsAt)
     for (const value of [startsAt, dueAt])
       if (value && new Date(value) < new Date(parent.startsAt))
-        throw new Error('Задача или этап не могут начинаться до начала цели.');
+        throw new Error('Задача или этап не могут начинаться до начала проекта.');
   if (parent?.dueAt)
     for (const value of [startsAt, dueAt])
       if (value && new Date(value) > new Date(parent.dueAt))
         throw new Error(
-          'Задача или этап выходят за срок цели. Сначала измени срок цели.',
+          'Задача или этап выходят за срок проекта. Сначала измени срок проекта.',
         );
 }
 export function planEvent(
@@ -170,7 +170,7 @@ export function saveGoal(
       state.quests.some((q) => q.goalId === existing.id)
     )
       throw new Error(
-        'Для цели с задачами сфера сохраняется, чтобы учёт XP оставался верным.',
+        'Для проекта с задачами сфера сохраняется, чтобы учёт XP оставался верным.',
       );
   }
   const mode = input.progressMode ?? existing?.progressMode ?? 'manual';
@@ -213,8 +213,8 @@ export function saveGoal(
       next,
       goal.id,
       existing.dueAt !== goal.dueAt || existing.startsAt !== goal.startsAt
-        ? 'Изменён срок цели'
-        : 'Изменены настройки цели',
+        ? 'Изменён срок проекта'
+        : 'Изменены настройки проекта',
     );
   return next;
 }
@@ -227,7 +227,7 @@ export function saveStage(
   if (!goal || !input.name.trim() || input.name.length > 100)
     throw new Error('Укажи название этапа.');
   if (input.id && !goal.stages?.some((s) => s.id === input.id))
-    throw new Error('Этап не найден в этой цели.');
+    throw new Error('Этап не найден в этом проекте.');
   if (input.prerequisiteId) {
     const visited = new Set([input.id]);
     let id: string | undefined = input.prerequisiteId;
@@ -236,7 +236,7 @@ export function saveStage(
         throw new Error('Этапы не могут зависеть друг от друга по кругу.');
       visited.add(id);
       const prior = goal.stages?.find((s) => s.id === id);
-      if (!prior) throw new Error('Предыдущий этап не найден в этой цели.');
+      if (!prior) throw new Error('Предыдущий этап не найден в этом проекте.');
       id = prior.prerequisiteId;
     }
   }
@@ -341,7 +341,7 @@ export function saveTask(
     !(input.difficulty in difficulties)
   )
     throw new Error('Проверь название, сферу и сложность задачи.');
-  if (input.goalId && !goal) throw new Error('Цель не найдена.');
+  if (input.goalId && !goal) throw new Error('Проект не найден.');
   if (input.labelId && !state.taskLabels?.some((label) => label.id === input.labelId))
     throw new Error('Метка задачи не найдена.');
   const stage = input.stageId
@@ -487,7 +487,7 @@ export function taskTransferText(task: Quest, state: GameState) {
   const stage = goal?.stages?.find((s) => s.id === task.stageId);
   return [
     task.name,
-    goal ? `Цель: ${goal.name}` : '',
+    goal ? `Проект: ${goal.name}` : '',
     stage ? `Этап: ${stage.name}` : '',
     task.startsAt ? `Начало: ${formatDate(task.startsAt)}` : '',
     task.dueAt ? `Срок: ${formatDate(task.dueAt)}` : '',
@@ -570,7 +570,7 @@ export function moveStage(
   position: number,
 ) {
   const goal = state.goals.find((g) => g.id === goalId);
-  if (!goal) throw new Error('Цель не найдена.');
+  if (!goal) throw new Error('Проект не найден.');
   const stages = [...(goal.stages ?? [])];
   const index = stages.findIndex((s) => s.id === stageId);
   if (

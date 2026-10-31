@@ -121,7 +121,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
         </header>
         <div className="twin-stats">
           <div><small>В сферу</small><b>+{c.xp} XP</b><span>{sphere?.name ?? ''}</span></div>
-          <div><small>В цель</small><b>{c.goal ? `${c.goalShare}%` : '—'}</b><span>{c.goal ? c.goal.name : 'вне цели'}</span></div>
+          <div><small>В проект</small><b>{c.goal ? `${c.goalShare}%` : '—'}</b><span>{c.goal ? c.goal.name : 'вне проекта'}</span></div>
           <div><small>В этап</small><b>{c.stage ? c.stage.name : '—'}</b><span>{c.stage ? `${c.stageTasks} задач в этапе` : 'без этапа'}</span></div>
         </div>
         <div className="twin-body">
@@ -131,7 +131,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
           </label>
           {inGoal && (
             <div className="twin-field" role="group" aria-label="Этап">
-              <span>Этап цели «{c.goal?.name}»</span>
+              <span>Этап проекта «{c.goal?.name}»</span>
               <div className="twin-chips">
                 <button type="button" aria-pressed={!task.stageId} onClick={() => patch({ stageId: null })}>Без этапа</button>
                 {(c.goal?.stages ?? []).map((s) => (

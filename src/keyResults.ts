@@ -501,7 +501,7 @@ export function winSuggestions(state: GameState, month: string, now = new Date()
   if (summary.longest >= 3) wins.push(`Серия ${summary.longest} дн. подряд`);
   if (summary.activeDays >= 5) wins.push(`${summary.activeDays} дн. с выполненной задачей`);
   if (summary.quests >= 5) wins.push(`Выполнено задач: ${summary.quests}`);
-  if (summary.goals > 0) wins.push(`Достигнуто целей: ${summary.goals}`);
+  if (summary.goals > 0) wins.push(`Достигнуто проектов: ${summary.goals}`);
   for (const s of summary.sphereResults) {
     if (s.levelDelta !== null && s.levelDelta > 0) wins.push(`Уровень ${s.levelAfter} в сфере «${s.name}»`);
   }

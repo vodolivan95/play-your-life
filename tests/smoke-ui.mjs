@@ -55,8 +55,8 @@ if (process.env.SMOKE_PLAN_ONLY === '1') {
 }
 const seedJson = JSON.stringify(seed);
 
-const desktopMenu = ['Главная', 'Сферы жизни', 'Мои задачи', 'Привычки', 'Цели', 'Финансы', 'Дерево навыков', 'Достижения', 'Магазин', 'Город', 'Профиль', 'Ключевые итоги'];
-const mobileTabs = ['Главная', 'Привычки', 'Цели', 'Город'];
+const desktopMenu = ['Главная', 'Сферы жизни', 'Мои задачи', 'Привычки', 'Проекты', 'Финансы', 'Дерево навыков', 'Достижения', 'Магазин', 'Город', 'Профиль', 'Ключевые итоги'];
+const mobileTabs = ['Главная', 'Привычки', 'Проекты', 'Город'];
 const mobileMore = ['Сферы жизни', 'Финансы', 'Дерево навыков', 'Достижения', 'Магазин', 'Профиль', 'Ключевые итоги', 'Мои задачи'];
 
 let browser;
@@ -267,8 +267,8 @@ try {
     await page.screenshot({ path: 'work/smoke/desktop-broken-section.png' });
     await page.getByRole('button', { name: 'Попробовать снова' }).click();
     await page.locator('.error-boundary').waitFor({ timeout: 5000 });
-    await menu.getByRole('button', { name: /^Цели/ }).click();
-    await page.waitForFunction(() => !document.querySelector('.error-boundary') && (document.querySelector('main h1')?.textContent ?? '').startsWith('Цели'), null, { timeout: 5000 });
+    await menu.getByRole('button', { name: /^Проекты/ }).click();
+    await page.waitForFunction(() => !document.querySelector('.error-boundary') && (document.querySelector('main h1')?.textContent ?? '').startsWith('Проекты'), null, { timeout: 5000 });
     await menu.getByRole('button', { name: /^Главная/ }).click();
     await page.waitForFunction(() => (document.querySelector('main h1')?.textContent ?? '').startsWith('Привет'), null, { timeout: 5000 });
     assert.deepEqual(uncaught, [], 'Ошибка раздела не должна становиться необработанной');

@@ -133,7 +133,7 @@ try {
     await panel(page).getByText('Настройки сохранены в вашем аккаунте.',{exact:false}).waitFor();
     assert.equal(account(uid).settings.sphereLists.sport,'fitness');
     await panel(page).getByRole('button',{name:'Синхронизировать сейчас'}).click();
-    await panel(page).getByText('Связанные задачи целей синхронизированы.',{exact:true}).waitFor();
+    await panel(page).getByText('Связанные задачи проектов синхронизированы.',{exact:true}).waitFor();
     assert.equal(account(uid).creates,1); assert.equal((await stateOf(page,uid)).quests.length,1);
     // Изменение задачи в TickTick подхватывается фоновым обменом без ручного клика.
     account(uid).tasks.get('remote-task-'+uid).title='Изменено в TickTick';
@@ -162,12 +162,12 @@ try {
     assert.equal((await stateOf(page,uid)).xp,0);
     await ctx.setOffline(false);
     await page.waitForFunction(uid => JSON.parse(localStorage.getItem('ticktick-fixture-game:'+uid)).xp === 20, uid);
-    await panel(page).getByText('Связанные задачи целей синхронизированы.',{exact:true}).waitFor();
+    await panel(page).getByText('Связанные задачи проектов синхронизированы.',{exact:true}).waitFor();
     assert.equal((await stateOf(page,uid)).xp,20); assert.equal((await stateOf(page,uid)).quests[0].done,true);
     await page.reload();
     await panel(page).getByText('Доступ к TickTick подтверждён.',{exact:false}).waitFor();
     await panel(page).getByRole('button',{name:'Синхронизировать сейчас'}).click();
-    await panel(page).getByText('Связанные задачи целей синхронизированы.',{exact:true}).waitFor();
+    await panel(page).getByText('Связанные задачи проектов синхронизированы.',{exact:true}).waitFor();
     assert.equal((await stateOf(page,uid)).xp,20); assert.equal(account(uid).creates,1);
     // The application itself loads from localhost while its integration server is offline.
     account(uid).unavailable=true;

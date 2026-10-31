@@ -33,12 +33,12 @@ export function monthlyFocusGoals(state: GameState, now: Date = new Date()): Goa
 
 /** Добавляет или убирает цель из главных целей месяца (не больше трёх). */
 export function toggleMonthlyFocus(state: GameState, goalId: string, now: Date = new Date()): GameState {
-  if (!state.goals.some((g) => g.id === goalId)) throw new Error('Такой цели нет.');
+  if (!state.goals.some((g) => g.id === goalId)) throw new Error('Такого проекта нет.');
   const month = monthKey(now);
   const current = state.monthlyFocus?.month === month ? state.monthlyFocus.goalIds : [];
   if (current.includes(goalId)) {
     return { ...state, monthlyFocus: { month, goalIds: current.filter((id) => id !== goalId) } };
   }
-  if (current.length >= MAX_MONTHLY_FOCUS) throw new Error('Можно выбрать не больше трёх главных целей месяца.');
+  if (current.length >= MAX_MONTHLY_FOCUS) throw new Error('Можно выбрать не больше трёх главных проектов месяца.');
   return { ...state, monthlyFocus: { month, goalIds: [...current, goalId] } };
 }

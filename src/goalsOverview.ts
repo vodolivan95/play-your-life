@@ -35,7 +35,7 @@ export function pluralDays(count: number) {
 }
 
 export function deadlineLabel(goal: Goal, now = new Date()) {
-  if (isGoalDone(goal)) return 'Цель достигнута';
+  if (isGoalDone(goal)) return 'Проект завершён';
   const days = goalDaysLeft(goal, now);
   if (days === undefined) return 'Без срока';
   if (days < 0) return `Просрочено на ${pluralDays(-days)}`;

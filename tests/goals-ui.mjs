@@ -155,10 +155,10 @@ try {
     await workspace.waitFor();
     const tabs = workspace.locator('.gw-tabs');
     await workspace
-      .getByRole('button', { name: 'Изменить обложку цели' })
+      .getByRole('button', { name: 'Изменить обложку проекта' })
       .click();
     const coverEditor = page.locator('dialog[open]').filter({
-      has: page.getByRole('heading', { name: 'Настроить цель', exact: true }),
+      has: page.getByRole('heading', { name: 'Настроить проект', exact: true }),
     });
     const photo = await page.evaluate(
       (id) =>
@@ -175,7 +175,7 @@ try {
     await coverEditor
       .getByRole('button', { name: 'Заменить картинку' })
       .waitFor();
-    await coverEditor.getByRole('button', { name: 'Сохранить цель' }).click();
+    await coverEditor.getByRole('button', { name: 'Сохранить проект' }).click();
     assert.ok(
       await workspace.locator('.gw-banner-image').evaluate(async (img) => {
         await img.decode();
@@ -203,7 +203,7 @@ try {
     await workspace.locator('.gw-reward-content').click();
     await workspace
       .locator('dialog[open]')
-      .getByRole('heading', { name: '🏆 Награды цели', exact: true })
+      .getByRole('heading', { name: '🏆 Награды проекта', exact: true })
       .waitFor();
     await workspace
       .locator('dialog[open]')
@@ -289,7 +289,7 @@ try {
     );
     await stageA.getByRole('link', { name: 'Продолжить →' }).click({ force: true });
     await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.a}`);
-    await workspace.getByRole('link', { name: 'Перейти к цели →' }).click();
+    await workspace.getByRole('link', { name: 'Перейти к проекту →' }).click();
     await stageB
       .getByRole('button', { name: 'Раскрыть этап: Разговорная практика' })
       .click();
@@ -308,7 +308,7 @@ try {
       })
       .click();
     await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.b}`);
-    await workspace.getByRole('link', { name: 'Перейти к цели →' }).click();
+    await workspace.getByRole('link', { name: 'Перейти к проекту →' }).click();
     await stageA
       .getByRole('link', { name: 'Открыть этап: База A1–A2', exact: true })
       .click();
@@ -380,14 +380,14 @@ try {
       .click();
     // Общий прогресс — среднее по трём этапам: 50/0/0 округляется до 17%.
     await workspace
-      .getByRole('img', { name: 'Общий прогресс цели: 17%' })
+      .getByRole('img', { name: 'Общий прогресс проекта: 17%' })
       .waitFor();
     await workspace.getByRole('img', { name: 'Прогресс этапа: 50%' }).waitFor();
     await workspace
       .getByRole('button', { name: 'Выполнить: Выучить слова', exact: true })
       .click();
     await workspace
-      .getByRole('img', { name: 'Общий прогресс цели: 33%' })
+      .getByRole('img', { name: 'Общий прогресс проекта: 33%' })
       .waitFor();
     await workspace
       .getByRole('img', { name: 'Прогресс этапа: 100%' })
@@ -404,14 +404,14 @@ try {
       false,
       'после загрузки выполненную задачу можно снова открыть',
     );
-    await workspace.getByRole('link', { name: 'Перейти к цели →' }).click();
+    await workspace.getByRole('link', { name: 'Перейти к проекту →' }).click();
     await stageB.locator('.gw-stage-tasks').waitFor();
     assert.ok(
       await stageB.evaluate((el) => el.classList.contains('gw-stage-active')),
     );
     await workspace
       .locator('.gw-banner')
-      .getByRole('img', { name: 'Общий прогресс цели: 33%' })
+      .getByRole('img', { name: 'Общий прогресс проекта: 33%' })
       .waitFor();
     await tabs.getByRole('button', { name: 'Этапы', exact: true }).click();
     await workspace
@@ -477,7 +477,7 @@ try {
       await tabs.getByRole('button', { name, exact: true }).click();
     // Пустой ручной этап входит в среднее, поэтому проект завершён только
     // после явного завершения этапа и выполнения оставшейся задачи.
-    await workspace.getByRole('link', { name: 'Перейти к цели →' }).click();
+    await workspace.getByRole('link', { name: 'Перейти к проекту →' }).click();
     // Две другие стадии для проверки завершения проекта подготавливаются
     // доменными функциями; ниже UI-сценарий проверяет последнюю задачу и награду.
     await page.evaluate(async ({ id, b, c }) => {
@@ -499,7 +499,7 @@ try {
       .getByRole('button', { name: 'Выполнить: Посмотреть фильм', exact: true })
       .click();
     await workspace
-      .getByRole('img', { name: 'Общий прогресс цели: 100%' })
+      .getByRole('img', { name: 'Общий прогресс проекта: 100%' })
       .waitFor();
     const saved = await page.evaluate(() =>
       JSON.parse(localStorage.getItem('play-your-life-v1')),
@@ -624,7 +624,7 @@ try {
       location.hash = `/goals/${id}`;
     }, ids.manual);
     await workspace
-      .getByRole('img', { name: 'Общий прогресс цели: 68%' })
+      .getByRole('img', { name: 'Общий прогресс проекта: 68%' })
       .waitFor();
     await page.evaluate(() => {
       const state = JSON.parse(localStorage.getItem('play-your-life-v1'));

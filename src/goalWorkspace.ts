@@ -68,7 +68,7 @@ export function stageMetrics(
 }
 export function stageAccess(state: GameState, goal: Goal, stage: GoalStage) {
   if (stage.status === 'locked')
-    return 'Этот этап заблокирован в настройках цели.';
+    return 'Этот этап заблокирован в настройках проекта.';
   if (stage.prerequisiteId) {
     const prior = goal.stages?.find((s) => s.id === stage.prerequisiteId);
     if (!prior)
@@ -218,7 +218,7 @@ export function goalHistory(
           {
             id: `created:${stageId ?? goal.id}`,
             sphere: goal.sphere,
-            title: stageId ? 'Этап создан' : 'Цель создана',
+            title: stageId ? 'Этап создан' : 'Проект создан',
             xp: 0,
             date: created,
             kind: 'planning' as const,

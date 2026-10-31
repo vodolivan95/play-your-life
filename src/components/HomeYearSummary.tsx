@@ -16,7 +16,7 @@ export function HomeYearSummary({ state, onSphere }: HomeYearSummaryProps) {
   const kpis = [
     { label: 'XP за год', value: String(report.xp), unit: 'XP', note: 'все игровые источники XP' },
     { label: 'Задач выполнено', value: String(report.quests), unit: '', note: 'только игровые задания' },
-    { label: 'Целей достигнуто', value: String(report.goals), unit: '', note: 'события достижения цели' },
+    { label: 'Проектов достигнуто', value: String(report.goals), unit: '', note: 'события достижения проекта' },
     { label: 'Активных дней', value: String(report.activeDays), unit: `из ${report.daysPassed}`, note: report.activeDays ? 'дни с игровой активностью' : 'пока нет игровых дней' },
     {
       label: 'Привычки',
@@ -81,7 +81,7 @@ export function HomeYearSummary({ state, onSphere }: HomeYearSummaryProps) {
       </div>
 
       {report.partial && (
-        <p className="hys-note">ⓘ Подробный учёт задач, целей и оценок сфер {report.trackingSince ? `ведётся с ${new Date(report.trackingSince).toLocaleDateString('ru-RU')}` : 'ещё не начат'}. Часть ранних записей года может быть неполной; XP из сохранённой истории включён.</p>
+        <p className="hys-note">ⓘ Подробный учёт задач, проектов и оценок сфер {report.trackingSince ? `ведётся с ${new Date(report.trackingSince).toLocaleDateString('ru-RU')}` : 'ещё не начат'}. Часть ранних записей года может быть неполной; XP из сохранённой истории включён.</p>
       )}
 
       <section className="hys-card hys-spheres" aria-labelledby="home-year-spheres-title">

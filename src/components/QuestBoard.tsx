@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
-import { removeQuest, reopenQuest } from "../game";
+import { questsForToday, removeQuest, reopenQuest } from "../game";
 import type { GameState, Quest } from "../game";
 import {
   progressQuest,
@@ -14,6 +14,7 @@ import { pluralDays } from "../goalsOverview";
 import { updateTaskSettings } from "../taskSettings";
 import QuestWizard from "./QuestWizard";
 import GoalTaskList from "./GoalTaskList";
+import TodayTasks from "./TodayTasks";
 import TaskWindow from "./TaskWindow";
 import TasksSummary from "./TasksSummary";
 import TasksCalendar from "./TasksCalendar";
@@ -23,8 +24,9 @@ import { TickTickContext } from "../tickTickContext";
 import "./QuestBoard.css";
 import "./TasksAside.css";
 
-type Mode = "inbox" | "list" | "calendar" | "plan";
+type Mode = "today" | "inbox" | "list" | "calendar" | "plan";
 const modes: [Mode, string][] = [
+  ["today", "Задачи на сегодня"],
   ["inbox", "Входящие"],
   ["list", "Список"],
   ["calendar", "Календарь"],
@@ -70,6 +72,9 @@ export default function QuestBoard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const quests = state.quests.filter((q) => !q.ownerId || q.ownerId === ownerId);
+  const todayCount = questsForToday(state).filter(
+    (q) => !q.done && (!q.ownerId || q.ownerId === ownerId),
+  ).length;
   const connected = Boolean(
     manager?.connection && manager.connected && state.profile.mode !== "demo",
   );
@@ -123,6 +128,9 @@ export default function QuestBoard({
               onClick={() => setMode(id)}
             >
               {label}
+              {id === "today" && todayCount ? (
+                <b className="pyl-tasks-badge">{todayCount}</b>
+              ) : null}
               {id === "inbox" && manager?.incoming.length ? (
                 <b className="pyl-tasks-badge">{manager.incoming.length}</b>
               ) : null}
@@ -135,6 +143,15 @@ export default function QuestBoard({
       <TasksSummary quests={quests} today={today} />
       <div className="pyl-tasks-layout">
       <div className="pyl-tasks-main">
+      {mode === "today" && (
+        <TodayTasks
+          state={state}
+          quests={quests}
+          today={today}
+          onOpen={setOpenTask}
+          onProgress={startProgress}
+        />
+      )}
       {mode === "inbox" &&
         (connected ? (
           <TickTickInbox state={state} onChange={onChange} />

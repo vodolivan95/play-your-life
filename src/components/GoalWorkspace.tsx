@@ -1589,7 +1589,7 @@ export default function GoalWorkspace(p: Props) {
                   </Card>
                   <Card title="Фокус на эту неделю" icon="◎">
                     <button
-                      className="gw-motivation"
+                      className="gw-weekly-focus-btn"
                       onClick={() => setDetail({ kind: 'weeklyFocus' })}
                     >
                       {goal.weeklyFocus ||

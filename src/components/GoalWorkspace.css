@@ -656,7 +656,8 @@
   margin-top: 15px;
   font-size: 12px;
 }
-.gw-motivation {
+.gw-motivation,
+.gw-weekly-focus-btn {
   display: flex;
   justify-content: space-between;
   gap: 12px;
@@ -672,7 +673,8 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-.gw-motivation span {
+.gw-motivation span,
+.gw-weekly-focus-btn span {
   color: #008fed;
   flex-shrink: 0;
 }

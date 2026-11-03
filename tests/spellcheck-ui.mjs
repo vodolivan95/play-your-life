@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
-import { newAccountGame } from '../src/accountGame.ts';
 
 await mkdir('work', { recursive: true });
 execFileSync(process.execPath, ['scripts/build-spell-dictionaries.mjs'], { stdio: 'inherit' });
@@ -76,10 +75,14 @@ try {
     page.on('requestfailed', request => { if (request.url().startsWith('http://127.0.0.1:5178/')) errors.push(`request failed: ${request.url()} ${request.failure()?.errorText}`); });
     page.on('response', response => { if (/spellcheck|worker/i.test(response.url())) responses.push(`${response.status()} ${response.url()}`); });
     page.on('worker', worker => responses.push(`worker started: ${worker.url()}`));
-    const state = newAccountGame('Игрок');
-    state.profile.onboardingComplete = true;
-    await page.addInitScript(value => localStorage.setItem('play-your-life-v1', JSON.stringify(value)), state);
     await page.goto('http://127.0.0.1:5178/');
+    await page.evaluate(async () => {
+      const { newAccountGame } = await import('/src/accountGame.ts');
+      const state = newAccountGame('Игрок');
+      state.profile.onboardingComplete = true;
+      localStorage.setItem('play-your-life-v1', JSON.stringify(state));
+    });
+    await page.reload();
     await page.getByRole('button', { name: 'Продолжить игру на этом устройстве' }).click();
     await openTasks(page, mobile);
     await page.getByRole('button', { name: '＋ Новая задача' }).first().click();

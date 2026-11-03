@@ -4,11 +4,13 @@ import { createRoot } from 'react-dom/client';
 import AccountRoot from './AccountRoot';
 import ErrorBoundary from './components/ErrorBoundary';
 import { preloadCityAssets } from './cityLive/preload';
+import { enableNativeSpellcheck } from './spellcheck';
 import './styles.css';
 import './interface.css';
 import './components/PlayerAppearance.css';
 import './components/AdaptiveLayout.css';
 const SportRoomDemo = lazy(() => import('./components/room3d/SportRoomDemo'));
+enableNativeSpellcheck();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

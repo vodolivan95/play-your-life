@@ -44,6 +44,8 @@ jobs:
           node-version-file: .nvmrc
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - name: Verify local Russian and English spelling suggestions
+        run: npm run test:spellcheck-ui
       - name: Verify homepage month focus and yearly summary (local fixture only)
         run: node --experimental-strip-types --no-warnings tests/home-ui.mjs
       - run: npm run test:quests-ui
@@ -69,6 +71,7 @@ jobs:
             work/ticktick/*.png
             work/theme/*.png
             work/spheres/*.png
+            work/spellcheck-*.png
 
   live-city-ui:
     runs-on: ubuntu-latest

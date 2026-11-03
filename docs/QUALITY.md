@@ -10,11 +10,11 @@
 | Правила Firestore в эмуляторе | `tests/firebase-rules.test.mjs` | `firestore-rules` |
 | Обход всех разделов на ПК и телефоне | `npm run test:smoke-ui` | `sections-ui` |
 | Ключевые итоги и отчёт месяца | `npm run test:key-results-ui`, `npm run test:month-report-ui` | `sections-ui` |
-| Задачи, цели, тема, сферы, TickTick | `npm run test:quests-ui`, `test:tasks-calendar`, `test:goals-ui`, `test:theme-ui`, `test:spheres-ui` | `quests-ui` |
+| Задачи, цели, тема, сферы, TickTick, RU/EN spellcheck | `npm run test:quests-ui`, `test:tasks-calendar`, `test:goals-ui`, `test:theme-ui`, `test:spheres-ui`, `test:spellcheck-ui` | `quests-ui` |
 | Живой город | `npm run test:live-city` | `live-city-ui` |
 
 ## Орфография в полях ввода
-`src/spellcheck.ts` добавляет `spellcheck="true"` к текстовым полям, многострочным полям и редактируемым областям, включая динамически появляющиеся; email и пароли исключены. Красное подчёркивание и варианты исправления показывает сам браузер. Для русского и английского пользователь должен включить соответствующие словари в браузере или клавиатуре устройства.
+`src/spellcheck.ts` показывает отдельные ошибки красной волнистой линией и контекстное меню замен в обычных `input[type=text|search]` и `textarea`, включая динамические React-формы. Локальный worker `nspell` использует русский и английский словари; поля email, password, URL и числовые поля исключены. Поведение, лицензии и ограничения описаны в [`docs/SPELLCHECK.md`](./SPELLCHECK.md). Проверка словаря — `tests/spellcheck.test.ts`; desktop/mobile UI и замена текста в управляемых React-полях — `npm run test:spellcheck-ui`.
 
 ## Общие проверки проекта
 

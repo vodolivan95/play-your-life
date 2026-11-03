@@ -9,6 +9,7 @@ import './styles.css';
 import './interface.css';
 import './components/PlayerAppearance.css';
 import './components/AdaptiveLayout.css';
+import './spellcheck.css';
 const SportRoomDemo = lazy(() => import('./components/room3d/SportRoomDemo'));
 enableNativeSpellcheck();
 

@@ -1,0 +1,99 @@
+.spellcheck-mirror {
+  position: fixed;
+  z-index: 2147483000;
+  margin: 0;
+  border-radius: 0;
+  background: transparent;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  contain: layout paint;
+}
+
+.spellcheck-mirror[hidden] {
+  display: none;
+}
+
+.spellcheck-mirror-content {
+  min-height: 100%;
+  transform-origin: top left;
+}
+
+.spellcheck-error-word {
+  text-decoration-line: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: #dc2626;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 2px;
+}
+
+.spellcheck-placeholder {
+  color: var(--spellcheck-placeholder-color);
+  opacity: .62;
+}
+
+.spellcheck-popover {
+  position: fixed;
+  z-index: 2147483001;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: 210px;
+  max-width: min(320px, calc(100vw - 16px));
+  max-height: min(260px, calc(100vh - 16px));
+  overflow: auto;
+  padding: 10px;
+  border: 1px solid rgba(126, 157, 203, .45);
+  border-radius: 12px;
+  background: #fff;
+  color: #18243a;
+  box-shadow: 0 10px 34px rgba(5, 13, 30, .28);
+  font: 500 14px/1.35 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.spellcheck-popover-heading {
+  padding: 1px 4px 8px;
+  color: #66738b;
+  font-size: 12px;
+}
+
+.spellcheck-popover-choices {
+  display: grid;
+  gap: 4px;
+}
+
+.spellcheck-suggestion {
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.spellcheck-suggestion:hover,
+.spellcheck-suggestion:focus-visible {
+  outline: 2px solid #3898ff;
+  outline-offset: -2px;
+  background: #edf5ff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .spellcheck-popover {
+    border-color: rgba(150, 174, 211, .4);
+    background: #182239;
+    color: #edf3ff;
+  }
+
+  .spellcheck-popover-heading {
+    color: #b1bfd4;
+  }
+
+  .spellcheck-suggestion:hover,
+  .spellcheck-suggestion:focus-visible {
+    background: #283956;
+  }
+}

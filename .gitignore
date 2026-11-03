@@ -10,6 +10,8 @@ dist/
 
 # Авторские GLB воспроизводимо собираются из scripts/build-city-models.mjs
 public/models/city/
+public/spellcheck/*.dict
+public/spellcheck/LICENSE-*.txt
 
 # Временные проверки и рабочие файлы агента
 work/

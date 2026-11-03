@@ -1,14 +1,14 @@
 {
   "name": "play-your-life",
   "private": true,
-  "version": "0.66.1",
+  "version": "0.66.2",
   "type": "module",
   "engines": {
     "node": ">=24 <25"
   },
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
-    "build": "node scripts/build-city-models.mjs && node scripts/build-dark-theme.mjs && tsc -b && tsc -p integrations/ticktick/tsconfig.json && vite build",
+    "dev": "node scripts/build-spell-dictionaries.mjs && vite --host 0.0.0.0",
+    "build": "node scripts/build-spell-dictionaries.mjs && node scripts/build-city-models.mjs && node scripts/build-dark-theme.mjs && tsc -b && tsc -p integrations/ticktick/tsconfig.json && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "tsc -b && tsc -p integrations/ticktick/tsconfig.json",
     "lint": "eslint . --max-warnings 0",
@@ -25,13 +25,15 @@
     "test:key-results-ui": "node tests/key-results-ui.mjs",
     "test:month-report-ui": "node tests/month-report-ui.mjs",
     "test:smoke-ui": "node --experimental-strip-types --no-warnings tests/smoke-ui.mjs",
-    "check:budgets": "node scripts/check-budgets.mjs"
+    "check:budgets": "node scripts/check-budgets.mjs",
+    "test:spellcheck-ui": "node tests/spellcheck-ui.mjs"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "^5.3.0",
     "@react-three/drei": "^10.7.0",
     "@react-three/fiber": "^9.3.0",
     "firebase": "12.19.0",
+    "nspell": "^2.1.5",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "three": "^0.180.0"
@@ -44,6 +46,8 @@
     "@types/react-dom": "^19.2.0",
     "@types/three": "^0.180.0",
     "@vitejs/plugin-react": "^5.1.0",
+    "dictionary-en": "^4.0.0",
+    "dictionary-ru": "^3.0.0",
     "eslint": "^10.14.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",

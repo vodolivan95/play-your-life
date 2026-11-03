@@ -11,7 +11,9 @@ let browser;
 async function replaceWord(page, field, word, expected, diagnostics) {
   const fieldId = `spellcheck-test-${expected}`;
   await field.evaluate((element, id) => { element.id = id; }, fieldId);
+  await field.focus();
   await field.fill(word);
+  assert.equal(await field.inputValue(), word, 'Ввод должен сохраняться в поле до ответа проверки орфографии');
   try {
     await page.waitForFunction(value => Array.from(document.querySelectorAll('.spellcheck-error-word')).some(node => node.textContent === value), word, { timeout: 30000 });
   } catch (error) {
@@ -57,7 +59,7 @@ try {
   browser = await chromium.launch({ executablePath: process.env.LIFEGAME_CHROMIUM_PATH || undefined, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 
   for (const mobile of [false, true]) {
-    const context = await browser.newContext({ viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 1000 }, isMobile: mobile, hasTouch: mobile });
+    const context = await browser.newContext({ viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 1000 } });
     const page = await context.newPage();
     const errors = [];
     const responses = [];

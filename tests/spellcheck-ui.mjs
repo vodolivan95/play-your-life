@@ -17,7 +17,7 @@ async function replaceWord(page, field, word, expected, diagnostics) {
   try {
     await page.waitForFunction(value => Array.from(document.querySelectorAll('.spellcheck-error-word')).some(node => node.textContent === value), word, { timeout: 30000 });
   } catch (error) {
-    console.error('Spellcheck diagnostics:', await page.evaluate(() => ({ url: location.href, body: document.body.innerText, fields: Array.from(document.querySelectorAll('input,textarea')).map(el => ({ tag: el.tagName, type: el.type, spellcheck: el.getAttribute('spellcheck'), active: el === document.activeElement, color: getComputedStyle(el).color, value: el.value })), overlay: Boolean(document.querySelector('.spellcheck-mirror')), popup: document.querySelector('.spellcheck-popover')?.textContent, workerError: document.documentElement.dataset.spellcheckError })), 'page/worker errors:', diagnostics.errors, 'worker and dictionary requests:', diagnostics.responses);
+    console.error('Spellcheck diagnostics:', await page.evaluate(() => ({ url: location.href, body: document.body.innerText, fields: Array.from(document.querySelectorAll('input,textarea')).map(el => ({ tag: el.tagName, type: el.type, spellcheck: el.getAttribute('spellcheck'), active: el === document.activeElement, color: getComputedStyle(el).color, value: el.value })), overlay: Boolean(document.querySelector('.spellcheck-mirror')), popup: document.querySelector('.spellcheck-popover')?.textContent, workerError: document.documentElement.dataset.spellcheckError })), 'field events:', diagnostics.fieldEvents, 'page/worker errors:', diagnostics.errors, 'worker and dictionary requests:', diagnostics.responses);
     throw error;
   }
   const underline = page.locator('.spellcheck-error-word').filter({ hasText: word }).first();
@@ -63,13 +63,22 @@ try {
     const page = await context.newPage();
     const errors = [];
     const responses = [];
+    const fieldEvents = [];
+    await page.exposeFunction('recordSpellcheckEvent', event => fieldEvents.push(event));
     page.on('pageerror', error => errors.push(error.message));
     page.on('console', message => { if (message.type() === 'error') errors.push(`console: ${message.text()}`); });
     page.on('requestfailed', request => { if (request.url().startsWith('http://127.0.0.1:5178/')) errors.push(`request failed: ${request.url()} ${request.failure()?.errorText}`); });
     page.on('response', response => { if (/spellcheck|worker/i.test(response.url())) responses.push(`${response.status()} ${response.url()}`); });
     page.on('worker', worker => responses.push(`worker started: ${worker.url()}`));
     await page.goto('http://127.0.0.1:5178/tests/fixtures/spellcheck.html');
-    await replaceWord(page, page.getByLabel('Название задачи'), 'projct', 'project', { errors, responses, view: mobile ? 'mobile' : 'desktop' });
+    await page.evaluate(() => {
+      for (const type of ['focusin', 'focusout', 'input', 'change']) document.addEventListener(type, event => {
+        if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+          void window.recordSpellcheckEvent({ type, value: event.target.value, active: document.activeElement === event.target, time: performance.now() });
+        }
+      }, true);
+    });
+    await replaceWord(page, page.getByLabel('Название задачи'), 'projct', 'project', { errors, responses, fieldEvents, view: mobile ? 'mobile' : 'desktop' });
     await replaceWord(page, page.getByLabel('Комментарий'), 'превет', 'привет', { errors, responses });
     assert.deepEqual(errors, [], `Ошибки браузера на ${mobile ? 'телефоне' : 'desktop'}`);
     await context.close();

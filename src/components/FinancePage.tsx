@@ -454,13 +454,17 @@ export default function FinancePage({
                                 : `след. платёж ${paymentDayLabel(p.nextDate)} · ${p.autopay ? 'автосписание' : 'вручную'}`}
                             </small>
                           </span>
-                          <span className="fin-payment-badge">{paymentIntervalLabel(p.interval)}</span>
-                          <span className={pending ? 'fin-row-amount fin-payment-status' : days < 0 ? 'fin-row-amount negative' : 'fin-row-amount'}>
-                            {pending ? 'ждёт' : daysLeftLabel(days)}
+                          <span className="fin-payment-meta">
+                            <span className="fin-payment-meta-top">
+                              <span className="fin-payment-badge">{paymentIntervalLabel(p.interval)}</span>
+                              <span className={pending ? 'fin-payment-status' : days < 0 ? 'fin-payment-status negative' : 'fin-payment-status'}>
+                                {pending ? 'ждёт' : daysLeftLabel(days)}
+                              </span>
+                            </span>
+                            <strong className={p.amount === null ? 'fin-payment-amount unknown' : 'fin-payment-amount'}>
+                              {p.amount === null ? 'уточнить' : money(p.amount)}
+                            </strong>
                           </span>
-                          <strong className={p.amount === null ? 'fin-payment-amount unknown' : 'fin-payment-amount'}>
-                            {p.amount === null ? 'уточнить' : money(p.amount)}
-                          </strong>
                         </button>
                         <button type="button" className="icon-button" aria-label={`Удалить платёж: ${p.name}`} onClick={() => removePaymentEntry(p.id)}>
                           <Icon name="trash" size={16} />

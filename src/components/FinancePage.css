@@ -90,9 +90,19 @@
 .fin-payment-filters button.active { border: 1.5px solid #4d8bff; background: linear-gradient(135deg, rgba(77,139,255,.22), rgba(155,123,255,.18)); color: #1c2a44; font-weight: 800; }
 :root[data-theme="dark"] .fin-payment-filters button.active { color: #fff; }
 
-.fin-payment-row .fin-row-main { gap: 10px; flex-wrap: wrap; }
+.fin-payment-row .fin-row-main { gap: 12px; flex-wrap: nowrap; padding-right: 14px; }
+.fin-payment-row .fin-row-text { flex: 1 1 auto; }
+.fin-payment-meta { flex: 0 0 auto; margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.fin-payment-meta-top { display: flex; align-items: center; gap: 6px; }
 .fin-payment-badge { font-size: 10px; font-weight: 700; color: #50607a; background: var(--chip-bg, #eef2f9); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
 :root[data-theme="dark"] .fin-payment-badge { background: #141b30; color: #97aad7; }
-.fin-payment-status { color: #7a879e; font-weight: 600; font-size: 11px; }
+.fin-payment-status { color: #7a879e; font-weight: 600; font-size: 11px; white-space: nowrap; }
+.fin-payment-status.negative { color: #c5423e; }
 .fin-payment-amount { font-size: 13px; font-weight: 700; white-space: nowrap; }
 .fin-payment-amount.unknown { font-style: italic; font-weight: 600; color: #7a879e; }
+
+@media (max-width: 760px) {
+  .fin-payment-row .fin-row-main { flex-wrap: wrap; padding-right: 6px; }
+  .fin-payment-meta { width: 100%; flex-direction: row; align-items: center; justify-content: space-between; margin-left: 0; padding-left: 42px; }
+  .fin-payment-meta-top { gap: 8px; }
+}

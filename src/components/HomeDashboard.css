@@ -268,8 +268,8 @@
 /* Главная: правая колонка — обёртка нескольких карточек (цитата / серия / баланс / выполнено за неделю). */
 .home-dashboard .home-right-stack { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .home-dashboard .home-right-stack .home-streak { min-height: 0; }
-.home-quote-label, .home-balance-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #7e87ab; margin-bottom: 10px; }
-.home-quote-text { font-style: italic; font-size: 15px; line-height: 1.5; color: #20314f; margin: 0; }
+.home-quote-label, .home-balance-label { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #7e87ab; margin-bottom: 10px; }
+.home-dashboard p.home-quote-text { font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 16px; line-height: 1.5; color: #20314f; margin: 0; }
 .home-balance-row { display: flex; align-items: center; }
 .home-balance-row > div { flex: 1; text-align: center; padding: 2px 4px; }
 .home-balance-row > div + div { border-left: 1px solid #e7eff9; }
@@ -286,7 +286,7 @@
 .home-week-done-bars small { font-size: 10.5px; color: #7e87ab; }
 .home-week-done-bars .is-today small { color: #b97a05; font-weight: 700; }
 .home-dashboard[data-theme='dark'] .home-quote-label, .home-dashboard[data-theme='dark'] .home-balance-label { color: #9fb2db; }
-.home-dashboard[data-theme='dark'] .home-quote-text { color: #f0eee4; }
+.home-dashboard[data-theme='dark'] p.home-quote-text { color: #f0eee4; }
 .home-dashboard[data-theme='dark'] .home-balance-row > div + div { border-left-color: #96b9ff29; }
 .home-dashboard[data-theme='dark'] .home-balance-row strong, .home-dashboard[data-theme='dark'] .home-week-done-total strong { color: #fff; }
 .home-dashboard[data-theme='dark'] .home-balance-row small, .home-dashboard[data-theme='dark'] .home-week-done-total span { color: #9fb2db; }

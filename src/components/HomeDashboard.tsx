@@ -34,7 +34,18 @@ export default function HomeDashboard({
   const tickTick = useContext(TickTickContext);
   const [theme] = useMenuTheme();
   const now = new Date();
-  const tasks = questsForToday(state, now);
+  // На главной показываем только настоящие сегодняшние задачи, без просроченных
+  // «хвостов» из прошлых дней (их список — на вкладке «Мои задачи» → «Просрочено»):
+  // иначе модуль разрастается на экраны вниз и перестаёт помещаться вровень с
+  // правой колонкой. `questsForToday()` (используется в счётчиках меню и других
+  // местах) специально включает и просрочку — здесь фильтруем дополнительно,
+  // саму функцию не трогаем.
+  const todayKey = localDate(now);
+  const tasks = questsForToday(state, now).filter((q) => {
+    if (q.done) return true;
+    const due = q.dueAt ?? q.startsAt;
+    return !due || localDate(new Date(due)) === todayKey;
+  });
   const peaks = monthlyFocusGoals(state, now).map(goal => goalPeak(state, goal, now));
   const currentStreak = streak(state.activeDates);
   const monday = new Date(now);

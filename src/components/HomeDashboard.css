@@ -249,7 +249,8 @@
 
 /* Главная 0.59.0: баннер → задачи и серия → сводка за год. */
 .home-dashboard > .peak-banner { grid-column: 1 / -1; min-width: 0; }
-.home-dashboard .home-today { grid-column: 1; grid-row: 2; }
+.home-dashboard .home-today { grid-column: 1; grid-row: 2; display: flex; flex-direction: column; }
+.home-dashboard .home-today .home-all-tasks { margin-top: auto; padding-top: 14px; }
 .home-dashboard .home-streak { grid-column: 2; grid-row: 2; }
 .home-dashboard > .home-year-summary { grid-column: 1 / -1; min-width: 0; }
 .profile-account .account-bar { margin: 0; }

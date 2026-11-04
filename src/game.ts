@@ -880,6 +880,61 @@ export function questsForToday(state: GameState, now = new Date()): Quest[] {
       );
     });
 }
+/** Опыт, лайфкоины и выполненные сегодня привычки — для карточки «Баланс сегодня» на главной. */
+export function todayEarnings(state: GameState, now = new Date()) {
+  const today = dateKey(now);
+  const xp = state.events
+    .filter((e) => dateKey(new Date(e.date)) === today)
+    .reduce((sum, e) => sum + (e.xp || 0), 0);
+  const coins = (state.coinTransactions ?? [])
+    .filter((t) => dateKey(new Date(t.createdAt)) === today)
+    .reduce((sum, t) => sum + t.amount, 0);
+  const todayWeekday = now.getDay();
+  const scheduled = (state.habits ?? []).filter(
+    (h) => h.isActive && h.weekdays.includes(todayWeekday),
+  );
+  const completedHabitIds = new Set(
+    (state.habitCompletions ?? [])
+      .filter((c) => c.day === today)
+      .map((c) => c.habitId),
+  );
+  const habitsDone = scheduled.filter((h) => completedHabitIds.has(h.id)).length;
+  return { xp, coins, habitsDone, habitsTotal: scheduled.length };
+}
+/** Выполненные задачи по дням текущей недели (Пн–Вс) — для карточки «Выполнено за неделю» на главной. */
+export function weekCompletedQuests(state: GameState, now = new Date()) {
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return dateKey(d);
+  });
+  const questEvent = (e: Event) => e.kind === 'quest' || e.kind === undefined;
+  const sphereCounts: Record<string, number> = {};
+  const counts = days.map((day) => {
+    let count = 0;
+    for (const e of state.events) {
+      if (!questEvent(e) || dateKey(new Date(e.date)) !== day) continue;
+      count++;
+      sphereCounts[e.sphere] = (sphereCounts[e.sphere] ?? 0) + 1;
+    }
+    return count;
+  });
+  const total = counts.reduce((sum, c) => sum + c, 0);
+  let topSphereId: string | null = null;
+  let topCount = 0;
+  for (const [sphereId, count] of Object.entries(sphereCounts)) {
+    if (count > topCount) {
+      topSphereId = sphereId;
+      topCount = count;
+    }
+  }
+  const topSphereName = topSphereId
+    ? spheres.find((s) => s.id === topSphereId)?.name ?? null
+    : null;
+  return { days, counts, total, topSphereName };
+}
 /**
  * Достижение, уже полученное в прежних версиях действием «Life Score → 9», сохраняется.
  * Самооценка 9 при первом запуске (без такого события) достижение не открывает.

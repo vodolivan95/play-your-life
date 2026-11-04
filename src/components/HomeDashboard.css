@@ -263,3 +263,36 @@
 @media (max-width: 760px) {
   .app-shell:not(.app-page-home) .main-wrap > .topbar { display: none; }
 }
+
+/* Главная: правая колонка — обёртка нескольких карточек (цитата / серия / баланс / выполнено за неделю). */
+.home-dashboard .home-right-stack { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.home-dashboard .home-right-stack .home-streak { min-height: 0; }
+.home-quote-label, .home-balance-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #7e87ab; margin-bottom: 10px; }
+.home-quote-text { font-style: italic; font-size: 15px; line-height: 1.5; color: #20314f; margin: 0; }
+.home-balance-row { display: flex; align-items: center; }
+.home-balance-row > div { flex: 1; text-align: center; padding: 2px 4px; }
+.home-balance-row > div + div { border-left: 1px solid #e7eff9; }
+.home-balance-row strong { display: block; font-size: 20px; font-weight: 800; color: #12264a; letter-spacing: -.2px; }
+.home-balance-row small { display: block; font-size: 11px; color: #7e87ab; margin-top: 3px; }
+.home-week-done-total { display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px; }
+.home-week-done-total strong { font-size: 28px; font-weight: 800; color: #12264a; letter-spacing: -.3px; }
+.home-week-done-total span { font-size: 12px; color: #7e87ab; }
+.home-week-done-bars { display: flex; justify-content: space-between; gap: 8px; }
+.home-week-done-bars > div { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 7px; }
+.home-week-done-bar-track { width: 100%; max-width: 20px; height: 52px; display: flex; align-items: flex-end; }
+.home-week-done-bar-track > span { display: block; width: 100%; min-height: 2px; border-radius: 5px 5px 2px 2px; background: #d8e3f3; }
+.home-week-done-bars .is-today .home-week-done-bar-track > span { background: linear-gradient(180deg, #ffd56b, #f0a81c); }
+.home-week-done-bars small { font-size: 10.5px; color: #7e87ab; }
+.home-week-done-bars .is-today small { color: #b97a05; font-weight: 700; }
+.home-dashboard[data-theme='dark'] .home-quote-label, .home-dashboard[data-theme='dark'] .home-balance-label { color: #9fb2db; }
+.home-dashboard[data-theme='dark'] .home-quote-text { color: #f0eee4; }
+.home-dashboard[data-theme='dark'] .home-balance-row > div + div { border-left-color: #96b9ff29; }
+.home-dashboard[data-theme='dark'] .home-balance-row strong, .home-dashboard[data-theme='dark'] .home-week-done-total strong { color: #fff; }
+.home-dashboard[data-theme='dark'] .home-balance-row small, .home-dashboard[data-theme='dark'] .home-week-done-total span { color: #9fb2db; }
+.home-dashboard[data-theme='dark'] .home-week-done-bar-track > span { background: #ffffff1f; }
+.home-dashboard[data-theme='dark'] .home-week-done-bars .is-today .home-week-done-bar-track > span { background: linear-gradient(180deg, #ffe08a, #f0a81c); }
+.home-dashboard[data-theme='dark'] .home-week-done-bars small { color: #9fb2db; }
+.home-dashboard[data-theme='dark'] .home-week-done-bars .is-today small { color: #ffe08a; }
+@media (max-width: 900px) {
+  .home-dashboard .home-right-stack { grid-column: 1; grid-row: auto; }
+}

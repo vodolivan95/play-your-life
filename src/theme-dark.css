@@ -74,7 +74,12 @@
   color: #9fb2db;
 }
 :root[data-theme='dark'] .home-weather {
+  background: #0f1830b8;
+  border: 1px solid #96b9ff29;
   color: #e6ecfa;
+}
+:root[data-theme='dark'] .dashboard-avatar::after {
+  border-color: #0f1830;
 }
 
 /* Сферы жизни: «паутина» баланса в тёмной теме — тёмная сетка со светящимися нитями. */

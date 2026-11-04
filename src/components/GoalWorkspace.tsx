@@ -1595,7 +1595,7 @@ export default function GoalWorkspace(p: Props) {
                   {tab !== 'rewards' && rewards()}
                   <Card title="Конечный результат" icon="◇">
                     <button
-                      className="gw-motivation"
+                      className="gw-final-result"
                       onClick={() => setDetail({ kind: 'finalResult' })}
                     >
                       {goal.finalResult ||
@@ -1647,7 +1647,7 @@ export default function GoalWorkspace(p: Props) {
                         {activeStage.name}
                       </p>
                       <button
-                        className="gw-motivation"
+                        className="gw-stage-why"
                         onClick={() => setDetail({ kind: 'stageWhy' })}
                       >
                         {activeStage.whyImportant ||

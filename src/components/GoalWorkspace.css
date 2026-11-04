@@ -657,7 +657,9 @@
   font-size: 12px;
 }
 .gw-motivation,
-.gw-weekly-focus-btn {
+.gw-weekly-focus-btn,
+.gw-final-result,
+.gw-stage-why {
   display: flex;
   justify-content: space-between;
   gap: 12px;
@@ -674,7 +676,9 @@
   overflow-wrap: anywhere;
 }
 .gw-motivation span,
-.gw-weekly-focus-btn span {
+.gw-weekly-focus-btn span,
+.gw-final-result span,
+.gw-stage-why span {
   color: #008fed;
   flex-shrink: 0;
 }

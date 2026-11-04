@@ -53,6 +53,7 @@ import {
   hasClockTime,
 } from './game';
 import type { Quest, GameState } from './game';
+import type { SearchResult } from './globalSearch';
 import QuestBoard from './components/QuestBoard';
 import TaskWindow from './components/TaskWindow';
 import HabitsPage from './components/HabitsPage';
@@ -178,6 +179,30 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
     setFocusedGoalId(id); setGoalLocation(id ? { goalId: id } : null);
     window.location.hash = id ? goalRoute(id) : 'goals';
   }
+  function openSearchResult(result: SearchResult) {
+    switch (result.kind) {
+      case 'task':
+        setPendingTask(result.id);
+        navigate('tasks');
+        return;
+      case 'goal':
+        navigate('goals');
+        openGoal(result.id);
+        return;
+      case 'sphere':
+        navigate('spheres');
+        setSelected(result.id);
+        setSphereTab('overview');
+        return;
+      case 'city':
+        if (result.id) setCityEnter(result.id);
+        navigate('city');
+        return;
+      case 'achievement':
+        navigate('achievements');
+        return;
+    }
+  }
   function navigate(id: string) {
     if (id === 'profile') window.history.pushState(null, '', location.pathname + location.search + '#profile');
     else if (readGoalRoute() || location.hash === '#goals' || location.hash === '#profile' || location.hash.startsWith('#ticktick=')) window.history.pushState(null, '', location.pathname + location.search + (id === 'city' ? '#city' : ''));
@@ -298,7 +323,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
       >
         <AppSidebar page={page} state={state} questCount={questsForToday(state).filter((q) => !q.done).length + incomingForToday(tickTick.incoming).length} onNavigate={navigate} />
         <div className="main-wrap">
-          <header className="topbar"><DashboardHeader state={state} onProfile={() => navigate('profile')} onQuests={() => navigate('tasks')} /></header>
+          <header className="topbar"><DashboardHeader state={state} onProfile={() => navigate('profile')} onQuests={() => navigate('tasks')} onSearchResult={openSearchResult} /></header>
           <main
             className={`screen-${page} ${sphere ? 'screen-sphere-detail' : ''}`}
           >

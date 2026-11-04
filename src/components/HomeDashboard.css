@@ -78,7 +78,7 @@
 .sidebar-city > img { width:100%; height:190px; display:block; object-fit:cover; object-position:50% 52%; mask-image:linear-gradient(transparent,black 12%,black 82%,transparent); }
 .sidebar-city > .play-brand { margin:0 20px 15px; }
 .app-shell .main-wrap > .topbar { display:block; height:auto; min-height:78px; padding:16px 22px; }
-.dashboard-header { display:flex; gap:12px; align-items:center; width:100%; color:#284769; }
+.dashboard-header { display:flex; flex-wrap:wrap; gap:10px 12px; align-items:center; width:100%; color:#284769; }
 .dashboard-header-left { display:flex; align-items:center; gap:8px; flex:0 0 auto; }
 .dashboard-header-right { display:flex; align-items:center; gap:10px; flex:0 0 auto; }
 .dashboard-clock { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:800; font-variant-numeric:tabular-nums; background:#fff; padding:10px 14px 10px 10px; border-radius:12px; white-space:nowrap; }

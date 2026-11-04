@@ -81,6 +81,22 @@
 :root[data-theme='dark'] .dashboard-avatar::after {
   border-color: #0f1830;
 }
+:root[data-theme='dark'] .dashboard-search-results {
+  background: #0f1830;
+  border: 1px solid #96b9ff29;
+  box-shadow: 0 14px 34px #00000066;
+  color: #e6ecfa;
+}
+:root[data-theme='dark'] .dashboard-search-result:hover,
+:root[data-theme='dark'] .dashboard-search-result:focus-visible {
+  background: #96b9ff1f;
+}
+:root[data-theme='dark'] .dashboard-search-result-icon {
+  background: #ffffff14;
+}
+:root[data-theme='dark'] .dashboard-search-result-text small {
+  color: #9fb2db;
+}
 
 /* Сферы жизни: «паутина» баланса в тёмной теме — тёмная сетка со светящимися нитями. */
 :root[data-theme='dark'] .sphere-radar .radar-web {

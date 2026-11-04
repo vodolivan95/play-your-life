@@ -43,11 +43,23 @@
   color: #e6ecfa;
 }
 :root[data-theme='dark'] .dashboard-date,
+:root[data-theme='dark'] .dashboard-clock,
+:root[data-theme='dark'] .dashboard-search,
 :root[data-theme='dark'] .dashboard-metric,
 :root[data-theme='dark'] .dashboard-notifications summary {
   background: #0f1830b8;
   border: 1px solid #96b9ff29;
   color: #e6ecfa;
+}
+:root[data-theme='dark'] .dashboard-clock svg {
+  color: #34d399;
+}
+:root[data-theme='dark'] .dashboard-search:focus-within {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px #8b5cf62e;
+}
+:root[data-theme='dark'] .dashboard-search input::placeholder {
+  color: #7f92bd;
 }
 :root[data-theme='dark'] .dashboard-notifications > div {
   background: #0f1830;

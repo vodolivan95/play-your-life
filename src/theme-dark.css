@@ -51,6 +51,20 @@
   border: 1px solid #96b9ff29;
   color: #e6ecfa;
 }
+:root[data-theme='dark'] .dashboard-clock {
+  border-right: none;
+}
+:root[data-theme='dark'] .dashboard-date {
+  border-left: 1px solid #96b9ff29;
+}
+@media(max-width:760px) {
+  :root[data-theme='dark'] .dashboard-clock {
+    border-right: 1px solid #96b9ff29;
+  }
+  :root[data-theme='dark'] .dashboard-date {
+    border-left: 1px solid #96b9ff29;
+  }
+}
 :root[data-theme='dark'] .dashboard-clock svg {
   color: #34d399;
 }

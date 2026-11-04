@@ -456,6 +456,12 @@
 :root[data-theme="dark"] .gw-practice-session { border: 1px solid #374c62; background: #151d33; }
 :root[data-theme="dark"] .gw-practice-step { color: #b6c4e3; }
 :root[data-theme="dark"] .gw-practice-history { color: #9dafda; }
+:root[data-theme="dark"] .gw-stage-why-title { color: #acbce0; }
+:root[data-theme="dark"] .gw-weekly-focus-goal-controls { color: #acbce0; }
+:root[data-theme="dark"] .gw-weekly-focus-goal-controls .gw-icon-button { border: 1px solid #3c4c5d; background: #141c31; }
+:root[data-theme="dark"] .gw-woop-list div { background: #141c31; }
+:root[data-theme="dark"] .gw-woop-list dd { color: #9cb9dc; }
+:root[data-theme="dark"] .gw-if-then-list li span b { color: #9cb9dc; }
 
 /* components/GoalsOverview.css */
 :root[data-theme="dark"] .gl-tile { background: #151d33; }

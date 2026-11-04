@@ -5,6 +5,8 @@ import {
   syncGoalTasks,
   MAX_GOAL_CHECKPOINTS,
   GOAL_CHECKPOINT_TEXT_MAX,
+  MAX_GOAL_IF_THEN_RULES,
+  GOAL_IF_THEN_TEXT_MAX,
 } from './game.ts';
 import {
   stageMetrics,
@@ -292,6 +294,58 @@ export function removeGoalCheckpoint(
     goals: state.goals.map((g) =>
       g.id === goalId
         ? { ...g, checkpoints: g.checkpoints!.filter((c) => c.id !== checkpointId) }
+        : g,
+    ),
+  };
+}
+/** Правило «Если — То» (implementation intentions) — заранее решённая реакция на препятствие. */
+export function addGoalIfThenRule(
+  state: GameState,
+  goalId: string,
+  ifText: string,
+  thenText: string,
+): GameState {
+  const goal = findGoal(state, goalId);
+  const trimmedIf = ifText.trim();
+  const trimmedThen = thenText.trim();
+  if (
+    !trimmedIf ||
+    !trimmedThen ||
+    trimmedIf.length > GOAL_IF_THEN_TEXT_MAX ||
+    trimmedThen.length > GOAL_IF_THEN_TEXT_MAX
+  )
+    throw new Error('Проверь текст правила «Если — То».');
+  const rules = goal.ifThenRules ?? [];
+  if (rules.length >= MAX_GOAL_IF_THEN_RULES)
+    throw new Error(`Не больше ${MAX_GOAL_IF_THEN_RULES} правил «Если — То» на проект.`);
+  return {
+    ...state,
+    goals: state.goals.map((g) =>
+      g.id === goalId
+        ? {
+            ...g,
+            ifThenRules: [
+              ...rules,
+              { id: crypto.randomUUID(), ifText: trimmedIf, thenText: trimmedThen },
+            ],
+          }
+        : g,
+    ),
+  };
+}
+export function removeGoalIfThenRule(
+  state: GameState,
+  goalId: string,
+  ruleId: string,
+): GameState {
+  const goal = findGoal(state, goalId);
+  if (!goal.ifThenRules?.some((r) => r.id === ruleId))
+    throw new Error('Правило не найдено.');
+  return {
+    ...state,
+    goals: state.goals.map((g) =>
+      g.id === goalId
+        ? { ...g, ifThenRules: g.ifThenRules!.filter((r) => r.id !== ruleId) }
         : g,
     ),
   };

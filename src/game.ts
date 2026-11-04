@@ -164,6 +164,8 @@ export type GoalStage = {
   rarity?: 'common' | 'rare' | 'epic' | 'legendary';
   startsAt?: string;
   dueAt?: string;
+  /** Свободный текст — почему именно этот этап важен (отдельно от общей мотивации проекта). */
+  whyImportant?: string;
 };
 export type ProjectReview = {
   completedAt: string;
@@ -182,6 +184,30 @@ export type GoalCheckpoint = {
 export const MAX_GOAL_CHECKPOINTS = 12;
 export const GOAL_CHECKPOINT_TEXT_MAX = 200;
 export const GOAL_WEEKLY_FOCUS_MAX = 300;
+export const GOAL_FINAL_RESULT_MAX = 300;
+export const STAGE_WHY_IMPORTANT_MAX = 300;
+export const GOAL_WOOP_FIELD_MAX = 300;
+export type GoalWoop = {
+  wish: string;
+  outcome: string;
+  obstacle: string;
+  plan: string;
+};
+export type GoalIfThenRule = {
+  id: string;
+  ifText: string;
+  thenText: string;
+};
+export const MAX_GOAL_IF_THEN_RULES = 8;
+export const GOAL_IF_THEN_TEXT_MAX = 150;
+/** Измеримый фокус недели — отдельно от свободного текстового weeklyFocus. */
+export type GoalWeeklyFocusGoal = {
+  text: string;
+  target: number;
+  done: number;
+};
+export const GOAL_WEEKLY_FOCUS_GOAL_TEXT_MAX = 150;
+export const GOAL_WEEKLY_FOCUS_GOAL_TARGET_MAX = 999;
 export type Goal = {
   image?: string;
   id: string;
@@ -206,8 +232,16 @@ export type Goal = {
   paused?: boolean;
   /** Свободный текст — на чём сфокусироваться на этой неделе (отдельно от «Главных проектов месяца»). */
   weeklyFocus?: string;
+  /** Измеримый фокус недели (текст + счётчик done/target) — отдельно от свободного weeklyFocus. */
+  weeklyFocusGoal?: GoalWeeklyFocusGoal;
   /** Контрольные точки — измеримые промежуточные результаты проекта, независимо от этапов/задач. */
   checkpoints?: GoalCheckpoint[];
+  /** Свободный текст — каким будет конечный результат проекта. */
+  finalResult?: string;
+  /** WOOP (Gabriele Oettingen) — Желание/Результат/Препятствие/План. */
+  woop?: GoalWoop;
+  /** Правила «Если — То» (implementation intentions, Peter Gollwitzer). */
+  ifThenRules?: GoalIfThenRule[];
 };
 export type SphereState = {
   xp: number;

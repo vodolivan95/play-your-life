@@ -10,7 +10,18 @@ import { validKeySpheres } from './lifePlanMap.ts';
 import { validReview, validMoodCheckins } from './keyResults.ts';
 import { validImportance } from './monthReport.ts';
 import type { GameState } from './game.ts';
-import { MAX_GOAL_CHECKPOINTS, GOAL_CHECKPOINT_TEXT_MAX, GOAL_WEEKLY_FOCUS_MAX } from './game.ts';
+import {
+  MAX_GOAL_CHECKPOINTS,
+  GOAL_CHECKPOINT_TEXT_MAX,
+  GOAL_WEEKLY_FOCUS_MAX,
+  GOAL_FINAL_RESULT_MAX,
+  STAGE_WHY_IMPORTANT_MAX,
+  GOAL_WOOP_FIELD_MAX,
+  MAX_GOAL_IF_THEN_RULES,
+  GOAL_IF_THEN_TEXT_MAX,
+  GOAL_WEEKLY_FOCUS_GOAL_TEXT_MAX,
+  GOAL_WEEKLY_FOCUS_GOAL_TARGET_MAX,
+} from './game.ts';
 import { imageDocPattern, imageRefPattern, monthPattern } from './cloudSplit.ts';
 import { validTaskLabels } from './taskLabels.ts';
 import {
@@ -345,7 +356,11 @@ export function validateState(value: unknown): asserts value is SavedState {
               optionalDate(stage.createdAt) &&
               optionalDate(stage.completedAt) &&
               optionalDate(stage.startsAt) &&
-              optionalDate(stage.dueAt),
+              optionalDate(stage.dueAt) &&
+              (stage.whyImportant === undefined ||
+                (text(stage.whyImportant) &&
+                  (stage.whyImportant as string).length <=
+                    STAGE_WHY_IMPORTANT_MAX)),
           )) &&
         (g.paused === undefined || typeof g.paused === 'boolean') &&
         (g.weeklyFocus === undefined ||
@@ -362,7 +377,45 @@ export function validateState(value: unknown): asserts value is SavedState {
               (c.text as string).length <= GOAL_CHECKPOINT_TEXT_MAX &&
               typeof c.done === 'boolean',
           ) &&
-            (g.checkpoints as unknown[]).length <= MAX_GOAL_CHECKPOINTS)),
+            (g.checkpoints as unknown[]).length <= MAX_GOAL_CHECKPOINTS)) &&
+        (g.finalResult === undefined ||
+          (text(g.finalResult) &&
+            (g.finalResult as string).length <= GOAL_FINAL_RESULT_MAX)) &&
+        (g.weeklyFocusGoal === undefined ||
+          (record(g.weeklyFocusGoal) &&
+            text(g.weeklyFocusGoal.text) &&
+            !!(g.weeklyFocusGoal.text as string).trim() &&
+            (g.weeklyFocusGoal.text as string).length <=
+              GOAL_WEEKLY_FOCUS_GOAL_TEXT_MAX &&
+            number(g.weeklyFocusGoal.target) &&
+            (g.weeklyFocusGoal.target as number) > 0 &&
+            (g.weeklyFocusGoal.target as number) <=
+              GOAL_WEEKLY_FOCUS_GOAL_TARGET_MAX &&
+            number(g.weeklyFocusGoal.done) &&
+            (g.weeklyFocusGoal.done as number) >= 0 &&
+            (g.weeklyFocusGoal.done as number) <=
+              (g.weeklyFocusGoal.target as number))) &&
+        (g.woop === undefined ||
+          (record(g.woop) &&
+            [g.woop.wish, g.woop.outcome, g.woop.obstacle, g.woop.plan].every(
+              (v) =>
+                v === undefined ||
+                (text(v) && (v as string).length <= GOAL_WOOP_FIELD_MAX),
+            ))) &&
+        (g.ifThenRules === undefined ||
+          (list(
+            g.ifThenRules,
+            (r) =>
+              text(r.id) &&
+              !!r.id &&
+              text(r.ifText) &&
+              !!(r.ifText as string).trim() &&
+              (r.ifText as string).length <= GOAL_IF_THEN_TEXT_MAX &&
+              text(r.thenText) &&
+              !!(r.thenText as string).trim() &&
+              (r.thenText as string).length <= GOAL_IF_THEN_TEXT_MAX,
+          ) &&
+            (g.ifThenRules as unknown[]).length <= MAX_GOAL_IF_THEN_RULES)),
     )
   )
     return fail();

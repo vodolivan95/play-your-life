@@ -18,6 +18,8 @@ import {
   addGoalCheckpoint,
   toggleGoalCheckpoint,
   removeGoalCheckpoint,
+  addGoalIfThenRule,
+  removeGoalIfThenRule,
 } from '../src/planning.ts';
 import {
   goalProgressValue,
@@ -650,4 +652,92 @@ test('состояние проекта: сравнивает прогресс �
   s = finishStage(s, f.id, f.b);
   // Оба этапа завершены — прогресс 100%, точно не отставание.
   assert.equal(goalPaceStatus(s, goal(s, f.id), now).status, 'on-track');
+});
+test('конечный результат проекта — свободный текст, сохраняется и проходит валидацию', () => {
+  const f = fixture();
+  const s = saveGoal(f.s, {
+    ...goal(f.s, f.id),
+    finalResult: 'Сдать экзамен на уровень B2',
+  });
+  assert.equal(goal(s, f.id).finalResult, 'Сдать экзамен на уровень B2');
+  validateState(JSON.parse(JSON.stringify(s)));
+});
+test('почему важен этап — свободный текст, сохраняется у конкретного этапа и проходит валидацию', () => {
+  const f = fixture();
+  const s = saveStage(f.s, f.id, {
+    ...goal(f.s, f.id).stages!.find((st) => st.id === f.a)!,
+    whyImportant: 'Этот этап закладывает базу для всего остального',
+  });
+  const stage = goal(s, f.id).stages!.find((st) => st.id === f.a)!;
+  assert.equal(stage.whyImportant, 'Этот этап закладывает базу для всего остального');
+  validateState(JSON.parse(JSON.stringify(s)));
+});
+test('измеримый фокус недели: сохраняется, прогресс ограничен целью, проходит валидацию', () => {
+  const f = fixture();
+  let s = saveGoal(f.s, {
+    ...goal(f.s, f.id),
+    weeklyFocusGoal: { text: 'Тренировки на этой неделе', target: 3, done: 0 },
+  });
+  assert.deepEqual(goal(s, f.id).weeklyFocusGoal, {
+    text: 'Тренировки на этой неделе',
+    target: 3,
+    done: 0,
+  });
+  validateState(JSON.parse(JSON.stringify(s)));
+  s = saveGoal(s, {
+    ...goal(s, f.id),
+    weeklyFocusGoal: { ...goal(s, f.id).weeklyFocusGoal!, done: 2 },
+  });
+  assert.equal(goal(s, f.id).weeklyFocusGoal!.done, 2);
+});
+test('WOOP: все четыре поля сохраняются и проходят валидацию, частично заполненный тоже валиден', () => {
+  const f = fixture();
+  let s = saveGoal(f.s, {
+    ...goal(f.s, f.id),
+    woop: {
+      wish: 'Сдать экзамен',
+      outcome: 'Уверенность в языке',
+      obstacle: 'Лень по вечерам',
+      plan: 'Если лень — то 10 минут аудирования',
+    },
+  });
+  assert.deepEqual(goal(s, f.id).woop, {
+    wish: 'Сдать экзамен',
+    outcome: 'Уверенность в языке',
+    obstacle: 'Лень по вечерам',
+    plan: 'Если лень — то 10 минут аудирования',
+  });
+  validateState(JSON.parse(JSON.stringify(s)));
+  s = saveGoal(s, {
+    ...goal(s, f.id),
+    woop: { wish: 'Только желание', outcome: '', obstacle: '', plan: '' },
+  });
+  validateState(JSON.parse(JSON.stringify(s)));
+});
+test('если-то план: добавление и удаление правил, пустой текст и лимит отклоняются', () => {
+  const f = fixture();
+  let s = addGoalIfThenRule(
+    f.s,
+    f.id,
+    'не хочется идти на тренировку',
+    'сделаю хотя бы 10 минут',
+  );
+  assert.equal(goal(s, f.id).ifThenRules!.length, 1);
+  assert.equal(
+    goal(s, f.id).ifThenRules![0].ifText,
+    'не хочется идти на тренировку',
+  );
+  assert.equal(goal(s, f.id).ifThenRules![0].thenText, 'сделаю хотя бы 10 минут');
+  validateState(JSON.parse(JSON.stringify(s)));
+  const ruleId = goal(s, f.id).ifThenRules![0].id;
+  s = removeGoalIfThenRule(s, f.id, ruleId);
+  assert.equal(goal(s, f.id).ifThenRules!.length, 0);
+  assert.throws(() => addGoalIfThenRule(f.s, f.id, '   ', 'то'));
+  assert.throws(() => addGoalIfThenRule(f.s, f.id, 'если', '   '));
+  assert.throws(() => addGoalIfThenRule(f.s, f.id, 'если', 'x'.repeat(151)));
+  let full = f.s;
+  for (let i = 0; i < 8; i++)
+    full = addGoalIfThenRule(full, f.id, `если ${i}`, `то ${i}`);
+  assert.equal(goal(full, f.id).ifThenRules!.length, 8);
+  assert.throws(() => addGoalIfThenRule(full, f.id, 'лишнее если', 'лишнее то'));
 });

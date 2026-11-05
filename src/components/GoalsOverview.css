@@ -497,13 +497,9 @@
   background: #14804a;
   border-color: #14804a;
 }
-.gl-side-reward {
+.gl-side .gl-pace {
+  align-self: flex-start;
   margin-top: 6px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: #fff1c7;
-  color: #6b4a00;
-  font-size: 13px;
 }
 @media (max-width: 1000px) {
   .gl-side {

@@ -599,15 +599,19 @@ export default function GoalsBoard({
             ) : (
               <p className="gl-side-empty">Открытых задач нет.</p>
             )}
-            <div className="gl-side-reward">
-              🏆 Награда за проект: <b>{preview.reward} XP</b>
-              {preview.rewarded ? ' · получена' : ''}
-            </div>
+            {(() => {
+              const previewPace = goalCardPace(state, preview);
+              return (
+                <span className={`gl-pace gl-pace-${previewPace.tone}`}>
+                  {previewPace.text}
+                </span>
+              );
+            })()}
             <button
               className="primary-button gl-plan"
               onClick={() => onSelect(preview.id)}
             >
-              Открыть план проекта
+              Открыть проект
               <Icon name="arrow" size={16} />
             </button>
           </aside>

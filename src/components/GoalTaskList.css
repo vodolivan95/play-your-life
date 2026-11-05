@@ -36,6 +36,8 @@
 :root[data-theme='dark'] .gtl-done{color:#9fb0cc}
 .pyl-tasks-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px}
 .pyl-tasks-head h1{margin:0;font-size:32px;font-weight:800}
+.pyl-tasks-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.pyl-tasks-sync{white-space:nowrap}
 .pyl-tasks-badge{margin-left:8px;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#2f7de1;color:#fff;font-size:12px;display:inline-flex;align-items:center;justify-content:center}
 .pyl-tasks-empty{margin:0;padding:22px;border-radius:18px;border:1.5px dashed #b9c6da;color:#5b6b82;text-align:center}
 :root[data-theme='dark'] .pyl-tasks-empty{color:#9fb0cc;border-color:#ffffff33}

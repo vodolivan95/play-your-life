@@ -9,9 +9,7 @@ import type { TickTickSettings } from './ticktickSettings';
 import type { TickTickManager } from './tickTickContext';
 import { acceptIncomingTask, dismissIncomingTask, findIncomingTasks, mappedProjectIds } from './ticktickInbox';
 import type { IncomingChoice, IncomingTask } from './ticktickInbox';
-
-/** Частота фоновой проверки изменений в TickTick, пока вкладка видима. */
-const TICKTICK_SYNC_INTERVAL_MS = 10_000;
+import { isTickTickAutoSyncDue, TICKTICK_AUTO_SYNC_INTERVAL_MS } from './ticktickScheduler';
 
 function readConnection(storageKey: string): TickTickConnection | null {
   try {
@@ -62,6 +60,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
   const [inboxError, setInboxError] = useState('');
   const working = useRef(false);
   const recoveryPending = useRef(false);
+  const lastSyncAttemptAt = useRef(0);
   const latest = useRef({ state, connection, connected, dirty, incoming: [] as IncomingTask[] });
   useEffect(() => { latest.current = { state, connection, connected, dirty, incoming }; }, [state, connection, connected, dirty, incoming]);
   useEffect(() => {
@@ -126,6 +125,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     if (working.current || !current.connection || !current.connected || current.dirty || current.state.profile.mode === 'demo') return;
     if (!navigator.onLine) { setStatus('Нет сети. Изменения задач сохранены в игре; обмен продолжится после подключения.'); return; }
     working.current = true; setBusy(true);
+    lastSyncAttemptAt.current = Date.now();
     let held: HeldRemovals | undefined;
     try {
       let c = current.connection;
@@ -260,25 +260,41 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.quests, state.goals, connection?.auto, mappingKey, connected, dirty]);
   useEffect(() => {
-    const poll = () => {
+    const poll = (force = false) => {
       const current = latest.current;
-      if (document.visibilityState !== 'visible' || !current.connection || current.dirty) return;
-      if (!current.connected && recoveryPending.current) void refresh();
-      else if (current.connection.auto) void sync(undefined, true);
+      if (!current.connection || current.dirty) return;
+      if (!navigator.onLine) {
+        if (current.connected) setStatus('Нет сети. Изменения задач сохранены в игре; обмен продолжится после подключения.');
+        return;
+      }
+      if (!current.connected && recoveryPending.current) {
+        if (document.visibilityState === 'visible') void refresh();
+        return;
+      }
+      if (
+        current.connected && current.connection.auto && current.state.profile.mode !== 'demo' &&
+        hasTickTickTargets(current.connection) &&
+        (force || isTickTickAutoSyncDue(lastSyncAttemptAt.current, Date.now()))
+      ) void sync(undefined, true).then(() => loadIncoming());
     };
-    const timer = setInterval(poll, TICKTICK_SYNC_INTERVAL_MS);
-    document.addEventListener('visibilitychange', poll);
-    window.addEventListener('focus', poll);
-    window.addEventListener('online', poll);
+    const check = () => poll();
+    const onOnline = () => poll(true);
+    const onVisibilityChange = () => { if (document.visibilityState === 'visible') poll(); };
+    const timer = setInterval(check, TICKTICK_AUTO_SYNC_INTERVAL_MS);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', check);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', check);
     const outcome = location.hash;
     if (outcome.startsWith('#ticktick=')) history.replaceState(null, '', location.pathname + location.search + '#profile');
     if (outcome === '#ticktick=cancelled' || outcome === '#ticktick=failed') queueMicrotask(() => setStatus(outcome.endsWith('cancelled') ? 'Подключение TickTick отменено.' : 'TickTick не подтвердил подключение. Попробуйте снова.'));
     else if (latest.current.connection) void refresh();
     return () => {
       clearInterval(timer);
-      document.removeEventListener('visibilitychange', poll);
-      window.removeEventListener('focus', poll);
-      window.removeEventListener('online', poll);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', check);
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', check);
     };
     // Each App instance is keyed by the authenticated Firebase UID.
     // eslint-disable-next-line react-hooks/exhaustive-deps

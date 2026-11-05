@@ -11,6 +11,7 @@ import {
   remotePayload,
 } from '../src/ticktick.ts';
 import type { RemoteTask } from '../src/ticktick.ts';
+import { isTickTickAutoSyncDue, TICKTICK_AUTO_SYNC_INTERVAL_MS } from '../src/ticktickScheduler.ts';
 function setup() {
   const state = initialState();
   state.profile = {
@@ -82,6 +83,13 @@ const remote = (id: string, title = 'Из TickTick'): RemoteTask => ({
   content: 'Реальная задача',
   priority: 3,
   status: 0,
+});
+test('фоновая автосинхронизация TickTick выдерживает интервал в пять минут', () => {
+  const lastSync = 1_800_000_000_000;
+  assert.equal(TICKTICK_AUTO_SYNC_INTERVAL_MS, 5 * 60 * 1000);
+  assert.equal(isTickTickAutoSyncDue(lastSync, lastSync + TICKTICK_AUTO_SYNC_INTERVAL_MS - 1), false);
+  assert.equal(isTickTickAutoSyncDue(lastSync, lastSync + TICKTICK_AUTO_SYNC_INTERVAL_MS), true);
+  assert.equal(isTickTickAutoSyncDue(0, lastSync), true);
 });
 test('подключение принимает только корневой HTTPS адрес и создаёт случайный ключ', () => {
   assert.throws(() => newConnection('http://example.com'));

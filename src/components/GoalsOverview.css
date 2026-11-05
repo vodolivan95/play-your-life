@@ -80,7 +80,8 @@
   gap: 14px;
   align-items: start;
 }
-.gl-list > .empty {
+.gl-list > .empty,
+.gl-list > .gl-section-heading {
   grid-column: 1 / -1;
 }
 .gl-card {
@@ -107,15 +108,27 @@
   height: 52px;
 }
 .gl-title h2 {
-  margin: 0 0 6px;
+  margin: 0;
   font-size: 16px;
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
+/* Теги — отдельной строкой на всю ширину карточки, не делят место с датой,
+   поэтому не переносятся по-разному в зависимости от длины названия сферы. */
 .gl-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  padding-left: 64px;
+}
+.gl-tag-sphere {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+.gl-tag-sphere.is-active {
+  outline: 2px solid var(--gl-color, #1272d6);
+  outline-offset: 1px;
 }
 .gl-tag {
   padding: 2px 9px;
@@ -136,6 +149,10 @@
 .gl-tag.is-late {
   background: #ffe3e3;
   color: #9b1c1c;
+}
+.gl-tag.is-paused {
+  background: #ffe9d6;
+  color: #b94a00;
 }
 .gl-deadline {
   display: flex;
@@ -196,14 +213,34 @@
 .gl-next b {
   color: #0f1b33;
 }
-.gl-reward {
+.gl-pace {
   padding: 3px 10px;
   border-radius: 10px;
-  background: #fff1c7;
-  color: #6b4a00;
+  background: rgba(82, 98, 125, 0.12);
+  color: #52627d;
   font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
+}
+.gl-pace-ahead {
+  background: rgba(20, 128, 74, 0.14);
+  color: #14804a;
+}
+.gl-pace-behind {
+  background: rgba(214, 48, 48, 0.14);
+  color: #b91c1c;
+}
+.gl-pace-on-track {
+  background: #dcebfc;
+  color: #1272d6;
+}
+/* Прогресс, темп и кнопка всегда привязаны к низу карточки — независимо от
+   того, сколько строк занимает название проекта над ними. */
+.gl-card-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: auto;
 }
 .gl-card .goal-controls {
   margin: 0;
@@ -238,6 +275,9 @@
     align-items: baseline;
     gap: 4px 8px;
     text-align: left;
+  }
+  .gl-tags {
+    padding-left: 56px;
   }
   .gl-sort {
     margin-left: 0;
@@ -284,6 +324,70 @@
 .gl-ico.is-gold {
   background: #fff1c7;
   color: #8a6100;
+}
+.gl-ico.is-purple {
+  background: #ece3fc;
+  color: #6424c9;
+}
+.gl-ico.is-red {
+  background: #ffe1e1;
+  color: #b91c1c;
+}
+
+/* Главные проекты месяца */
+.gl-section-heading {
+  margin: 0 0 10px;
+  font-size: 15px;
+  color: #0f1b33;
+}
+.gl-featured {
+  margin-bottom: 20px;
+}
+.gl-featured-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.gl-featured-head h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #0f1b33;
+}
+.gl-featured-count {
+  padding: 2px 10px;
+  border-radius: 10px;
+  background: #fff1c7;
+  color: #6b4a00;
+  font-size: 12px;
+  font-weight: 700;
+}
+.gl-featured-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+.gl-add-slot {
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 160px;
+  text-align: center;
+  background: transparent;
+  box-shadow: none;
+  border: 2px dashed #c7d4e8;
+  cursor: default;
+}
+.gl-add-slot-icon {
+  font-size: 22px;
+  color: #9aa8bf;
+}
+.gl-add-slot p {
+  margin: 0;
+  max-width: 220px;
+  font-size: 13px;
+  color: #7c8aa8;
 }
 
 /* Список слева и краткая панель выбранной цели справа */

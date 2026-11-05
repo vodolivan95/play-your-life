@@ -88,13 +88,19 @@ export function goalStatus(
   // 26.10.2026, AUD-002), так что статус мог разойтись с живым прогрессом
   // на экранах, использующих goalProgressValue. goalProgressValue верна для
   // обоих режимов цели.
+  // Проект на паузе: задачи не завершаются, срок и серия активности не
+  // учитываются (см. комментарий к Goal.paused в game.ts) — поэтому статус
+  // «на паузе» важнее просроченного срока, но завершённый проект остаётся
+  // завершённым независимо от паузы.
   return goalProgressValue(state, goal) >= 100
     ? 'Достигнут'
-    : goal.dueAt && new Date(goal.dueAt) < now
-      ? 'Срок прошёл'
-      : goal.startsAt && new Date(goal.startsAt) > now
-        ? 'Запланирован'
-        : 'В процессе';
+    : goal.paused
+      ? 'На паузе'
+      : goal.dueAt && new Date(goal.dueAt) < now
+        ? 'Срок прошёл'
+        : goal.startsAt && new Date(goal.startsAt) > now
+          ? 'Запланирован'
+          : 'В процессе';
 }
 function checkRange(
   startsAt?: string,

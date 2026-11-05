@@ -21,6 +21,7 @@ import {
   goalActivityStreak,
   goalPaceStatus,
   goalPaceLabels,
+  activeGoalStage,
 } from '../goalWorkspace';
 import { goalStatistics, chartCoordinates } from '../goalStatistics';
 import type { ProgressPoint } from '../goalStatistics';
@@ -37,8 +38,21 @@ import {
   addGoalCheckpoint,
   toggleGoalCheckpoint,
   removeGoalCheckpoint,
+  addGoalIfThenRule,
+  removeGoalIfThenRule,
 } from '../planning';
-import { MAX_GOAL_CHECKPOINTS, GOAL_CHECKPOINT_TEXT_MAX, GOAL_WEEKLY_FOCUS_MAX } from '../game';
+import {
+  MAX_GOAL_CHECKPOINTS,
+  GOAL_CHECKPOINT_TEXT_MAX,
+  GOAL_WEEKLY_FOCUS_MAX,
+  GOAL_FINAL_RESULT_MAX,
+  STAGE_WHY_IMPORTANT_MAX,
+  GOAL_WOOP_FIELD_MAX,
+  MAX_GOAL_IF_THEN_RULES,
+  GOAL_IF_THEN_TEXT_MAX,
+  GOAL_WEEKLY_FOCUS_GOAL_TEXT_MAX,
+  GOAL_WEEKLY_FOCUS_GOAL_TARGET_MAX,
+} from '../game';
 import { questCoins, progressQuest } from '../personalQuests';
 import { sphereProgress, MAX_SPHERE_LEVEL } from '../sphereProgress';
 import { sphereAssets } from '../sphereAssets';
@@ -552,7 +566,16 @@ export default function GoalWorkspace(p: Props) {
     }
   }, [activeId]);
   const [detail, setDetail] = useState<{
-    kind: 'reward' | 'motivation' | 'notes' | 'weeklyFocus' | 'task';
+    kind:
+      | 'reward'
+      | 'motivation'
+      | 'notes'
+      | 'weeklyFocus'
+      | 'task'
+      | 'finalResult'
+      | 'stageWhy'
+      | 'weeklyFocusGoal'
+      | 'woop';
     task?: Quest;
   } | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -564,6 +587,7 @@ export default function GoalWorkspace(p: Props) {
   const level = sphereProgress(state.spheres[goal.sphere].xp);
   const history = goalHistory(state, goal, stage?.id);
   const nextTask = nextGoalTask(state, goal);
+  const activeStage = activeGoalStage(state, goal, new Date(now));
   const streak = goalActivityStreak(state, goal);
   const completed = stages.filter(
     (s) => stageMetrics(state, goal, s).complete,
@@ -1569,6 +1593,16 @@ export default function GoalWorkspace(p: Props) {
               ) : (
                 <>
                   {tab !== 'rewards' && rewards()}
+                  <Card title="Конечный результат" icon="◇">
+                    <button
+                      className="gw-final-result"
+                      onClick={() => setDetail({ kind: 'finalResult' })}
+                    >
+                      {goal.finalResult ||
+                        'Опишите, каким будет конечный результат этого проекта.'}
+                      <span>✎</span>
+                    </button>
+                  </Card>
                   <Card title="Состояние проекта" icon="◐">
                     {(() => {
                       const pace = goalPaceStatus(state, goal, new Date(now));
@@ -1607,6 +1641,101 @@ export default function GoalWorkspace(p: Props) {
                       <span>✎</span>
                     </button>
                   </Card>
+                  {activeStage && (
+                    <Card title="Почему важен этот этап" icon="♦">
+                      <p className="gw-muted gw-stage-why-title">
+                        {activeStage.name}
+                      </p>
+                      <button
+                        className="gw-stage-why"
+                        onClick={() => setDetail({ kind: 'stageWhy' })}
+                      >
+                        {activeStage.whyImportant ||
+                          'Почему именно этот этап важен сейчас?'}
+                        <span>✎</span>
+                      </button>
+                    </Card>
+                  )}
+                  <Card title="Фокус на эту неделю — измеримый" icon="◎">
+                    {goal.weeklyFocusGoal ? (
+                      <div className="gw-weekly-focus-goal">
+                        <button
+                          className="text-button"
+                          onClick={() => setDetail({ kind: 'weeklyFocusGoal' })}
+                        >
+                          {goal.weeklyFocusGoal.text}
+                          <span>✎</span>
+                        </button>
+                        <div className="gw-meter">
+                          <span
+                            style={{
+                              width: `${Math.min(100, (goal.weeklyFocusGoal.done / Math.max(1, goal.weeklyFocusGoal.target)) * 100)}%`,
+                            }}
+                          />
+                        </div>
+                        <div className="gw-weekly-focus-goal-controls">
+                          <button
+                            className="gw-icon-button"
+                            aria-label="Меньше"
+                            disabled={goal.weeklyFocusGoal.done <= 0}
+                            onClick={() =>
+                              mutate((s) =>
+                                saveGoal(s, {
+                                  ...goal,
+                                  weeklyFocusGoal: {
+                                    ...goal.weeklyFocusGoal!,
+                                    done: Math.max(
+                                      0,
+                                      goal.weeklyFocusGoal!.done - 1,
+                                    ),
+                                  },
+                                }),
+                              )
+                            }
+                          >
+                            −
+                          </button>
+                          <span>
+                            {goal.weeklyFocusGoal.done} из{' '}
+                            {goal.weeklyFocusGoal.target}
+                          </span>
+                          <button
+                            className="gw-icon-button"
+                            aria-label="Больше"
+                            disabled={
+                              goal.weeklyFocusGoal.done >=
+                              goal.weeklyFocusGoal.target
+                            }
+                            onClick={() =>
+                              mutate((s) =>
+                                saveGoal(s, {
+                                  ...goal,
+                                  weeklyFocusGoal: {
+                                    ...goal.weeklyFocusGoal!,
+                                    done: Math.min(
+                                      goal.weeklyFocusGoal!.target,
+                                      goal.weeklyFocusGoal!.done + 1,
+                                    ),
+                                  },
+                                }),
+                              )
+                            }
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        className="gw-weekly-focus-btn"
+                        onClick={() => setDetail({ kind: 'weeklyFocusGoal' })}
+                      >
+                        Задайте измеримую цель на неделю — например, число
+                        тренировок.
+                        <span>✎</span>
+                      </button>
+                    )}
+                  </Card>
                   <Card title="Связанная сфера">
                     <button
                       className="gw-sphere"
@@ -1639,6 +1768,104 @@ export default function GoalWorkspace(p: Props) {
                       Все события →
                     </button>
                   </Card>
+                  <Card title="WOOP" icon="◈">
+                    <p className="gw-muted">
+                      Желание → Результат → Препятствие → План.
+                    </p>
+                    {goal.woop &&
+                    (goal.woop.wish ||
+                      goal.woop.outcome ||
+                      goal.woop.obstacle ||
+                      goal.woop.plan) ? (
+                      <dl className="gw-woop-list">
+                        <div>
+                          <dt>Желание</dt>
+                          <dd>{goal.woop.wish || '—'}</dd>
+                        </div>
+                        <div>
+                          <dt>Результат</dt>
+                          <dd>{goal.woop.outcome || '—'}</dd>
+                        </div>
+                        <div>
+                          <dt>Препятствие</dt>
+                          <dd>{goal.woop.obstacle || '—'}</dd>
+                        </div>
+                        <div>
+                          <dt>План</dt>
+                          <dd>{goal.woop.plan || '—'}</dd>
+                        </div>
+                      </dl>
+                    ) : null}
+                    <button
+                      className="text-button"
+                      onClick={() => setDetail({ kind: 'woop' })}
+                    >
+                      {goal.woop ? 'Изменить' : '＋ Заполнить WOOP'}
+                    </button>
+                  </Card>
+                  <Card title="Если-То план" icon="◆" className="gw-checkpoints">
+                    <p className="gw-muted">
+                      Заранее решите, как отреагировать на препятствие — так
+                      проще не бросить на полпути.
+                    </p>
+                    <ul className="gw-checkpoint-list gw-if-then-list">
+                      {(goal.ifThenRules ?? []).map((r) => (
+                        <li key={r.id}>
+                          <span>
+                            <b>Если</b> {r.ifText} <b>→ то</b> {r.thenText}
+                          </span>
+                          <button
+                            className="gw-icon-button"
+                            aria-label={`Удалить правило: если ${r.ifText}`}
+                            onClick={() =>
+                              mutate((s) =>
+                                removeGoalIfThenRule(s, goal.id, r.id),
+                              )
+                            }
+                          >
+                            ×
+                          </button>
+                        </li>
+                      ))}
+                      {!goal.ifThenRules?.length && (
+                        <li className="gw-muted">Правил пока нет.</li>
+                      )}
+                    </ul>
+                    {(goal.ifThenRules?.length ?? 0) < MAX_GOAL_IF_THEN_RULES && (
+                      <form
+                        className="gw-checkpoint-form gw-if-then-form"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const form = e.currentTarget;
+                          const data = new FormData(form);
+                          const ifText = String(data.get('ifText') ?? '');
+                          const thenText = String(data.get('thenText') ?? '');
+                          if (
+                            mutate((s) =>
+                              addGoalIfThenRule(s, goal.id, ifText, thenText),
+                            )
+                          )
+                            form.reset();
+                        }}
+                      >
+                        <input
+                          name="ifText"
+                          placeholder="Если… (например: не хочется идти на тренировку)"
+                          maxLength={GOAL_IF_THEN_TEXT_MAX}
+                          required
+                        />
+                        <input
+                          name="thenText"
+                          placeholder="То… (например: сделаю хотя бы 10 минут)"
+                          maxLength={GOAL_IF_THEN_TEXT_MAX}
+                          required
+                        />
+                        <button className="text-button" type="submit">
+                          ＋ Добавить правило
+                        </button>
+                      </form>
+                    )}
+                  </Card>
                 </>
               )}
             </aside>
@@ -1656,7 +1883,15 @@ export default function GoalWorkspace(p: Props) {
                 ? 'Заметки этапа'
                 : detail?.kind === 'weeklyFocus'
                   ? 'Фокус на эту неделю'
-                  : 'Личная мотивация'
+                  : detail?.kind === 'finalResult'
+                    ? 'Конечный результат'
+                    : detail?.kind === 'stageWhy'
+                      ? 'Почему важен этот этап'
+                      : detail?.kind === 'weeklyFocusGoal'
+                        ? 'Измеримый фокус недели'
+                        : detail?.kind === 'woop'
+                          ? 'WOOP'
+                          : 'Личная мотивация'
         }
         onCancel={() => setDetail(null)}
         onClick={(e) => {
@@ -1700,7 +1935,9 @@ export default function GoalWorkspace(p: Props) {
           )}
           {(detail?.kind === 'motivation' ||
             detail?.kind === 'notes' ||
-            detail?.kind === 'weeklyFocus') && (
+            detail?.kind === 'weeklyFocus' ||
+            detail?.kind === 'finalResult' ||
+            detail?.kind === 'stageWhy') && (
             <form
               className="planning-form"
               onSubmit={(e) => {
@@ -1715,7 +1952,20 @@ export default function GoalWorkspace(p: Props) {
                       ? mutate((s) =>
                           saveGoal(s, { ...goal, weeklyFocus: text }),
                         )
-                      : mutate((s) => saveGoal(s, { ...goal, motivation: text }));
+                      : detail.kind === 'finalResult'
+                        ? mutate((s) =>
+                            saveGoal(s, { ...goal, finalResult: text }),
+                          )
+                        : detail.kind === 'stageWhy' && activeStage
+                          ? mutate((s) =>
+                              saveStage(s, goal.id, {
+                                ...activeStage,
+                                whyImportant: text,
+                              }),
+                            )
+                          : mutate((s) =>
+                              saveGoal(s, { ...goal, motivation: text }),
+                            );
                 if (saved) setDetail(null);
               }}
             >
@@ -1724,7 +1974,11 @@ export default function GoalWorkspace(p: Props) {
                   ? 'Заметки этапа'
                   : detail.kind === 'weeklyFocus'
                     ? 'Фокус на эту неделю'
-                    : 'Почему этот проект важен для меня'}
+                    : detail.kind === 'finalResult'
+                      ? 'Конечный результат'
+                      : detail.kind === 'stageWhy'
+                        ? 'Почему важен этот этап'
+                        : 'Почему этот проект важен для меня'}
               </h2>
               <label>
                 Текст
@@ -1732,7 +1986,13 @@ export default function GoalWorkspace(p: Props) {
                   autoFocus
                   name="text"
                   maxLength={
-                    detail.kind === 'weeklyFocus' ? GOAL_WEEKLY_FOCUS_MAX : 2000
+                    detail.kind === 'weeklyFocus'
+                      ? GOAL_WEEKLY_FOCUS_MAX
+                      : detail.kind === 'finalResult'
+                        ? GOAL_FINAL_RESULT_MAX
+                        : detail.kind === 'stageWhy'
+                          ? STAGE_WHY_IMPORTANT_MAX
+                          : 2000
                   }
                   rows={8}
                   defaultValue={
@@ -1740,8 +2000,129 @@ export default function GoalWorkspace(p: Props) {
                       ? (stage?.notes ?? '')
                       : detail.kind === 'weeklyFocus'
                         ? (goal.weeklyFocus ?? '')
-                        : (goal.motivation ?? '')
+                        : detail.kind === 'finalResult'
+                          ? (goal.finalResult ?? '')
+                          : detail.kind === 'stageWhy'
+                            ? (activeStage?.whyImportant ?? '')
+                            : (goal.motivation ?? '')
                   }
+                />
+              </label>
+              <button className="primary-button" type="submit">
+                Сохранить
+              </button>
+            </form>
+          )}
+          {detail?.kind === 'weeklyFocusGoal' && (
+            <form
+              className="planning-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const data = new FormData(e.currentTarget);
+                const text = String(data.get('text') ?? '').trim();
+                const target = Math.max(1, Number(data.get('target')) || 1);
+                if (!text) return;
+                const saved = mutate((s) =>
+                  saveGoal(s, {
+                    ...goal,
+                    weeklyFocusGoal: {
+                      text,
+                      target,
+                      done: Math.min(goal.weeklyFocusGoal?.done ?? 0, target),
+                    },
+                  }),
+                );
+                if (saved) setDetail(null);
+              }}
+            >
+              <h2>Фокус на эту неделю — измеримый</h2>
+              <label>
+                Что именно сделать
+                <input
+                  autoFocus
+                  name="text"
+                  maxLength={GOAL_WEEKLY_FOCUS_GOAL_TEXT_MAX}
+                  defaultValue={goal.weeklyFocusGoal?.text ?? ''}
+                  placeholder="Например: тренировки на этой неделе"
+                  required
+                />
+              </label>
+              <label>
+                Сколько раз за неделю
+                <input
+                  name="target"
+                  type="number"
+                  min={1}
+                  max={GOAL_WEEKLY_FOCUS_GOAL_TARGET_MAX}
+                  defaultValue={goal.weeklyFocusGoal?.target ?? 3}
+                  required
+                />
+              </label>
+              <button className="primary-button" type="submit">
+                Сохранить
+              </button>
+            </form>
+          )}
+          {detail?.kind === 'woop' && (
+            <form
+              className="planning-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const data = new FormData(e.currentTarget);
+                const woop = {
+                  wish: String(data.get('wish') ?? '').trim(),
+                  outcome: String(data.get('outcome') ?? '').trim(),
+                  obstacle: String(data.get('obstacle') ?? '').trim(),
+                  plan: String(data.get('plan') ?? '').trim(),
+                };
+                const saved = mutate((s) => saveGoal(s, { ...goal, woop }));
+                if (saved) setDetail(null);
+              }}
+            >
+              <h2>WOOP</h2>
+              <p className="gw-muted">
+                Проверенная психологами техника достижения целей (Gabriele
+                Oettingen): желание → результат → препятствие → план.
+              </p>
+              <label>
+                Желание (Wish)
+                <textarea
+                  autoFocus
+                  name="wish"
+                  rows={2}
+                  maxLength={GOAL_WOOP_FIELD_MAX}
+                  defaultValue={goal.woop?.wish ?? ''}
+                  placeholder="Чего вы хотите достичь в этом проекте?"
+                />
+              </label>
+              <label>
+                Результат (Outcome)
+                <textarea
+                  name="outcome"
+                  rows={2}
+                  maxLength={GOAL_WOOP_FIELD_MAX}
+                  defaultValue={goal.woop?.outcome ?? ''}
+                  placeholder="Как вы себя почувствуете, когда этого добьётесь?"
+                />
+              </label>
+              <label>
+                Препятствие (Obstacle)
+                <textarea
+                  name="obstacle"
+                  rows={2}
+                  maxLength={GOAL_WOOP_FIELD_MAX}
+                  defaultValue={goal.woop?.obstacle ?? ''}
+                  placeholder="Что внутри вас мешает этому больше всего?"
+                />
+              </label>
+              <label>
+                План (Plan)
+                <textarea
+                  name="plan"
+                  rows={2}
+                  maxLength={GOAL_WOOP_FIELD_MAX}
+                  defaultValue={goal.woop?.plan ?? ''}
+                  placeholder="Если наступит препятствие, то я..."
                 />
               </label>
               <button className="primary-button" type="submit">

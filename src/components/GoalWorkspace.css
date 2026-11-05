@@ -657,7 +657,9 @@
   font-size: 12px;
 }
 .gw-motivation,
-.gw-weekly-focus-btn {
+.gw-weekly-focus-btn,
+.gw-final-result,
+.gw-stage-why {
   display: flex;
   justify-content: space-between;
   gap: 12px;
@@ -674,7 +676,9 @@
   overflow-wrap: anywhere;
 }
 .gw-motivation span,
-.gw-weekly-focus-btn span {
+.gw-weekly-focus-btn span,
+.gw-final-result span,
+.gw-stage-why span {
   color: #008fed;
   flex-shrink: 0;
 }
@@ -1550,4 +1554,75 @@
   .gw-finish-project { min-height: 42px; padding: 9px 11px !important; font-size: 12px; }
   .gw-practice-session { padding: 11px; }
   .gw-practice-card { padding: 14px !important; }
+}
+.gw-stage-why-title {
+  margin: 0 0 8px;
+  font-weight: 700;
+  color: #3c5674;
+}
+.gw-weekly-focus-goal {
+  display: grid;
+  gap: 10px;
+}
+.gw-weekly-focus-goal > .text-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+}
+.gw-weekly-focus-goal-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #3c5674;
+}
+.gw-weekly-focus-goal-controls .gw-icon-button {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #d7e2ee;
+  background: #f7fafd;
+  font-weight: 800;
+}
+.gw-weekly-focus-goal-controls .gw-icon-button:disabled {
+  opacity: 0.4;
+}
+.gw-woop-list {
+  margin: 10px 0 0;
+  display: grid;
+  gap: 10px;
+}
+.gw-woop-list div {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f7fafd;
+}
+.gw-woop-list dt {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #7d92ac;
+  margin-bottom: 3px;
+}
+.gw-woop-list dd {
+  margin: 0;
+  color: #2d527f;
+}
+.gw-if-then-list li {
+  align-items: flex-start;
+}
+.gw-if-then-list li span b {
+  color: #2d527f;
+}
+.gw-if-then-form {
+  flex-direction: column;
+}
+.gw-if-then-form input {
+  width: 100%;
 }

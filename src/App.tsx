@@ -1,5 +1,4 @@
 import { readGoalRoute, goalRoute } from './goalRoutes';
-import SpheresOverview from './components/SpheresOverview';
 import HomeDashboard from './components/HomeDashboard';
 import DashboardHeader from './components/DashboardHeader';
 import MobileCityFooter from './components/MobileCityFooter';
@@ -12,6 +11,19 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction, ReactNode } from 'react';
 import Icon from './components/Icon';
 const LifeCity = lazy(() => import('./components/LifeCity'));
+// Страницы разделов грузятся по требованию: при первом открытии сайта виден
+// только «Главная», остальные разделы не нужны и не должны лежать в главном
+// скрипте. «Главная» (HomeDashboard) намеренно остаётся обычным импортом.
+const SpheresOverview = lazy(() => import('./components/SpheresOverview'));
+const Statistics = lazy(() => import('./components/Statistics'));
+const RewardShop = lazy(() => import('./components/RewardShop'));
+const KeyResults = lazy(() => import('./components/KeyResults'));
+const FinancePage = lazy(() => import('./components/FinancePage'));
+const GoalsBoard = lazy(() => import('./components/GoalsBoard'));
+const SkillTree = lazy(() => import('./components/SkillTree'));
+const LifePlanner = lazy(() => import('./components/LifePlanner'));
+const QuestBoard = lazy(() => import('./components/QuestBoard'));
+const HabitsPage = lazy(() => import('./components/HabitsPage'));
 import GameArt from './components/GameArt';
 import Avatar from './components/Avatar';
 import DataBackup from './components/DataBackup';
@@ -19,14 +31,7 @@ import { stateStorageKey, recoveryStorageKey, adoptBackupOwner } from './backup'
 import { SphereProjects } from './components/SphereCity';
 import { SphereOverview, SphereQuickView, SphereScene, SphereSkills } from './components/SphereHub';
 import type { SphereTab } from './components/SphereHub';
-import Statistics from './components/Statistics';
-import RewardShop from './components/RewardShop';
 import Onboarding, { ProfileEditor } from './components/Onboarding';
-import KeyResults from './components/KeyResults';
-import FinancePage from './components/FinancePage';
-import GoalsBoard from './components/GoalsBoard';
-import SkillTree from './components/SkillTree';
-import LifePlanner from './components/LifePlanner';
 import { GoalForm } from './components/PlanningForms';
 import { saveGoal } from './planning';
 import useTickTick from './useTickTick';
@@ -54,9 +59,7 @@ import {
 } from './game';
 import type { Quest, GameState } from './game';
 import type { SearchResult } from './globalSearch';
-import QuestBoard from './components/QuestBoard';
 import TaskWindow from './components/TaskWindow';
-import HabitsPage from './components/HabitsPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import QuestWizard from './components/QuestWizard';
 import { saveCustomQuest, saveHabit } from './personalQuests';
@@ -377,6 +380,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
               </div>
             )}
             <ErrorBoundary resetKey={`${page}:${sphere?.id ?? ''}`}>
+            <Suspense fallback={<p role="status">Загружаем раздел…</p>}>
             {page === 'monthly' && (
               <KeyResults
                 state={state}
@@ -814,6 +818,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 )}
               </>
             )}
+            </Suspense>
             </ErrorBoundary>
             <MobileCityFooter />
           <footer className="footer">

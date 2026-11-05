@@ -11,6 +11,10 @@ async function openTasks(page, mobile) {
   } else {
     await page.locator(".sidebar").getByRole("button", { name: /^Мои задачи/ }).click();
   }
+  // С 0.70.0 страницы разделов грузятся по требованию (React.lazy), поэтому после
+  // клика по меню раздел появляется не мгновенно. Ждём сам раздел: `count()` ниже
+  // не ждёт появления элементов и на незагруженной странице вернёт 0.
+  await page.locator(".pyl-quest-modes").first().waitFor({ state: "visible" });
 }
 await mkdir("work", { recursive: true });
 const server = spawn(

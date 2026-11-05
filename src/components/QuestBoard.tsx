@@ -137,7 +137,21 @@ export default function QuestBoard({
             </button>
           ))}
         </nav>
-        {mode !== "plan" && <button className="primary-button" onClick={() => onCreate()}>＋ Новая задача</button>}
+        <div className="pyl-tasks-actions">
+          {mode !== "plan" && connected && manager && (
+            <button
+              type="button"
+              className="secondary-button pyl-tasks-sync"
+              aria-label="Синхронизировать задачи с TickTick"
+              title="Сверить статусы и сроки связанных задач"
+              disabled={manager.busy || manager.dirty}
+              onClick={() => void manager.sync()}
+            >
+              {manager.busy ? "Синхронизация…" : "Синхронизировать"}
+            </button>
+          )}
+          {mode !== "plan" && <button className="primary-button" onClick={() => onCreate()}>＋ Новая задача</button>}
+        </div>
       </header>
       {mode === "plan" ? planContent : <>
       <TasksSummary quests={quests} today={today} />

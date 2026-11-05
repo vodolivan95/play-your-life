@@ -619,6 +619,7 @@ test('подзадачи здоровья и английского попада
   assert.equal(applied.state.goals.at(-1)!.current, 50);
   assert.equal(applied.state.spheres.health.xp - before.spheres.health.xp, 20);
   assert.equal(applied.state.spheres.english.xp, before.spheres.english.xp);
+  assert.equal(applied.state.quests.find((q) => q.id === health.id)!.done, true);
   assert.equal(
     applied.state.quests.find((q) => q.id === english.id)!.done,
     false,

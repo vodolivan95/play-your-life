@@ -25,13 +25,14 @@ import QuestWizard from './QuestWizard';
 import { goalProgressValue, stageMetrics } from '../goalWorkspace';
 import {
   deadlineLabel,
+  goalCardPace,
   goalDaysLeft,
   goalNextStep,
   goalSortNames,
   goalUpcomingTasks,
   goalsSummary,
   isGoalDone,
-  pluralDays,
+  shortDate,
   sortGoals,
 } from '../goalsOverview';
 import type { GoalSort } from '../goalsOverview';
@@ -47,12 +48,18 @@ type Editor =
   | { kind: 'task'; task?: Quest; stageId?: string }
   | { kind: 'transfer'; task?: Quest }
   | { kind: 'inbox' };
-function TileIcon({ kind }: { kind: 'target' | 'trend' | 'calendar' | 'star' }) {
+function TileIcon({
+  kind,
+}: {
+  kind: 'target' | 'pause' | 'check' | 'list' | 'checkBadge' | 'alert';
+}) {
   const paths = {
     target: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.2" /></>,
-    trend: <><path d="M4 17l5-5 4 4 7-8" /><path d="M15 8h5v5" /></>,
-    calendar: <><rect x="4" y="5" width="16" height="15" rx="3" /><path d="M4 10h16M9 3v4M15 3v4" /></>,
-    star: <path d="M12 3l2.7 5.6 6.1.8-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1L3.2 9.4l6.1-.8z" />,
+    pause: <><rect x="7" y="5" width="4" height="14" rx="1.5" /><rect x="14" y="5" width="4" height="14" rx="1.5" /></>,
+    check: <><circle cx="12" cy="12" r="9" /><path d="M8 12.5l2.5 2.5L16 9" /></>,
+    list: <><circle cx="5" cy="7" r="1.3" fill="currentColor" stroke="none" /><path d="M9 7h11" /><circle cx="5" cy="12" r="1.3" fill="currentColor" stroke="none" /><path d="M9 12h11" /><circle cx="5" cy="17" r="1.3" fill="currentColor" stroke="none" /><path d="M9 17h11" /></>,
+    checkBadge: <><rect x="4" y="4" width="16" height="16" rx="5" /><path d="M8 12.5l2.5 2.5L16 9" /></>,
+    alert: <><path d="M12 4l9 16H3z" /><path d="M12 10v4" /><circle cx="12" cy="17" r="0.9" fill="currentColor" stroke="none" /></>,
   };
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -140,22 +147,234 @@ export default function GoalsBoard({
         : 'Проект убран из главных проектов месяца.',
     );
   }
+  const monthlyFocusIds = new Set(currentMonthlyFocus.map((g) => g.id));
   const visibleGoals = sortGoals(
     state,
     state.goals.filter(
       (g) =>
+        // Главные проекты месяца уже показаны отдельным блоком выше списка,
+        // поэтому здесь не дублируются — независимо от текущей вкладки.
+        !monthlyFocusIds.has(g.id) &&
         (sphereFilter === 'all' || g.sphere === sphereFilter) &&
         (goalFilter === 'all' ||
-          (goalFilter === 'done' ? isGoalDone(g) : !isGoalDone(g))),
+          (goalFilter === 'paused'
+            ? g.paused && !isGoalDone(g)
+            : goalFilter === 'done'
+              ? isGoalDone(g)
+              : !isGoalDone(g) && !g.paused)),
     ),
     sort,
   );
-  const preview = visibleGoals.find((g) => g.id === previewId) ?? visibleGoals[0];
+  // Ищем выбранный проект по всем целям, а не только по видимому списку:
+  // карточки «Главных проектов месяца» показываются отдельно и не входят
+  // в visibleGoals, но боковая панель должна находить и их по клику.
+  const preview = state.goals.find((g) => g.id === previewId) ?? visibleGoals[0];
   const usedSpheres = spheres.filter((sp) =>
     state.goals.some((g) => g.sphere === sp.id),
   );
   const summary = goalsSummary(state, state.goals);
   const progress = (g: Goal) => Math.round(goalProgressValue(state, g));
+  const listHeading =
+    goalFilter === 'all'
+      ? 'Все проекты'
+      : goalFilter === 'paused'
+        ? 'Проекты на паузе'
+        : goalFilter === 'done'
+          ? 'Завершённые проекты'
+          : 'Активные проекты';
+  function renderGoalCard(g: Goal) {
+    const sphere = spheres.find((s) => s.id === g.sphere)!;
+    const days = goalDaysLeft(g);
+    const done = isGoalDone(g);
+    const late = !done && !g.paused && days !== undefined && days < 0;
+    const next = goalNextStep(state, g);
+    const isMain = mainGoal?.id === g.id;
+    const isMonthlyFocus = monthlyFocusIds.has(g.id);
+    const pace = goalCardPace(state, g);
+    return (
+      <section
+        className={`gl-card ${isMain ? 'is-main' : ''} ${preview?.id === g.id ? 'is-selected' : ''}`}
+        key={g.id}
+        onClick={() => setPreviewId(g.id)}
+        style={{ '--gl-color': sphere.color } as CSSProperties}
+      >
+        <div className="gl-head">
+          <span className="sphere-icon gl-icon">
+            {g.image ? (
+              <ProjectArt name={g.name} sphere={g.sphere} image={g.image} />
+            ) : (
+              <GameArt kind={g.sphere === 'english' ? 'target' : g.sphere} />
+            )}
+          </span>
+          <div className="gl-title">
+            <h2>
+              <button
+                className="goal-title-link"
+                onClick={() => onSelect(g.id)}
+              >
+                {g.name}
+              </button>
+            </h2>
+          </div>
+          <div className={`gl-deadline ${late ? 'is-late' : ''}`}>
+            {!done && g.startsAt ? (
+              <>
+                <small>{g.dueAt ? 'Старт → дедлайн' : 'Старт'}</small>
+                <b>
+                  {shortDate(g.startsAt)}
+                  {g.dueAt ? ` → ${shortDate(g.dueAt)}` : ''}
+                </b>
+                <span>{g.dueAt ? deadlineLabel(g) : 'Без дедлайна'}</span>
+              </>
+            ) : (
+              <>
+                <small>Срок</small>
+                <b>
+                  {g.dueAt
+                    ? new Date(g.dueAt).toLocaleDateString('ru-RU', {
+                        day: 'numeric',
+                        month: 'long',
+                      })
+                    : 'Без срока'}
+                </b>
+                {(g.dueAt || done) && <span>{deadlineLabel(g)}</span>}
+              </>
+            )}
+          </div>
+        </div>
+        <div className="gl-tags">
+          <button
+            type="button"
+            className={`gl-tag gl-tag-sphere ${sphereFilter === g.sphere ? 'is-active' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setSphereFilter(sphereFilter === g.sphere ? 'all' : g.sphere);
+            }}
+          >
+            {sphere.name}
+          </button>
+          <span
+            className={`gl-tag ${late ? 'is-late' : ''} ${g.paused ? 'is-paused' : ''}`}
+          >
+            {goalStatus(state, g)}
+          </span>
+          {isMain && <span className="gl-tag is-main">★ Главная</span>}
+          {isMonthlyFocus && (
+            <span className="gl-tag is-monthly-focus">
+              ★ Главный проект месяца
+            </span>
+          )}
+        </div>
+        <div className="gl-card-bottom">
+          <div className="gl-progress">
+            <div className="gl-progress-label">
+              <span>
+                {g.progressMode === 'tasks'
+                  ? `${state.quests.filter((q) => q.goalId === g.id && q.done).length} из ${state.quests.filter((q) => q.goalId === g.id).length} задач`
+                  : `${g.current} из ${g.target}`}
+              </span>
+              <b>{progress(g)}%</b>
+            </div>
+            <div
+              className="gl-bar"
+              role="progressbar"
+              aria-label={`Прогресс проекта «${g.name}»`}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={progress(g)}
+            >
+              <span style={{ width: `${progress(g)}%` }} />
+            </div>
+          </div>
+          <div className="gl-foot">
+            <p className="gl-next">
+              {next ? (
+                <>
+                  {next.kind === 'task' ? 'Следующий шаг' : 'Текущий этап'}:{' '}
+                  <b>{next.text}</b>
+                </>
+              ) : done ? (
+                'Проект завершён'
+              ) : (
+                'Добавьте первый шаг в плане проекта'
+              )}
+            </p>
+            <span className={`gl-pace gl-pace-${pace.tone}`}>{pace.text}</span>
+          </div>
+          <details className="goal-controls">
+            <summary>Прогресс и сроки</summary>{' '}
+            <button
+              className="text-button main-goal-button"
+              aria-pressed={isMain}
+              onClick={() => main(g.id)}
+            >
+              {isMain ? '★ Главный проект' : '☆ Сделать главным'}
+            </button>
+            <button
+              className="text-button main-goal-button"
+              aria-pressed={isMonthlyFocus}
+              disabled={!isMonthlyFocus && monthlyFocusLimitReached}
+              title={
+                !isMonthlyFocus && monthlyFocusLimitReached
+                  ? monthlyFocusLimitMessage
+                  : undefined
+              }
+              onClick={() => toggleGoalMonthlyFocus(g.id)}
+            >
+              {isMonthlyFocus
+                ? 'Убрать из главных проектов месяца'
+                : 'Сделать главным проектом месяца'}
+            </button>
+            {!isMonthlyFocus && monthlyFocusLimitReached && (
+              <small className="gl-monthly-focus-limit">
+                {monthlyFocusLimitMessage}
+              </small>
+            )}
+            {g.progressMode !== 'tasks' && (
+              <label className="goal-input">
+                Текущий прогресс
+                <input
+                  type="number"
+                  min="0"
+                  max={g.target}
+                  value={g.current}
+                  onChange={(e) => {
+                    const next = updateGoal(
+                      state,
+                      g.id,
+                      Number(e.target.value),
+                    );
+                    onChange(next);
+                    if (next.xp > state.xp)
+                      onNotify(
+                        `Проект завершён! +${next.xp - state.xp} XP`,
+                      );
+                  }}
+                />
+              </label>
+            )}
+            <div className="goal-dates-summary">
+              <small>
+                Срок: {formatDate(g.dueAt)} ·{' '}
+                {durationLabel(g.startsAt, g.dueAt)}
+              </small>
+            </div>
+          </details>
+          <button
+            className="primary-button gl-plan"
+            onClick={() => onSelect(g.id)}
+          >
+            {done
+              ? g.projectReview
+                ? 'Открыть практику'
+                : 'Завершить проект'
+              : 'Открыть проект'}
+            <Icon name="arrow" size={16} />
+          </button>
+        </div>
+      </section>
+    );
+  }
   return (
     <>
       <div className="page-toolbar">
@@ -190,39 +409,48 @@ export default function GoalsBoard({
               </div>
             </div>
             <div className="gl-tile">
-              <i className="gl-ico is-green"><TileIcon kind="trend" /></i>
+              <i className="gl-ico is-orange"><TileIcon kind="pause" /></i>
               <div>
-                <b>{summary.averageProgress}%</b>
-                <span>Средний прогресс</span>
+                <b>{summary.paused}</b>
+                <span>Проекты на паузе</span>
               </div>
             </div>
             <div className="gl-tile">
-              <i className="gl-ico is-orange"><TileIcon kind="calendar" /></i>
+              <i className="gl-ico is-purple"><TileIcon kind="check" /></i>
               <div>
-                <b>
-                  {summary.nearestDays === undefined
-                    ? 'Нет сроков'
-                    : summary.nearestDays === 0
-                      ? 'Сегодня'
-                      : pluralDays(summary.nearestDays)}
-                </b>
-                <span>До ближайшего срока</span>
+                <b>{summary.completed}</b>
+                <span>Завершённые проекты</span>
               </div>
             </div>
             <div className="gl-tile">
-              <i className="gl-ico is-gold"><TileIcon kind="star" /></i>
+              <i className="gl-ico is-green"><TileIcon kind="list" /></i>
               <div>
-                <b>+{summary.pendingReward} XP</b>
-                <span>Награды впереди</span>
+                <b>{summary.activeOpenTasks}</b>
+                <span>Задачи в активных проектах</span>
+              </div>
+            </div>
+            <div className="gl-tile">
+              <i className="gl-ico is-gold"><TileIcon kind="checkBadge" /></i>
+              <div>
+                <b>{summary.completedTasksTotal}</b>
+                <span>Всего завершено задач</span>
+              </div>
+            </div>
+            <div className="gl-tile">
+              <i className="gl-ico is-red"><TileIcon kind="alert" /></i>
+              <div>
+                <b>{summary.overdueTasks}</b>
+                <span>Просроченные задачи</span>
               </div>
             </div>
           </div>
           <div className="gl-filters">
             <div className="tabs goal-tabs">
               {[
-                ['active', 'Активные'],
-                ['done', 'Достигнутые'],
                 ['all', 'Все'],
+                ['active', 'Активные'],
+                ['paused', 'На паузе'],
+                ['done', 'Завершённые'],
               ].map(([id, name]) => (
                 <button
                   key={id}
@@ -263,191 +491,52 @@ export default function GoalsBoard({
           </div>
         </>
       )}
+      {!goal && state.goals.length > 0 && (
+        <div className="gl-featured">
+          <div className="gl-featured-head">
+            <h3>Главные проекты месяца</h3>
+            <span className="gl-featured-count">
+              {currentMonthlyFocus.length} из {MAX_MONTHLY_FOCUS}
+            </span>
+          </div>
+          <div className="gl-featured-grid">
+            {currentMonthlyFocus.map((g) => renderGoalCard(g))}
+            {Array.from({
+              length: MAX_MONTHLY_FOCUS - currentMonthlyFocus.length,
+            }).map((_, i) => (
+              <div className="gl-card gl-add-slot" key={`gl-add-slot-${i}`}>
+                <span className="gl-add-slot-icon" aria-hidden="true">
+                  ＋
+                </span>
+                <p>
+                  Откройте проект ниже и отметьте «Сделать главным проектом
+                  месяца»
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       {!goal ? (
         <div className="gl-layout">
         <div className="gl-list">
-          {visibleGoals.map((g) => {
-            const sphere = spheres.find((s) => s.id === g.sphere)!;
-            const days = goalDaysLeft(g);
-            const late = !isGoalDone(g) && days !== undefined && days < 0;
-            const next = goalNextStep(state, g);
-            const isMain = mainGoal?.id === g.id;
-            const isMonthlyFocus = currentMonthlyFocus.some(
-              (monthlyGoal) => monthlyGoal.id === g.id,
-            );
-            return (
-              <section
-                className={`gl-card ${isMain ? 'is-main' : ''} ${preview?.id === g.id ? 'is-selected' : ''}`}
-                key={g.id}
-                onClick={() => setPreviewId(g.id)}
-                style={{ '--gl-color': sphere.color } as CSSProperties}
-              >
-                <div className="gl-head">
-                  <span className="sphere-icon gl-icon">
-                    {g.image ? (
-                      <ProjectArt
-                        name={g.name}
-                        sphere={g.sphere}
-                        image={g.image}
-                      />
-                    ) : (
-                      <GameArt
-                        kind={g.sphere === 'english' ? 'target' : g.sphere}
-                      />
-                    )}
-                  </span>
-                  <div className="gl-title">
-                    <h2>
-                      <button
-                        className="goal-title-link"
-                        onClick={() => onSelect(g.id)}
-                      >
-                        {g.name}
-                      </button>
-                    </h2>
-                    <div className="gl-tags">
-                      <span className="gl-tag">{sphere.name}</span>
-                      <span className={`gl-tag ${late ? 'is-late' : ''}`}>
-                        {goalStatus(state, g)}
-                      </span>
-                      {isMain && <span className="gl-tag is-main">★ Главная</span>}
-                      {isMonthlyFocus && (
-                        <span className="gl-tag is-monthly-focus">
-                          ★ Главный проект месяца
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className={`gl-deadline ${late ? 'is-late' : ''}`}>
-                    <small>Срок</small>
-                    <b>
-                      {g.dueAt
-                        ? new Date(g.dueAt).toLocaleDateString('ru-RU', {
-                            day: 'numeric',
-                            month: 'long',
-                          })
-                        : 'Без срока'}
-                    </b>
-                    {(g.dueAt || isGoalDone(g)) && (
-                      <span>{deadlineLabel(g)}</span>
-                    )}
-                  </div>
-                </div>
-                <div className="gl-progress">
-                  <div className="gl-progress-label">
-                    <span>
-                      {g.progressMode === 'tasks'
-                        ? `${state.quests.filter((q) => q.goalId === g.id && q.done).length} из ${state.quests.filter((q) => q.goalId === g.id).length} задач`
-                        : `${g.current} из ${g.target}`}
-                    </span>
-                    <b>{progress(g)}%</b>
-                  </div>
-                  <div
-                    className="gl-bar"
-                    role="progressbar"
-                    aria-label={`Прогресс проекта «${g.name}»`}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={progress(g)}
-                  >
-                    <span style={{ width: `${progress(g)}%` }} />
-                  </div>
-                </div>
-                <div className="gl-foot">
-                  <p className="gl-next">
-                    {next ? (
-                      <>
-                        {next.kind === 'task' ? 'Следующий шаг' : 'Текущий этап'}:{' '}
-                        <b>{next.text}</b>
-                      </>
-                    ) : isGoalDone(g) ? (
-                      'Проект завершён'
-                    ) : (
-                      'Добавьте первый шаг в плане проекта'
-                    )}
-                  </p>
-                  <span className="gl-reward">
-                    🏆 {g.reward} XP{g.rewarded ? ' · получены' : ''}
-                  </span>
-                </div>
-                <details className="goal-controls">
-                  <summary>Прогресс и сроки</summary>{' '}
-                  <button
-                    className="text-button main-goal-button"
-                    aria-pressed={isMain}
-                    onClick={() => main(g.id)}
-                  >
-                    {isMain ? '★ Главный проект' : '☆ Сделать главным'}
-                  </button>
-                  <button
-                    className="text-button main-goal-button"
-                    aria-pressed={isMonthlyFocus}
-                    disabled={!isMonthlyFocus && monthlyFocusLimitReached}
-                    title={
-                      !isMonthlyFocus && monthlyFocusLimitReached
-                        ? monthlyFocusLimitMessage
-                        : undefined
-                    }
-                    onClick={() => toggleGoalMonthlyFocus(g.id)}
-                  >
-                    {isMonthlyFocus
-                      ? 'Убрать из главных проектов месяца'
-                      : 'Сделать главным проектом месяца'}
-                  </button>
-                  {!isMonthlyFocus && monthlyFocusLimitReached && (
-                    <small className="gl-monthly-focus-limit">
-                      {monthlyFocusLimitMessage}
-                    </small>
-                  )}
-                  {g.progressMode !== 'tasks' && (
-                    <label className="goal-input">
-                      Текущий прогресс
-                      <input
-                        type="number"
-                        min="0"
-                        max={g.target}
-                        value={g.current}
-                        onChange={(e) => {
-                          const next = updateGoal(
-                            state,
-                            g.id,
-                            Number(e.target.value),
-                          );
-                          onChange(next);
-                          if (next.xp > state.xp)
-                            onNotify(
-                              `Проект завершён! +${next.xp - state.xp} XP`,
-                            );
-                        }}
-                      />
-                    </label>
-                  )}
-                  <div className="goal-dates-summary">
-                    <small>
-                      Срок: {formatDate(g.dueAt)} ·{' '}
-                      {durationLabel(g.startsAt, g.dueAt)}
-                    </small>
-                  </div>
-                </details>
-                <button
-                  className="primary-button gl-plan"
-                  onClick={() => onSelect(g.id)}
-                >
-                  {isGoalDone(g) ? (g.projectReview ? 'Открыть практику' : 'Завершить проект') : 'План проекта'}
-                  <Icon name="arrow" size={16} />
-                </button>
-              </section>
-            );
-          })}
+          <h3 className="gl-section-heading">{listHeading}</h3>
+          {visibleGoals.map((g) => renderGoalCard(g))}
           {visibleGoals.length === 0 && (
             <div className="panel empty">
               <span>🎯</span>
               <h3>
                 {goalFilter === 'done'
                   ? 'Твои победы ещё впереди'
-                  : 'Начни с того, что важно'}
+                  : goalFilter === 'paused'
+                    ? 'Нет проектов на паузе'
+                    : 'Начни с того, что важно'}
               </h3>
-              <p>Поставь проект, выбери срок и добавь первый реальный шаг.</p>
+              <p>
+                {goalFilter === 'paused'
+                  ? 'Поставьте проект на паузу в его карточке, если сейчас не время им заниматься.'
+                  : 'Поставь проект, выбери срок и добавь первый реальный шаг.'}
+              </p>
             </div>
           )}
         </div>

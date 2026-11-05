@@ -1,6 +1,8 @@
 import type { GameState, Goal } from './game.ts';
 import {
   activeGoalStage,
+  goalPaceLabels,
+  goalPaceStatus,
   goalProgressValue,
   nextGoalTask,
 } from './goalWorkspace.ts';
@@ -48,13 +50,33 @@ export function goalsSummary(
   goals: Goal[],
   now = new Date(),
 ) {
-  const active = goals.filter((g) => !isGoalDone(g));
+  // Проект на паузе не считается ни активным, ни (пока не завершён) —
+  // его срок и прогресс не учитываются в сводке, как и на самой карточке
+  // проекта (см. комментарий к Goal.paused в game.ts).
+  const active = goals.filter((g) => !isGoalDone(g) && !g.paused);
+  const paused = goals.filter((g) => !isGoalDone(g) && g.paused);
+  const completed = goals.filter((g) => isGoalDone(g));
   const progress = active.map((g) => goalProgressValue(state, g));
   const upcoming = active
     .map((g) => goalDaysLeft(g, now))
     .filter((d): d is number => d !== undefined && d >= 0);
+  const activeIds = new Set(active.map((g) => g.id));
+  const projectTasks = state.quests.filter((q) => q.goalId);
+  const activeOpenTasks = projectTasks.filter(
+    (q) => !q.done && activeIds.has(q.goalId as string),
+  ).length;
+  const completedTasksTotal = projectTasks.filter((q) => q.done).length;
+  const overdueTasks = projectTasks.filter(
+    (q) =>
+      !q.done &&
+      q.dueAt &&
+      Date.parse(q.dueAt) < now.getTime() &&
+      activeIds.has(q.goalId as string),
+  ).length;
   return {
     active: active.length,
+    paused: paused.length,
+    completed: completed.length,
     averageProgress: progress.length
       ? Math.round(progress.reduce((a, b) => a + b, 0) / progress.length)
       : 0,
@@ -62,7 +84,45 @@ export function goalsSummary(
     pendingReward: active
       .filter((g) => !g.rewarded)
       .reduce((sum, g) => sum + g.reward, 0),
+    activeOpenTasks,
+    completedTasksTotal,
+    overdueTasks,
   };
+}
+
+/** Короткая дата без года, для компактных блоков («5 ноя»). */
+export function shortDate(value: string) {
+  return new Date(value).toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'short',
+  });
+}
+
+export type GoalCardPace = {
+  text: string;
+  tone: 'ahead' | 'behind' | 'on-track' | 'neutral';
+};
+
+/**
+ * Полезный индикатор темпа для карточки проекта вместо статичной награды:
+ * сравнивает прогресс со временем (как на странице проекта), а для
+ * проектов без срока — показывает, сколько дней проект уже активен.
+ */
+export function goalCardPace(
+  state: Pick<GameState, 'quests'>,
+  goal: Goal,
+  now = new Date(),
+): GoalCardPace {
+  if (isGoalDone(goal)) return { text: 'Проект завершён', tone: 'on-track' };
+  const pace = goalPaceStatus(state, goal, now);
+  if (pace.status !== 'unknown')
+    return { text: goalPaceLabels[pace.status], tone: pace.status };
+  const start = goal.startsAt ?? goal.created;
+  const startMs = start ? Date.parse(start) : NaN;
+  if (!Number.isFinite(startMs))
+    return { text: goalPaceLabels.unknown, tone: 'neutral' };
+  const days = Math.max(0, Math.floor((now.getTime() - startMs) / DAY));
+  return { text: `Активен ${pluralDays(days)}`, tone: 'neutral' };
 }
 
 /** The real next action: the nearest open task, else the stage the player is in. */

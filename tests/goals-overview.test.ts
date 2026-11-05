@@ -4,11 +4,13 @@ import { initialState } from '../src/game.ts';
 import { saveGoal, saveTask } from '../src/planning.ts';
 import {
   deadlineLabel,
+  goalCardPace,
   goalDaysLeft,
   goalNextStep,
   goalUpcomingTasks,
   goalsSummary,
   pluralDays,
+  shortDate,
   sortGoals,
 } from '../src/goalsOverview.ts';
 
@@ -70,6 +72,68 @@ test('сводка считает только активные цели и бл
   assert.equal(summary.nearestDays, 40);
   assert.equal(summary.pendingReward, 350);
   assert.equal(goalsSummary(s, [], now).nearestDays, undefined);
+});
+
+test('сводка считает проекты на паузе и завершённые, задачи — только в активных', () => {
+  let s = fixture();
+  const [near, far, none] = s.goals.slice(-3);
+  s = saveTask(s, {
+    name: 'Задача в активном',
+    difficulty: 'Micro',
+    sphere: 'health',
+    goalId: near.id,
+  });
+  s = saveTask(s, {
+    name: 'Просроченная задача в активном',
+    difficulty: 'Micro',
+    sphere: 'health',
+    goalId: near.id,
+    dueAt: inDays(-2),
+  });
+  s = saveTask(s, {
+    name: 'Выполненная задача',
+    difficulty: 'Micro',
+    sphere: 'sport',
+    goalId: far.id,
+  });
+  s = {
+    ...s,
+    quests: s.quests.map((q) =>
+      q.name === 'Выполненная задача' ? { ...q, done: true } : q,
+    ),
+  };
+  const paused = { ...far, paused: true };
+  s = saveTask(s, {
+    name: 'Задача в проекте на паузе',
+    difficulty: 'Micro',
+    sphere: 'sport',
+    goalId: paused.id,
+    dueAt: inDays(-5),
+  });
+  const done = { ...none, current: none.target };
+  const summary = goalsSummary(s, [near, paused, done], now);
+  assert.equal(summary.active, 1);
+  assert.equal(summary.paused, 1);
+  assert.equal(summary.completed, 1);
+  assert.equal(summary.activeOpenTasks, 2);
+  assert.equal(summary.completedTasksTotal, 1);
+  assert.equal(summary.overdueTasks, 1);
+});
+
+test('формат короткой даты и индикатор темпа проекта', () => {
+  const s = fixture();
+  const [near, , none] = s.goals.slice(-3);
+  assert.equal(shortDate(near.dueAt!), shortDate(new Date(near.dueAt!).toISOString()));
+  assert.match(shortDate('2026-11-05T00:00:00.000Z'), /^5 /);
+  assert.equal(
+    goalCardPace(s, { ...none, current: none.target }, now).text,
+    'Проект завершён',
+  );
+  assert.match(goalCardPace(s, none, now).text, /^Активен /);
+  assert.equal(
+    goalCardPace(s, { ...near, startsAt: inDays(-10) }, now).tone,
+    'behind',
+  );
 });
 
 test('сортировка по сроку ставит цели без срока в конец', () => {

@@ -49,7 +49,7 @@ export default function TickTickConnection({ demo }: { demo: boolean }) {
             </select>{missing && <small>Выберите доступный список или отключите эту сферу.</small>}</label>;
           })}
         </div>
-        <label className="include-shared"><input type="checkbox" checked={c.auto} disabled={manager.busy} onChange={e => manager.update({ auto: e.target.checked })} />Обновлять автоматически, пока приложение открыто</label>
+        <label className="include-shared"><input type="checkbox" checked={c.auto} disabled={manager.busy} onChange={e => manager.update({ auto: e.target.checked })} />Автоматически синхронизировать и проверять TickTick каждые 5 минут, пока сайт открыт</label>
         <label className="include-shared"><input type="checkbox" checked={c.deleteRemote} disabled={manager.busy} onChange={e => {
           if (e.target.checked && !window.confirm('Удалённые здесь связанные задачи также будут удаляться в TickTick. Включить?')) return;
           manager.update({ deleteRemote: e.target.checked });

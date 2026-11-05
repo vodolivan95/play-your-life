@@ -180,8 +180,6 @@ export default function TickTickInbox({ state, onChange, scope }: { state: GameS
   useEffect(() => {
     if (!active) return;
     void load.current();
-    const timer = setInterval(() => { if (document.visibilityState === 'visible') void load.current(); }, 60000);
-    return () => clearInterval(timer);
   }, [active]);
   if (!manager || !active) return null;
   const names = new Map(manager.projects.map((p) => [p.id, p.name]));

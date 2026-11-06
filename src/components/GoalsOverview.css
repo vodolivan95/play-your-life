@@ -81,8 +81,13 @@
   align-items: start;
 }
 .gl-list > .empty,
-.gl-list > .gl-section-heading {
+.gl-list > .gl-list-head {
   grid-column: 1 / -1;
+}
+.gl-section-sub {
+  margin: 4px 0 10px;
+  font-size: 13px;
+  color: #52627d;
 }
 .gl-card {
   display: flex;
@@ -336,7 +341,7 @@
 
 /* Главные проекты месяца */
 .gl-section-heading {
-  margin: 0 0 10px;
+  margin: 0;
   font-size: 15px;
   color: #0f1b33;
 }
@@ -345,7 +350,8 @@
 }
 .gl-featured-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 10px;
   margin-bottom: 10px;
 }
@@ -353,6 +359,9 @@
   margin: 0;
   font-size: 15px;
   color: #0f1b33;
+}
+.gl-featured-head .gl-section-sub {
+  margin: 4px 0 0;
 }
 .gl-featured-count {
   padding: 2px 10px;
@@ -398,9 +407,11 @@
   align-items: flex-start;
 }
 .gl-layout > .gl-list {
-  flex: 1 1 520px;
+  /* Растёт быстрее боковой панели, чтобы на широких экранах карточки
+     показывались в 2 колонки, как на согласованном холсте, а не всегда
+     в одну — grid-template-columns наследуется от базового .gl-list. */
+  flex: 2 1 480px;
   min-width: 0;
-  grid-template-columns: minmax(0, 1fr);
 }
 .gl-card {
   cursor: pointer;

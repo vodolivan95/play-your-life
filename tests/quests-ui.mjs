@@ -72,15 +72,32 @@ try {
     await page.goto("http://127.0.0.1:5174/");
     await page.evaluate(async () => {
       const { newAccountGame } = await import("/src/accountGame.ts");
+      const { saveCustomQuest } = await import("/src/personalQuests.ts");
       const s = newAccountGame("Игрок");
       s.profile.onboardingComplete = true;
-      localStorage.setItem("play-your-life-v1", JSON.stringify(s));
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      const seeded = saveCustomQuest(s, {
+        name: "Тестовая задача на завтра",
+        sphere: "growth",
+        difficulty: "Medium",
+        dueAt: tomorrow.toISOString(),
+      }, "local");
+      localStorage.setItem("play-your-life-v1", JSON.stringify(seeded));
     });
     await page
       .getByRole("button", { name: "Продолжить игру на этом устройстве" })
       .click();
     await openTasks(page, mobile);
     assert.equal(await page.locator(".pyl-quest-modes>button").count(), 5);
+    await page.locator(".pyl-quest-modes").getByRole("button", { name: /Задачи на сегодня/ }).click();
+    assert.equal(
+      await page.locator(".gtl-item").filter({ hasText: "Тестовая задача на завтра" }).count(),
+      0,
+      "Задача на полночь завтрашнего дня в Europe/Moscow не должна показываться как сегодняшняя",
+    );
+    await page.locator(".pyl-quest-modes").getByRole("button", { name: "Список", exact: true }).click();
     await page
       .getByRole("button", { name: "＋ Новая задача" })
       .first()

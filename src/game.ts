@@ -242,7 +242,10 @@ export type Goal = {
   woop?: GoalWoop;
   /** Правила «Если — То» (implementation intentions, Peter Gollwitzer). */
   ifThenRules?: GoalIfThenRule[];
+  /** Свободные заметки по проекту в целом (отдельно от заметок этапа). */
+  notes?: string;
 };
+export const GOAL_NOTES_MAX = 2000;
 export type SphereState = {
   xp: number;
   score: number;

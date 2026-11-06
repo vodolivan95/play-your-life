@@ -494,7 +494,13 @@ export default function GoalsBoard({
       {!goal && state.goals.length > 0 && (
         <div className="gl-featured">
           <div className="gl-featured-head">
-            <h3>Главные проекты месяца</h3>
+            <div>
+              <h3>Главные проекты месяца</h3>
+              <p className="gl-section-sub">
+                До трёх проектов в фокусе — им отдаётся приоритет среди
+                активных.
+              </p>
+            </div>
             <span className="gl-featured-count">
               {currentMonthlyFocus.length} из {MAX_MONTHLY_FOCUS}
             </span>
@@ -520,7 +526,12 @@ export default function GoalsBoard({
       {!goal ? (
         <div className="gl-layout">
         <div className="gl-list">
-          <h3 className="gl-section-heading">{listHeading}</h3>
+          <div className="gl-list-head">
+            <h3 className="gl-section-heading">{listHeading}</h3>
+            <p className="gl-section-sub">
+              Нажмите на бейдж сферы в карточке, чтобы отфильтровать список.
+            </p>
+          </div>
           {visibleGoals.map((g) => renderGoalCard(g))}
           {visibleGoals.length === 0 && (
             <div className="panel empty">

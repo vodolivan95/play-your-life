@@ -223,11 +223,6 @@ try {
       'page',
     );
     await tabs.getByRole('button', { name: 'Обзор', exact: true }).click();
-    await workspace.locator('.gw-sphere').click();
-    await page
-      .locator('.sph-scene')
-      .getByRole('heading', { name: 'Английский', exact: true })
-      .waitFor();
     await page.evaluate((id) => {
       location.hash = `/goals/${id}`;
     }, ids.id);

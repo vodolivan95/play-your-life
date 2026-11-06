@@ -429,7 +429,6 @@
 :root[data-theme="dark"] .gw-final-result span,
 :root[data-theme="dark"] .gw-goal-notes span,
 :root[data-theme="dark"] .gw-stage-why span { color: #90d3ff; }
-:root[data-theme="dark"] .gw-sphere > span { color: #91d9ff; }
 :root[data-theme="dark"] .gw-meter { background: #1a3140; }
 :root[data-theme="dark"] .gw-history li:before { background: #1f2f39; }
 :root[data-theme="dark"] .gw-history p { color: #8fa4d4; }

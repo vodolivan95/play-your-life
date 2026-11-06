@@ -736,39 +736,6 @@
   color: #008fed;
   flex-shrink: 0;
 }
-.gw-sphere {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 12px;
-  padding: 0;
-  border: 0;
-  background: none;
-  text-align: left;
-  color: inherit;
-}
-.gw-sphere .sphere-ui-icon {
-  width: 57px;
-  height: 57px;
-  flex-shrink: 0;
-}
-.gw-sphere > div {
-  flex: 1;
-  min-width: 0;
-}
-.gw-sphere b {
-  font-size: 15px;
-}
-.gw-sphere small {
-  display: block;
-  font-size: 12px;
-  color: #7f94ad;
-  margin-top: 4px;
-}
-.gw-sphere > span {
-  color: #009dee;
-  font-size: 23px;
-}
 .gw-meter {
   height: 6px;
   border-radius: 5px;

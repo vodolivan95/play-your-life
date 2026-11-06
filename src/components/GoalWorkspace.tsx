@@ -55,7 +55,6 @@ import {
   GOAL_NOTES_MAX,
 } from '../game';
 import { questCoins, progressQuest } from '../personalQuests';
-import { sphereProgress, MAX_SPHERE_LEVEL } from '../sphereProgress';
 import { sphereAssets } from '../sphereAssets';
 import { startPracticeSession, togglePracticeStep, completePracticeSession } from '../skillPractice';
 import { skillTreeOf, nodeLevel, practiceLevelInfo } from '../skillTree';
@@ -722,7 +721,6 @@ export default function GoalWorkspace(p: Props) {
     else dialog.current?.close();
   }, [detail]);
   const sphere = spheres.find((s) => s.id === goal.sphere)!;
-  const level = sphereProgress(state.spheres[goal.sphere].xp);
   const history = goalHistory(state, goal, stage?.id);
   const nextTask = nextGoalTask(state, goal);
   const activeStage = activeGoalStage(state, goal, new Date(now));
@@ -1889,29 +1887,6 @@ export default function GoalWorkspace(p: Props) {
                       {goal.notes ||
                         'Сохраните мысли, ссылки и детали, которые стоит держать под рукой при работе над проектом.'}
                       <span>✎</span>
-                    </button>
-                  </Card>
-                  <Card title="Связанная сфера">
-                    <button
-                      className="gw-sphere"
-                      onClick={() => p.onSphere(goal.sphere)}
-                    >
-                      <SphereIcon id={goal.sphere} />
-                      <div>
-                        <b>{sphere.name}</b>
-                        <small>
-                          LVL {level.level} / {MAX_SPHERE_LEVEL}
-                        </small>
-                        <div className="gw-meter">
-                          <span style={{ width: `${level.progress}%` }} />
-                        </div>
-                        <small>
-                          {level.maxed
-                            ? 'Максимальный уровень'
-                            : `${level.remainingXP} XP до следующего уровня`}
-                        </small>
-                      </div>
-                      <span>›</span>
                     </button>
                   </Card>
                   <Card title="История проекта">

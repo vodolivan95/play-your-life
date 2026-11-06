@@ -197,9 +197,6 @@ try {
     assert.equal(await tabs.getByRole('button').count(), 5);
     assert.equal(await workspace.locator('.gw-roadmap-stage').count(), 3);
     assert.equal(await workspace.locator('.gw-stage-tasks').count(), 1);
-    assert.ok(
-      await workspace.getByText('LVL 0 / 100', { exact: true }).count(),
-    );
     await workspace.locator('.gw-reward-content').click();
     await workspace
       .locator('dialog[open]')

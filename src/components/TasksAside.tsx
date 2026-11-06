@@ -54,13 +54,14 @@ export default function TasksAside({ state, quests, today }: { state: GameState;
   const weekStart = mondayOf(today);
   const weekEnd = addDays(weekStart, 6);
   const weekQuests = quests.filter((q) => {
+    if (q.wontDo) return false;
     const day = questDay(q);
     return !!day && day >= weekStart && day <= weekEnd;
   });
   const weekTotal = weekQuests.length;
 
   const upcoming = quests
-    .filter((q) => !q.done && questDay(q) === today)
+    .filter((q) => !q.done && !q.wontDo && questDay(q) === today)
     .sort((a, b) => (a.startsAt ?? a.dueAt ?? '').localeCompare(b.startsAt ?? b.dueAt ?? ''));
 
   const bySphere = spheres

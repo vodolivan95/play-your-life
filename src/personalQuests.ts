@@ -191,6 +191,44 @@ export function saveCustomQuest(
       : [...state.quests, clean],
   };
 }
+/**
+ * Дублирует задачу (пункт «Дублировать» в меню «⋯» задачи, по образцу `duplicateStage()`
+ * в `planning.ts`): новая независимая задача с тем же проектом/этапом/сложностью/сроком,
+ * но без выполнения, награды и связи с конкретной задачей TickTick (иначе обмен с TickTick
+ * спутал бы копию и оригинал под одним внешним id).
+ */
+export function duplicateQuest(
+  state: GameState,
+  id: string,
+  ownerId: string,
+): GameState {
+  const q = state.quests.find((item) => item.id === id);
+  if (!q) throw new Error("Задача не найдена.");
+  if (q.ownerId && q.ownerId !== ownerId)
+    throw new Error("Это задача другого пользователя.");
+  const copy: Quest = {
+    ...q,
+    id: crypto.randomUUID(),
+    ownerId,
+    name: `${q.name} (копия)`,
+    createdAt: new Date().toISOString(),
+    done: false,
+    currentValue: 0,
+    rewardClaimed: false,
+    pinned: undefined,
+    wontDo: undefined,
+    subtasks: q.subtasks?.map((t) => ({ ...t, id: crypto.randomUUID(), done: false })),
+  };
+  delete copy.completedAt;
+  delete copy.rewardClaimedAt;
+  delete copy.rewardLocked;
+  delete copy.tickTickSharedAt;
+  delete copy.tickTickSync;
+  const clean = Object.fromEntries(
+    Object.entries(copy).filter(([, v]) => v !== undefined),
+  ) as Quest;
+  return { ...state, quests: [...state.quests, clean] };
+}
 export function progressQuest(
   state: GameState,
   id: string,

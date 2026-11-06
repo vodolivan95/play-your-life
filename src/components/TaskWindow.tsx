@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { difficulties, spheres } from '../game';
 import type { GameState, Quest } from '../game';
 import { isGoalTask, saveStage } from '../planning';
+import { taskRoute } from '../taskRoutes';
 import {
   canChangeDifficulty,
   difficultyLabels,
@@ -54,7 +55,7 @@ function withTime(dueAt: string, time: string) {
   const day = dayOf(dueAt);
   return time ? `${day}T${time}` : day;
 }
-export default function TaskWindow({ taskId, state, today, onChange, onClose, onAdvanced, onProgress, onUndo, onDelete, notify }: {
+export default function TaskWindow({ taskId, state, today, onChange, onClose, onAdvanced, onProgress, onUndo, onDelete, onDuplicate, notify }: {
   taskId: string;
   state: GameState;
   today: string;
@@ -64,6 +65,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
   onProgress?: (q: Quest) => void;
   onUndo?: (q: Quest) => void;
   onDelete?: (q: Quest) => void;
+  onDuplicate?: (q: Quest) => void;
   notify: (s: string) => void;
 }) {
   const task = state.quests.find((q) => q.id === taskId);
@@ -72,7 +74,10 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
     [adding, setAdding] = useState(false),
     [draft, setDraft] = useState(''),
     [picking, setPicking] = useState(false),
-    [sub, setSub] = useState('');
+    [sub, setSub] = useState(''),
+    [menuOpen, setMenuOpen] = useState(false),
+    [activityOpen, setActivityOpen] = useState(false);
+  const subInput = useRef<HTMLInputElement>(null);
   if (!task) return null;
   const c = taskContribution(state, task),
     sphere = spheres.find((s) => s.id === task.sphere),
@@ -103,6 +108,71 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
       notify((e as Error).message);
     }
   }
+  function closeMenu() {
+    setMenuOpen(false);
+  }
+  function focusSubtask() {
+    closeMenu();
+    subInput.current?.scrollIntoView({ block: 'center' });
+    subInput.current?.focus();
+  }
+  function openLabels() {
+    closeMenu();
+    if (onAdvanced) {
+      onClose();
+      onAdvanced(task!);
+    }
+  }
+  function duplicate() {
+    closeMenu();
+    onDuplicate?.(task!);
+  }
+  async function copyLink() {
+    closeMenu();
+    const link = `${location.origin}${location.pathname}${location.search}#${taskRoute(task!.id)}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      notify('Ссылка на задачу скопирована');
+    } catch {
+      notify('Не удалось скопировать ссылку: ' + link);
+    }
+  }
+  function openActivity() {
+    closeMenu();
+    setActivityOpen(true);
+  }
+  function exportTask() {
+    closeMenu();
+    const payload = {
+      name: task!.name,
+      sphere: sphere?.name ?? task!.sphere,
+      difficulty: task!.difficulty,
+      dueAt: task!.dueAt ?? null,
+      deadlineAt: task!.deadlineAt ?? null,
+      notes: task!.notes ?? null,
+      subtasks: task!.subtasks ?? [],
+    };
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }),
+    );
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${task!.name.replace(/[\\/:*?"<>|]/g, '').trim() || 'задача'}.json`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function printTask() {
+    closeMenu();
+    window.print();
+  }
+  function deleteFromMenu() {
+    closeMenu();
+    onDelete?.(task!);
+  }
+  const activity = state.events
+    .filter((e) => e.sourceId === task.id)
+    .slice()
+    .sort((a, b) => a.date.localeCompare(b.date));
   const ring = Math.min(100, Math.round((c.xp / 50) * 100));
   return (
     <div className="pyl-overlay twin-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -114,11 +184,67 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
           </div>
           <div>
             <small>{sphere ? `${sphere.icon} ${sphere.name}` : 'Сфера'} · 🪙 {c.coins}</small>
-            <h2 id="twin-title">{task.name}</h2>
+            <h2 id="twin-title">{task.pinned && <span aria-label="Закреплена">📌 </span>}{task.name}</h2>
+            <div className="twin-badges">
+              {sphere && <span className="twin-badge" style={{ ['--bc' as string]: sphere.color }}>{sphere.icon} {sphere.name}</span>}
+              {c.stage && <span className="twin-badge twin-badge-stage">▸ {c.stage.name}</span>}
+            </div>
             <TaskLabelBadge labelId={task.labelId} labels={state.taskLabels} />
           </div>
-          <button type="button" className="twin-close" onClick={onClose} aria-label="Закрыть">✕</button>
+          <div className="twin-head-actions">
+            <div className="twin-menu-wrap">
+              <button type="button" className="twin-menu-btn" aria-haspopup="menu" aria-expanded={menuOpen} aria-label="Другие действия" onClick={() => setMenuOpen((v) => !v)}>⋯</button>
+              {menuOpen && (
+                <>
+                  <div className="twin-menu-backdrop" onClick={closeMenu} />
+                  <div className="twin-menu" role="menu">
+                    <button type="button" role="menuitem" onClick={focusSubtask}>＋ Добавить подзадачу</button>
+                    <button type="button" role="menuitem" onClick={() => { closeMenu(); patch({ pinned: !task.pinned }); }}>
+                      📌 {task.pinned ? 'Открепить' : 'Закрепить'}
+                    </button>
+                    <button type="button" role="menuitem" onClick={() => { closeMenu(); patch({ wontDo: !task.wontDo }); }}>
+                      ⛔ {task.wontDo ? 'Вернуть в работу' : 'Не буду делать'}
+                    </button>
+                    {task.sourceType === 'USER_CREATED' && onAdvanced && (
+                      <button type="button" role="menuitem" onClick={openLabels}>🏷️ Метки</button>
+                    )}
+                    {onDuplicate && <button type="button" role="menuitem" onClick={duplicate}>🧬 Дублировать</button>}
+                    <button type="button" role="menuitem" onClick={copyLink}>🔗 Копировать ссылку</button>
+                    <button type="button" role="menuitem" onClick={openActivity}>🕘 Активность</button>
+                    <button type="button" role="menuitem" onClick={exportTask}>⬇️ Экспорт</button>
+                    <button type="button" role="menuitem" onClick={printTask}>🖶 Печать</button>
+                    {onDelete && <button type="button" role="menuitem" className="twin-menu-danger" onClick={deleteFromMenu}>🗑️ Удалить</button>}
+                  </div>
+                </>
+              )}
+            </div>
+            <button type="button" className="twin-close" onClick={onClose} aria-label="Закрыть">✕</button>
+          </div>
         </header>
+        {activityOpen && (
+          <div className="twin-field twin-activity" role="group" aria-label="Активность">
+            <span>Активность<button type="button" className="text-button twin-activity-close" onClick={() => setActivityOpen(false)}>Скрыть</button></span>
+            {activity.length === 0 ? (
+              <p className="twin-activity-empty">По этой задаче пока нет событий.</p>
+            ) : (
+              <ul className="twin-activity-list">
+                {activity.map((e) => (
+                  <li key={e.id}>
+                    <span>{fmtDate(e.date)}</span>
+                    <span>{e.title}</span>
+                    <b>+{e.xp} XP</b>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+        {task.wontDo && (
+          <div className="twin-wontdo-banner">
+            <span>⛔ Отмечена «Не буду делать» — не в «Сегодня» и без награды.</span>
+            <button type="button" className="text-button" onClick={() => patch({ wontDo: false })}>Вернуть в работу</button>
+          </div>
+        )}
         <div className="twin-stats">
           <div><small>В сферу</small><b>+{c.xp} XP</b><span>{sphere?.name ?? ''}</span></div>
           <div><small>В проект</small><b>{c.goal ? `${c.goalShare}%` : '—'}</b><span>{c.goal ? c.goal.name : 'вне проекта'}</span></div>
@@ -238,7 +364,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
               ))}
             </ul>
             <form className="twin-inline" onSubmit={(e) => { e.preventDefault(); if (!sub.trim()) return; patch({ subtasks: [...(task.subtasks ?? []), { id: crypto.randomUUID(), title: sub, done: false }] }); setSub(''); }}>
-              <input value={sub} maxLength={100} placeholder="Новая подзадача" aria-label="Новая подзадача" onChange={(e) => setSub(e.target.value)} />
+              <input ref={subInput} value={sub} maxLength={100} placeholder="Новая подзадача" aria-label="Новая подзадача" onChange={(e) => setSub(e.target.value)} />
               <button className="secondary-button" disabled={!sub.trim()}>＋ Добавить</button>
             </form>
           </div>
@@ -262,7 +388,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
           )}
           {task.done && onUndo && <button type="button" className="secondary-button" onClick={() => onUndo(task)}>Отменить выполнение</button>}
           {onDelete && <button type="button" className="text-button" onClick={() => onDelete(task)}>Удалить</button>}
-          {onProgress && !task.done && <button type="button" className="secondary-button" onClick={() => onProgress(task)}>Продолжить</button>}
+          {onProgress && !task.done && !task.wontDo && <button type="button" className="secondary-button" onClick={() => onProgress(task)}>Продолжить</button>}
           <button type="button" className="primary-button" onClick={onClose}>Готово</button>
         </footer>
       </section>

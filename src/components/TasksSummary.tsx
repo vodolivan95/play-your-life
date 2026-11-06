@@ -7,7 +7,7 @@ import './TasksSummary.css';
 
 export default function TasksSummary({ quests, today }: { quests: Quest[]; today: string }) {
   const manager = useContext(TickTickContext);
-  const open = quests.filter((q) => !q.done);
+  const open = quests.filter((q) => !q.done && !q.wontDo);
   // День по местной зоне через calendarItem(), не по UTC-срезу строки (см. TasksAside.tsx).
   const day = (q: Quest) => calendarItem(q)?.day;
   const weekEnd = addDays(mondayOf(today), 6);

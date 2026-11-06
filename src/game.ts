@@ -148,6 +148,10 @@ export type Quest = {
   tickTickSync?: false;
   repeat?: 'daily' | 'weekdays' | 'weekly' | 'monthly';
   subtasks?: { id: string; title: string; done: boolean }[];
+  /** Закреплена в меню «⋯» задачи — показывается первой в списках задач. */
+  pinned?: boolean;
+  /** Отмечена «Не буду делать» в меню «⋯» задачи: не в «Сегодня»/«Просрочено»/нагрузке недели, без награды, но не удалена. */
+  wontDo?: boolean;
 };
 export type GoalStage = {
   id: string;
@@ -883,6 +887,8 @@ export function questsForToday(state: GameState, now = new Date()): Quest[] {
   const today = dateKey(now);
   return state.quests
     .filter((q) => {
+      // «Не буду делать» — не считается ни выполненной сегодня, ни «на сегодня».
+      if (q.wontDo) return false;
       if (q.done) {
         const questEvent = (e: Event) => e.kind === 'quest' || e.kind === undefined;
         const completedAt =

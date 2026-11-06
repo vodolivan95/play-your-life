@@ -31,8 +31,10 @@
 .gtl-done{font-size:13px;font-weight:700;color:#5b6b82;display:flex;gap:6px;align-items:center}
 .gtl-item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
 .gtl-item.is-done .gtl-name{text-decoration:line-through;opacity:.6}
+.gtl-item.is-wontdo .gtl-name{text-decoration:line-through;opacity:.5}
 .gtl-go{font:inherit;font-size:13px;font-weight:800;border:0;border-radius:12px;padding:9px 14px;background:linear-gradient(135deg,#2f7de1,#7c5cff);color:#fff;cursor:pointer}
 .gtl-ok{font-weight:800;color:#34c759;padding:0 12px}
+.gtl-wontdo{font-weight:800;color:#e5484d;padding:0 12px}
 :root[data-theme='dark'] .gtl-done{color:#9fb0cc}
 .pyl-tasks-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px}
 .pyl-tasks-head h1{margin:0;font-size:32px;font-weight:800}

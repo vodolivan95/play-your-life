@@ -194,7 +194,7 @@ try {
       undefined,
     );
 
-    assert.equal(await tabs.getByRole('button').count(), 6);
+    assert.equal(await tabs.getByRole('button').count(), 5);
     assert.equal(await workspace.locator('.gw-roadmap-stage').count(), 3);
     assert.equal(await workspace.locator('.gw-stage-tasks').count(), 1);
     assert.ok(
@@ -514,7 +514,7 @@ try {
     d = workspace.locator('dialog[open]');
     await d.getByLabel('Текст').fill('Моя настоящая мотивация');
     await d.getByRole('button', { name: 'Сохранить', exact: true }).click();
-    for (const name of ['Задачи', 'Статистика', 'Награды', 'История', 'Обзор'])
+    for (const name of ['Задачи', 'Статистика', 'История', 'Обзор'])
       await tabs.getByRole('button', { name, exact: true }).click();
     await workspace
       .getByRole('button', { name: '+ Этап', exact: true })

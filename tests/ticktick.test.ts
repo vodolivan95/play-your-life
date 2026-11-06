@@ -846,6 +846,31 @@ test('remoteFields: полночь по смещению TickTick — кален
     new Date('2026-10-28T19:30:00+0300').toISOString(),
   );
 });
+test('перенос срока связанной задачи в TickTick на завтра обновляет локальный календарный день', async () => {
+  const { state, connection } = setup();
+  const id = state.quests[0].id;
+  state.quests[0] = { ...state.quests[0], dueAt: '2026-11-06' };
+  const api = upstream();
+  const first = applyTickTickResult(
+    state,
+    await syncTickTick(state, connection, api.request),
+  );
+  const remoteId = first.connection.links[id].remoteId;
+  api.tasks.set(remoteId, {
+    ...api.tasks.get(remoteId)!,
+    startDate: '2026-11-07T00:00:00+0300',
+    dueDate: '2026-11-07T00:00:00+0300',
+  });
+
+  const next = applyTickTickResult(
+    first.state,
+    await syncTickTick(first.state, first.connection, api.request),
+  );
+  const updated = next.state.quests.find((q) => q.id === id)!;
+  // TickTick присылает startDate == dueDate для однодневной задачи; локально это только срок.
+  assert.equal(updated.startsAt, undefined);
+  assert.equal(updated.dueAt, '2026-11-07');
+});
 test('remotePayload: срок без времени уходит в TickTick тем же днём и как весь день', () => {
   const { state, connection } = setup();
   const task = { ...state.quests[0], dueAt: '2026-10-28', startsAt: undefined };

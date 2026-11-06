@@ -76,7 +76,7 @@
 }
 .gl-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
   gap: 14px;
   align-items: start;
 }
@@ -407,10 +407,12 @@
   align-items: flex-start;
 }
 .gl-layout > .gl-list {
-  /* Растёт быстрее боковой панели, чтобы на широких экранах карточки
-     показывались в 2 колонки, как на согласованном холсте, а не всегда
-     в одну — grid-template-columns наследуется от базового .gl-list. */
-  flex: 2 1 480px;
+  /* Боковая панель больше не растёт (gl-side ниже: flex-grow 0), поэтому
+     весь дополнительный экран достаётся списку — на широких экранах
+     карточки укладываются в 2-3 колонки, как на согласованном холсте,
+     а не всегда в одну; grid-template-columns наследуется от базового
+     .gl-list (auto-fill, см. ниже). */
+  flex: 1 1 600px;
   min-width: 0;
 }
 .gl-card {
@@ -421,7 +423,9 @@
     0 10px 24px rgba(30, 70, 130, 0.12);
 }
 .gl-side {
-  flex: 1 1 360px;
+  /* Не растёт вместе со списком (flex-grow 0) — держит фиксированную
+     ширину, чтобы список мог забрать весь лишний экран под колонки. */
+  flex: 0 1 380px;
   min-width: 0;
   position: sticky;
   top: 16px;

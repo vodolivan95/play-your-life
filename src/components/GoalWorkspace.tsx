@@ -52,9 +52,9 @@ import {
   GOAL_IF_THEN_TEXT_MAX,
   GOAL_WEEKLY_FOCUS_GOAL_TEXT_MAX,
   GOAL_WEEKLY_FOCUS_GOAL_TARGET_MAX,
+  GOAL_NOTES_MAX,
 } from '../game';
 import { questCoins, progressQuest } from '../personalQuests';
-import { sphereProgress, MAX_SPHERE_LEVEL } from '../sphereProgress';
 import { sphereAssets } from '../sphereAssets';
 import { startPracticeSession, togglePracticeStep, completePracticeSession } from '../skillPractice';
 import { skillTreeOf, nodeLevel, practiceLevelInfo } from '../skillTree';
@@ -101,6 +101,49 @@ const shortDate = (value?: string) =>
     : 'Без срока';
 const dayKey = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+/** Компактная строка «период · дедлайн» для карточки этапа в дорожной карте. */
+function stageDateLine(s: GoalStage, status: string) {
+  if (!s.startsAt && !s.dueAt) return null;
+  const range = s.startsAt && s.dueAt
+    ? `${shortDate(s.startsAt)} → ${shortDate(s.dueAt)}`
+    : s.startsAt
+      ? `с ${shortDate(s.startsAt)}`
+      : `до ${shortDate(s.dueAt)}`;
+  return (
+    <small className="gw-stage-dates">
+      <span aria-hidden="true">📅</span> {range}
+      {s.dueAt && (
+        <>
+          {' '}
+          · <span aria-hidden="true">⏳</span>{' '}
+          {status === 'completed' ? 'Дедлайн был' : 'Дедлайн'}:{' '}
+          {shortDate(s.dueAt)}
+        </>
+      )}
+    </small>
+  );
+}
+/** Период и отдельный игровой дедлайн задачи (deadlineAt не синхронизируется с TickTick). */
+function taskDateLine(task: Quest) {
+  const range =
+    task.startsAt && task.dueAt
+      ? `${shortDate(task.startsAt)} → ${shortDate(task.dueAt)}`
+      : task.dueAt
+        ? shortDate(task.dueAt)
+        : 'Без срока';
+  return (
+    <>
+      {range}
+      {task.deadlineAt && (
+        <>
+          {' '}
+          · <span aria-hidden="true">⏳</span> Дедлайн:{' '}
+          {shortDate(task.deadlineAt)}
+        </>
+      )}
+    </>
+  );
+}
 
 export function ProgressRing({
   value,
@@ -132,6 +175,41 @@ export function ProgressRing({
     </div>
   );
 }
+const CARD_ICONS = {
+  roadmap: { name: 'list', from: '#6ad0ff', to: '#0a84ff' },
+  checkpoints: { name: 'flag', from: '#ffbf5c', to: '#ff8a00' },
+  nextStep: { name: 'bolt', from: '#ffe066', to: '#ff9f0a' },
+  finalResult: { name: 'goals', from: '#cdaef8', to: '#8b5cf6' },
+  projectState: { name: 'gauge', from: '#78e8ab', to: '#1fb866' },
+  weeklyProgress: { name: 'statistics', from: '#7fe3ff', to: '#0a84ff' },
+  weeklyFocus: { name: 'crosshair', from: '#a7a4f7', to: '#5e5ce6' },
+  motivation: { name: 'heart', from: '#ff9ab3', to: '#ff375f' },
+  stageWhy: { name: 'diamond', from: '#a7a4f7', to: '#5e5ce6' },
+  weeklyFocusGoal: { name: 'ruler', from: '#6ad0ff', to: '#0a84ff' },
+  notes: { name: 'paperclip', from: '#b7bfd1', to: '#717c93' },
+  history: { name: 'clock', from: '#b7bfd1', to: '#717c93' },
+  woop: { name: 'brain', from: '#cdaef8', to: '#8b5cf6' },
+  ifThen: { name: 'flow', from: '#7fe3ff', to: '#0a84ff' },
+  rewards: { name: 'trophy', from: '#ffd27a', to: '#ff9f0a' },
+  stageDescription: { name: 'goals', from: '#78e8ab', to: '#1fb866' },
+  timeline: { name: 'clock', from: '#6ad0ff', to: '#0a84ff' },
+  planFact: { name: 'statistics', from: '#cdaef8', to: '#8b5cf6' },
+  xp: { name: 'star', from: '#ffd27a', to: '#ff9f0a' },
+  practice: { name: 'repeat', from: '#7fe3ff', to: '#0a84ff' },
+} satisfies Record<string, { name: string; from: string; to: string }>;
+type CardIcon = keyof typeof CARD_ICONS;
+function IconTile({ id, small = false }: { id: CardIcon; small?: boolean }) {
+  const cfg = CARD_ICONS[id];
+  return (
+    <span
+      className={`gw-ico ${small ? 'gw-ico-sm' : ''}`}
+      aria-hidden="true"
+      style={{ background: `linear-gradient(160deg, ${cfg.from}, ${cfg.to})` }}
+    >
+      <Icon name={cfg.name} size={small ? 12 : 14} />
+    </span>
+  );
+}
 function Card({
   title,
   icon,
@@ -139,14 +217,14 @@ function Card({
   className = '',
 }: {
   title: string;
-  icon?: string;
+  icon?: CardIcon;
   children: ReactNode;
   className?: string;
 }) {
   return (
     <section className={`gw-card ${className}`}>
       <h3>
-        {icon && <span aria-hidden="true">{icon}</span>}
+        {icon && <IconTile id={icon} />}
         {title}
       </h3>
       {children}
@@ -248,7 +326,7 @@ function StageCalendar({
 function Timeline({ stage, onEdit }: { stage: GoalStage; onEdit: () => void }) {
   const days = stageDays(stage);
   return (
-    <Card title="Временная шкала этапа" icon="◷">
+    <Card title="Временная шкала этапа" icon="timeline">
       <div className="gw-date-range">
         <div>
           <small>Дата начала</small>
@@ -386,7 +464,7 @@ function Statistics({
     data.rows.map((r) => ({ date: r.date, value: r[field] }));
   return (
     <div className="gw-statistics">
-      <Card title="План и факт выполнения" icon="▥">
+      <Card title="План и факт выполнения" icon="planFact">
         {data.rows.length ? (
           <>
             <DataChart
@@ -445,7 +523,7 @@ function Statistics({
           </p>
         )}
       </Card>
-      <Card title="Заработанный XP" icon="⭐">
+      <Card title="Заработанный XP" icon="xp">
         {data.totalXP > 0 ? (
           <>
             <DataChart
@@ -526,6 +604,65 @@ function Statistics({
     </div>
   );
 }
+/** Компактный спарклайн прогресса проекта по сохранённым точкам — для боковой панели. */
+function WeeklyProgressCard({ state, goal }: { state: GameState; goal: Goal }) {
+  const data = goalStatistics(state, goal);
+  const current = Math.round(goalProgressValue(state, goal));
+  const points = data.progress;
+  const coords =
+    points.length > 1
+      ? (() => {
+          const start = Date.parse(points[0].date);
+          const end = Date.parse(points[points.length - 1].date);
+          const span = Math.max(1, end - start);
+          return points.map((pt) => ({
+            x: 8 + ((Date.parse(pt.date) - start) / span) * 244,
+            y: 54 - (Math.max(0, Math.min(100, pt.value)) / 100) * 44,
+          }));
+        })()
+      : null;
+  return (
+    <Card title="Прогресс по неделям" icon="weeklyProgress">
+      <div className="gw-weekly-progress">
+        <b>{current}%</b>
+        {coords ? (
+          <svg
+            className="gw-sparkline"
+            viewBox="0 0 260 64"
+            role="img"
+            aria-label={`Прогресс проекта по сохранённым точкам, сейчас ${current}%`}
+          >
+            <path
+              d={coords
+                .map((c, i) => `${i ? 'L' : 'M'}${c.x.toFixed(1)},${c.y.toFixed(1)}`)
+                .join(' ')}
+              fill="none"
+              stroke="#0a84ff"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <circle
+              cx={coords[coords.length - 1].x}
+              cy={coords[coords.length - 1].y}
+              r="3.4"
+              fill="#0a84ff"
+            />
+          </svg>
+        ) : (
+          <p className="gw-muted">
+            График появится, когда накопится история прогресса проекта.
+          </p>
+        )}
+      </div>
+      {points.length > 1 && (
+        <small className="gw-muted">
+          {shortDate(points[0].date)} — {shortDate(points[points.length - 1].date)}
+        </small>
+      )}
+    </Card>
+  );
+}
 
 export default function GoalWorkspace(p: Props) {
   const { state, goal, stageId } = p;
@@ -584,7 +721,6 @@ export default function GoalWorkspace(p: Props) {
     else dialog.current?.close();
   }, [detail]);
   const sphere = spheres.find((s) => s.id === goal.sphere)!;
-  const level = sphereProgress(state.spheres[goal.sphere].xp);
   const history = goalHistory(state, goal, stage?.id);
   const nextTask = nextGoalTask(state, goal);
   const activeStage = activeGoalStage(state, goal, new Date(now));
@@ -756,7 +892,7 @@ export default function GoalWorkspace(p: Props) {
           <strong>{task.name}</strong>
           <TaskLabelBadge labelId={task.labelId} labels={state.taskLabels} />
           <small>
-            {task.dueAt ? shortDate(task.dueAt) : 'Без срока'}
+            {taskDateLine(task)}
             {task.required === false ? ' · Необязательная' : ''}
             {task.targetValue && !task.done
               ? ` · ${task.currentValue ?? 0}/${task.targetValue} ${task.unit ?? ''}`
@@ -801,7 +937,7 @@ export default function GoalWorkspace(p: Props) {
     return (
       <Card
         title={stage ? 'Награды за этап' : 'Награды за достижение проекта'}
-        icon="🏆"
+        icon="rewards"
         className="gw-rewards"
       >
         <button
@@ -843,11 +979,16 @@ export default function GoalWorkspace(p: Props) {
     return (
       <section className="gw-roadmap-section">
         <div className="gw-section-heading">
-          <h2>Путь к проекту</h2>
+          <h2>
+            <IconTile id="roadmap" />
+            Путь к проекту
+          </h2>
           <div>
-            <button className="text-button" onClick={() => setExpanded([])}>
-              Свернуть все этапы
-            </button>
+            {tab !== 'stages' && (
+              <button className="text-button" onClick={() => setExpanded([])}>
+                Свернуть все этапы
+              </button>
+            )}
             <button className="primary-button" onClick={() => p.onEditStage()}>
               + Этап
             </button>
@@ -857,7 +998,7 @@ export default function GoalWorkspace(p: Props) {
           {stages.map((s, index) => {
             const m = stageMetrics(state, goal, s),
               status = stageState(state, goal, s),
-              open = expanded.includes(s.id),
+              open = tab === 'stages' || expanded.includes(s.id),
               blocked = stageAccess(state, goal, s);
             return (
               <article
@@ -885,6 +1026,7 @@ export default function GoalWorkspace(p: Props) {
                       {s.description || 'Описание этапа пока не добавлено.'}
                     </p>
                     <small>{stageLabels[status]}</small>
+                    {stageDateLine(s, status)}
                   </div>
                   <div className="gw-stage-numbers">
                     <b>{Math.round(m.progress)}%</b>
@@ -892,19 +1034,21 @@ export default function GoalWorkspace(p: Props) {
                       {m.done} из {m.total} задач
                     </small>
                   </div>
-                  <button
-                    className="gw-icon-button"
-                    aria-label={`${open ? 'Свернуть' : 'Раскрыть'} этап: ${s.name}`}
-                    aria-expanded={open}
-                    aria-controls={`stage-content-${s.id}`}
-                    onClick={() =>
-                      setExpanded((v) =>
-                        open ? v.filter((id) => id !== s.id) : [...v, s.id],
-                      )
-                    }
-                  >
-                    {open ? '⌃' : '⌄'}
-                  </button>
+                  {tab !== 'stages' && (
+                    <button
+                      className="gw-icon-button"
+                      aria-label={`${open ? 'Свернуть' : 'Раскрыть'} этап: ${s.name}`}
+                      aria-expanded={open}
+                      aria-controls={`stage-content-${s.id}`}
+                      onClick={() =>
+                        setExpanded((v) =>
+                          open ? v.filter((id) => id !== s.id) : [...v, s.id],
+                        )
+                      }
+                    >
+                      {open ? '⌃' : '⌄'}
+                    </button>
+                  )}
                   {stageLink(s, '›', 'gw-stage-enter')}
                 </div>
                 {open && (
@@ -1282,7 +1426,6 @@ export default function GoalWorkspace(p: Props) {
                   ['stages', 'Этапы', 'tree'],
                   ['tasks', 'Задачи', 'calendar'],
                   ['statistics', 'Статистика', 'statistics'],
-                  ['rewards', 'Награды', 'trophy'],
                   ['history', 'История', 'plan'],
                 ]
             ).map(([id, name, icon]) => (
@@ -1312,7 +1455,7 @@ export default function GoalWorkspace(p: Props) {
             <div className="gw-main">
               {!stage && (tab === 'overview' || tab === 'stages') && roadmap()}
               {!stage && tab === 'overview' && (
-                <Card title="Контрольные точки" icon="◆" className="gw-checkpoints">
+                <Card title="Контрольные точки" icon="checkpoints" className="gw-checkpoints">
                   <p className="gw-muted">
                     Измеримые промежуточные результаты проекта — отдельно от
                     этапов и задач.
@@ -1370,7 +1513,7 @@ export default function GoalWorkspace(p: Props) {
                 </Card>
               )}
               {!stage && tab === 'overview' && (
-                <Card title="Следующий шаг" icon="⚡" className="gw-next-step">
+                <Card title="Следующий шаг" icon="nextStep" className="gw-next-step">
                   {nextTask ? (
                     <div>
                       <div>
@@ -1406,7 +1549,7 @@ export default function GoalWorkspace(p: Props) {
               )}
               {stage && tab === 'overview' && (
                 <>
-                  <Card title="Описание этапа" icon="🎯">
+                  <Card title="Описание этапа" icon="stageDescription">
                     <p>
                       {stage.description ||
                         'Добавьте описание результата в настройках этапа.'}
@@ -1422,7 +1565,7 @@ export default function GoalWorkspace(p: Props) {
                 </>
               )}
               {!stage && tab === 'tasks' && goal.projectReview && (
-                <Card title={`Практика навыка: ${goal.projectReview.skillName}`} icon="↻" className="gw-practice-card">
+                <Card title={`Практика навыка: ${goal.projectReview.skillName}`} icon="practice" className="gw-practice-card">
                   <p className="gw-muted">Уровень {practiceLevel} из {practiceNode?.levels ?? 5}. {practiceInfo?.max ? 'Максимальный уровень достигнут.' : `До следующего уровня осталось ${Math.max(0, (practiceInfo?.required ?? 0) - (practiceInfo?.practiced ?? 0))} повтора(ов).`} Повторы не дают XP или лайфкоины и не меняют исходные задачи.</p>
                   {practiceSessions.filter((session) => !session.completedAt).map((session) => (
                     <article className="gw-practice-session" key={session.id}>
@@ -1494,7 +1637,7 @@ export default function GoalWorkspace(p: Props) {
                 </Card>
               ) : null}
               {stage && (tab === 'overview' || tab === 'settings') && (
-                <Card title="Заметки" icon="▤">
+                <Card title="Заметки" icon="notes">
                   <p className="gw-notes">
                     {stage.notes ||
                       'Здесь можно сохранить мысли, ссылки и идеи для этого этапа.'}
@@ -1514,7 +1657,6 @@ export default function GoalWorkspace(p: Props) {
               {tab === 'statistics' && (
                 <Statistics state={state} goal={goal} stageId={stage?.id} />
               )}
-              {!stage && tab === 'rewards' && rewards()}
               {!stage && tab === 'history' && (
                 <Card title="История проекта">{historyList()}</Card>
               )}
@@ -1593,7 +1735,7 @@ export default function GoalWorkspace(p: Props) {
               ) : (
                 <>
                   {tab !== 'rewards' && rewards()}
-                  <Card title="Конечный результат" icon="◇">
+                  <Card title="Конечный результат" icon="finalResult">
                     <button
                       className="gw-final-result"
                       onClick={() => setDetail({ kind: 'finalResult' })}
@@ -1603,7 +1745,7 @@ export default function GoalWorkspace(p: Props) {
                       <span>✎</span>
                     </button>
                   </Card>
-                  <Card title="Состояние проекта" icon="◐">
+                  <Card title="Состояние проекта" icon="projectState">
                     {(() => {
                       const pace = goalPaceStatus(state, goal, new Date(now));
                       return (
@@ -1621,7 +1763,8 @@ export default function GoalWorkspace(p: Props) {
                       );
                     })()}
                   </Card>
-                  <Card title="Фокус на эту неделю" icon="◎">
+                  <WeeklyProgressCard state={state} goal={goal} />
+                  <Card title="Фокус на эту неделю" icon="weeklyFocus">
                     <button
                       className="gw-weekly-focus-btn"
                       onClick={() => setDetail({ kind: 'weeklyFocus' })}
@@ -1631,7 +1774,7 @@ export default function GoalWorkspace(p: Props) {
                       <span>✎</span>
                     </button>
                   </Card>
-                  <Card title="Почему этот проект важен для меня" icon="♥">
+                  <Card title="Почему этот проект важен для меня" icon="motivation">
                     <button
                       className="gw-motivation"
                       onClick={() => setDetail({ kind: 'motivation' })}
@@ -1642,7 +1785,7 @@ export default function GoalWorkspace(p: Props) {
                     </button>
                   </Card>
                   {activeStage && (
-                    <Card title="Почему важен этот этап" icon="♦">
+                    <Card title="Почему важен этот этап" icon="stageWhy">
                       <p className="gw-muted gw-stage-why-title">
                         {activeStage.name}
                       </p>
@@ -1656,7 +1799,7 @@ export default function GoalWorkspace(p: Props) {
                       </button>
                     </Card>
                   )}
-                  <Card title="Фокус на эту неделю — измеримый" icon="◎">
+                  <Card title="Фокус на эту неделю — измеримый" icon="weeklyFocusGoal">
                     {goal.weeklyFocusGoal ? (
                       <div className="gw-weekly-focus-goal">
                         <button
@@ -1736,27 +1879,14 @@ export default function GoalWorkspace(p: Props) {
                       </button>
                     )}
                   </Card>
-                  <Card title="Связанная сфера">
+                  <Card title="Заметки" icon="notes">
                     <button
-                      className="gw-sphere"
-                      onClick={() => p.onSphere(goal.sphere)}
+                      className="gw-goal-notes"
+                      onClick={() => setDetail({ kind: 'notes' })}
                     >
-                      <SphereIcon id={goal.sphere} />
-                      <div>
-                        <b>{sphere.name}</b>
-                        <small>
-                          LVL {level.level} / {MAX_SPHERE_LEVEL}
-                        </small>
-                        <div className="gw-meter">
-                          <span style={{ width: `${level.progress}%` }} />
-                        </div>
-                        <small>
-                          {level.maxed
-                            ? 'Максимальный уровень'
-                            : `${level.remainingXP} XP до следующего уровня`}
-                        </small>
-                      </div>
-                      <span>›</span>
+                      {goal.notes ||
+                        'Сохраните мысли, ссылки и детали, которые стоит держать под рукой при работе над проектом.'}
+                      <span>✎</span>
                     </button>
                   </Card>
                   <Card title="История проекта">
@@ -1768,7 +1898,7 @@ export default function GoalWorkspace(p: Props) {
                       Все события →
                     </button>
                   </Card>
-                  <Card title="WOOP" icon="◈">
+                  <Card title="WOOP" icon="woop">
                     <p className="gw-muted">
                       Желание → Результат → Препятствие → План.
                     </p>
@@ -1803,7 +1933,7 @@ export default function GoalWorkspace(p: Props) {
                       {goal.woop ? 'Изменить' : '＋ Заполнить WOOP'}
                     </button>
                   </Card>
-                  <Card title="Если-То план" icon="◆" className="gw-checkpoints">
+                  <Card title="Если-То план" icon="ifThen" className="gw-checkpoints">
                     <p className="gw-muted">
                       Заранее решите, как отреагировать на препятствие — так
                       проще не бросить на полпути.
@@ -1880,7 +2010,9 @@ export default function GoalWorkspace(p: Props) {
             : detail?.kind === 'reward'
               ? 'Подробности награды'
               : detail?.kind === 'notes'
-                ? 'Заметки этапа'
+                ? stage
+                  ? 'Заметки этапа'
+                  : 'Заметки проекта'
                 : detail?.kind === 'weeklyFocus'
                   ? 'Фокус на эту неделю'
                   : detail?.kind === 'finalResult'
@@ -1948,30 +2080,34 @@ export default function GoalWorkspace(p: Props) {
                     ? mutate((s) =>
                         saveStage(s, goal.id, { ...stage, notes: text }),
                       )
-                    : detail.kind === 'weeklyFocus'
-                      ? mutate((s) =>
-                          saveGoal(s, { ...goal, weeklyFocus: text }),
-                        )
-                      : detail.kind === 'finalResult'
+                    : detail.kind === 'notes'
+                      ? mutate((s) => saveGoal(s, { ...goal, notes: text }))
+                      : detail.kind === 'weeklyFocus'
                         ? mutate((s) =>
-                            saveGoal(s, { ...goal, finalResult: text }),
+                            saveGoal(s, { ...goal, weeklyFocus: text }),
                           )
-                        : detail.kind === 'stageWhy' && activeStage
+                        : detail.kind === 'finalResult'
                           ? mutate((s) =>
-                              saveStage(s, goal.id, {
-                                ...activeStage,
-                                whyImportant: text,
-                              }),
+                              saveGoal(s, { ...goal, finalResult: text }),
                             )
-                          : mutate((s) =>
-                              saveGoal(s, { ...goal, motivation: text }),
-                            );
+                          : detail.kind === 'stageWhy' && activeStage
+                            ? mutate((s) =>
+                                saveStage(s, goal.id, {
+                                  ...activeStage,
+                                  whyImportant: text,
+                                }),
+                              )
+                            : mutate((s) =>
+                                saveGoal(s, { ...goal, motivation: text }),
+                              );
                 if (saved) setDetail(null);
               }}
             >
               <h2>
                 {detail.kind === 'notes'
-                  ? 'Заметки этапа'
+                  ? stage
+                    ? 'Заметки этапа'
+                    : 'Заметки проекта'
                   : detail.kind === 'weeklyFocus'
                     ? 'Фокус на эту неделю'
                     : detail.kind === 'finalResult'
@@ -1992,12 +2128,14 @@ export default function GoalWorkspace(p: Props) {
                         ? GOAL_FINAL_RESULT_MAX
                         : detail.kind === 'stageWhy'
                           ? STAGE_WHY_IMPORTANT_MAX
-                          : 2000
+                          : detail.kind === 'notes'
+                            ? GOAL_NOTES_MAX
+                            : 2000
                   }
                   rows={8}
                   defaultValue={
                     detail.kind === 'notes'
-                      ? (stage?.notes ?? '')
+                      ? (stage ? stage.notes : goal.notes) ?? ''
                       : detail.kind === 'weeklyFocus'
                         ? (goal.weeklyFocus ?? '')
                         : detail.kind === 'finalResult'

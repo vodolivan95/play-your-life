@@ -194,12 +194,9 @@ try {
       undefined,
     );
 
-    assert.equal(await tabs.getByRole('button').count(), 6);
+    assert.equal(await tabs.getByRole('button').count(), 5);
     assert.equal(await workspace.locator('.gw-roadmap-stage').count(), 3);
     assert.equal(await workspace.locator('.gw-stage-tasks').count(), 1);
-    assert.ok(
-      await workspace.getByText('LVL 0 / 100', { exact: true }).count(),
-    );
     await workspace.locator('.gw-reward-content').click();
     await workspace
       .locator('dialog[open]')
@@ -223,11 +220,6 @@ try {
       'page',
     );
     await tabs.getByRole('button', { name: 'Обзор', exact: true }).click();
-    await workspace.locator('.gw-sphere').click();
-    await page
-      .locator('.sph-scene')
-      .getByRole('heading', { name: 'Английский', exact: true })
-      .waitFor();
     await page.evaluate((id) => {
       location.hash = `/goals/${id}`;
     }, ids.id);
@@ -514,7 +506,7 @@ try {
     d = workspace.locator('dialog[open]');
     await d.getByLabel('Текст').fill('Моя настоящая мотивация');
     await d.getByRole('button', { name: 'Сохранить', exact: true }).click();
-    for (const name of ['Задачи', 'Статистика', 'Награды', 'История', 'Обзор'])
+    for (const name of ['Задачи', 'Статистика', 'История', 'Обзор'])
       await tabs.getByRole('button', { name, exact: true }).click();
     await workspace
       .getByRole('button', { name: '+ Этап', exact: true })

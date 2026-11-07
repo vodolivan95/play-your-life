@@ -484,11 +484,13 @@
 :root[data-theme="dark"] .gl-chips button.selected { color: #e0e6f3; }
 :root[data-theme="dark"] .gl-sort { color: #9db0da; }
 :root[data-theme="dark"] .gl-sort select { background: #151d33; color: #b2c0e2; }
+:root[data-theme="dark"] .gl-section-sub { color: #9db0da; }
 :root[data-theme="dark"] .gl-card { background: #151d33; }
 :root[data-theme="dark"] .gl-tag { background: color-mix(in srgb, var(--gl-color, #1272d6) 18%, #151d33); color: #ced7ec; }
 :root[data-theme="dark"] .gl-tag.is-main { background: #3d3419; color: #ffd066; }
 :root[data-theme="dark"] .gl-tag.is-monthly-focus { background: #131a2e; color: #81eabe; }
 :root[data-theme="dark"] .gl-tag.is-late { background: #411a1a; color: #eb9191; }
+:root[data-theme="dark"] .gl-tag.is-paused { background: #3f2b1a; color: #ffb27e; }
 :root[data-theme="dark"] .gl-deadline { color: #9db0da; }
 :root[data-theme="dark"] .gl-deadline b { color: #e0e6f3; }
 :root[data-theme="dark"] .gl-deadline span { color: #b2c0e2; }
@@ -499,13 +501,25 @@
 :root[data-theme="dark"] .gl-foot { border-top: 1px solid #3a495f; }
 :root[data-theme="dark"] .gl-next { color: #b2c0e2; }
 :root[data-theme="dark"] .gl-next b { color: #e0e6f3; }
-:root[data-theme="dark"] .gl-reward { background: #3d3419; color: #ffd066; }
+:root[data-theme="dark"] .gl-pace { color: #9db0da; }
+:root[data-theme="dark"] .gl-pace-ahead { color: #84ecb8; }
+:root[data-theme="dark"] .gl-pace-behind { color: #ef9797; }
+:root[data-theme="dark"] .gl-pace-on-track { background: #1a2b3f; color: #97c6f6; }
 :root[data-theme="dark"] .gl-monthly-focus-limit { color: #9db0da; }
 :root[data-theme="dark"] .gl-plan { background: #1b3242; color: #95c8e4; }
+:root[data-theme="dark"] .gl-pause-toggle { background: #141b30; color: #9db0da; }
+:root[data-theme="dark"] .gl-pause-toggle:hover { background: #12192d; }
+:root[data-theme="dark"] .gl-pause-toggle.is-paused { background: #1b3242; color: #95c8e4; }
 :root[data-theme="dark"] .gl-ico.is-blue { background: #1a2b3f; color: #97c6f6; }
 :root[data-theme="dark"] .gl-ico.is-green { background: #1e3929; color: #84ecb8; }
 :root[data-theme="dark"] .gl-ico.is-orange { background: #3f2b1a; color: #ffb27e; }
 :root[data-theme="dark"] .gl-ico.is-gold { background: #3d3419; color: #ffd46e; }
+:root[data-theme="dark"] .gl-ico.is-purple { background: #281a40; color: #bfa1ee; }
+:root[data-theme="dark"] .gl-ico.is-red { background: #411a1a; color: #ef9797; }
+:root[data-theme="dark"] .gl-section-heading { color: #e0e6f3; }
+:root[data-theme="dark"] .gl-featured-head h3 { color: #e0e6f3; }
+:root[data-theme="dark"] .gl-featured-count { background: #3d3419; color: #ffd066; }
+:root[data-theme="dark"] .gl-add-slot { border: 2px dashed #3b495e; }
 :root[data-theme="dark"] .gl-side { background: #151d33; }
 :root[data-theme="dark"] .gl-side-kicker { color: #9db0da; }
 :root[data-theme="dark"] .gl-side-meta { color: #9db0da; }
@@ -516,7 +530,6 @@
 :root[data-theme="dark"] .gl-task-list li span { color: #e0e6f3; }
 :root[data-theme="dark"] .gl-stage-list b { color: #b2c0e2; }
 :root[data-theme="dark"] .gl-task-list small { color: #9db0da; }
-:root[data-theme="dark"] .gl-side-reward { background: #3d3419; color: #ffd066; }
 
 /* components/LifeCity.css */
 :root[data-theme="dark"] .city-summary b { color: #a5b6f1; }

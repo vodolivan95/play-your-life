@@ -71,8 +71,12 @@ function hasTime(value?: string) {
   return !/T00:00(:00)?(\.\d+)?(Z|[+-]\d{2}:?\d{2})?$/.test(value);
 }
 
-function dayOf(value: string) {
-  return value.includes('T') ? dateKey(new Date(value)) : value.slice(0, 10);
+/** Даты без времени сохраняют свой день; моменты времени относятся к локальному дню. */
+export function calendarDay(value?: string): string | undefined {
+  if (!value) return undefined;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : dateKey(date);
 }
 
 function clock(value: string) {
@@ -94,10 +98,12 @@ function plusMinutes(time: string, minutes: number) {
 export function calendarItem(quest: Quest): CalendarItem | undefined {
   const base = quest.dueAt || quest.startsAt;
   if (!base) return undefined;
-  const item: CalendarItem = { quest, day: dayOf(base) };
+  const day = calendarDay(base);
+  if (!day) return undefined;
+  const item: CalendarItem = { quest, day };
   const startsTimed = hasTime(quest.startsAt) && quest.startsAt;
   const dueTimed = hasTime(quest.dueAt) && quest.dueAt;
-  if (startsTimed && dueTimed && dayOf(startsTimed) === dayOf(dueTimed)) {
+  if (startsTimed && dueTimed && calendarDay(startsTimed) === calendarDay(dueTimed)) {
     item.start = clock(startsTimed);
     item.end = clock(dueTimed);
   } else if (dueTimed) {
@@ -134,7 +140,7 @@ export function questReward(quest: Quest) {
 
 /** Сводка дня: сколько задач, сколько выполнено и сколько XP. */
 export function daySummary(items: CalendarItem[], day: string) {
-  const own = items.filter((item) => item.day === day);
+  const own = items.filter((item) => item.day === day && !item.quest.wontDo);
   const done = own.filter((item) => item.quest.done);
   const plan = own.reduce((sum, item) => sum + questReward(item.quest), 0);
   const earned = done.reduce((sum, item) => sum + questReward(item.quest), 0);
@@ -153,7 +159,7 @@ export function nextItem(items: CalendarItem[], now: Date): CalendarItem | undef
   const minutes = now.getHours() * 60 + now.getMinutes();
   return items
     .filter((item) => {
-      if (item.quest.done) return false;
+      if (item.quest.done || item.quest.wontDo) return false;
       if (item.day > today) return true;
       if (item.day < today) return false;
       return !item.start || minutesOf(item.start) > minutes;
@@ -166,7 +172,7 @@ export function weekLoad(items: CalendarItem[], anchor: string) {
   const start = mondayOf(anchor);
   return Array.from({ length: 7 }, (_, i) => {
     const day = addDays(start, i);
-    return { day, count: items.filter((item) => item.day === day).length };
+    return { day, count: items.filter((item) => item.day === day && !item.quest.wontDo).length };
   });
 }
 

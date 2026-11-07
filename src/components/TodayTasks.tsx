@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { dateKey, type GameState, type Quest } from '../game';
+import type { GameState, Quest } from '../game';
+import { calendarItem } from '../tasksCalendar';
+import { todayTaskGroups } from '../taskSummary';
 import { taskContribution } from '../taskSettings';
 import TaskLabelBadge from './TaskLabelBadge';
 import './GoalTaskList.css';
@@ -8,13 +10,6 @@ const short = (day?: string) =>
   day
     ? new Date(`${day.slice(0, 10)}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
     : 'без срока';
-
-const calendarDay = (value?: string) => {
-  if (!value) return undefined;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? undefined : dateKey(date);
-};
 
 /**
  * Вкладка «Задачи на сегодня» страницы «Мои задачи»: то же определение «пора
@@ -37,19 +32,8 @@ export default function TodayTasks({
   onProgress: (q: Quest) => void;
 }) {
   const [showDone, setShowDone] = useState(true);
-  const day = (q: Quest) => calendarDay(q.dueAt ?? q.startsAt);
-  const doneToday = (q: Quest) => !!q.done && (q.completedAt ?? '').slice(0, 10) === today;
-  const pinnedFirst = (a: Quest, b: Quest) => Number(!!b.pinned) - Number(!!a.pinned);
-  const relevant = quests.filter(
-    (q) => !q.wontDo && (doneToday(q) || (!q.done && (!day(q) || (day(q) as string) <= today))),
-  );
-  const overdue = relevant
-    .filter((q) => !q.done && !!day(q) && (day(q) as string) < today)
-    .sort((a, b) => pinnedFirst(a, b) || (day(a) as string).localeCompare(day(b) as string));
-  // `relevant` уже ограничивает недоделанные задачи сроком «сегодня или раньше» (либо без срока):
-  // всё, что не просрочено, остаётся либо на сегодня, либо вовсе без срока.
-  const dueToday = relevant.filter((q) => !q.done && !overdue.includes(q)).sort(pinnedFirst);
-  const done = relevant.filter((q) => q.done);
+  const day = (q: Quest) => calendarItem(q)?.day;
+  const { overdue, today: dueToday, done } = todayTaskGroups(quests, today);
   const nothing = !overdue.length && !dueToday.length && (!showDone || !done.length);
 
   const row = (q: Quest) => {

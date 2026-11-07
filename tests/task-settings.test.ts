@@ -63,6 +63,19 @@ test('настройки: интервал выполнения — начало
   // Неверный формат — отказ, как и у срока.
   assert.throws(() => updateTaskSettings(state([quest({})]), 'q1', { startsAt: '02.11' }));
 });
+test('настройки: одновременный перенос начала и конца проверяет новый интервал', () => {
+  const s = state([quest({ startsAt: '2026-11-02T15:00', dueAt: '2026-11-02T16:00' })]);
+  const moved = updateTaskSettings(s, 'q1', { startsAt: '2026-11-02T09:00', dueAt: '2026-11-02T10:00' });
+  assert.equal(moved.quests[0].startsAt, new Date('2026-11-02T09:00').toISOString());
+  assert.equal(moved.quests[0].dueAt, new Date('2026-11-02T10:00').toISOString());
+  const cleared = updateTaskSettings(s, 'q1', { startsAt: null, dueAt: '2026-11-02T10:00' });
+  assert.equal(cleared.quests[0].startsAt, undefined);
+  assert.throws(() => updateTaskSettings(s, 'q1', { startsAt: '2026-11-02T11:00', dueAt: '2026-11-02T10:00' }));
+  assert.equal(s.quests[0].dueAt, '2026-11-02T16:00');
+  // Старая некорректная пара дат не блокирует несвязанное редактирование названия.
+  const legacy = state([quest({ startsAt: '2026-11-02T16:00', dueAt: '2026-11-02T15:00' })]);
+  assert.equal(updateTaskSettings(legacy, 'q1', { name: 'Исправить план' }).quests[0].name, 'Исправить план');
+});
 test('настройки: отказы', () => {
   const s = state([quest({}), quest({ id: 'q2', done: true }), quest({ id: 'q3', sourceType: 'SYSTEM' }), quest({ id: 'q4', goalId: undefined, stageId: undefined })]);
   assert.throws(() => updateTaskSettings(s, 'q2', { name: 'x' }));

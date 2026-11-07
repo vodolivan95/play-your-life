@@ -101,7 +101,6 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
       const timed = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(patch.dueAt);
       if ((!bare && !timed) || !Number.isFinite(Date.parse(patch.dueAt))) throw new Error('Проверь дату.');
       const due = bare ? patch.dueAt : new Date(patch.dueAt).toISOString();
-      if (old.startsAt && new Date(due) < new Date(old.startsAt)) throw new Error('Срок не может быть раньше начала.');
       q.dueAt = due;
     }
   }
@@ -113,7 +112,6 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
       const timed = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(patch.startsAt);
       if ((!bare && !timed) || !Number.isFinite(Date.parse(patch.startsAt))) throw new Error('Проверь начало.');
       const starts = bare ? patch.startsAt : new Date(patch.startsAt).toISOString();
-      if (q.dueAt && new Date(starts) > new Date(q.dueAt)) throw new Error('Начало не может быть позже срока.');
       q.startsAt = starts;
     }
   }
@@ -124,6 +122,11 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
     if (!Number.isInteger(patch.shiftDays) || !patch.shiftDays) throw new Error('Нечего переносить.');
     if (old.dueAt) q.dueAt = shiftDate(old.dueAt, patch.shiftDays);
     if (old.startsAt) q.startsAt = shiftDate(old.startsAt, patch.shiftDays);
+  }
+  // Проверяем итоговый интервал: начало и конец могут меняться одним действием.
+  if ((patch.startsAt !== undefined || patch.dueAt !== undefined || patch.shiftDays !== undefined)
+    && q.startsAt && q.dueAt && new Date(q.startsAt) > new Date(q.dueAt)) {
+    throw new Error(patch.startsAt !== undefined ? 'Начало не может быть позже срока.' : 'Срок не может быть раньше начала.');
   }
   if (patch.deadlineAt !== undefined) {
     if (patch.deadlineAt === null) q.deadlineAt = undefined;

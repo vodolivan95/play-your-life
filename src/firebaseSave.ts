@@ -7,6 +7,7 @@ import {
   setDoc,
 } from "firebase/firestore";
 import type { Firestore } from "firebase/firestore";
+import { revisionConflictOnDenial } from './revisionConflict.ts';
 import {
   assembleFromCloud,
   cloudWrites,
@@ -342,7 +343,7 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
           recordChanges: changes,
           revision: expected + 1,
         });
-        const row = await runTransaction(database, async (transaction) => {
+        const row = await revisionConflictOnDenial(() => runTransaction(database, async (transaction) => {
           const snapshot = await transaction.get(ref);
           if (!snapshot.exists() || snapshot.data().revision !== expected)
             return null;
@@ -355,6 +356,9 @@ export function firebaseSave(database: Firestore, userId: string): SaveDriver {
             updatedAt: serverTimestamp(),
           });
           return expected + 1;
+        }), expected, async () => {
+          const current = await getDocFromServer(ref);
+          return current.exists() ? current.data().revision : undefined;
         });
         if (row === null) return false;
         currentRevision = row;

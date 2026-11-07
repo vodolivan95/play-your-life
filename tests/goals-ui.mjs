@@ -228,11 +228,11 @@ try {
       .getByRole('button', { name: 'Начать →', exact: true })
       .click();
     await workspace
-      .locator('dialog[open]')
+      .getByRole('dialog')
       .getByRole('heading', { name: 'Посмотреть фильм', exact: true })
       .waitFor();
     await workspace
-      .locator('dialog[open]')
+      .getByRole('dialog')
       .getByRole('button', { name: 'Закрыть', exact: true })
       .click();
     await tabs.getByRole('button', { name: 'Задачи', exact: true }).click();
@@ -324,8 +324,9 @@ try {
       .click();
     await workspace.getByRole('button', { name: /Приостановить этап/ }).click();
     await workspace.getByRole('button', { name: /^Выучить слова/ }).click();
-    const pausedDialog = workspace.locator('dialog[open]');
-    await pausedDialog.getByLabel('Прогресс задачи (слова)').fill('1');
+    await workspace.getByRole('dialog').getByRole('button', { name: 'Продолжить', exact: true }).click();
+    const pausedDialog = workspace.getByRole('dialog');
+    await pausedDialog.getByLabel('Выполнено (слова)').fill('1');
     await pausedDialog
       .getByRole('button', { name: 'Сохранить прогресс' })
       .click();
@@ -334,17 +335,17 @@ try {
       'Ошибка сохранения не должна закрывать окно',
     );
     assert.equal(
-      await pausedDialog.getByLabel('Прогресс задачи (слова)').inputValue(),
+      await pausedDialog.getByLabel('Выполнено (слова)').inputValue(),
       '1',
     );
     await pausedDialog
-      .getByRole('button', { name: 'Закрыть', exact: true })
+      .getByRole('button', { name: 'Отмена', exact: true })
       .click();
     await workspace.getByRole('button', { name: /Возобновить этап/ }).click();
     await workspace.getByRole('button', { name: /^Выучить слова/ }).click();
     await workspace
-      .locator('dialog[open]')
-      .getByRole('button', { name: 'Редактировать задачу' })
+      .getByRole('dialog')
+      .getByRole('button', { name: 'Расширенные настройки', exact: true })
       .click();
     const unchangedTask = page.locator('dialog[open]').filter({
       has: page.getByRole('heading', {
@@ -365,8 +366,9 @@ try {
     assert.equal(undated.startsAt, undefined);
     assert.equal(undated.dueAt, undefined);
     await workspace.getByRole('button', { name: /^Выучить слова/ }).click();
-    const partialDialog = workspace.locator('dialog[open]');
-    await partialDialog.getByLabel('Прогресс задачи (слова)').fill('1');
+    await workspace.getByRole('dialog').getByRole('button', { name: 'Продолжить', exact: true }).click();
+    const partialDialog = workspace.getByRole('dialog');
+    await partialDialog.getByLabel('Выполнено (слова)').fill('1');
     await partialDialog
       .getByRole('button', { name: 'Сохранить прогресс' })
       .click();
@@ -549,8 +551,8 @@ try {
     await taskEditor.getByRole('button', { name: /Создать задачу/ }).click();
     await workspace.getByRole('button', { name: /^Созданная задача/ }).click();
     await workspace
-      .locator('dialog[open]')
-      .getByRole('button', { name: 'Редактировать задачу' })
+      .getByRole('dialog')
+      .getByRole('button', { name: 'Расширенные настройки', exact: true })
       .click();
     const editTask = page.locator('dialog[open]').filter({
       has: page.getByRole('heading', {

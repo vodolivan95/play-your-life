@@ -393,7 +393,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
           </div>
         </div>
         <footer className="twin-foot">
-          {task.sourceType === 'USER_CREATED' && onAdvanced && (
+          {(task.sourceType === 'USER_CREATED' || inGoal) && onAdvanced && (
             <button type="button" className="text-button" onClick={() => { onClose(); onAdvanced(task); }}>Расширенные настройки</button>
           )}
           {task.done && onPractice && <button type="button" className="primary-button" onClick={() => onPractice(task)}>↻ Практиковать снова</button>}

@@ -9,6 +9,7 @@ import {
   matchSphereLists,
   remoteFields,
   remotePayload,
+  TICKTICK_AUTO_LINK_FROM,
 } from '../src/ticktick.ts';
 import type { RemoteTask } from '../src/ticktick.ts';
 import { isTickTickAutoSyncDue, TICKTICK_AUTO_SYNC_INTERVAL_MS } from '../src/ticktickScheduler.ts';
@@ -19,7 +20,7 @@ function setup() {
     mode: 'personal',
     onboardingComplete: true,
   };
-  state.quests = [{ ...state.quests[0], goalId: 'b2' }];
+  state.quests = [{ ...state.quests[0], goalId: 'b2', createdAt: `${TICKTICK_AUTO_LINK_FROM}T00:00:00.000Z` }];
   const connection = newConnection('https://bridge.example/');
   connection.projectId = 'life';
   connection.sphereLists = { english: 'life' };
@@ -117,6 +118,48 @@ test('создание и повторная синхронизация не с�
   assert.equal(api.calls.filter((c) => c.path === '/create').length, 1);
   assert.equal(result.state.xp, 2450);
 });
+test('автоматически связывает активные задачи с 1 октября и новые; старые — только по явному запросу', async () => {
+  const { state, connection } = setup();
+  const base = state.quests[0];
+  const task = (id: string, createdAt: string, patch: Partial<typeof base> = {}) => ({
+    ...base,
+    id,
+    goalId: undefined,
+    sourceType: 'USER_CREATED' as const,
+    ownerId: 'player',
+    createdAt,
+    ...patch,
+  });
+  state.quests = [
+    task('before-october', '2026-09-30T23:59:59.999Z'),
+    task('october-active', `${TICKTICK_AUTO_LINK_FROM}T00:00:00.000Z`, {
+      startsAt: '2026-10-02T09:00:00.000Z',
+      dueAt: '2026-10-02T10:30:00.000Z',
+    }),
+    task('new-active', '2026-11-07T08:00:00.000Z', {
+      startsAt: '2026-11-08T12:00:00.000Z',
+      dueAt: '2026-11-08T13:00:00.000Z',
+    }),
+    task('completed', `${TICKTICK_AUTO_LINK_FROM}T00:00:00.000Z`, { done: true }),
+    task('wont-do', `${TICKTICK_AUTO_LINK_FROM}T00:00:00.000Z`, { wontDo: true }),
+    task('sync-disabled', `${TICKTICK_AUTO_LINK_FROM}T00:00:00.000Z`, { tickTickSync: false }),
+    task('system', `${TICKTICK_AUTO_LINK_FROM}T00:00:00.000Z`, { sourceType: 'SYSTEM' }),
+  ];
+  const api = upstream();
+  const applied = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
+  assert.deepEqual(Object.keys(applied.connection.links).sort(), ['new-active', 'october-active']);
+  assert.equal(applied.state.quests.find((q) => q.id === 'october-active')?.tickTickSharedAt !== undefined, true);
+  assert.equal(api.calls.filter((call) => call.path === '/create').length, 2);
+  const octoberRemote = api.tasks.get(applied.connection.links['october-active'].remoteId)!;
+  assert.equal(remoteFields(octoberRemote).startsAt, '2026-10-02T09:00:00.000Z');
+  assert.equal(remoteFields(octoberRemote).dueAt, '2026-10-02T10:30:00.000Z');
+
+  await syncTickTick(applied.state, applied.connection, api.request);
+  assert.equal(api.calls.filter((call) => call.path === '/create').length, 2, 'повтор не создаёт копии');
+
+  const manuallyLinked = await syncTickTick(state, connection, api.request, ['before-october']);
+  assert.ok(manuallyLinked.connection.links['before-october'], 'старую задачу можно связать явно');
+});
 test('перенос связанной задачи в другой сопоставленный список не считается удалением', async () => {
   const { state, connection } = setup();
   connection.sphereLists = { english: 'life', health: 'health-list' };
@@ -162,9 +205,12 @@ test('редактирование в обе стороны, выполнени�
   connection = applied.connection;
   assert.equal(api.tasks.get(rid)!.title, 'Новый шаг');
   assert.equal(api.tasks.get(rid)!.priority, 5);
+  assert.equal(remoteFields(api.tasks.get(rid)!).startsAt, '2027-03-01T10:00:00.000Z');
+  assert.equal(remoteFields(api.tasks.get(rid)!).dueAt, '2027-03-01T11:00:00.000Z');
   api.tasks.set(rid, {
     ...api.tasks.get(rid)!,
     title: 'Изменено в TickTick',
+    startDate: '2027-03-01T11:30:00+0000',
     dueDate: '2027-03-01T12:00:00+0000',
   });
   applied = applyTickTickResult(
@@ -174,6 +220,7 @@ test('редактирование в обе стороны, выполнени�
   state = applied.state;
   connection = applied.connection;
   assert.equal(state.quests[0].name, 'Изменено в TickTick');
+  assert.equal(state.quests[0].startsAt, '2027-03-01T11:30:00.000Z');
   assert.equal(state.quests[0].dueAt, '2027-03-01T12:00:00.000Z');
   api.tasks.get(rid)!.status = 2;
   applied = applyTickTickResult(

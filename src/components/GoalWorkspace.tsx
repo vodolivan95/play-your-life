@@ -1222,15 +1222,6 @@ export default function GoalWorkspace(p: Props) {
       {goal.paused && !stage && (
         <div className="gw-paused-banner">
           <span>Проект на паузе — срок и серия активности не учитываются</span>
-          <button
-            className="primary-button"
-            onClick={() => {
-              if (mutate((s) => saveGoal(s, { ...goal, paused: false })))
-                p.onNotify('Проект возобновлён.');
-            }}
-          >
-            Возобновить проект
-          </button>
         </div>
       )}
       <section className={`gw-banner ${stageId ? 'gw-banner-compact' : ''}`}>
@@ -1251,19 +1242,6 @@ export default function GoalWorkspace(p: Props) {
             <summary aria-label="Дополнительные действия проекта">⋮</summary>
             <div>
               <button onClick={p.onEditGoal}>Настроить проект</button>
-              <button
-                onClick={() => {
-                  const next = !goal.paused;
-                  if (mutate((s) => saveGoal(s, { ...goal, paused: next })))
-                    p.onNotify(
-                      next
-                        ? 'Проект на паузе — срок и серия активности не учитываются.'
-                        : 'Проект возобновлён.',
-                    );
-                }}
-              >
-                {goal.paused ? '▶ Возобновить проект' : 'Ⅱ Поставить на паузу'}
-              </button>
               <button onClick={() => p.onTransfer()}>Задачи в TickTick</button>
               <button onClick={p.onInbox}>Разобрать входящие</button>
               <button
@@ -1361,6 +1339,22 @@ export default function GoalWorkspace(p: Props) {
           {!stage && goal.projectReview && (
             <button className="text-button gw-practice-link" onClick={() => setTab('tasks')}>
               Навык: {goal.projectReview.skillName} · практика →
+            </button>
+          )}
+          {!stage && (
+            <button
+              className="text-button gw-pause-toggle"
+              onClick={() => {
+                const next = !goal.paused;
+                if (mutate((s) => saveGoal(s, { ...goal, paused: next })))
+                  p.onNotify(
+                    next
+                      ? 'Проект на паузе — срок и серия активности не учитываются.'
+                      : 'Проект возобновлён.',
+                  );
+              }}
+            >
+              {goal.paused ? '▶ Возобновить проект' : 'Ⅱ Поставить на паузу'}
             </button>
           )}
         </div>

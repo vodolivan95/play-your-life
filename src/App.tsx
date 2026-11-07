@@ -1,4 +1,5 @@
 import { readGoalRoute, goalRoute } from './goalRoutes';
+import { readTaskRoute } from './taskRoutes';
 import SpheresOverview from './components/SpheresOverview';
 import HomeDashboard from './components/HomeDashboard';
 import DashboardHeader from './components/DashboardHeader';
@@ -100,7 +101,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   const setState = onChange ?? setLocalState;
   const tickTick = useTickTick(state, setState, userId, tickTickToken);
   const [page, setPage] = useState(() =>
-    readGoalRoute() || location.hash === '#goals' ? 'goals' : location.hash === '#city'
+    readTaskRoute() ? 'tasks' : readGoalRoute() || location.hash === '#goals' ? 'goals' : location.hash === '#city'
       ? 'city'
       : location.hash.startsWith('#ticktick=') || location.hash === '#profile'
         ? 'profile'
@@ -111,6 +112,8 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   const tickTickHabits = useTickTickHabits(tickTick, state, setState, userId ?? 'local', today);
   const [focusedGoalId, setFocusedGoalId] = useState<string | null>(() => readGoalRoute()?.goalId ?? null);
   const [goalLocation, setGoalLocation] = useState(readGoalRoute);
+  /** Задача из прямой ссылки `#/tasks/<id>` (пункт «Копировать ссылку» в меню «⋯» задачи). */
+  const [pendingTask, setPendingTask] = useState<string | null>(() => readTaskRoute());
   const [selected, setSelected] = useState<string | null>(null);
   const [profileTipDismissed, setProfileTipDismissed] = useState(false);
   const [modal, setModal] = useState<
@@ -122,6 +125,8 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   }, [userId, state.profile.onboardingComplete]);
   useEffect(() => {
     const changed = () => {
+      const taskId = readTaskRoute();
+      if (taskId) { setPendingTask(taskId); setFocusedGoalId(null); setGoalLocation(null); setPage('tasks'); return; }
       const route = readGoalRoute(); setGoalLocation(route);
       if (route || location.hash === '#goals') { setPage('goals'); setFocusedGoalId(route?.goalId ?? null); }
       else { setFocusedGoalId(null); setPage(location.hash === '#city' ? 'city' : location.hash.startsWith('#ticktick=') || location.hash === '#profile' ? 'profile' : 'home'); }
@@ -138,7 +143,6 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   const [toast, setToast] = useState('');
   const [storageError, setStorageError] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [pendingTask, setPendingTask] = useState<string | null>(null);
   const [sphereTaskId, setSphereTaskId] = useState<string | null>(null);
   const [inboxSphereId, setInboxSphereId] = useState<string | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -205,7 +209,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   }
   function navigate(id: string) {
     if (id === 'profile') window.history.pushState(null, '', location.pathname + location.search + '#profile');
-    else if (readGoalRoute() || location.hash === '#goals' || location.hash === '#profile' || location.hash.startsWith('#ticktick=')) window.history.pushState(null, '', location.pathname + location.search + (id === 'city' ? '#city' : ''));
+    else if (readGoalRoute() || readTaskRoute() || location.hash === '#goals' || location.hash === '#profile' || location.hash.startsWith('#ticktick=')) window.history.pushState(null, '', location.pathname + location.search + (id === 'city' ? '#city' : ''));
     setGoalLocation(null);
     setPage(id);
     setSelected(null);

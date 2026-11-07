@@ -45,11 +45,11 @@ const timeFromOffset = (y: number) => {
 function Chip({ item, selected, onPick, label, onDragStart, onDragEnd, dragging }: { item: CalendarItem; selected: boolean; onPick: () => void; label?: string; onDragStart: (e: DragEvent) => void; onDragEnd: () => void; dragging: boolean }) {
   const { quest } = item;
   // Перенос связанных с TickTick задач тоже разрешён: новая дата уходит туда обычным обменом.
-  const movable = !quest.done;
+  const movable = !quest.done && !quest.wontDo;
   return (
     <button
       type="button"
-      className={`tcal-chip${quest.done ? ' is-done' : ''}${selected ? ' is-selected' : ''}${dragging ? ' is-dragging' : ''}`}
+      className={`tcal-chip${quest.done ? ' is-done' : ''}${quest.wontDo ? ' is-wontdo' : ''}${selected ? ' is-selected' : ''}${dragging ? ' is-dragging' : ''}`}
       style={{ '--c': colorOf(quest) } as CSSProperties}
       onClick={onPick}
       draggable={movable}
@@ -57,7 +57,7 @@ function Chip({ item, selected, onPick, label, onDragStart, onDragEnd, dragging 
       onDragEnd={onDragEnd}
       title={`${quest.name}${quest.tickTickSharedAt ? ' · перенос уйдёт в TickTick' : ''}`}
     >
-      {label ?? `${item.start ? `${item.start} ` : ''}${quest.tickTickSharedAt ? '⟳ ' : ''}${quest.name}`}
+      {label ?? `${item.start ? `${item.start} ` : ''}${quest.pinned ? '📌 ' : ''}${quest.tickTickSharedAt ? '⟳ ' : ''}${quest.name}`}
     </button>
   );
 }

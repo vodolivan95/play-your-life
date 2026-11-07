@@ -17,6 +17,8 @@ export type TaskPatch = {
   sync?: boolean;
   repeat?: Quest['repeat'] | null;
   subtasks?: NonNullable<Quest['subtasks']>;
+  pinned?: boolean;
+  wontDo?: boolean;
 };
 export const repeatLabels: [Quest['repeat'] | null, string][] = [
   [null, 'Не повторять'],
@@ -147,6 +149,8 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
       throw new Error('Проверь подзадачи: не больше 30, название до 100 символов.');
     q.subtasks = patch.subtasks.length ? patch.subtasks.map((t) => ({ ...t, title: t.title.trim() })) : undefined;
   }
+  if (patch.pinned !== undefined) q.pinned = patch.pinned || undefined;
+  if (patch.wontDo !== undefined) q.wontDo = patch.wontDo || undefined;
   const clean = Object.fromEntries(Object.entries(q).filter(([, v]) => v !== undefined)) as Quest;
   return { ...state, quests: state.quests.map((item) => (item.id === id ? clean : item)) };
 }

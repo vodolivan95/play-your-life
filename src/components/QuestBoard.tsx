@@ -3,6 +3,7 @@ import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { questsForToday, removeQuest, reopenQuest } from "../game";
 import type { GameState, Quest } from "../game";
 import {
+  duplicateQuest,
   progressQuest,
   questCoins,
   saveCustomQuest,
@@ -102,6 +103,13 @@ export default function QuestBoard({
         }
       } else notify("Прогресс сохранён");
       setProgress(null);
+    } catch (e) {
+      notify((e as Error).message);
+    }
+  }
+  function duplicateQuestFlow(q: Quest) {
+    try {
+      apply((s) => duplicateQuest(s, q.id, ownerId), `«${q.name}» продублирована`);
     } catch (e) {
       notify((e as Error).message);
     }
@@ -235,6 +243,7 @@ export default function QuestBoard({
           onProgress={(q) => { setOpenTask(null); startProgress(q); }}
           onUndo={(q) => apply((s) => reopenQuest(s, q.id), "Отметка выполнения снята. Полученная награда остаётся и повторно не начислится.")}
           onDelete={deleteQuest}
+          onDuplicate={duplicateQuestFlow}
         />
       )}
       {progress && (

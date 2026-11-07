@@ -11,22 +11,24 @@ const short = (day?: string) => (day ? new Date(`${day.slice(0, 10)}T12:00:00`).
 export default function GoalTaskList({ state, quests, today, onOpen, onProgress }: { state: GameState; quests: Quest[]; today: string; onOpen: (id: string) => void; onProgress: (q: Quest) => void }) {
   const [filter, setFilter] = useState<(typeof filters)[number][0]>('all');
   const [showDone, setShowDone] = useState(false);
-  const shown = quests.filter((q) => (showDone || !q.done)
-    && (filter === 'all' || (filter === 'ticktick' ? !!q.tickTickSharedAt : !q.tickTickSharedAt)));
+  const shown = quests
+    .filter((q) => (showDone || (!q.done && !q.wontDo))
+      && (filter === 'all' || (filter === 'ticktick' ? !!q.tickTickSharedAt : !q.tickTickSharedAt)))
+    .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned));
   const inGoal = (q: Quest) => !!q.goalId && state.goals.some((g) => g.id === q.goalId);
   const goals = state.goals.filter((g) => shown.some((q) => q.goalId === g.id));
   const loose = shown.filter((q) => !inGoal(q));
   const row = (q: Quest) => {
     const c = taskContribution(state, q);
-    const late = !q.done && (q.dueAt ?? '9').slice(0, 10) < today;
+    const late = !q.done && !q.wontDo && (q.dueAt ?? '9').slice(0, 10) < today;
     return (
-      <li key={q.id} className={q.done ? 'gtl-item is-done' : 'gtl-item'}>
+      <li key={q.id} className={q.wontDo ? 'gtl-item is-wontdo' : q.done ? 'gtl-item is-done' : 'gtl-item'}>
         <button type="button" className="gtl-row" onClick={() => onOpen(q.id)}>
-          <span className="gtl-name"><span>{q.tickTickSharedAt ? '⟳ ' : ''}{q.name}</span><TaskLabelBadge labelId={q.labelId} labels={state.taskLabels} /></span>
+          <span className="gtl-name"><span>{q.pinned ? '📌 ' : ''}{q.tickTickSharedAt ? '⟳ ' : ''}{q.name}</span><TaskLabelBadge labelId={q.labelId} labels={state.taskLabels} /></span>
           <span className={late ? 'gtl-due is-late' : 'gtl-due'}>{short(q.dueAt)}</span>
           <span className="gtl-xp">+{c.xp} XP</span>
         </button>
-        {q.done ? <span className="gtl-ok" aria-label="Выполнено">✓</span> : (
+        {q.wontDo ? <span className="gtl-wontdo" aria-label="Не делаем">⊘</span> : q.done ? <span className="gtl-ok" aria-label="Выполнено">✓</span> : (
           <button type="button" className="gtl-go" onClick={() => onProgress(q)}>Продолжить</button>
         )}
       </li>

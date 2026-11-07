@@ -39,15 +39,16 @@ export default function TodayTasks({
   const [showDone, setShowDone] = useState(true);
   const day = (q: Quest) => calendarDay(q.dueAt ?? q.startsAt);
   const doneToday = (q: Quest) => !!q.done && (q.completedAt ?? '').slice(0, 10) === today;
+  const pinnedFirst = (a: Quest, b: Quest) => Number(!!b.pinned) - Number(!!a.pinned);
   const relevant = quests.filter(
-    (q) => doneToday(q) || (!q.done && (!day(q) || (day(q) as string) <= today)),
+    (q) => !q.wontDo && (doneToday(q) || (!q.done && (!day(q) || (day(q) as string) <= today))),
   );
   const overdue = relevant
     .filter((q) => !q.done && !!day(q) && (day(q) as string) < today)
-    .sort((a, b) => (day(a) as string).localeCompare(day(b) as string));
+    .sort((a, b) => pinnedFirst(a, b) || (day(a) as string).localeCompare(day(b) as string));
   // `relevant` уже ограничивает недоделанные задачи сроком «сегодня или раньше» (либо без срока):
   // всё, что не просрочено, остаётся либо на сегодня, либо вовсе без срока.
-  const dueToday = relevant.filter((q) => !q.done && !overdue.includes(q));
+  const dueToday = relevant.filter((q) => !q.done && !overdue.includes(q)).sort(pinnedFirst);
   const done = relevant.filter((q) => q.done);
   const nothing = !overdue.length && !dueToday.length && (!showDone || !done.length);
 
@@ -59,6 +60,7 @@ export default function TodayTasks({
         <button type="button" className="gtl-row" onClick={() => onOpen(q.id)}>
           <span className="gtl-name">
             <span>
+              {q.pinned ? '📌 ' : ''}
               {q.tickTickSharedAt ? '⟳ ' : ''}
               {q.name}
             </span>

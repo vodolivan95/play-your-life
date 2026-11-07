@@ -40,3 +40,28 @@
 .twin-subs input{width:auto;padding:0}
 .twin-subs .is-done{text-decoration:line-through;color:var(--tw-mute)}
 .twin-subs button{border:0;background:none;color:var(--tw-mute);cursor:pointer}
+.twin-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.twin-badge{--bc:#2f7de1;display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;background:color-mix(in srgb,var(--bc) 16%,transparent);color:var(--bc)}
+.twin-badge-stage{--bc:var(--tw-acc2);background:color-mix(in srgb,var(--tw-acc2) 16%,transparent);color:var(--tw-acc2)}
+.twin-head-actions{display:flex;align-items:center;gap:8px}
+.twin-menu-wrap{position:relative}
+.twin-menu-btn{border:0;background:var(--tw-card);color:var(--tw-ink);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;font-weight:800;line-height:1}
+.twin-menu-backdrop{position:fixed;inset:0;z-index:5}
+.twin-menu{position:absolute;top:calc(100% + 6px);right:0;z-index:6;min-width:220px;display:grid;background:var(--tw-bg);border:1px solid var(--tw-line);border-radius:14px;padding:6px;box-shadow:0 20px 50px #0a1b3a33;backdrop-filter:blur(24px) saturate(1.4)}
+.twin-menu button{font:inherit;font-size:13px;font-weight:600;text-align:left;border:0;background:none;color:var(--tw-ink);border-radius:9px;padding:9px 10px;cursor:pointer}
+.twin-menu button:hover{background:var(--tw-card)}
+.twin-menu-danger{color:#e2483a}
+.twin-wontdo-banner{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;background:#e2483a1f;color:#e2483a;border:1px solid #e2483a44;border-radius:14px;padding:10px 14px;font-size:13px;font-weight:600}
+.twin-activity{gap:8px}
+.twin-activity>span{display:flex;align-items:center;justify-content:space-between}
+.twin-activity-close{font-size:12px;padding:0}
+.twin-activity-empty{color:var(--tw-mute);font-size:12px;font-weight:500;margin:0}
+.twin-activity-list{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:12px;font-weight:500;color:var(--tw-mute)}
+.twin-activity-list li{display:flex;justify-content:space-between;gap:8px;background:var(--tw-card);border-radius:10px;padding:6px 10px}
+.twin-activity-list b{color:var(--tw-ink)}
+@media print{
+  body *{visibility:hidden}
+  .twin-overlay,.twin-overlay .twin{position:static;visibility:visible;box-shadow:none;background:#fff;color:#000;max-height:none;overflow:visible}
+  .twin-overlay .twin *{visibility:visible}
+  .twin-close,.twin-head-actions,.twin-foot,.twin-sync{display:none}
+}

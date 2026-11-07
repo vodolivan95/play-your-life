@@ -293,7 +293,9 @@ export function validateState(value: unknown): asserts value is SavedState {
             Number(q.weight) > 0 &&
             Number(q.weight) <= 1000)) &&
         (q.notes === undefined || text(q.notes)) &&
-        (q.labelId === undefined || taskLabelIds.has(String(q.labelId))),
+        (q.labelId === undefined || taskLabelIds.has(String(q.labelId))) &&
+        (q.pinned === undefined || typeof q.pinned === 'boolean') &&
+        (q.wontDo === undefined || typeof q.wontDo === 'boolean'),
     )
   )
     return fail();

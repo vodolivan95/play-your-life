@@ -5,6 +5,7 @@ import { isGoalDone } from '../goalsOverview';
 import { pluralDays } from '../goalsOverview';
 import { questCoins } from '../personalQuests';
 import { addDays, calendarItem, mondayOf } from '../tasksCalendar';
+import { completedInWeek } from '../taskSummary';
 import './TasksAside.css';
 
 const steps = [
@@ -46,8 +47,9 @@ function goalFraction(state: GameState, goal: GameState['goals'][number]) {
 
 export default function TasksAside({ state, quests, today }: { state: GameState; quests: Quest[]; today: string }) {
   const now = new Date();
-  const done = quests.filter((q) => q.done).length;
-  const total = quests.length;
+  const included = quests.filter((q) => !q.wontDo);
+  const done = included.filter((q) => q.done).length;
+  const total = included.length;
   const percent = total ? Math.round((done / total) * 100) : 0;
   const circ = 2 * Math.PI * 42;
 
@@ -84,8 +86,7 @@ export default function TasksAside({ state, quests, today }: { state: GameState;
   const leader = segments[0];
   const silentSpheres = spheres.length - bySphere.length;
 
-  const weekCoins = quests
-    .filter((q) => q.done && q.completedAt && q.completedAt.slice(0, 10) >= weekStart && q.completedAt.slice(0, 10) <= weekEnd)
+  const weekCoins = completedInWeek(quests, today)
     .reduce((sum, q) => sum + questCoins(q), 0);
 
   const activeGoals = state.goals

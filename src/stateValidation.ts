@@ -1,3 +1,4 @@
+import { validTaskPlanning, validPlanningSettings, validPlanningEvent } from './planningData.ts';
 import { validPersonalState, validQuestExtension } from './questValidation.ts';
 import { SPHERE_PROGRESSION_MODEL } from './sphereProgress.ts';
 import { validCity, cityPrices, cityRooms } from './city.ts';
@@ -87,6 +88,7 @@ export function validateState(value: unknown): asserts value is SavedState {
   };
   if (!record(value) || value.version !== 1) return fail();
   if (!validPersonalState(value)) return fail();
+  if (value.planningSettings !== undefined && !validPlanningSettings(value.planningSettings)) return fail();
   if (value.taskLabels !== undefined && !validTaskLabels(value.taskLabels)) return fail();
   const taskLabelIds = new Set(
     validTaskLabels(value.taskLabels) ? value.taskLabels.map((label) => label.id) : [],
@@ -266,6 +268,7 @@ export function validateState(value: unknown): asserts value is SavedState {
       value.quests,
       (q) =>
         validQuestExtension(q) &&
+        validTaskPlanning(q.planning) &&
         text(q.id) &&
         !!q.id &&
         text(q.name) &&
@@ -425,6 +428,7 @@ export function validateState(value: unknown): asserts value is SavedState {
     !list(
       value.events,
       (e) =>
+        validPlanningEvent(e) &&
         (e.sourceId === undefined || text(e.sourceId)) &&
         optionalText(e.goalId) &&
         optionalText(e.stageId) &&

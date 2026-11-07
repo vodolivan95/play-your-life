@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { spheres } from '../game';
 import type { GameState, Quest } from '../game';
+import { calendarItem } from '../tasksCalendar';
 import { taskContribution } from '../taskSettings';
 import TaskLabelBadge from './TaskLabelBadge';
 import './GoalTaskList.css';
@@ -20,12 +21,12 @@ export default function GoalTaskList({ state, quests, today, onOpen, onProgress 
   const loose = shown.filter((q) => !inGoal(q));
   const row = (q: Quest) => {
     const c = taskContribution(state, q);
-    const late = !q.done && !q.wontDo && (q.dueAt ?? '9').slice(0, 10) < today;
+    const late = !q.done && !q.wontDo && (calendarItem(q)?.day ?? '9') < today;
     return (
       <li key={q.id} className={q.wontDo ? 'gtl-item is-wontdo' : q.done ? 'gtl-item is-done' : 'gtl-item'}>
         <button type="button" className="gtl-row" onClick={() => onOpen(q.id)}>
           <span className="gtl-name"><span>{q.pinned ? '📌 ' : ''}{q.tickTickSharedAt ? '⟳ ' : ''}{q.name}</span><TaskLabelBadge labelId={q.labelId} labels={state.taskLabels} /></span>
-          <span className={late ? 'gtl-due is-late' : 'gtl-due'}>{short(q.dueAt)}</span>
+          <span className={late ? 'gtl-due is-late' : 'gtl-due'}>{short(calendarItem(q)?.day)}</span>
           <span className="gtl-xp">+{c.xp} XP</span>
         </button>
         {q.wontDo ? <span className="gtl-wontdo" aria-label="Не делаем">⊘</span> : q.done ? <span className="gtl-ok" aria-label="Выполнено">✓</span> : (

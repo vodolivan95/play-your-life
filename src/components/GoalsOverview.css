@@ -265,6 +265,31 @@
   color: #236589;
   justify-content: center;
 }
+.gl-card-actions {
+  display: flex;
+  gap: 10px;
+}
+.gl-card-actions .gl-plan {
+  flex: 1 1 auto;
+}
+.gl-pause-toggle {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 10px;
+  background: #f1f4f9;
+  color: #52627d;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.gl-pause-toggle:hover {
+  background: #e4e9f1;
+}
+.gl-pause-toggle.is-paused {
+  background: #e9f6ff;
+  color: #236589;
+}
 @media (max-width: 600px) {
   .gl-head {
     grid-template-columns: 44px minmax(0, 1fr);

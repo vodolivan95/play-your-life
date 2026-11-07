@@ -147,6 +147,11 @@ export default function GoalsBoard({
         : 'Проект убран из главных проектов месяца.',
     );
   }
+  function togglePause(g: Goal) {
+    const next = !g.paused;
+    onChange((s) => saveGoal(s, { ...g, paused: next }));
+    onNotify(next ? 'Проект поставлен на паузу.' : 'Проект возобновлён.');
+  }
   const monthlyFocusIds = new Set(currentMonthlyFocus.map((g) => g.id));
   const visibleGoals = sortGoals(
     state,
@@ -360,17 +365,31 @@ export default function GoalsBoard({
               </small>
             </div>
           </details>
-          <button
-            className="primary-button gl-plan"
-            onClick={() => onSelect(g.id)}
-          >
-            {done
-              ? g.projectReview
-                ? 'Открыть практику'
-                : 'Завершить проект'
-              : 'Открыть проект'}
-            <Icon name="arrow" size={16} />
-          </button>
+          <div className="gl-card-actions">
+            {!done && (
+              <button
+                type="button"
+                className={`text-button gl-pause-toggle${g.paused ? ' is-paused' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePause(g);
+                }}
+              >
+                {g.paused ? '▶ Возобновить' : 'Ⅱ Пауза'}
+              </button>
+            )}
+            <button
+              className="primary-button gl-plan"
+              onClick={() => onSelect(g.id)}
+            >
+              {done
+                ? g.projectReview
+                  ? 'Открыть практику'
+                  : 'Завершить проект'
+                : 'Открыть проект'}
+              <Icon name="arrow" size={16} />
+            </button>
+          </div>
         </div>
       </section>
     );

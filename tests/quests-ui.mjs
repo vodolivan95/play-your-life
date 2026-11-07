@@ -90,7 +90,8 @@ try {
       .getByRole("button", { name: "Продолжить игру на этом устройстве" })
       .click();
     await openTasks(page, mobile);
-    assert.equal(await page.locator(".pyl-quest-modes>button").count(), 5);
+    assert.equal(await page.locator(".pyl-quest-modes>button").count(), 6);
+    assert.equal(await page.locator(".pyl-quest-modes").getByRole("button", { name: "Мой план", exact: true }).count(), 1);
     await page.locator(".pyl-quest-modes").getByRole("button", { name: /Задачи на сегодня/ }).click();
     assert.equal(
       await page.locator(".gtl-item").filter({ hasText: "Тестовая задача на завтра" }).count(),

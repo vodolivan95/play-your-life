@@ -630,7 +630,7 @@ try {
           JSON.parse(localStorage.getItem('play-your-life-v1')).goals.find(
             (g) => g.id === id,
           ).paused,
-        ids.id,
+        ids.manual,
       ),
       true,
     );
@@ -649,7 +649,7 @@ try {
           JSON.parse(localStorage.getItem('play-your-life-v1')).goals.find(
             (g) => g.id === id,
           ).paused,
-        ids.id,
+        ids.manual,
       ),
       false,
     );

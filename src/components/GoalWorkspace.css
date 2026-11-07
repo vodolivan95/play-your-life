@@ -1272,9 +1272,11 @@
   .gw-banner-progress {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     justify-content: center;
     padding-top: 0;
     gap: 14px;
+    row-gap: 8px;
   }
   .gw-banner-progress .gw-ring {
     width: 92px;

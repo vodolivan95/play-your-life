@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import type { Dispatch, SetStateAction, ReactNode } from 'react';
 import {
   completeQuest,
+  dateKey,
   reopenQuest,
   removeQuest,
   spheres,
@@ -54,7 +55,7 @@ import {
   GOAL_WEEKLY_FOCUS_GOAL_TARGET_MAX,
   GOAL_NOTES_MAX,
 } from '../game';
-import { questCoins, progressQuest } from '../personalQuests';
+import { questCoins, progressQuest, duplicateQuest } from '../personalQuests';
 import { sphereAssets } from '../sphereAssets';
 import { startPracticeSession, togglePracticeStep, completePracticeSession } from '../skillPractice';
 import { skillTreeOf, nodeLevel, practiceLevelInfo } from '../skillTree';
@@ -67,6 +68,7 @@ import {
 import SphereIcon from './SphereIcon';
 import Icon from './Icon';
 import TaskLabelBadge from './TaskLabelBadge';
+import TaskWindow from './TaskWindow';
 import './GoalWorkspace.css';
 
 type Props = {
@@ -675,6 +677,7 @@ export default function GoalWorkspace(p: Props) {
   const [tab, setTab] = useState(goal.projectReview ? 'tasks' : 'overview');
   const [filter, setFilter] = useState('all');
   const [now, setNow] = useState(() => Date.now());
+  const today = dateKey(new Date(now));
   const monthNow = new Date(now);
   const currentMonthlyFocus = monthlyFocusGoals(state, monthNow);
   const isMonthlyFocus = currentMonthlyFocus.some((item) => item.id === goal.id);
@@ -717,7 +720,8 @@ export default function GoalWorkspace(p: Props) {
   } | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
-    if (detail) dialog.current?.showModal();
+    // У окна задачи (TaskWindow) собственный оверлей — свой <dialog> под него не открываем.
+    if (detail && detail.kind !== 'task') dialog.current?.showModal();
     else dialog.current?.close();
   }, [detail]);
   const sphere = spheres.find((s) => s.id === goal.sphere)!;
@@ -861,6 +865,45 @@ export default function GoalWorkspace(p: Props) {
     if (changed)
       p.onNotify('Отметка выполнения снята. Полученная награда остаётся и повторно не начислится.');
     return changed;
+  }
+  function deleteTask(task: Quest) {
+    if (
+      window.confirm(
+        'Удалить задачу? Уже заработанные награды и история сохранятся.',
+      )
+    ) {
+      mutate((s) =>
+        planEvent(
+          removeQuest(s, task.id),
+          goal.id,
+          `Удалена задача: ${task.name}`,
+          task.stageId,
+        ),
+      );
+      setDetail(null);
+    }
+  }
+  function duplicateTask(task: Quest) {
+    if (mutate((s) => duplicateQuest(s, task.id, p.ownerId)))
+      p.onNotify(`«${task.name}» продублирована`);
+  }
+  const [progress, setProgress] = useState<Quest | null>(null);
+  const [progressValue, setProgressValue] = useState(0);
+  function startProgress(task: Quest) {
+    setProgress(task);
+    setProgressValue(task.currentValue ?? 0);
+  }
+  function saveProgress(task: Quest, value: number) {
+    if (goal.paused) {
+      p.onNotify('Проект на паузе. Возобновите проект, чтобы завершать задачи.');
+      return;
+    }
+    const target = task.targetValue ?? 1;
+    if (value >= target) {
+      if (finish(task)) setProgress(null);
+    } else if (mutate((s) => progressQuest(s, task.id, value, p.ownerId))) {
+      setProgress(null);
+    }
   }
   function taskRow(task: Quest) {
     const parent = stages.find((s) => s.id === task.stageId);
@@ -2268,119 +2311,80 @@ export default function GoalWorkspace(p: Props) {
               </button>
             </form>
           )}
-          {detail?.kind === 'task' && !viewedTask && (
+        </div>
+      </dialog>
+      {detail?.kind === 'task' && !viewedTask && (
+        <div className="pyl-overlay" onClick={(e) => e.target === e.currentTarget && setDetail(null)}>
+          <div className="dialog-content" role="dialog" aria-modal="true" aria-label="Подробности задачи">
+            <button className="icon-button modal-close" aria-label="Закрыть" onClick={() => setDetail(null)}>×</button>
             <p className="gw-muted">
               Эта задача больше не находится в проекте. Закройте окно и выберите
               доступный шаг.
             </p>
-          )}
-          {detail?.kind === 'task' && viewedTask && (
-            <>
-              <h2>{viewedTask.name}</h2>
-              <p>{viewedTask.notes || 'Описание задачи не добавлено.'}</p>
-              <p>
-                {shortDate(viewedTask.dueAt)} · +{viewedTask.xp} XP ·{' '}
-                {questCoins(viewedTask)} лайфкоинов
-              </p>
-              <p>{viewedTask.done ? '✓ Выполнена' : 'В плане'}</p>
-              {viewedTask.done && goal.projectReview && (
-                <button className="primary-button" onClick={() => beginPractice(viewedTask)}>↻ Практиковать снова</button>
-              )}
-              {!viewedTask.done &&
-                viewedTask.targetValue &&
-                viewedTask.targetValue > 1 && (
-                  <form
-                    className="planning-form"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const value = Number(
-                        new FormData(e.currentTarget).get('progress'),
-                      );
-                      if (
-                        mutate((s) =>
-                          progressQuest(s, viewedTask!.id, value, p.ownerId),
-                        )
-                      )
-                        setDetail(null);
-                    }}
-                  >
-                    <label>
-                      Прогресс задачи ({viewedTask.unit || 'ед.'})
-                      <input
-                        name="progress"
-                        type="number"
-                        min={viewedTask.currentValue ?? 0}
-                        max={viewedTask.targetValue}
-                        step="any"
-                        required
-                        defaultValue={viewedTask.currentValue ?? 0}
-                      />
-                    </label>
-                    <small>
-                      Цель: {viewedTask.targetValue} {viewedTask.unit}
-                    </small>
-                    <button className="primary-button" type="submit">
-                      Сохранить прогресс
-                    </button>
-                  </form>
-                )}
-              <div className="gw-task-toolbar">
-                <button
-                  className={viewedTask.done ? 'secondary-button' : 'primary-button'}
-                  onClick={() => {
-                    if (viewedTask!.done) undoFinish(viewedTask!);
-                    else if (finish(viewedTask!)) setDetail(null);
-                  }}
-                >
-                  {viewedTask.done ? 'Отменить выполнение' : 'Выполнить задачу'}
-                </button>
-                {!viewedTask.done && (
-                  <button
-                    className="secondary-button"
-                    onClick={() => {
-                      p.onEditTask(viewedTask!);
-                      setDetail(null);
-                    }}
-                  >
-                    Редактировать задачу
-                  </button>
-                )}
-                <button
-                  className="text-button"
-                  onClick={() => {
-                    p.onTransfer(viewedTask);
-                    setDetail(null);
-                  }}
-                >
-                  Передать в TickTick
-                </button>
-                <button
-                  className="text-button gw-danger"
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        'Удалить задачу? Уже заработанные награды и история сохранятся.',
-                      )
-                    ) {
-                      mutate((s) =>
-                        planEvent(
-                          removeQuest(s, viewedTask!.id),
-                          goal.id,
-                          `Удалена задача: ${viewedTask!.name}`,
-                          viewedTask!.stageId,
-                        ),
-                      );
-                      setDetail(null);
-                    }
-                  }}
-                >
-                  Удалить задачу
-                </button>
-              </div>
-            </>
-          )}
+          </div>
         </div>
-      </dialog>
+      )}
+      {detail?.kind === 'task' && viewedTask && (
+        <TaskWindow
+          taskId={viewedTask.id}
+          state={state}
+          today={today}
+          onChange={p.onChange}
+          notify={p.onNotify}
+          onClose={() => setDetail(null)}
+          onAdvanced={(task) => p.onEditTask(task)}
+          onProgress={(task) => { setDetail(null); startProgress(task); }}
+          onUndo={undoFinish}
+          onDelete={deleteTask}
+          onDuplicate={duplicateTask}
+          onTransfer={(task) => p.onTransfer(task)}
+          onPractice={goal.projectReview ? beginPractice : undefined}
+        />
+      )}
+      {progress && (
+        <div className="pyl-overlay">
+          <form
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="goal-progress-title"
+            onSubmit={(e) => {
+              e.preventDefault();
+              saveProgress(progress, progressValue);
+            }}
+          >
+            <h2 id="goal-progress-title">{progress.name}</h2>
+            <label>
+              Выполнено ({progress.unit || 'шагов'})
+              <input
+                autoFocus
+                type="number"
+                required
+                min={progress.currentValue ?? 0}
+                max={progress.targetValue ?? 1}
+                step="any"
+                value={progressValue}
+                onChange={(e) => setProgressValue(e.target.valueAsNumber)}
+              />
+            </label>
+            <p>
+              Цель: {progress.targetValue ?? 1} {progress.unit}
+            </p>
+            <footer>
+              <button type="button" onClick={() => setProgress(null)}>
+                Отмена
+              </button>
+              <button className="primary-button">Сохранить прогресс</button>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => saveProgress(progress, progress.targetValue ?? 1)}
+              >
+                Выполнить полностью
+              </button>
+            </footer>
+          </form>
+        </div>
+      )}
       {reviewOpen && !goal.projectReview && (
         <ProjectCompletionDialog
           state={state}

@@ -120,7 +120,7 @@ export function calendarItem(quest: Quest): CalendarItem | undefined {
 }
 
 export function calendarItems(quests: Quest[]): CalendarItem[] {
-  return quests.map(calendarItem).filter((item): item is CalendarItem => !!item);
+  return quests.filter((q) => !q.planning?.archivedAt).map(calendarItem).filter((item): item is CalendarItem => !!item);
 }
 
 export function itemsForDay(items: CalendarItem[], day: string): CalendarItem[] {

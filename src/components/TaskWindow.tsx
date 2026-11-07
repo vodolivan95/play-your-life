@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react';
+import { lazy, Suspense, useRef, useState } from 'react';
+const TaskPlanningFields = lazy(() => import('./TaskPlanningFields'));
 import type { Dispatch, SetStateAction } from 'react';
 import { difficulties, spheres } from '../game';
 import type { GameState, Quest } from '../game';
@@ -79,6 +80,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
     [sub, setSub] = useState(''),
     [menuOpen, setMenuOpen] = useState(false),
     [activityOpen, setActivityOpen] = useState(false);
+  const [moveReason, setMoveReason] = useState('');
   const subInput = useRef<HTMLInputElement>(null);
   if (!task) return null;
   const c = taskContribution(state, task),
@@ -90,7 +92,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
   function patch(p: TaskPatch, message?: string) {
     onChange((current) => {
       try {
-        const next = updateTaskSettings(current, task!.id, p);
+        const next = updateTaskSettings(current, task!.id, { ...p, moveReason });
         if (message) queueMicrotask(() => notify(message));
         return next;
       } catch (e) {
@@ -261,6 +263,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
           <div><small>В этап</small><b>{c.stage ? c.stage.name : '—'}</b><span>{c.stage ? `${c.stageTasks} задач в этапе` : 'без этапа'}</span></div>
         </div>
         <div className="twin-body">
+          <Suspense fallback={<p>Загрузка планирования…</p>}><TaskPlanningFields state={state} task={task} onChange={onChange} notify={notify} onReason={setMoveReason} /></Suspense>
           <label className="twin-field">Название
             <input value={name} maxLength={100} disabled={locked} onChange={(e) => setName(e.target.value)}
               onBlur={() => name.trim() !== task.name && patch({ name })} />

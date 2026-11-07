@@ -1,9 +1,15 @@
+import { recordTaskSchedule, validTaskPlanning } from './planningData.ts';
 import { difficulties } from './game.ts';
 import type { GameState, Quest } from './game.ts';
 import { questCoins } from './personalQuests.ts';
 import { addDays, mondayOf } from './tasksCalendar.ts';
 
 export type TaskPatch = {
+  planning?: Quest['planning'];
+  estimateMinutes?: number | null;
+  priority?: Quest['priority'];
+  moveReason?: string;
+  actionId?: string;
   name?: string;
   notes?: string;
   difficulty?: string;
@@ -71,10 +77,23 @@ export function taskContribution(state: GameState, q: Quest) {
   return { xp, coins: questCoins(q), goal, stage, goalShare: share, stageTasks: stagePool.length };
 }
 export function updateTaskSettings(state: GameState, id: string, patch: TaskPatch): GameState {
+  if (patch.actionId && state.events.some((e) => e.id === patch.actionId)) return state;
   const old = state.quests.find((q) => q.id === id);
   if (!old) throw new Error('Задача не найдена.');
   if (old.done) throw new Error('Выполненную задачу нельзя менять.');
   const q: Quest = { ...old };
+  if (patch.planning !== undefined) {
+    if (!validTaskPlanning(patch.planning)) throw new Error('Проверь настройки задачи.');
+    q.planning = patch.planning;
+  }
+  if (patch.priority !== undefined) {
+    if (!['low', 'normal', 'high'].includes(patch.priority)) throw new Error('Выбери приоритет.');
+    q.priority = patch.priority;
+  }
+  if (patch.estimateMinutes !== undefined) {
+    if (patch.estimateMinutes !== null && (!Number.isFinite(patch.estimateMinutes) || patch.estimateMinutes < 1 || patch.estimateMinutes > 43200)) throw new Error('Оценка времени: от 1 до 43200 минут.');
+    q.estimateMinutes = patch.estimateMinutes ?? undefined;
+  }
   if (patch.name !== undefined) {
     const name = patch.name.trim();
     if (!name || name.length > 100) throw new Error('Проверь название задачи.');
@@ -155,5 +174,5 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
   if (patch.pinned !== undefined) q.pinned = patch.pinned || undefined;
   if (patch.wontDo !== undefined) q.wontDo = patch.wontDo || undefined;
   const clean = Object.fromEntries(Object.entries(q).filter(([, v]) => v !== undefined)) as Quest;
-  return { ...state, quests: state.quests.map((item) => (item.id === id ? clean : item)) };
+  return recordTaskSchedule({ ...state, quests: state.quests.map((item) => (item.id === id ? clean : item)) }, old, clean, patch.moveReason, patch.actionId);
 }

@@ -8,7 +8,7 @@ const quest = (over: Partial<Quest>): Quest => ({
   sourceType: 'USER_CREATED', goalId: 'g1', stageId: 's1', ...over,
 });
 const state = (quests: Quest[]) => ({
-  quests,
+  quests, events: [],
   goals: [{ id: 'g1', name: 'Марафон', sphere: 'sport', stages: [{ id: 's1', name: 'База' }, { id: 's2', name: 'Темп' }] }],
 }) as unknown as GameState;
 

@@ -1,3 +1,4 @@
+import { recordTaskSchedule } from './planningData.ts';
 import { validProjectImage } from './projectImage.ts';
 import {
   dateKey,
@@ -549,7 +550,7 @@ export function saveTask(
         : `Добавлена задача: ${task.name}`,
       task.stageId,
     );
-  return next;
+  return recordTaskSchedule(next, existing, task);
 }
 export function deleteGoal(state: GameState, id: string): GameState {
   return {
@@ -597,7 +598,7 @@ export function periodItems(
   };
   const goals = state.goals.filter(overlaps);
   const tasks = state.quests
-    .filter(overlaps)
+    .filter((q) => !q.planning?.archivedAt && !q.wontDo && overlaps(q))
     .sort((a, b) =>
       (a.startsAt ?? a.dueAt ?? '9999').localeCompare(
         b.startsAt ?? b.dueAt ?? '9999',
@@ -606,7 +607,7 @@ export function periodItems(
   return {
     goals,
     tasks,
-    unscheduled: state.quests.filter((q) => !q.done && !q.startsAt && !q.dueAt),
+    unscheduled: state.quests.filter((q) => !q.done && !q.wontDo && !q.planning?.archivedAt && !q.startsAt && !q.dueAt),
     hours:
       tasks
         .filter((q) => !q.done)

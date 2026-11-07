@@ -55,7 +55,7 @@ function withTime(dueAt: string, time: string) {
   const day = dayOf(dueAt);
   return time ? `${day}T${time}` : day;
 }
-export default function TaskWindow({ taskId, state, today, onChange, onClose, onAdvanced, onProgress, onUndo, onDelete, onDuplicate, notify }: {
+export default function TaskWindow({ taskId, state, today, onChange, onClose, onAdvanced, onProgress, onUndo, onDelete, onDuplicate, onTransfer, onPractice, notify }: {
   taskId: string;
   state: GameState;
   today: string;
@@ -66,6 +66,8 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
   onUndo?: (q: Quest) => void;
   onDelete?: (q: Quest) => void;
   onDuplicate?: (q: Quest) => void;
+  onTransfer?: (q: Quest) => void;
+  onPractice?: (q: Quest) => void;
   notify: (s: string) => void;
 }) {
   const task = state.quests.find((q) => q.id === taskId);
@@ -126,6 +128,11 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
   function duplicate() {
     closeMenu();
     onDuplicate?.(task!);
+  }
+  function transfer() {
+    closeMenu();
+    onClose();
+    onTransfer?.(task!);
   }
   async function copyLink() {
     closeMenu();
@@ -209,6 +216,9 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
                       <button type="button" role="menuitem" onClick={openLabels}>🏷️ Метки</button>
                     )}
                     {onDuplicate && <button type="button" role="menuitem" onClick={duplicate}>🧬 Дублировать</button>}
+                    {onTransfer && inGoal && !task.done && (
+                      <button type="button" role="menuitem" onClick={transfer}>📤 Передать в TickTick</button>
+                    )}
                     <button type="button" role="menuitem" onClick={copyLink}>🔗 Копировать ссылку</button>
                     <button type="button" role="menuitem" onClick={openActivity}>🕘 Активность</button>
                     <button type="button" role="menuitem" onClick={exportTask}>⬇️ Экспорт</button>
@@ -386,6 +396,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
           {task.sourceType === 'USER_CREATED' && onAdvanced && (
             <button type="button" className="text-button" onClick={() => { onClose(); onAdvanced(task); }}>Расширенные настройки</button>
           )}
+          {task.done && onPractice && <button type="button" className="primary-button" onClick={() => onPractice(task)}>↻ Практиковать снова</button>}
           {task.done && onUndo && <button type="button" className="secondary-button" onClick={() => onUndo(task)}>Отменить выполнение</button>}
           {onDelete && <button type="button" className="text-button" onClick={() => onDelete(task)}>Удалить</button>}
           {onProgress && !task.done && !task.wontDo && <button type="button" className="secondary-button" onClick={() => onProgress(task)}>Продолжить</button>}

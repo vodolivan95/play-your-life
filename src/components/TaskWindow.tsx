@@ -75,7 +75,6 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
     [notes, setNotes] = useState(task?.notes ?? ''),
     [adding, setAdding] = useState(false),
     [draft, setDraft] = useState(''),
-    [picking, setPicking] = useState(false),
     [sub, setSub] = useState(''),
     [menuOpen, setMenuOpen] = useState(false),
     [activityOpen, setActivityOpen] = useState(false);
@@ -295,54 +294,51 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
             </div>
             {!canChangeDifficulty(task) && <small>Сложность зафиксирована: задача начата или создана системой.</small>}
           </div>
-          {linked ? (
-            <div className="twin-field" role="group" aria-label="Плановая дата">
-              <span>Плановая дата{task.dueAt ? ` · ${fmtDate(task.dueAt)}` : ''}</span>
-              <input type="date" aria-label="Дата выполнения" value={dayOf(task.dueAt)}
-                onChange={(e) => e.target.value && patch({ dueAt: withTime(e.target.value, clockOf(task.dueAt)) })} />
-              <small>Дата и время — в обе стороны с TickTick: перенос здесь при следующем обмене уйдёт и туда.</small>
-              {task.dueAt && (
-                <div className="twin-time-row">
-                  <label className="twin-time">С
-                    <input type="time" aria-label="Время начала" value={clockOf(task.startsAt)}
-                      onChange={(e) => patch({ startsAt: e.target.value ? withTime(task.startsAt || task.dueAt!, e.target.value) : null })} />
-                  </label>
-                  <label className="twin-time">До
-                    <input type="time" aria-label="Время выполнения" value={clockOf(task.dueAt)}
-                      onChange={(e) => patch({ dueAt: withTime(task.dueAt!, e.target.value) })} />
-                  </label>
-                </div>
-              )}
-              <small>Время — в обе стороны с TickTick; интервал «с … до …» показан в календаре; без времени задача на весь день.</small>
-            </div>
-          ) : (
+          {!linked && (
             <div className="twin-field" role="group" aria-label="Срок">
               <span>Срок</span>
               <div className="twin-chips">
                 {duePresets.map(([id, label]) => (
-                  <button key={id} type="button" aria-pressed={preset === id && !picking}
-                    onClick={() => { setPicking(false); patch({ dueAt: dueFor(id, today) }); }}>{label}</button>
+                  <button key={id} type="button" aria-pressed={preset === id}
+                    onClick={() => patch({ dueAt: dueFor(id, today) })}>{label}</button>
                 ))}
-                <button type="button" aria-pressed={preset === 'date' || picking} onClick={() => setPicking(true)}>Выбрать дату</button>
               </div>
-              {(picking || preset === 'date') && (
-                <input type="date" aria-label="Дата выполнения" value={dayOf(task.dueAt)}
-                  onChange={(e) => e.target.value && patch({ dueAt: withTime(e.target.value, clockOf(task.dueAt)) })} />
-              )}
-              {preset !== 'none' && (
-                <div className="twin-time-row">
-                  <label className="twin-time">С
-                    <input type="time" aria-label="Время начала" value={clockOf(task.startsAt)}
-                      onChange={(e) => patch({ startsAt: e.target.value ? withTime(task.startsAt || task.dueAt!, e.target.value) : null })} />
-                  </label>
-                  <label className="twin-time">До
-                    <input type="time" aria-label="Время выполнения" value={clockOf(task.dueAt)}
-                      onChange={(e) => task.dueAt && patch({ dueAt: withTime(task.dueAt, e.target.value) })} />
-                  </label>
-                </div>
-              )}
             </div>
           )}
+          <div className="twin-field" role="group" aria-label="Период задачи">
+            <span>Период задачи{task.startsAt || task.dueAt ? ` · ${fmtDate(task.startsAt)}${task.startsAt && task.dueAt ? ' — ' : ''}${fmtDate(task.dueAt)}` : ''}</span>
+            <div className="twin-range-row">
+              <div className="twin-range-endpoint">
+                <strong>С</strong>
+                <label>Дата начала
+                  <input type="date" aria-label="Дата начала" value={dayOf(task.startsAt)} max={dayOf(task.dueAt) || undefined}
+                    onChange={(e) => patch({ startsAt: e.target.value ? withTime(e.target.value, clockOf(task.startsAt)) : null })} />
+                </label>
+                <label>Время начала
+                  <input type="time" aria-label="Время начала" value={clockOf(task.startsAt)}
+                    onChange={(e) => {
+                      const day = dayOf(task.startsAt) || dayOf(task.dueAt) || today;
+                      patch({ startsAt: e.target.value ? withTime(day, e.target.value) : task.startsAt ? day : null });
+                    }} />
+                </label>
+              </div>
+              <div className="twin-range-endpoint">
+                <strong>По</strong>
+                <label>Дата окончания
+                  <input type="date" aria-label="Дата окончания" value={dayOf(task.dueAt)} min={dayOf(task.startsAt) || undefined}
+                    onChange={(e) => patch({ dueAt: e.target.value ? withTime(e.target.value, clockOf(task.dueAt)) : null })} />
+                </label>
+                <label>Время окончания
+                  <input type="time" aria-label="Время окончания" value={clockOf(task.dueAt)}
+                    onChange={(e) => {
+                      const day = dayOf(task.dueAt) || dayOf(task.startsAt) || today;
+                      patch({ dueAt: e.target.value ? withTime(day, e.target.value) : task.dueAt ? day : null });
+                    }} />
+                </label>
+              </div>
+            </div>
+            <small>{linked ? 'Связанные дата начала, срок и время синхронизируются с TickTick в обе стороны.' : 'Интервал «с — по» отображается в календаре; без времени задача на весь день.'}</small>
+          </div>
           <div className="twin-field" role="group" aria-label="Дедлайн">
             <span>Дедлайн</span>
             <div className="twin-chips">

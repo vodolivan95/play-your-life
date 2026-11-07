@@ -108,6 +108,18 @@ export function canSyncTask(state: GameState, task: Quest): boolean {
     (isGoalTask(state, task) || task.sourceType === 'USER_CREATED')
   );
 }
+/** Начиная с этой даты новые и активные задачи автоматически связываются с TickTick. */
+export const TICKTICK_AUTO_LINK_FROM = '2026-10-01';
+export function shouldAutoLinkTask(
+  state: GameState,
+  task: Quest,
+  explicitlyRequested = false,
+): boolean {
+  if (task.done || task.wontDo || !canSyncTask(state, task)) return false;
+  if (explicitlyRequested) return true;
+  const createdDay = task.createdAt?.slice(0, 10) ?? '';
+  return /^\d{4}-\d{2}-\d{2}$/.test(createdDay) && createdDay >= TICKTICK_AUTO_LINK_FROM;
+}
 function taskProject(connection: TickTickConnection, task: Quest) {
   return connection.sphereLists?.[task.sphere];
 }
@@ -557,7 +569,7 @@ async function syncTickTickProject(
     (q) =>
       !q.done &&
       (!taskIds || taskIds.includes(q.id)) &&
-      canSyncTask(state, q) &&
+      shouldAutoLinkTask(state, q, !!taskIds?.includes(q.id)) &&
       !allLinks[q.id] &&
       taskProject(connection, q) === connection.projectId,
   )) {
@@ -631,7 +643,7 @@ export async function syncTickTick(
     if (
       (taskIds && !taskIds.includes(task.id)) ||
       task.done ||
-      !canSyncTask(state, task) ||
+      !shouldAutoLinkTask(state, task, !!taskIds?.includes(task.id)) ||
       connection.links[task.id]
     )
       continue;
@@ -834,6 +846,19 @@ export function applyTickTickResult(state: GameState, result: TickTickResult) {
   const connection = {
     ...result.connection,
     links: { ...result.connection.links },
+  };
+  const linkedIds = new Set(Object.keys(connection.links));
+  const linkedAt = new Date().toISOString();
+  next = {
+    ...next,
+    quests: next.quests.map((task) => {
+      if (linkedIds.has(task.id))
+        return task.tickTickSharedAt ? task : { ...task, tickTickSharedAt: linkedAt };
+      if (!task.tickTickSharedAt) return task;
+      const unlinked = { ...task };
+      delete unlinked.tickTickSharedAt;
+      return unlinked;
+    }),
   };
   for (const [id, link] of Object.entries(connection.links)) {
     const task = next.quests.find((q) => q.id === id);

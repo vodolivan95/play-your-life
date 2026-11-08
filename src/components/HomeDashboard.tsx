@@ -2,9 +2,10 @@ import { useContext } from 'react';
 import type { ReactNode } from 'react';
 import type { GameState, Quest } from '../game';
 import {
-  streak, streakRewards, dateKey as localDate, questsForToday,
+  streak, streakRewards, dateKey as localDate,
   todayEarnings, weekCompletedQuests,
 } from '../game';
+import { questsForCalendarDay } from '../tasksCalendar';
 import { quoteForNow } from '../quoteOfDay';
 import { TickTickContext } from '../tickTickContext';
 import { monthlyFocusGoals } from '../monthlyFocus';
@@ -34,18 +35,10 @@ export default function HomeDashboard({
   const tickTick = useContext(TickTickContext);
   const [theme] = useMenuTheme();
   const now = new Date();
-  // На главной показываем только настоящие сегодняшние задачи, без просроченных
-  // «хвостов» из прошлых дней (их список — на вкладке «Мои задачи» → «Просрочено»):
-  // иначе модуль разрастается на экраны вниз и перестаёт помещаться вровень с
-  // правой колонкой. `questsForToday()` (используется в счётчиках меню и других
-  // местах) специально включает и просрочку — здесь фильтруем дополнительно,
-  // саму функцию не трогаем.
+  // Главная использует тот же точный день и порядок, что календарь и вкладка
+  // «Задачи на сегодня»: задачи без даты, просроченные и будущие не попадают.
   const todayKey = localDate(now);
-  const tasks = questsForToday(state, now).filter((q) => {
-    if (q.done) return true;
-    const due = q.dueAt ?? q.startsAt;
-    return !due || localDate(new Date(due)) === todayKey;
-  });
+  const tasks = questsForCalendarDay(state.quests, todayKey);
   const peaks = monthlyFocusGoals(state, now).map(goal => goalPeak(state, goal, now));
   const currentStreak = streak(state.activeDates);
   const monday = new Date(now);

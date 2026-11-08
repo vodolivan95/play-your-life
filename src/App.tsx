@@ -36,6 +36,7 @@ import TickTickInboxDialog from './components/TickTickInboxDialog';
 import { TickTickContext, TickTickHabitsContext } from './tickTickContext';
 import useTickTickHabits from './useTickTickHabits';
 import { incomingForToday } from './ticktickInbox';
+import { questsForCalendarDay } from './tasksCalendar';
 import {
   achievements,
   completeQuest,
@@ -49,7 +50,6 @@ import {
   streak,
   streakRewards,
   removeQuest,
-  questsForToday,
   isOverdue,
   hasClockTime,
 } from './game';
@@ -325,7 +325,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
       <div
         className={`app-shell pyl-shell app-page-${page} ${modal === 'quest' ? 'quest-dialog-open' : ''}`}
       >
-        <AppSidebar page={page} state={state} questCount={questsForToday(state).filter((q) => !q.done).length + incomingForToday(tickTick.incoming).length} onNavigate={navigate} />
+        <AppSidebar page={page} state={state} questCount={questsForCalendarDay(state.quests, dateKey(new Date())).filter((q) => !q.done).length + incomingForToday(tickTick.incoming).length} onNavigate={navigate} />
         <div className="main-wrap">
           <header className="topbar"><DashboardHeader state={state} onProfile={() => navigate('profile')} onQuests={() => navigate('tasks')} onSearchResult={openSearchResult} /></header>
           <main
@@ -607,7 +607,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                   </section>
                 </div>
                 {(() => {
-                  const taskBadge = questsForToday(state).filter((q) => !q.done).length + incomingForToday(tickTick.incoming).length;
+                  const taskBadge = questsForCalendarDay(state.quests, dateKey(new Date())).filter((q) => !q.done).length + incomingForToday(tickTick.incoming).length;
                   const byId = (id: string) => navigation.find((n) => n.id === id)!;
                   const quickIds = ['tasks', 'quests', 'goals', 'spheres'];
                   const progressIds = ['tree', 'achievements', 'statistics'];

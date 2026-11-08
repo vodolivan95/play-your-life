@@ -121,9 +121,10 @@ try {
   await page.locator('.sidebar').getByRole('button', { name: /^Мои задачи/ }).click();
   await page.getByRole('button', { name: /^Задачи на сегодня/ }).click();
   const todayList = page.getByRole('region', { name: 'Задачи на сегодня', exact: true });
-  await todayList.getByText('Ночное выполнение', { exact: true }).waitFor();
+  await todayList.getByText('Ночная задача', { exact: true }).waitFor();
+  assert.equal(await todayList.getByText('Ночное выполнение', { exact: true }).count(), 0, 'выполнение без плановой даты остаётся в итогах, а не в календарном списке');
   assert.equal(await todayList.getByText('Другая неделя', { exact: true }).count(), 0);
-  assert.equal(await todayList.getByText('Отменённая задача', { exact: true }).count(), 0);
+  assert.equal(await todayList.getByText('Отменённая задача', { exact: true }).count(), 1);
   assert.match(await page.locator('.tsum > div').filter({ has: page.getByText('Выполнено', { exact: true }) }).innerText(), /Выполнено\s+1\s+за неделю/);
   await page.getByRole('button', { name: 'Список', exact: true }).click();
   const nightRow = page.locator('.gtl-item').filter({ hasText: 'Ночная задача' });

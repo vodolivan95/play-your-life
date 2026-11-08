@@ -146,14 +146,14 @@ export function findIncomingTasks(
   return found;
 }
 
-/** Входящие, срок или начало которых сегодня или раньше: они тоже «на сегодня», хотя ещё не приняты в игру. */
+/** Входящие, срок или начало которых приходится на точный локальный календарный день сегодня. */
 export function incomingForToday(incoming: IncomingTask[], now: Date = new Date()): IncomingTask[] {
   const today = dateKey(now);
   return incoming.filter((item) => {
     const value = item.remote.dueDate || item.remote.startDate;
     if (!value) return false;
     const date = new Date(value);
-    return !Number.isNaN(date.getTime()) && dateKey(date) <= today;
+    return !Number.isNaN(date.getTime()) && dateKey(date) === today;
   });
 }
 

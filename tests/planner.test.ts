@@ -116,6 +116,26 @@ test('пересечения: соприкасающиеся границы и �
   assert.equal(planningConflicts([a, { ...c, done: true }, { ...b, startsAt: '2026-11-10', dueAt: '2026-11-10' }]).length, 0);
 });
 
+test('недельный план не освобождает место от выбранной задачи, оставшейся на прежней дате', () => {
+  let s = setup(); const anchor = addDays(mondayOf(dateKey()), 7);
+  s.quests[0].dueAt = anchor; s.quests[0].estimateMinutes = 90;
+  s = quickPlanningTask(s, 'Маленький шаг', 'u'); s.quests[1].estimateMinutes = 30;
+  s = savePlanningSettings(s, { ...planningSettings(s), weekdays: [1], dailyMinutes: 60, reservePercent: 0 });
+  const p = proposeWeek(s, s.quests.map((q) => q.id), anchor, 'u');
+  assert.equal(p.assignments.length, 0);
+  assert.equal(p.unplaced.length, 2);
+  assert.equal(applyWeekProposal(s, p, 'u').quests[0].dueAt, anchor);
+});
+
+test('недельный план освобождает прежний бюджет после успешного переноса', () => {
+  let s = setup(); const anchor = addDays(mondayOf(dateKey()), 7);
+  s = quickPlanningTask(s, 'Второй шаг', 'u');
+  s.quests = s.quests.map((q) => ({ ...q, dueAt: anchor, estimateMinutes: 40 }));
+  s = savePlanningSettings(s, { ...planningSettings(s), weekdays: [1, 2], dailyMinutes: 60, reservePercent: 0 });
+  const p = proposeWeek(s, s.quests.map((q) => q.id), anchor, 'u');
+  assert.deepEqual(p.assignments.map((a) => a.day), [addDays(anchor, 1), anchor]);
+});
+
 test('завершение не обходит отказ от задачи и паузу проекта без этапов', () => {
   const s = setup(); const id = s.quests[0].id;
   s.quests[0].wontDo = true;

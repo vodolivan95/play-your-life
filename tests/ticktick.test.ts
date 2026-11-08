@@ -384,7 +384,7 @@ test('повреждённый снимок связи не прерывает �
   assert.equal(result.state.quests[0].name, 'Правка в игре');
   assert.match(result.warnings[0], /конфликт полей/);
 });
-test('выполнение TickTick двигает цель, даты вне её срока отклоняются', async () => {
+test('выполнение TickTick двигает цель, перенесённый срок задачи остаётся синхронизированным', async () => {
   let { state, connection } = setup();
   state.quests = [];
   state = saveGoal(state, {
@@ -418,8 +418,8 @@ test('выполнение TickTick двигает цель, даты вне е�
     state,
     await syncTickTick(state, connection, api.request),
   );
-  assert.equal(result.state.quests[0].dueAt, state.quests[0].dueAt);
-  assert.equal(result.warnings.length, 1);
+  assert.equal(result.state.quests[0].dueAt, '2027-03-03');
+  assert.equal(result.warnings.length, 0);
   api.tasks.get(rid)!.dueDate = '2027-03-01T10:00:00+0000';
   api.tasks.get(rid)!.status = 2;
   result = applyTickTickResult(
@@ -870,6 +870,36 @@ test('перенос срока связанной задачи в TickTick на
   // TickTick присылает startDate == dueDate для однодневной задачи; локально это только срок.
   assert.equal(updated.startsAt, undefined);
   assert.equal(updated.dueAt, '2026-11-07');
+});
+test('срок, перенесённый в TickTick за дедлайн проекта, синхронизируется вместо старой просрочки', async () => {
+  const { state, connection } = setup();
+  const id = state.quests[0].id;
+  state.goals = state.goals.map((goal) =>
+    goal.id === 'b2' ? { ...goal, dueAt: '2026-11-10' } : goal,
+  );
+  state.quests[0] = { ...state.quests[0], dueAt: '2026-11-06' };
+  const api = upstream();
+  const first = applyTickTickResult(
+    state,
+    await syncTickTick(state, connection, api.request),
+  );
+  const remoteId = first.connection.links[id].remoteId;
+  api.tasks.set(remoteId, {
+    ...api.tasks.get(remoteId)!,
+    dueDate: '2026-11-14T00:00:00+0300',
+  });
+
+  const next = applyTickTickResult(
+    first.state,
+    await syncTickTick(first.state, first.connection, api.request),
+  );
+
+  assert.equal(next.state.quests.find((q) => q.id === id)?.dueAt, '2026-11-14');
+  assert.throws(
+    () => saveTask(next.state, { ...next.state.quests.find((q) => q.id === id)!, dueAt: '2026-11-15' }),
+    /выходят за срок проекта/,
+    'обычная ручная правка по-прежнему уважает дедлайн проекта',
+  );
 });
 test('remotePayload: срок без времени уходит в TickTick тем же днём и как весь день', () => {
   const { state, connection } = setup();

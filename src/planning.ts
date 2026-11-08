@@ -466,6 +466,7 @@ export function removeStage(
 export function saveTask(
   state: GameState,
   input: Pick<Quest, 'name' | 'sphere' | 'difficulty'> & Partial<Quest>,
+  options: { allowOutsidePlanRange?: boolean } = {},
 ): GameState {
   const existing = input.id
     ? state.quests.find((q) => q.id === input.id)
@@ -492,8 +493,15 @@ export function saveTask(
     (!Number.isFinite(input.weight) || input.weight <= 0 || input.weight > 1000)
   )
     throw new Error('Вес задачи — от 0 до 1000, не включая 0.');
-  checkRange(input.startsAt, input.dueAt, goal);
-  if (stage)
+  // A date changed in TickTick is the task's current plan, even if the project
+  // or stage window has not yet been extended to match it. Manual edits still
+  // enforce those parent windows; the sync path opts into the exception.
+  checkRange(
+    input.startsAt,
+    input.dueAt,
+    options.allowOutsidePlanRange ? undefined : goal,
+  );
+  if (stage && !options.allowOutsidePlanRange)
     checkRange(input.startsAt, input.dueAt, {
       startsAt: stage.startsAt ?? goal?.startsAt,
       dueAt: stage.dueAt ?? goal?.dueAt,

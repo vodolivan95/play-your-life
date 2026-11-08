@@ -99,15 +99,18 @@ export function proposeWeek(state: GameState, ids: string[], anchor: string, own
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i)).filter((d) => d >= today);
   const selected = new Set(ids);
   const capacity = new Map(days.map((d) => [d, availableMinutes(state, d) - state.quests
-    .filter((q) => !selected.has(q.id) && visiblePlanningTask(q) && !q.done && taskDay(q) === d)
+    .filter((q) => visiblePlanningTask(q) && !q.done && taskDay(q) === d)
     .reduce((sum, q) => sum + (q.estimateMinutes ?? 0), 0)]));
   const proposal: WeekProposal = { anchor, revision: planRevision(state), assignments: [], unplaced: [] };
   for (const id of selected) {
     const q = owned(state, id, ownerId);
     if (q.done || !visiblePlanningTask(q)) continue;
     if (state.goals.some((g) => g.id === q.goalId && g.paused)) { proposal.unplaced.push(id); continue; }
-    const day = q.estimateMinutes ? days.find((d) => capacity.get(d)! >= q.estimateMinutes!) : undefined;
+    // Старый интервал освобождается только если задача действительно распределена.
+    const oldDay = taskDay(q);
+    const day = q.estimateMinutes ? days.find((d) => capacity.get(d)! + (d === oldDay ? q.estimateMinutes! : 0) >= q.estimateMinutes!) : undefined;
     if (!day) { proposal.unplaced.push(id); continue; }
+    if (oldDay && capacity.has(oldDay)) capacity.set(oldDay, capacity.get(oldDay)! + q.estimateMinutes!);
     capacity.set(day, capacity.get(day)! - q.estimateMinutes!);
     proposal.assignments.push({ id, day, original: q.dueAt, originalStart: q.startsAt });
   }

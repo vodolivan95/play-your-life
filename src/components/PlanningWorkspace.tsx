@@ -45,9 +45,7 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
     if (scope === 'inbox' && !inboxTask(q)) return false;
     const d = taskDay(q);
     if (scope === 'overdue' && (q.done || !d || d >= today)) return false;
-    const completedHere = q.done && ['today', 'tomorrow'].includes(scope) && planningDay(q.completedAt) === day;
-    const mainHere = !q.done && ['today', 'tomorrow'].includes(scope) && q.planning?.mainDay === day;
-    if (['today', 'tomorrow', 'week', 'month'].includes(scope) && !completedHere && !mainHere && (!d || d < start || d > end)) return false;
+    if (['today', 'tomorrow', 'week', 'month'].includes(scope) && (!d || d < start || d > end)) return false;
     return (!sphere || q.sphere === sphere) && (!priority || (q.priority ?? 'normal') === priority)
       && (doneFilter === 'all' || q.done === (doneFilter === 'done'))
       && (!query.trim() || `${q.name} ${q.notes ?? ''}`.toLocaleLowerCase('ru-RU').includes(query.trim().toLocaleLowerCase('ru-RU')));
@@ -121,7 +119,7 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
       <button type="button" onClick={() => setReview('morning')}>Начать день</button><button type="button" onClick={() => setReview('evening')}>Завершить день</button>
     </div>
     {review && <div className="pplan-panel" role="region" aria-label={review === 'morning' ? 'Утренний обзор' : 'Вечерний обзор'}>
-      <h3>{review === 'morning' ? 'Начать день' : 'Итоги дня'}</h3><p>Сегодня: {own.filter((q) => visiblePlanningTask(q) && taskDay(q) === today && q.done).length} выполнено. Просрочено: {own.filter((q) => visiblePlanningTask(q) && !q.done && !!taskDay(q) && taskDay(q)! < today).length}. Главных задач: {own.filter((q) => visiblePlanningTask(q) && !q.done && q.planning?.mainDay === today).length}.</p>
+      <h3>{review === 'morning' ? 'Начать день' : 'Итоги дня'}</h3><p>Сегодня: {own.filter((q) => visiblePlanningTask(q) && planningDay(q.completedAt) === today && q.done).length} выполнено. Просрочено: {own.filter((q) => visiblePlanningTask(q) && !q.done && !!taskDay(q) && taskDay(q)! < today).length}. Главных задач: {own.filter((q) => visiblePlanningTask(q) && !q.done && q.planning?.mainDay === today).length}.</p>
       <p>{review === 'morning' ? 'Открой «Сегодня» или «Просроченные», выбери главные задачи звёздочкой и проверь нагрузку.' : 'Для оставшихся задач выбери дату, верни во входящие массовым действием или оставь просроченными. Ничего не переносится автоматически.'}</p>
       <div className="pplan-row"><button type="button" onClick={() => { setScope('today'); setReview(null); }}>Открыть сегодня</button><button type="button" onClick={() => { setScope('overdue'); setReview(null); }}>Разобрать просроченные</button><button type="button" onClick={() => setReview(null)}>Закрыть обзор</button></div>
     </div>}

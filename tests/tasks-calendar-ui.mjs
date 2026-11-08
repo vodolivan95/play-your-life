@@ -41,6 +41,13 @@ try {
     s.quests = Array.from({ length: 7 }, (_, i) => ({
       id: `cal${i}`, name: `Календарная задача ${i + 1}`, sphere: "sport", xp: 20, done: false, difficulty: "Medium", dueAt: due,
     }));
+    const today = dateKey(new Date());
+    const start = new Date(); start.setHours(17, 0, 0, 0);
+    const end = new Date(start); end.setHours(18, 0, 0, 0);
+    s.quests.push(
+      { id: "cal-today", name: "Задача TickTick на весь день", sphere: "sport", xp: 20, done: false, difficulty: "Medium", dueAt: today },
+      { id: "cal-timed", name: "Задача TickTick с временем", sphere: "sport", xp: 20, done: false, difficulty: "Medium", startsAt: start.toISOString(), dueAt: end.toISOString() },
+    );
     localStorage.setItem("play-your-life-v1", JSON.stringify(s));
   });
   await page.getByRole("button", { name: "Продолжить игру на этом устройстве" }).click();
@@ -56,12 +63,13 @@ try {
   const calendar = page.locator(".tcal");
   await calendar.waitFor();
   assert.equal(await calendar.getByRole("button", { name: "Месяц", exact: true }).getAttribute("aria-pressed"), "true");
+  const targetDay = await page.evaluate(() => JSON.parse(localStorage.getItem("play-your-life-v1")).quests.find((q) => q.id === "cal0").dueAt);
+  const cell = calendar.locator(`.tcal-cell[data-day="${targetDay}"]`);
   for (const name of ["День", "Неделя", "2 недели", "Месяц"]) {
     await calendar.getByRole("button", { name, exact: true }).click();
     assert.equal(await calendar.getByRole("button", { name, exact: true }).getAttribute("aria-pressed"), "true");
   }
   // Месяц: у дня с семью задачами видны три и «ещё 4»; число разворачивает день, повторное нажатие — сворачивает.
-  const cell = calendar.locator(".tcal-cell", { has: page.locator(".tcal-chip") });
   await cell.first().waitFor();
   assert.equal(await cell.first().locator(".tcal-chip").count(), 3);
   assert.equal((await cell.first().locator(".tcal-more").textContent())?.trim(), "ещё 4");
@@ -72,11 +80,9 @@ try {
   assert.equal(await cell.first().locator(".tcal-num").getAttribute("aria-pressed"), "true");
   await cell.first().locator(".tcal-num").click();
   assert.equal(await cell.first().locator(".tcal-chip").count(), 3);
-  // Задача открывается из подробностей.
+  // Одного нажатия на задачу достаточно, чтобы открыть её окно.
   await cell.first().locator(".tcal-chip").first().click();
-  await calendar.locator(".tcal-detail").waitFor();
   // Окно задачи: награда, сложность и срок меняются и сохраняются.
-  await calendar.getByRole("button", { name: "Открыть задачу" }).click();
   const win = page.locator(".twin");
   await win.waitFor();
   assert.match(await win.locator(".twin-ring").innerText(), /\+20/);
@@ -98,6 +104,18 @@ try {
   const rep = await page.evaluate(() => JSON.parse(localStorage.getItem("play-your-life-v1")).quests.filter((q) => q.repeat === "daily"));
   assert.equal(rep.length, 1);
   assert.deepEqual(rep[0].subtasks.map((t) => [t.title, t.done]), [["Первый шаг", true]]);
+  await win.getByRole("button", { name: "Готово" }).click();
+  await win.waitFor({ state: "detached" });
+  // В дневном виде клик также открывает окно и для задачи на весь день, и для события со временем.
+  await calendar.getByRole("button", { name: "День", exact: true }).click();
+  const allDay = calendar.locator(".tcal-allday .tcal-chip").filter({ hasText: "Задача TickTick на весь день" });
+  await allDay.click();
+  await win.waitFor();
+  await win.getByRole("button", { name: "Готово" }).click();
+  await win.waitFor({ state: "detached" });
+  const timed = calendar.locator(".tcal-event").filter({ hasText: "Задача TickTick с временем" });
+  await timed.click();
+  await win.waitFor();
   await win.getByRole("button", { name: "Готово" }).click();
   await win.waitFor({ state: "detached" });
   // Сразу после полуночи в Москве выполненная задача относится к новому дню,

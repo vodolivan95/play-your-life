@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { GameState } from '../game';
-import { playerProgress, questsForToday } from '../game';
+import { dateKey, playerProgress } from '../game';
+import { questsForCalendarDay } from '../tasksCalendar';
 import { searchEverything } from '../globalSearch';
 import type { SearchResult } from '../globalSearch';
 
@@ -37,7 +38,7 @@ export default function DashboardHeader({ state, onProfile, onQuests, onSearchRe
     document.addEventListener('pointerdown', onDocPointerDown);
     return () => document.removeEventListener('pointerdown', onDocPointerDown);
   }, []);
-  const count = questsForToday(state, now).filter(q => !q.done).length;
+  const count = questsForCalendarDay(state.quests, dateKey(now)).filter(q => !q.done).length;
   const results = useMemo(() => searchEverything(state, query), [state, query]);
   function selectResult(result: SearchResult) {
     onSearchResult(result);

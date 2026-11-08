@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { GameState, Quest } from '../game';
-import { calendarItems, itemsForDay } from '../tasksCalendar';
+import { questsForCalendarDay } from '../tasksCalendar';
 import { taskContribution } from '../taskSettings';
 import TaskLabelBadge from './TaskLabelBadge';
 import './GoalTaskList.css';
@@ -26,7 +26,7 @@ export default function TodayTasks({
   onProgress: (q: Quest) => void;
 }) {
   const [showDone, setShowDone] = useState(true);
-  const scheduledToday = itemsForDay(calendarItems(quests), today).map((item) => item.quest);
+  const scheduledToday = questsForCalendarDay(quests, today);
   const tasks = scheduledToday.filter((q) => showDone || !q.done);
 
   const row = (q: Quest) => {

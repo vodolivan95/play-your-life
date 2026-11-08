@@ -260,6 +260,7 @@ export default function TasksCalendar({
                 return (
                   <div
                     key={day}
+                    data-day={day}
                     className={`tcal-cell${day === today ? ' is-today' : ''}${focused ? ' is-focus' : ''}${other ? ' is-other' : ''}${((date.getDay() + 6) % 7) > 4 ? ' is-weekend' : ''}${overDay === day ? ' is-drop' : ''}`}
                     onDragOver={allowDrop(day)}
                     onDragLeave={() => setOverDay((d) => (d === day ? '' : d))}
@@ -276,7 +277,7 @@ export default function TasksCalendar({
                     </button>
                     <div className={`tcal-list${focused ? ' is-scroll' : ''}${view === 'twoWeeks' ? ' is-tall' : ''}`}>
                       {shown.map((item) => (
-                        <Chip key={item.quest.id} item={item} selected={selectedId === item.quest.id} onPick={() => setSelectedId(item.quest.id)} onDragStart={startDrag(item)} onDragEnd={endDrag} dragging={draggedId === item.quest.id} />
+                        <Chip key={item.quest.id} item={item} selected={selectedId === item.quest.id} onPick={() => { setSelectedId(item.quest.id); onOpen(item.quest); }} onDragStart={startDrag(item)} onDragEnd={endDrag} dragging={draggedId === item.quest.id} />
                       ))}
                     </div>
                     {!focused && list.length > limit && <span className="tcal-more">ещё {list.length - limit}</span>}
@@ -306,7 +307,7 @@ export default function TasksCalendar({
                 {days.map((day) => (
                   <div key={day} className={overDay === day ? 'is-drop' : ''} onDragOver={allowDrop(day)} onDragLeave={() => setOverDay((d) => (d === day ? '' : d))} onDrop={dropOnDay(day)}>
                     {itemsForDay(items, day).filter((item) => !item.start).map((item) => (
-                      <Chip key={item.quest.id} item={item} selected={selectedId === item.quest.id} onPick={() => setSelectedId(item.quest.id)} label={`${item.quest.tickTickSharedAt ? '⟳ ' : ''}${item.quest.name}`} onDragStart={startDrag(item)} onDragEnd={endDrag} dragging={draggedId === item.quest.id} />
+                      <Chip key={item.quest.id} item={item} selected={selectedId === item.quest.id} onPick={() => { setSelectedId(item.quest.id); onOpen(item.quest); }} label={`${item.quest.tickTickSharedAt ? '⟳ ' : ''}${item.quest.name}`} onDragStart={startDrag(item)} onDragEnd={endDrag} dragging={draggedId === item.quest.id} />
                     ))}
                   </div>
                 ))}
@@ -339,7 +340,7 @@ export default function TasksCalendar({
                           type="button"
                           className={`tcal-event${item.quest.done ? ' is-done' : ''}${selectedId === item.quest.id ? ' is-selected' : ''}${draggedId === item.quest.id ? ' is-dragging' : ''}${live ? ' is-resizing' : ''}${resizable ? ' is-resizable' : ''}`}
                           style={{ '--c': colorOf(item.quest), top, height } as CSSProperties}
-                          onClick={() => { if (!suppressClick.current) setSelectedId(item.quest.id); }}
+                          onClick={() => { if (!suppressClick.current) { setSelectedId(item.quest.id); onOpen(item.quest); } }}
                           draggable={movable && !resize}
                           onDragStart={movable ? startDrag(item) : undefined}
                           onDragEnd={endDrag}

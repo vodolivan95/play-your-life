@@ -9,6 +9,7 @@ import {
   keySphereIds,
   planMapRange,
   planSpans,
+  stagePlanSpans,
   shiftAnchor,
   spanPlacement,
   toggleKeySphere,
@@ -105,4 +106,30 @@ test('пустой период не ломает карту; положение
   assert.ok(place.left >= 0 && place.left + place.width <= 100.0001);
   const wide = spanPlacement({ ...planSpans(state)[0], from: new Date('2026-01-01'), to: new Date('2026-12-31') }, range);
   assert.ok(wide.left === 0 && Math.abs(wide.width - 100) < 0.001);
+});
+
+
+test('этапы в работе: только этапы со своими двумя датами, без задач и подстановки проекта', () => {
+  const state = sample();
+  const goal = state.goals[0];
+  const valid = goal.stages![0];
+  state.goals = [{ ...goal, stages: [valid,
+    { ...valid, id: 'no-start', startsAt: undefined },
+    { ...valid, id: 'no-end', dueAt: undefined },
+    { ...valid, id: 'bad', startsAt: 'bad' },
+    { ...valid, id: 'reverse', startsAt: '2026-11-01' },
+    ...(['paused', 'locked', 'completed'] as const).map(status => ({ ...valid, id: status, status })),
+    { ...valid, id: 'finished', completedAt: '2026-10-09' },
+  ] }, { ...goal, id: 'no-stages', stages: [] },
+    { ...goal, id: 'paused-project', paused: true },
+    { ...goal, id: 'done-project', current: goal.target }];
+  state.quests = [{ ...initialState().quests[0], id: 'dated-task', done: false,
+    startsAt: goal.startsAt, dueAt: goal.dueAt }];
+  const spans = stagePlanSpans(state);
+  assert.deepEqual(spans.map(s => s.id), ['g1:s1']);
+  assert.equal(spans[0].from.getDate(), 3);
+  assert.equal(spans[0].to.getDate(), 9);
+  assert.equal(spans[0].goalId, 'g1');
+  assert.ok(planSpans(state).some(s => s.id === 'dated-task'));
+  assert.ok(planSpans(state).some(s => s.id === 'no-stages'));
 });

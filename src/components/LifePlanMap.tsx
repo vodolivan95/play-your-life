@@ -10,6 +10,7 @@ import {
   shiftAnchor,
   spanPlacement,
   startOfDay,
+  stagePlanSpans,
   toggleKeySphere,
 } from '../lifePlanMap';
 import type { PlanMapPeriod } from '../lifePlanMap';
@@ -50,7 +51,10 @@ export default function LifePlanMap({
   const todayColumn = range.columns.findIndex(
     (c) => today >= c.start && today <= c.end,
   );
-  const gantt = map.spans
+  const stageSpans = stagePlanSpans(state).filter(
+    (s) => s.from <= range.end && s.to >= range.start,
+  );
+  const gantt = stageSpans
     .filter((s) => view === 'all' || (s.from <= today && s.to >= today))
     .sort(
       (a, b) =>
@@ -59,7 +63,7 @@ export default function LifePlanMap({
     )
     .slice(0, 14);
   const sphereOf = (id: string) => spheres.find((s) => s.id === id)!;
-  const concurrent = map.spans.filter(
+  const concurrent = stageSpans.filter(
     (s) => s.from <= today && s.to >= today,
   ).length;
   function toggle(id: string) {
@@ -275,7 +279,7 @@ export default function LifePlanMap({
             <p className="lpm-empty">
               {view === 'today'
                 ? 'На сегодня этапов нет.'
-                : 'Добавь даты этапам или проектам — они появятся здесь.'}
+                : 'Укажи начало и окончание этапов проектов — они появятся здесь.'}
             </p>
           )}
         </div>

@@ -104,6 +104,23 @@ export function planSpans(state: GameState): PlanSpan[] {
   return spans;
 }
 
+/** Для «Этапов в работе» — только собственный полный интервал этапа.
+ * Нагрузка карты по-прежнему включает задачи и проекты без этапов.
+ */
+export function stagePlanSpans(state: GameState): PlanSpan[] {
+  return state.goals.flatMap((goal) => {
+    if (goal.paused || (goal.target > 0 && goal.current >= goal.target)) return [];
+    return (goal.stages ?? []).flatMap((stage) => {
+      if (stage.completedAt || ['completed', 'paused', 'locked'].includes(stage.status ?? '')) return [];
+      const from = parse(stage.startsAt);
+      const to = parse(stage.dueAt);
+      if (!from || !to || from > to) return [];
+      return [{ id: `${goal.id}:${stage.id}`, kind: 'stage' as const,
+        name: stage.name, sphere: goal.sphere, goalId: goal.id, from, to }];
+    });
+  });
+}
+
 export type PlanColumn = { start: Date; end: Date; label: string };
 export type PlanMapRange = { start: Date; end: Date; columns: PlanColumn[]; title: string };
 

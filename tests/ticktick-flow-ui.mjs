@@ -174,7 +174,7 @@ try {
   await page.waitForFunction(({uid,day})=>JSON.parse(localStorage.getItem('ticktick-fixture-game:'+uid)).quests.some(q=>q.name==='Купить билеты'&&!q.done&&String(q.dueAt).startsWith(day)),{uid,day:overdueDay},{timeout:15000});
   await page.getByRole('button',{name:/^Задачи на сегодня/}).first().click();
   assert.equal(await page.locator('.gtl-item').filter({hasText:'Купить билеты'}).count(),0,'просроченная задача не показывается как задача на сегодня');
-  assert.equal(await page.locator('.gtl-goal').count(),0,'без задач с датой сегодня список пуст');
+  assert.equal(await page.locator('.gtl h3').count(),0,'без задач на сегодня нет повторного заголовка или вложенной панели');
   a.tasks.get('r1').status = 2;
   const taskSync = page.getByRole('button',{name:'Синхронизировать задачи с TickTick',exact:true});
   await page.waitForFunction(()=>{const button=document.querySelector('.pyl-tasks-sync');return button&&!button.disabled},{timeout:15000});

@@ -67,12 +67,9 @@ export default function TodayTasks({
         </label>
       </div>
       {tasks.length ? (
-        <article className="gtl-goal">
-          <h3>Сегодня</h3>
-          <div className="gtl-stage">
-            <ul>{tasks.map(row)}</ul>
-          </div>
-        </article>
+        <div className="gtl-stage">
+          <ul>{tasks.map(row)}</ul>
+        </div>
       ) : (
         <p className="gtl-empty">На сегодня задач нет. Добавь новую задачу или загляни во «Входящие».</p>
       )}

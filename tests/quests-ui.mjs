@@ -105,7 +105,8 @@ try {
     const todayTab = page.locator(".pyl-quest-modes").getByRole("button", { name: /Задачи на сегодня/ });
     await todayTab.click();
     assert.equal(await todayTab.locator(".pyl-tasks-badge").textContent(), "1", "счётчик совпадает с календарными задачами на сегодня");
-    assert.equal(await page.locator(".gtl-goal").count(), 1, "сегодняшние задачи собраны в одном списке");
+    assert.equal(await page.locator(".gtl-goal").count(), 0, "внутренняя дублирующая карточка убрана");
+    assert.equal(await page.locator(".gtl h3").count(), 0, "заголовок «Сегодня» не дублируется внутри вкладки");
     assert.equal(await page.locator(".gtl-item").count(), 1, "в списке только задача с датой на сегодня");
     assert.equal(await page.locator(".gtl-item").filter({ hasText: "Тестовая задача сегодня" }).count(), 1);
     assert.equal(

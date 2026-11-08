@@ -1,4 +1,5 @@
 import { completeQuest, removeQuest, spheres } from './game.ts';
+import { dependencyBlockMessage } from './taskDependencies.ts';
 import type { GameState, Quest } from './game.ts';
 import { isGoalTask, saveTask } from './planning.ts';
 import type { TickTickLink } from './ticktickSettings.ts';
@@ -807,6 +808,7 @@ export function applyTickTickResult(state: GameState, result: TickTickResult) {
   const warnings = [...result.warnings];
   const rejected = new Map<string, string>();
   const applied = new Set<string>();
+  const blockedCompletions = new Set<string>();
   for (const change of result.changes) {
     const local = next.quests.find((q) => q.id === change.id);
     if (!local || !canSyncTask(next, local)) continue;
@@ -833,7 +835,12 @@ export function applyTickTickResult(state: GameState, result: TickTickResult) {
       // recorded as synced even though the just-finished request wrote an older snapshot.
       rejected.set(change.id, change.previousRemote);
     }
-    if (change.remote.status === 2) next = completeQuest(next, local.id);
+    if (change.remote.status === 2) {
+      const task = next.quests.find((q) => q.id === local.id)!;
+      const blocked = !task.done && dependencyBlockMessage(next.quests, task);
+      if (blocked) { warnings.push(`${local.name}: ${blocked}`); blockedCompletions.add(local.id); }
+      else next = completeQuest(next, local.id);
+    }
   }
   const connection = {
     ...result.connection,
@@ -847,5 +854,7 @@ export function applyTickTickResult(state: GameState, result: TickTickResult) {
   for (const [id, remote] of rejected)
     if (connection.links[id])
       connection.links[id] = { ...connection.links[id], remote };
+  for (const id of blockedCompletions)
+    if (connection.links[id]) connection.links[id] = { ...connection.links[id], done: false };
   return { state: next, connection, warnings };
 }

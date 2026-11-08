@@ -1,3 +1,5 @@
+import { recordTaskSchedule } from './planningData.ts';
+import { dependencyBlockMessage } from './taskDependencies.ts';
 import {
   award,
   completeQuest,
@@ -184,12 +186,12 @@ export function saveCustomQuest(
   const clean = Object.fromEntries(
     Object.entries(q).filter(([, v]) => v !== undefined),
   ) as Quest;
-  return {
+  return recordTaskSchedule({
     ...state,
     quests: old
       ? state.quests.map((item) => (item.id === old.id ? clean : item))
       : [...state.quests, clean],
-  };
+  }, old, clean);
 }
 /**
  * Дублирует задачу (пункт «Дублировать» в меню «⋯» задачи, по образцу `duplicateStage()`
@@ -215,6 +217,7 @@ export function duplicateQuest(
     done: false,
     currentValue: 0,
     rewardClaimed: false,
+    planning: q.planning ? { important: !!q.planning.important, urgent: !!q.planning.urgent, ...(q.planning.dependencyIds ? { dependencyIds: [...q.planning.dependencyIds] } : {}) } : undefined,
     pinned: undefined,
     wontDo: undefined,
     subtasks: q.subtasks?.map((t) => ({ ...t, id: crypto.randomUUID(), done: false })),
@@ -237,11 +240,16 @@ export function progressQuest(
 ): GameState {
   const q = state.quests.find((item) => item.id === id);
   if (!q || q.done) return state;
+  if (q.wontDo) throw new Error("Сначала верни задачу в работу.");
+  if (q.planning?.archivedAt) throw new Error("Сначала восстанови задачу из архива.");
   if (q.ownerId && q.ownerId !== ownerId)
     throw new Error("Это задача другого пользователя.");
+  const dependencyProblem = dependencyBlockMessage(state.quests, q);
+  if (dependencyProblem) throw new Error(dependencyProblem);
   if (q.startsAt && Date.parse(q.startsAt) > Date.now())
     throw new Error("Задача ещё не началась.");
   const goal = state.goals.find(g => g.id === q.goalId), stage = goal?.stages?.find(s => s.id === q.stageId);
+  if (goal?.paused) throw new Error("Проект приостановлен. Сначала возобнови его.");
   if (goal && stage && (stageAccess(state, goal, stage) || stage.status === 'paused')) throw new Error(stageAccess(state, goal, stage) || 'Этап приостановлен.');
   if (value === (q.currentValue ?? 0)) return state;
   const target = q.targetValue ?? 1;

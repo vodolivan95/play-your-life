@@ -108,7 +108,8 @@ try {
     assert.equal(await page.locator(".pyl-nav-count").textContent(), "1", "счётчик меню включает только задачи на текущую дату");
     assert.equal(await page.locator(".dashboard-notifications summary span").textContent(), "1", "счётчик уведомлений не включает просрочку или задачи без даты");
     await openTasks(page, mobile);
-    assert.equal(await page.locator(".pyl-quest-modes>button").count(), 5);
+    assert.equal(await page.locator(".pyl-quest-modes>button").count(), 6);
+    assert.equal(await page.locator(".pyl-quest-modes").getByRole("button", { name: "Мой план", exact: true }).count(), 1);
     const todayTab = page.locator(".pyl-quest-modes").getByRole("button", { name: /Задачи на сегодня/ });
     await todayTab.click();
     assert.equal(await todayTab.locator(".pyl-tasks-badge").textContent(), "1", "счётчик совпадает с календарными задачами на сегодня");

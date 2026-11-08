@@ -1,3 +1,4 @@
+import { dependencyBlockMessage } from './taskDependencies';
 import { readGoalRoute, goalRoute } from './goalRoutes';
 import { readTaskRoute } from './taskRoutes';
 import SpheresOverview from './components/SpheresOverview';
@@ -220,6 +221,8 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   }
   function finish(q: Quest) {
     if (q.done) return;
+    const dependencyProblem = dependencyBlockMessage(state.quests, q);
+    if (dependencyProblem) { notify(dependencyProblem); return; }
     const next = completeQuest(state, q.id);
     if (next === state) {
       notify('Эту задачу пока нельзя выполнить: проверь этап и время начала.');

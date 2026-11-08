@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { lazy, Suspense, useContext, useEffect, useState } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { removeQuest, reopenQuest } from "../game";
 import type { GameState, Quest } from "../game";
@@ -26,8 +26,11 @@ import { TickTickContext } from "../tickTickContext";
 import "./QuestBoard.css";
 import "./TasksAside.css";
 
-type Mode = "today" | "inbox" | "list" | "calendar" | "plan";
+const PlanningWorkspace = lazy(() => import("./PlanningWorkspace"));
+
+type Mode = "workspace" | "today" | "inbox" | "list" | "calendar" | "plan";
 const modes: [Mode, string][] = [
+  ["workspace", "Мой план"],
   ["today", "Задачи на сегодня"],
   ["inbox", "Входящие"],
   ["list", "Список"],
@@ -73,7 +76,7 @@ export default function QuestBoard({
     // Один раз при открытии страницы: задача уже передана в начальное состояние.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const quests = state.quests.filter((q) => !q.ownerId || q.ownerId === ownerId);
+  const quests = state.quests.filter((q) => (!q.ownerId || q.ownerId === ownerId) && !q.planning?.archivedAt);
   const todayCount = itemsForDay(calendarItems(quests), today).filter(
     (item) => !item.quest.done,
   ).length;
@@ -163,9 +166,10 @@ export default function QuestBoard({
         </div>
       </header>
       {mode === "plan" ? planContent : <>
-      <TasksSummary quests={quests} today={today} />
-      <div className="pyl-tasks-layout">
+      {mode !== "workspace" && <TasksSummary quests={quests} today={today} />}
+      <div className={`pyl-tasks-layout${mode === "workspace" ? " is-planning" : ""}`}>
       <div className="pyl-tasks-main">
+      {mode === "workspace" && <Suspense fallback={<p>Загрузка плана…</p>}><PlanningWorkspace state={state} ownerId={ownerId} today={today} onChange={onChange} onOpen={setOpenTask} notify={notify} /></Suspense>}
       {mode === "today" && (
         <TodayTasks
           state={state}
@@ -216,7 +220,7 @@ export default function QuestBoard({
         />
       )}
       </div>
-      <TasksAside state={state} quests={quests} today={today} />
+      {mode !== "workspace" && <TasksAside state={state} quests={quests} today={today} />}
       </div>
       </>}
       {form && (
@@ -234,6 +238,9 @@ export default function QuestBoard({
       )}
       {openTask && (
         <TaskWindow
+          key={openTask}
+          onOpenRelated={setOpenTask}
+          ownerId={ownerId}
           taskId={openTask}
           state={state}
           today={today}

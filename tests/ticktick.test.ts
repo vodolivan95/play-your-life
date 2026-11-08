@@ -84,6 +84,29 @@ const remote = (id: string, title = 'Из TickTick'): RemoteTask => ({
   priority: 3,
   status: 0,
 });
+test('зависимости: завершение TickTick ждёт предшественника без повторной награды и обратного открытия', async () => {
+  const { state, connection } = setup();
+  state.quests.push({ ...state.quests[0], id: 'prior', name: 'Предшественник', goalId: undefined, startsAt: undefined, dueAt: undefined });
+  state.quests[0].planning = { dependencyIds: ['prior'] };
+  const api = upstream();
+  let current = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
+  const id = state.quests[0].id;
+  const remoteId = current.connection.links[id].remoteId;
+  api.tasks.get(remoteId)!.status = 2;
+  const xp = current.state.xp;
+  current = applyTickTickResult(current.state, await syncTickTick(current.state, current.connection, api.request));
+  assert.equal(current.state.quests[0].done, false);
+  assert.equal(current.state.xp, xp);
+  assert.match(current.warnings.join(' '), /предшественники/);
+  current = applyTickTickResult(current.state, await syncTickTick(current.state, current.connection, api.request));
+  assert.equal(api.tasks.get(remoteId)!.status, 2, 'блокировка не означает намеренную отмену внешнего выполнения');
+  const ready = completeQuest(current.state, 'prior');
+  current = applyTickTickResult(ready, await syncTickTick(ready, current.connection, api.request));
+  assert.equal(current.state.quests[0].done, true);
+  const earned = current.state.xp;
+  current = applyTickTickResult(current.state, await syncTickTick(current.state, current.connection, api.request));
+  assert.equal(current.state.xp, earned);
+});
 test('фоновая автосинхронизация TickTick выдерживает интервал в пять минут', () => {
   const lastSync = 1_800_000_000_000;
   assert.equal(TICKTICK_AUTO_SYNC_INTERVAL_MS, 5 * 60 * 1000);

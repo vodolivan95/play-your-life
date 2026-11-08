@@ -2,6 +2,7 @@ import { goalProgressValue, stageMetrics, stageAccess } from './goalWorkspace.ts
 import { SPHERE_PROGRESSION_MODEL, MAX_SPHERE_LEVEL, sphereProgress } from './sphereProgress.ts';
 import { repairState, validateState } from './stateValidation.ts';
 import { questCoins, recordQuestReward } from './personalQuests.ts';
+import { dependencyBlockMessage } from './taskDependencies.ts';
 export const spheres = [
   {
     id: 'health',
@@ -113,6 +114,7 @@ export const streakRewards: Record<number, number> = {
 };
 export type TaskLabel = { id: string; name: string };
 export type Quest = {
+  planning?: import('./planningData.ts').TaskPlanning;
   sourceType?: 'SYSTEM' | 'USER_CREATED';
   ownerId?: string;
   createdAt?: string;
@@ -257,6 +259,7 @@ export type SphereState = {
   previousScore: number;
 };
 export type Event = {
+  planningChange?: import('./planningData.ts').PlanningChange;
   sourceId?: string;
   goalId?: string;
   stageId?: string;
@@ -283,6 +286,7 @@ export type MonthReflection = {
   review?: import('./keyResults').MonthReview;
 };
 export type GameState = {
+  planningSettings?: import('./planningData.ts').PlanningSettings;
   habits?: import('./personalQuests').Habit[];
   habitCompletions?: import('./personalQuests').HabitCompletion[];
   coinTransactions?: import('./personalQuests').CoinTransaction[];
@@ -639,8 +643,10 @@ export function award(
 }
 export function completeQuest(state: GameState, id: string): GameState {
   const quest = state.quests.find((q) => q.id === id);
-  if (!quest || quest.done) return state;
+  if (!quest || quest.done || quest.wontDo || quest.planning?.archivedAt) return state;
+  if (dependencyBlockMessage(state.quests, quest)) return state;
   const parentGoal = state.goals.find((g) => g.id === quest.goalId);
+  if (parentGoal?.paused) return state;
   const parentStage = parentGoal?.stages?.find((s) => s.id === quest.stageId);
   if (parentGoal && parentStage && (stageAccess(state, parentGoal, parentStage) || parentStage.status === 'paused')) return state;
   if (quest.sourceType === 'USER_CREATED' && quest.startsAt && new Date(quest.startsAt) > new Date()) return state;
@@ -715,6 +721,7 @@ export function completeQuest(state: GameState, id: string): GameState {
       dueAt: day,
       // Дедлайн относился к прошлому повтору — для нового переносить не нужно.
       deadlineAt: undefined,
+      planning: quest.planning ? { important: !!quest.planning.important, urgent: !!quest.planning.urgent } : undefined,
       subtasks: quest.subtasks?.map((t) => ({ ...t, id: crypto.randomUUID(), done: false })),
     }).filter(([, v]) => v !== undefined)) as Quest;
     next = { ...next, quests: [...next.quests, copy] };
@@ -888,7 +895,7 @@ export function questsForToday(state: GameState, now = new Date()): Quest[] {
   return state.quests
     .filter((q) => {
       // «Не буду делать» — не считается ни выполненной сегодня, ни «на сегодня».
-      if (q.wontDo) return false;
+      if (q.wontDo || q.planning?.archivedAt) return false;
       if (q.done) {
         const questEvent = (e: Event) => e.kind === 'quest' || e.kind === undefined;
         const completedAt =

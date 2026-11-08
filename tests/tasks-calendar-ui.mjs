@@ -118,6 +118,36 @@ try {
   await win.waitFor();
   await win.getByRole("button", { name: "Готово" }).click();
   await win.waitFor({ state: "detached" });
+  // Сразу после полуночи в Москве выполненная задача относится к новому дню,
+  // а отказ от задачи не увеличивает календарную нагрузку.
+  await page.clock.install({ time: new Date('2026-11-07T00:15:00+03:00') });
+  await page.evaluate(async () => {
+    const { newAccountGame } = await import('/src/accountGame.ts');
+    const s = newAccountGame('Проверка планирования');
+    s.profile.onboardingComplete = true;
+    const q = { sphere: 'sport', xp: 20, difficulty: 'Medium', done: false };
+    s.quests = [
+      { ...q, id: 'night-done', name: 'Ночное выполнение', done: true, completedAt: '2026-11-06T21:05:00.000Z' },
+      { ...q, id: 'next-week', name: 'Другая неделя', done: true, completedAt: '2026-11-09T12:00:00.000Z' },
+      { ...q, id: 'night-plan', name: 'Ночная задача', dueAt: '2026-11-06T21:30:00.000Z' },
+      { ...q, id: 'declined', name: 'Отменённая задача', dueAt: '2026-11-07', wontDo: true },
+    ];
+    localStorage.setItem('play-your-life-v1', JSON.stringify(s));
+  });
+  await page.reload();
+  await page.getByRole('button', { name: 'Продолжить игру на этом устройстве' }).click();
+  await page.locator('.sidebar').getByRole('button', { name: /^Мои задачи/ }).click();
+  await page.getByRole('button', { name: /^Задачи на сегодня/ }).click();
+  const todayList = page.getByRole('region', { name: 'Задачи на сегодня', exact: true });
+  await todayList.getByText('Ночная задача', { exact: true }).waitFor();
+  assert.equal(await todayList.getByText('Ночное выполнение', { exact: true }).count(), 0, 'выполнение без плановой даты остаётся в итогах, а не в календарном списке');
+  assert.equal(await todayList.getByText('Другая неделя', { exact: true }).count(), 0);
+  assert.equal(await todayList.getByText('Отменённая задача', { exact: true }).count(), 1);
+  assert.match(await page.locator('.tsum > div').filter({ has: page.getByText('Выполнено', { exact: true }) }).innerText(), /Выполнено\s+1\s+за неделю/);
+  await page.getByRole('button', { name: 'Список', exact: true }).click();
+  const nightRow = page.locator('.gtl-item').filter({ hasText: 'Ночная задача' });
+  assert.equal(await nightRow.locator('.is-late').count(), 0);
+  assert.match(await nightRow.locator('.gtl-due').innerText(), /7 ноя/);
   assert.deepEqual(errors, []);
   console.log("tasks-calendar-ui: ok");
 } finally {

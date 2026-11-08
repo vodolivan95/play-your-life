@@ -19,6 +19,8 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { newAccountGame } from "../src/accountGame.ts";
+import { quickPlanningTask, moveTaskToDay, logTaskTime, savePlanningSettings, setTaskDependencies } from '../src/planner.ts';
+import { actualMinutes, moveCount, planningSettings } from '../src/planningData.ts';
 const env = await initializeTestEnvironment({
   projectId: "demo-play-your-life",
   firestore: { rules: readFileSync("firestore.rules", "utf8") },
@@ -559,6 +561,30 @@ test("SDK переносит старую историю и обложки в п
   assert.equal(again.state.goals[0].image, undefined);
   assert.equal((await getDoc(doc(db, "players", "alice", "images", main.state.imageRefs["goal:g1"]))).exists(), false);
   assert.equal(again.state.events.length, 2);
+});
+
+test('настройки плана и структурированная история проходят SDK и правила без изменения наград', async () => {
+  const uid = 'planner-data';
+  const db = env.authenticatedContext(uid).firestore();
+  const driver = firebaseSave(db, uid);
+  const fresh = await driver.create(newAccountGame('Планировщик'));
+  let state = quickPlanningTask(fresh.state, 'Проверить сохранение плана', uid);
+  const id = state.quests[0].id;
+  state = quickPlanningTask(state, 'Зависимый шаг', uid);
+  state = setTaskDependencies(state, state.quests[1].id, [id], uid);
+  state = moveTaskToDay(state, id, '2026-11-10', uid);
+  state = moveTaskToDay(state, id, '2026-11-11', uid, 'Не хватило времени');
+  state = logTaskTime(state, id, 40, uid);
+  state = savePlanningSettings(state, { ...planningSettings(state), dailyMinutes: 120 });
+  assert.ok(await driver.save(state, fresh.revision));
+  const loaded = await firebaseSave(db, uid).load();
+  assert.equal(loaded.state.planningSettings.dailyMinutes, 120);
+  assert.deepEqual(loaded.state.quests[1].planning.dependencyIds, [id]);
+  assert.equal(loaded.state.quests[0].planning.inbox, false);
+  assert.equal(actualMinutes(loaded.state, id), 40);
+  assert.equal(moveCount(loaded.state, id), 1);
+  assert.equal(loaded.state.xp, 0);
+  assert.equal(loaded.state.coins, 0);
 });
 
 test("конкурентные изменения одного архивного месяца не повреждают историю победившей ревизии", async () => {

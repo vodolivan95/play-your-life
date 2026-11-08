@@ -49,6 +49,7 @@ jobs:
       - name: Verify homepage month focus and yearly summary (local fixture only)
         run: node --experimental-strip-types --no-warnings tests/home-ui.mjs
       - run: npm run test:quests-ui
+      - run: npm run test:planner-ui
       - run: npm run test:tasks-calendar
       - run: npm run test:goals-ui
       - run: npm run test:theme-ui
@@ -65,6 +66,7 @@ jobs:
         with:
           name: quests-previews
           path: |
+            work/planner/
             work/quests-*.png
             work/logo-*.png
             work/goal-redesign/*.png

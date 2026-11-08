@@ -218,6 +218,7 @@ try {
   await scopeRow.waitFor();
   await scopeRow.getByRole('button',{name:'Разобрать',exact:true}).click();
   const sphereChoices = scopeRow.getByRole('group',{name:'Сфера'});
+  await sphereChoices.getByRole('button',{name:/Английский/}).waitFor();
   assert.equal(await sphereChoices.getByRole('button').count(),1,'в scope остаётся ровно одна сфера');
   assert.equal(await sphereChoices.getByRole('button',{name:/Английский/}).getAttribute('aria-pressed'),'true');
   await page.keyboard.press('Escape');

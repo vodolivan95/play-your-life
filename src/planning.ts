@@ -1,3 +1,5 @@
+import { recordTaskSchedule, validTaskPlanning } from './planningData.ts';
+import { validDependencyGraph } from './taskDependencies.ts';
 import { validProjectImage } from './projectImage.ts';
 import {
   dateKey,
@@ -539,12 +541,14 @@ export function saveTask(
     xp: difficulties[input.difficulty as keyof typeof difficulties],
     difficulty: input.difficulty,
   };
+  if (!validTaskPlanning(task.planning)) throw new Error('Проверь настройки планирования задачи.');
   let next: GameState = {
     ...state,
     quests: existing
       ? state.quests.map((q) => (q.id === task.id ? task : q))
       : [...state.quests, task],
   };
+  if (input.planning !== undefined && !validDependencyGraph(next.quests)) throw new Error('Связь создаёт цикл зависимостей.');
   if (existing?.goalId && existing.goalId !== task.goalId)
     next = syncGoalTasks(next, existing.goalId);
   if (task.goalId) next = syncGoalTasks(next, task.goalId);
@@ -557,7 +561,7 @@ export function saveTask(
         : `Добавлена задача: ${task.name}`,
       task.stageId,
     );
-  return next;
+  return recordTaskSchedule(next, existing, task);
 }
 export function deleteGoal(state: GameState, id: string): GameState {
   return {
@@ -605,7 +609,7 @@ export function periodItems(
   };
   const goals = state.goals.filter(overlaps);
   const tasks = state.quests
-    .filter(overlaps)
+    .filter((q) => !q.planning?.archivedAt && !q.wontDo && overlaps(q))
     .sort((a, b) =>
       (a.startsAt ?? a.dueAt ?? '9999').localeCompare(
         b.startsAt ?? b.dueAt ?? '9999',
@@ -614,7 +618,7 @@ export function periodItems(
   return {
     goals,
     tasks,
-    unscheduled: state.quests.filter((q) => !q.done && !q.startsAt && !q.dueAt),
+    unscheduled: state.quests.filter((q) => !q.done && !q.wontDo && !q.planning?.archivedAt && !q.startsAt && !q.dueAt),
     hours:
       tasks
         .filter((q) => !q.done)

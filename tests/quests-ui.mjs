@@ -73,17 +73,28 @@ try {
     await page.evaluate(async () => {
       const { newAccountGame } = await import("/src/accountGame.ts");
       const { saveCustomQuest } = await import("/src/personalQuests.ts");
-      const s = newAccountGame("Игрок");
-      s.profile.onboardingComplete = true;
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
-      const seeded = saveCustomQuest(s, {
-        name: "Тестовая задача на завтра",
-        sphere: "growth",
-        difficulty: "Medium",
-        dueAt: tomorrow.toISOString(),
-      }, "local");
+      let seeded = newAccountGame("Игрок");
+      seeded.profile.onboardingComplete = true;
+      seeded.quests = [];
+      const atDay = (offset) => {
+        const date = new Date();
+        date.setHours(12, 0, 0, 0);
+        date.setDate(date.getDate() + offset);
+        return date.toISOString();
+      };
+      for (const [name, offset] of [
+        ["Тестовая задача вчера", -1],
+        ["Тестовая задача сегодня", 0],
+        ["Тестовая задача завтра", 1],
+        ["Тестовая задача без даты", null],
+      ]) {
+        seeded = saveCustomQuest(seeded, {
+          name,
+          sphere: "growth",
+          difficulty: "Medium",
+          ...(offset === null ? {} : { dueAt: atDay(offset) }),
+        }, "local");
+      }
       localStorage.setItem("play-your-life-v1", JSON.stringify(seeded));
     });
     await page
@@ -91,11 +102,17 @@ try {
       .click();
     await openTasks(page, mobile);
     assert.equal(await page.locator(".pyl-quest-modes>button").count(), 5);
-    await page.locator(".pyl-quest-modes").getByRole("button", { name: /Задачи на сегодня/ }).click();
+    const todayTab = page.locator(".pyl-quest-modes").getByRole("button", { name: /Задачи на сегодня/ });
+    await todayTab.click();
+    assert.equal(await todayTab.locator(".pyl-tasks-badge").textContent(), "1", "счётчик совпадает с календарными задачами на сегодня");
+    assert.equal(await page.locator(".gtl-goal").count(), 0, "внутренняя дублирующая карточка убрана");
+    assert.equal(await page.locator(".gtl h3").count(), 0, "заголовок «Сегодня» не дублируется внутри вкладки");
+    assert.equal(await page.locator(".gtl-item").count(), 1, "в списке только задача с датой на сегодня");
+    assert.equal(await page.locator(".gtl-item").filter({ hasText: "Тестовая задача сегодня" }).count(), 1);
     assert.equal(
-      await page.locator(".gtl-item").filter({ hasText: "Тестовая задача на завтра" }).count(),
+      await page.locator(".gtl-item").filter({ hasText: /вчера|завтра|без даты/ }).count(),
       0,
-      "Задача на полночь завтрашнего дня в Europe/Moscow не должна показываться как сегодняшняя",
+      "просроченные, будущие и бессрочные задачи не должны попадать в список на сегодня",
     );
     await page.locator(".pyl-quest-modes").getByRole("button", { name: "Список", exact: true }).click();
     await page

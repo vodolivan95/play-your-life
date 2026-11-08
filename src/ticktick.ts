@@ -813,7 +813,11 @@ export function applyTickTickResult(state: GameState, result: TickTickResult) {
     const unchangedSinceRead = localFingerprint(local, next) === change.snapshot;
     if (!local.done && unchangedSinceRead) {
       try {
-        next = saveTask(next, { ...local, ...remoteFields(change.remote) });
+        next = saveTask(
+          next,
+          { ...local, ...remoteFields(change.remote) },
+          { allowOutsidePlanRange: true },
+        );
         applied.add(change.id);
       } catch (error) {
         if (change.previousRemote)

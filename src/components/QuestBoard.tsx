@@ -1,7 +1,8 @@
 import { useContext, useEffect, useState } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
-import { questsForToday, removeQuest, reopenQuest } from "../game";
+import { removeQuest, reopenQuest } from "../game";
 import type { GameState, Quest } from "../game";
+import { calendarItems, itemsForDay } from "../tasksCalendar";
 import {
   duplicateQuest,
   progressQuest,
@@ -73,8 +74,8 @@ export default function QuestBoard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const quests = state.quests.filter((q) => !q.ownerId || q.ownerId === ownerId);
-  const todayCount = questsForToday(state).filter(
-    (q) => !q.done && (!q.ownerId || q.ownerId === ownerId),
+  const todayCount = itemsForDay(calendarItems(quests), today).filter(
+    (item) => !item.quest.done,
   ).length;
   const connected = Boolean(
     manager?.connection && manager.connected && state.profile.mode !== "demo",

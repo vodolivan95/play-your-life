@@ -1,4 +1,5 @@
 import type { GameState } from './game.ts';
+import { stageAccess } from './goalWorkspace.ts';
 import { monthKey } from './monthlyFocus.ts';
 
 export const MAX_KEY_SPHERES = 3;
@@ -111,7 +112,7 @@ export function stagePlanSpans(state: GameState): PlanSpan[] {
   return state.goals.flatMap((goal) => {
     if (goal.paused || (goal.target > 0 && goal.current >= goal.target)) return [];
     return (goal.stages ?? []).flatMap((stage) => {
-      if (stage.completedAt || ['completed', 'paused', 'locked'].includes(stage.status ?? '')) return [];
+      if (stage.completedAt || ['completed', 'paused'].includes(stage.status ?? '') || stageAccess(state, goal, stage)) return [];
       const from = parse(stage.startsAt);
       const to = parse(stage.dueAt);
       if (!from || !to || from > to) return [];

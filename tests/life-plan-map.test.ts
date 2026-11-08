@@ -133,3 +133,15 @@ test('этапы в работе: только этапы со своими дв
   assert.ok(planSpans(state).some(s => s.id === 'dated-task'));
   assert.ok(planSpans(state).some(s => s.id === 'no-stages'));
 });
+
+
+test('этап с незавершённым или отсутствующим предшественником не считается в работе', () => {
+  const state = sample();
+  const prior = { ...state.goals[0].stages![0], completionMode: 'manual' as const };
+  const next = { ...prior, id: 'next', status: 'active' as const, prerequisiteId: prior.id };
+  state.goals[0].stages = [prior, next,
+    { ...next, id: 'missing', prerequisiteId: 'missing-prior' }];
+  assert.deepEqual(stagePlanSpans(state).map(s => s.id), ['g1:s1']);
+  state.goals[0].stages[0] = { ...prior, status: 'completed' };
+  assert.deepEqual(stagePlanSpans(state).map(s => s.id), ['g1:next']);
+});

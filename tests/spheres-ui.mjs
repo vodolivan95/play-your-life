@@ -34,8 +34,18 @@ try {
         const { initialState, completeQuest, dateKey } = await import('/src/game.ts');
         const s = initialState();
         s.profile.onboardingComplete = true;
+        s.quests = [];
+        const day = (offset) => {
+          const date = new Date();
+          date.setDate(date.getDate() + offset);
+          return dateKey(date);
+        };
         s.events.push({ id: 'ui-health', sphere: 'health', title: 'Утренняя зарядка', xp: 20, date: new Date().toISOString(), kind: 'quest' });
-        s.quests.push({ id: 'ui-sphere-task', name: 'Задача из сферы', sphere: 'health', xp: 20, difficulty: 'Medium', done: false, dueAt: dateKey() });
+        s.quests.push({ id: 'ui-sphere-task', name: 'Задача из сферы', sphere: 'health', xp: 20, difficulty: 'Medium', done: false, dueAt: day(0) });
+        s.quests.push({ id: 'ui-sphere-open-task', name: 'Ещё одна задача сегодня', sphere: 'health', xp: 20, difficulty: 'Medium', done: false, dueAt: day(0) });
+        s.quests.push({ id: 'ui-sphere-past-task', name: 'Просроченная задача', sphere: 'health', xp: 20, difficulty: 'Medium', done: false, dueAt: day(-1) });
+        s.quests.push({ id: 'ui-sphere-future-task', name: 'Будущая задача', sphere: 'health', xp: 20, difficulty: 'Medium', done: false, dueAt: day(1) });
+        s.quests.push({ id: 'ui-sphere-undated-task', name: 'Задача без даты', sphere: 'health', xp: 20, difficulty: 'Medium', done: false });
         const done = completeQuest(s, 'ui-sphere-task');
         localStorage.setItem('play-your-life-v1', JSON.stringify(done));
         localStorage.setItem('play-your-life-home-theme', theme);

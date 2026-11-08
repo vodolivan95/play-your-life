@@ -8,6 +8,7 @@ import {
   itemsForDay,
   mondayOf,
   nextItem,
+  questsForCalendarDay,
   shiftAnchor,
   weekLoad,
 } from '../src/tasksCalendar.ts';
@@ -74,6 +75,20 @@ test('календарь: дневной список — сначала без 
     calendarItem(quest({ id: 'd', name: 'Другой день', dueAt: '2026-10-21' })),
   ].filter((item) => item !== undefined);
   assert.deepEqual(itemsForDay(items, '2026-10-20').map((i) => i.quest.id), ['b', 'c', 'a']);
+});
+
+test('список на сегодня включает только задачи, назначенные на точный день календаря', () => {
+  const tasks = [
+    quest({ id: 'yesterday', dueAt: '2026-10-19' }),
+    quest({ id: 'today-later', name: 'Позже', dueAt: '2026-10-20T14:00:00' }),
+    quest({ id: 'today-all-day', name: 'Весь день', dueAt: '2026-10-20' }),
+    quest({ id: 'tomorrow', dueAt: '2026-10-21' }),
+    quest({ id: 'undated' }),
+  ];
+  assert.deepEqual(
+    questsForCalendarDay(tasks, '2026-10-20').map((q) => q.id),
+    ['today-all-day', 'today-later'],
+  );
 });
 
 test('календарь: сводка дня, ближайшая задача и нагрузка недели', () => {

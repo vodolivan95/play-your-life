@@ -1,5 +1,6 @@
-import { dateKey, questsForToday, spheres } from './game.ts';
+import { dateKey, spheres } from './game.ts';
 import type { Event, GameState, Quest } from './game.ts';
+import { questsForCalendarDay } from './tasksCalendar.ts';
 import { sphereMetrics } from './sphereAnalytics.ts';
 import { sphereProgress } from './sphereProgress.ts';
 
@@ -65,7 +66,7 @@ export type SphereCardData = ReturnType<typeof sphereCards>[number];
 /** Всё, что показывает карточка района на странице «Сферы жизни». */
 export function sphereCards(state: GameState, now = new Date()) {
   const metrics = sphereMetrics(state);
-  const today = questsForToday(state, now);
+  const today = questsForCalendarDay(state.quests, dateKey(now));
   const weekAgo = now.getTime() - 7 * DAY;
   return metrics.rows.map((row) => {
     const events = sphereEvents(state, row.id);
@@ -104,7 +105,7 @@ export function arrangeCards(cards: SphereCardData[], filter: SphereCardFilter, 
 
 /** Ближайшие открытые задачи на сегодня по всем сферам. */
 export function nextSteps(state: GameState, limit = 4, now = new Date()): { quest: Quest; project: string | null }[] {
-  return questsForToday(state, now)
+  return questsForCalendarDay(state.quests, dateKey(now))
     .filter((q) => !q.done)
     .slice(0, limit)
     .map((quest) => ({ quest, project: state.goals.find((g) => g.id === quest.goalId)?.name ?? null }));
@@ -121,7 +122,7 @@ export function sphereDetail(state: GameState, id: string, now = new Date()) {
     rank: sphereRank(progress.level),
     streak: sphereStreak(events, now),
     weeks: weeklyXP(events, now),
-    tasksToday: questsForToday(state, now).filter((q) => q.sphere === id),
+    tasksToday: questsForCalendarDay(state.quests, dateKey(now)).filter((q) => q.sphere === id),
     projects: state.goals.filter((g) => g.sphere === id && g.current < g.target),
     history: [...state.events.filter((e) => e.sphere === id)].sort((a, b) => b.date.localeCompare(a.date)),
   };

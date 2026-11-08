@@ -100,6 +100,13 @@ try {
     await page
       .getByRole("button", { name: "Продолжить игру на этом устройстве" })
       .click();
+    const homeToday = page.locator(".home-today");
+    assert.equal(await homeToday.locator(".quest-row").count(), 1, "главная показывает только задачу, назначенную на сегодня");
+    assert.equal(await homeToday.locator(".home-section-title h2 span").textContent(), "1", "счётчик блока главной совпадает со списком");
+    assert.equal(await homeToday.locator(".quest-row").filter({ hasText: "Тестовая задача сегодня" }).count(), 1);
+    assert.equal(await homeToday.locator(".quest-row").filter({ hasText: /вчера|завтра|без даты/ }).count(), 0);
+    assert.equal(await page.locator(".pyl-nav-count").textContent(), "1", "счётчик меню включает только задачи на текущую дату");
+    assert.equal(await page.locator(".dashboard-notifications summary span").textContent(), "1", "счётчик уведомлений не включает просрочку или задачи без даты");
     await openTasks(page, mobile);
     assert.equal(await page.locator(".pyl-quest-modes>button").count(), 5);
     const todayTab = page.locator(".pyl-quest-modes").getByRole("button", { name: /Задачи на сегодня/ });

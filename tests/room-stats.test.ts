@@ -1,13 +1,19 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { initialState, completeQuest } from '../src/game.ts';
+import { dateKey, initialState, completeQuest } from '../src/game.ts';
 import { roomStats } from '../src/roomStats.ts';
 import { roomConfigs, objectSpec, purchaseRoomObject } from '../src/roomEngine.ts';
 
 test('экран спортзала показывает реальный уровень, неделю и задания сферы', () => {
   let state = initialState();
+  const today = dateKey(new Date());
+  const yesterday = dateKey(new Date(Date.now() - 24 * 60 * 60 * 1000));
+  const tomorrow = dateKey(new Date(Date.now() + 24 * 60 * 60 * 1000));
   state.quests = [
-    { id: 'run', name: 'Пробежка', sphere: 'sport', xp: 35, difficulty: 'Hard', done: false },
+    { id: 'run', name: 'Пробежка', sphere: 'sport', xp: 35, difficulty: 'Hard', done: false, dueAt: today },
+    { id: 'past', name: 'Старая пробежка', sphere: 'sport', xp: 35, difficulty: 'Hard', done: false, dueAt: yesterday },
+    { id: 'future', name: 'Будущая пробежка', sphere: 'sport', xp: 35, difficulty: 'Hard', done: false, dueAt: tomorrow },
+    { id: 'undated', name: 'Пробежка без даты', sphere: 'sport', xp: 35, difficulty: 'Hard', done: false },
     { id: 'read', name: 'Чтение', sphere: 'growth', xp: 20, difficulty: 'Medium', done: false },
   ];
   const before = roomStats(state, 'sport', 'СПОРТ');

@@ -126,6 +126,11 @@ export function itemsForDay(items: CalendarItem[], day: string): CalendarItem[] 
     });
 }
 
+/** Tasks scheduled on one exact calendar day, in the same order as the calendar. */
+export function questsForCalendarDay(quests: Quest[], day: string): Quest[] {
+  return itemsForDay(calendarItems(quests), day).map((item) => item.quest);
+}
+
 export function questReward(quest: Quest) {
   return quest.sourceType === 'USER_CREATED'
     ? difficulties[quest.difficulty as keyof typeof difficulties] ?? quest.xp

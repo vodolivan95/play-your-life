@@ -156,9 +156,24 @@ try {
   const valid = await page.evaluate(async uid=>{ const m = await import('/play-your-life/src/stateValidation.ts'); try { m.validateState(JSON.parse(localStorage.getItem('ticktick-fixture-game:'+uid))); return true; } catch { return false; } },uid);
   assert.equal(valid,true,'сохранение проходит validateState');
   // 4. Перенос срока в TickTick отражается в игре.
-  a.tasks.get('r1').dueDate = '2026-11-20T09:00:00+0000';
+  const movedDate = await page.evaluate(() => { const d = new Date(); d.setDate(d.getDate() + 4); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; });
+  a.tasks.get('r1').dueDate = `${movedDate}T09:00:00+0000`;
   await page.getByRole('button',{name:'Обновить',exact:true}).first().click();
-  await page.waitForFunction(uid=>JSON.parse(localStorage.getItem('ticktick-fixture-game:'+uid)).quests.some(q=>q.name==='Купить билеты'&&String(q.dueAt).startsWith('2026-11-20')),uid,{timeout:15000});
+  await page.waitForFunction(({uid,day})=>JSON.parse(localStorage.getItem('ticktick-fixture-game:'+uid)).quests.some(q=>q.name==='Купить билеты'&&String(q.dueAt).startsWith(day)),{uid,day:movedDate},{timeout:15000});
+  // Связанная задача TickTick появляется именно в новой дате внутреннего календаря; клик открывает обычное окно задачи.
+  await page.getByRole('button',{name:'Календарь',exact:true}).click();
+  const calendar = page.locator('.tcal');
+  const movedDayLabel = await page.evaluate(day => { const [y,m,d] = day.split('-').map(Number); return new Date(y,m-1,d,12).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}); },movedDate);
+  const movedCell = calendar.locator(`.tcal-cell[data-day="${movedDate}"]`);
+  assert.equal(await movedCell.getByRole('button',{name:`Развернуть день ${movedDayLabel}`,exact:true}).count(),1,'срок TickTick размещён в соответствующей ячейке календаря');
+  const movedTask = movedCell.locator('.tcal-chip').filter({hasText:'Купить билеты'});
+  await movedTask.waitFor();
+  await movedTask.click();
+  const taskWindow = page.locator('.twin');
+  await taskWindow.waitFor();
+  await taskWindow.getByRole('button',{name:'Готово'}).click();
+  await taskWindow.waitFor({state:'detached'});
+  await page.getByRole('button',{name:/^Входящие/}).first().click();
   // 5. Удаление в TickTick убирает задачу в игре, цели остаются.
   a.tasks.delete('r2');
   const remoteDeleted = [...a.tasks.keys()];

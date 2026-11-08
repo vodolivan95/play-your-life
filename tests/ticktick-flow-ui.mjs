@@ -167,20 +167,20 @@ try {
   st = await stateOf(page,uid);
   assert.deepEqual(names(st.goals),['Бросить курить','Вылечить зубы'],'удаление в TickTick не удаляет цели');
   assert.ok(remoteDeleted.includes('r1'));
-  // 6. Просроченная задача, отмеченная выполненной в TickTick, исчезает из «Просрочено».
+  // 6. Просроченная задача остаётся в календаре на своей дате, но не попадает в список «Сегодня».
   const overdueDay = new Date(Date.now() - 2 * 86400000).toISOString().slice(0,10);
   a.tasks.get('r1').dueDate = overdueDay + 'T09:00:00+0000';
   await page.getByRole('button',{name:'Обновить',exact:true}).first().click();
   await page.waitForFunction(({uid,day})=>JSON.parse(localStorage.getItem('ticktick-fixture-game:'+uid)).quests.some(q=>q.name==='Купить билеты'&&!q.done&&String(q.dueAt).startsWith(day)),{uid,day:overdueDay},{timeout:15000});
   await page.getByRole('button',{name:/^Задачи на сегодня/}).first().click();
-  const overdueSection = page.locator('.gtl-goal').filter({has:page.getByRole('heading',{name:'Просрочено',exact:true})});
-  await overdueSection.locator('li',{hasText:'Купить билеты'}).waitFor();
+  assert.equal(await page.locator('.gtl-item').filter({hasText:'Купить билеты'}).count(),0,'просроченная задача не показывается как задача на сегодня');
+  assert.equal(await page.locator('.gtl-goal').count(),0,'без задач с датой сегодня список пуст');
   a.tasks.get('r1').status = 2;
   const taskSync = page.getByRole('button',{name:'Синхронизировать задачи с TickTick',exact:true});
   await page.waitForFunction(()=>{const button=document.querySelector('.pyl-tasks-sync');return button&&!button.disabled},{timeout:15000});
   await taskSync.click();
   await page.waitForFunction(uid=>JSON.parse(localStorage.getItem('ticktick-fixture-game:'+uid)).quests.some(q=>q.name==='Купить билеты'&&q.done),uid,{timeout:15000});
-  await page.waitForFunction(()=>!Array.from(document.querySelectorAll('.gtl-goal')).some(section=>section.querySelector('h3')?.textContent==='Просрочено'),null,{timeout:15000});
+  assert.equal(await page.locator('.gtl-item').filter({hasText:'Купить билеты'}).count(),0,'выполненная задача также не появляется в сегодняшнем списке без календарной даты на сегодня');
   st = await stateOf(page,uid);
   assert.equal(names(st.goals).length,2);
   // 7. Из сферы открывается нативный inbox-dialog поверх той же страницы.

@@ -1,3 +1,4 @@
+import { dependencyBlockMessage } from '../taskDependencies';
 import { useState, useRef, useEffect } from 'react';
 import type { Dispatch, SetStateAction, ReactNode } from 'react';
 import {
@@ -839,6 +840,8 @@ export default function GoalWorkspace(p: Props) {
     );
   };
   function finish(task: Quest) {
+    const dependencyProblem = dependencyBlockMessage(state.quests, task);
+    if (dependencyProblem) { p.onNotify(dependencyProblem); return false; }
     if (goal.paused) {
       p.onNotify('Проект на паузе. Возобновите проект, чтобы завершать задачи.');
       return false;
@@ -2326,6 +2329,7 @@ export default function GoalWorkspace(p: Props) {
       )}
       {detail?.kind === 'task' && viewedTask && (
         <TaskWindow
+          ownerId={p.ownerId}
           taskId={viewedTask.id}
           state={state}
           today={today}

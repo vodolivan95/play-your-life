@@ -7,6 +7,7 @@ import { addDays, mondayOf } from './tasksCalendar.ts';
 import { addPlanningEvent, planningDay, planningMetrics, planningSettings, validDay, validPlanningSettings, validTaskPlanning } from './planningData.ts';
 import type { PlanningSettings, TaskPlanning } from './planningData.ts';
 import { fingerprint } from './stateFingerprint.ts';
+import { dependencyBlockMessage, validDependencyGraph, validDependencyIds } from './taskDependencies.ts';
 
 export function visiblePlanningTask(q: Quest): boolean { return !q.planning?.archivedAt && !q.wontDo; }
 export function inboxTask(q: Quest): boolean {
@@ -23,7 +24,20 @@ export function changeTaskPlanning(state: GameState, id: string, patch: Partial<
   const q = owned(state, id, ownerId);
   const planning = Object.fromEntries(Object.entries({ ...q.planning, ...patch }).filter(([, v]) => v !== undefined));
   if (!validTaskPlanning(planning)) throw new Error('Проверь планирование задачи.');
-  return { ...state, quests: state.quests.map((t) => t.id === id ? { ...t, planning } : t) };
+  const next = { ...state, quests: state.quests.map((t) => t.id === id ? { ...t, planning } : t) };
+  if (patch.dependencyIds !== undefined && !validDependencyGraph(next.quests)) throw new Error('Связь создаёт цикл зависимостей.');
+  return next;
+}
+export function setTaskDependencies(state: GameState, id: string, ids: string[], ownerId: string): GameState {
+  const q = owned(state, id, ownerId);
+  if (q.done) throw new Error('Сначала отмени выполнение задачи, чтобы изменить её зависимости.');
+  if (!validDependencyIds(ids) || ids.includes(id)) throw new Error('Выбери до 50 разных предшественников, без самой задачи.');
+  for (const dep of ids) {
+    const target = state.quests.find((t) => t.id === dep);
+    if (!target && q.planning?.dependencyIds?.includes(dep)) continue;
+    owned(state, dep, ownerId);
+  }
+  return changeTaskPlanning(state, id, { dependencyIds: [...ids] }, ownerId);
 }
 export function savePlanningSettings(state: GameState, settings: PlanningSettings): GameState {
   if (!validPlanningSettings(settings)) throw new Error('Проверь настройки планирования.');
@@ -51,6 +65,10 @@ export function moveTaskToDay(state: GameState, id: string, day: string | null, 
 }
 export function setTaskWorkflow(state: GameState, id: string, workflow: NonNullable<TaskPlanning['workflow']> | 'done', ownerId: string): GameState {
   const q = owned(state, id, ownerId);
+  if (workflow === 'doing') {
+    const blocked = dependencyBlockMessage(state.quests, q);
+    if (blocked) throw new Error(blocked);
+  }
   if (workflow === 'done') return progressQuest(state, id, q.targetValue ?? 1, ownerId);
   const next = q.done ? reopenQuest(state, id) : state;
   return changeTaskPlanning(next, id, { workflow, inbox: false }, ownerId);

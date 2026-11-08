@@ -56,8 +56,10 @@ function withTime(dueAt: string, time: string) {
   const day = dayOf(dueAt);
   return time ? `${day}T${time}` : day;
 }
-export default function TaskWindow({ taskId, state, today, onChange, onClose, onAdvanced, onProgress, onUndo, onDelete, onDuplicate, onTransfer, onPractice, notify }: {
+export default function TaskWindow({ taskId, state, today, onChange, onClose, onAdvanced, onProgress, onUndo, onDelete, onDuplicate, onTransfer, onPractice, onOpenRelated, ownerId, notify }: {
   taskId: string;
+  ownerId?: string;
+  onOpenRelated?: (id: string) => void;
   state: GameState;
   today: string;
   onChange: Dispatch<SetStateAction<GameState>>;
@@ -263,7 +265,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
           <div><small>В этап</small><b>{c.stage ? c.stage.name : '—'}</b><span>{c.stage ? `${c.stageTasks} задач в этапе` : 'без этапа'}</span></div>
         </div>
         <div className="twin-body">
-          <Suspense fallback={<p>Загрузка планирования…</p>}><TaskPlanningFields state={state} task={task} onChange={onChange} notify={notify} onReason={setMoveReason} /></Suspense>
+          <Suspense fallback={<p>Загрузка планирования…</p>}><TaskPlanningFields state={state} task={task} ownerId={ownerId ?? task.ownerId ?? 'local'} onChange={onChange} notify={notify} onReason={setMoveReason} onOpenRelated={(id) => { onClose(); if (onOpenRelated) onOpenRelated(id); else location.hash = taskRoute(id); }} /></Suspense>
           <label className="twin-field">Название
             <input value={name} maxLength={100} disabled={locked} onChange={(e) => setName(e.target.value)}
               onBlur={() => name.trim() !== task.name && patch({ name })} />

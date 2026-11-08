@@ -1,4 +1,5 @@
 import { recordTaskSchedule } from './planningData.ts';
+import { dependencyBlockMessage } from './taskDependencies.ts';
 import {
   award,
   completeQuest,
@@ -216,7 +217,7 @@ export function duplicateQuest(
     done: false,
     currentValue: 0,
     rewardClaimed: false,
-    planning: q.planning ? { important: !!q.planning.important, urgent: !!q.planning.urgent } : undefined,
+    planning: q.planning ? { important: !!q.planning.important, urgent: !!q.planning.urgent, ...(q.planning.dependencyIds ? { dependencyIds: [...q.planning.dependencyIds] } : {}) } : undefined,
     pinned: undefined,
     wontDo: undefined,
     subtasks: q.subtasks?.map((t) => ({ ...t, id: crypto.randomUUID(), done: false })),
@@ -243,6 +244,8 @@ export function progressQuest(
   if (q.planning?.archivedAt) throw new Error("Сначала восстанови задачу из архива.");
   if (q.ownerId && q.ownerId !== ownerId)
     throw new Error("Это задача другого пользователя.");
+  const dependencyProblem = dependencyBlockMessage(state.quests, q);
+  if (dependencyProblem) throw new Error(dependencyProblem);
   if (q.startsAt && Date.parse(q.startsAt) > Date.now())
     throw new Error("Задача ещё не началась.");
   const goal = state.goals.find(g => g.id === q.goalId), stage = goal?.stages?.find(s => s.id === q.stageId);

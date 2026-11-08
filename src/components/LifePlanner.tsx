@@ -1,3 +1,4 @@
+import { dependencyBlockMessage } from '../taskDependencies';
 import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { completeQuest, dateKey, isOverdue, reopenQuest, spheres } from '../game';
@@ -96,6 +97,8 @@ export default function LifePlanner({
           aria-label={`${task.done ? 'Отменить выполнение' : 'Выполнить'}: ${task.name}`}
           title={task.done ? 'Отменить выполнение' : 'Выполнить'}
           onClick={() => {
+            const dependencyProblem = !task.done && dependencyBlockMessage(state.quests, task);
+            if (dependencyProblem) { onNotify(dependencyProblem); return; }
             const next = task.done
               ? reopenQuest(state, task.id)
               : completeQuest(state, task.id);

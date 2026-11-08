@@ -2,6 +2,7 @@ import { goalProgressValue, stageMetrics, stageAccess } from './goalWorkspace.ts
 import { SPHERE_PROGRESSION_MODEL, MAX_SPHERE_LEVEL, sphereProgress } from './sphereProgress.ts';
 import { repairState, validateState } from './stateValidation.ts';
 import { questCoins, recordQuestReward } from './personalQuests.ts';
+import { dependencyBlockMessage } from './taskDependencies.ts';
 export const spheres = [
   {
     id: 'health',
@@ -643,6 +644,7 @@ export function award(
 export function completeQuest(state: GameState, id: string): GameState {
   const quest = state.quests.find((q) => q.id === id);
   if (!quest || quest.done || quest.wontDo || quest.planning?.archivedAt) return state;
+  if (dependencyBlockMessage(state.quests, quest)) return state;
   const parentGoal = state.goals.find((g) => g.id === quest.goalId);
   if (parentGoal?.paused) return state;
   const parentStage = parentGoal?.stages?.find((s) => s.id === quest.stageId);

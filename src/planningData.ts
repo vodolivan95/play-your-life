@@ -1,6 +1,8 @@
 import type { Event, GameState, Quest } from './game.ts';
+import { validDependencyIds } from './taskDependencies.ts';
 
 export type TaskPlanning = {
+  dependencyIds?: string[];
   mainDay?: string;
   inbox?: boolean;
   archivedAt?: string;
@@ -34,7 +36,8 @@ export function validDay(v: unknown): v is string {
 }
 export function validTaskPlanning(v: unknown): boolean {
   return v === undefined || (obj(v)
-    && Object.keys(v).every((k) => ['mainDay', 'inbox', 'archivedAt', 'workflow', 'important', 'urgent'].includes(k))
+    && Object.keys(v).every((k) => ['dependencyIds', 'mainDay', 'inbox', 'archivedAt', 'workflow', 'important', 'urgent'].includes(k))
+    && (v.dependencyIds === undefined || validDependencyIds(v.dependencyIds))
     && (v.mainDay === undefined || validDay(v.mainDay))
     && (v.archivedAt === undefined || instant(v.archivedAt))
     && (v.workflow === undefined || ['planned', 'ready', 'doing', 'waiting'].includes(String(v.workflow)))

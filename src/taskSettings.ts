@@ -1,4 +1,5 @@
 import { recordTaskSchedule, validTaskPlanning } from './planningData.ts';
+import { validDependencyGraph } from './taskDependencies.ts';
 import { difficulties } from './game.ts';
 import type { GameState, Quest } from './game.ts';
 import { questCoins } from './personalQuests.ts';
@@ -174,5 +175,7 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
   if (patch.pinned !== undefined) q.pinned = patch.pinned || undefined;
   if (patch.wontDo !== undefined) q.wontDo = patch.wontDo || undefined;
   const clean = Object.fromEntries(Object.entries(q).filter(([, v]) => v !== undefined)) as Quest;
-  return recordTaskSchedule({ ...state, quests: state.quests.map((item) => (item.id === id ? clean : item)) }, old, clean, patch.moveReason, patch.actionId);
+  const next = { ...state, quests: state.quests.map((item) => (item.id === id ? clean : item)) };
+  if (patch.planning !== undefined && !validDependencyGraph(next.quests)) throw new Error('Связь создаёт цикл зависимостей.');
+  return recordTaskSchedule(next, old, clean, patch.moveReason, patch.actionId);
 }

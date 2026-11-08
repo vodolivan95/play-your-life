@@ -10,7 +10,8 @@ import { validMonthlyFocus } from './monthlyFocus.ts';
 import { validKeySpheres } from './lifePlanMap.ts';
 import { validReview, validMoodCheckins } from './keyResults.ts';
 import { validImportance } from './monthReport.ts';
-import type { GameState } from './game.ts';
+import type { GameState, Quest } from './game.ts';
+import { validDependencyGraph } from './taskDependencies.ts';
 import {
   MAX_GOAL_CHECKPOINTS,
   GOAL_CHECKPOINT_TEXT_MAX,
@@ -302,6 +303,7 @@ export function validateState(value: unknown): asserts value is SavedState {
     )
   )
     return fail();
+  if (!validDependencyGraph(value.quests as Quest[])) return fail();
   if (
     !list(
       value.goals,

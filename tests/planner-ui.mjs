@@ -101,6 +101,56 @@ try {
     assert.equal(stored.events.filter((e) => e.planningChange?.type === 'time').length, 1);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'горизонтальное переполнение');
     assert.deepEqual(errors, []);
+    // Предшественник блокирует выполнение; циклы отклоняются; перенос не каскадный.
+    await plan.getByLabel('Быстрая задача', { exact: true }).fill('Согласовать план');
+    await plan.getByRole('button', { name: 'Добавить задачу', exact: true }).click();
+    const prior = plan.locator('.pplan-task').filter({ hasText: 'Согласовать план' });
+    await prior.waitFor();
+    const ids = await page.evaluate(() => {
+      const s = JSON.parse(localStorage.getItem('play-your-life-v1'));
+      return { prior: s.quests.find((q) => q.name === 'Согласовать план').id, target: s.quests.find((q) => q.name === 'Подготовить план').id };
+    });
+    await task.getByRole('button', { name: 'Подготовить план', exact: true }).click();
+    await win.locator('summary').filter({ hasText: 'Планирование и время' }).click();
+    await win.getByLabel('Добавить предшественника', { exact: true }).selectOption(ids.prior);
+    await win.getByRole('button', { name: 'Добавить зависимость', exact: true }).click();
+    await win.getByText('Выполнение заблокировано: незавершённых предшественников — 1.', { exact: true }).waitFor();
+    await win.getByRole('button', { name: 'Согласовать план', exact: true }).click();
+    const priorWin = page.getByRole('dialog', { name: 'Согласовать план', exact: true });
+    assert.equal(await priorWin.getByLabel('Название', { exact: true }).inputValue(), 'Согласовать план', 'редактор переинициализируется при переходе к связанной задаче');
+    await priorWin.locator('summary').filter({ hasText: 'Планирование и время' }).click();
+    await priorWin.getByLabel('Добавить предшественника', { exact: true }).selectOption(ids.target);
+    await priorWin.getByRole('button', { name: 'Добавить зависимость', exact: true }).click();
+    await page.getByText('Связь создаёт цикл зависимостей.', { exact: true }).waitFor();
+    await priorWin.getByRole('button', { name: 'Готово', exact: true }).click();
+    await task.getByLabel('Статус: Подготовить план', { exact: true }).selectOption('done');
+    stored = await page.evaluate(() => JSON.parse(localStorage.getItem('play-your-life-v1')));
+    assert.equal(stored.quests.find((q) => q.id === ids.target).done, false);
+    await prior.getByLabel('Плановая дата: Согласовать план', { exact: true }).fill(nextWeek);
+    const targetDate = stored.quests.find((q) => q.id === ids.target).dueAt;
+    await plan.getByLabel('Дата плана', { exact: true }).fill(nextWeek);
+    await plan.getByLabel('Вид плана', { exact: true }).selectOption('timeline');
+    const timeline = plan.getByRole('region', { name: 'Шкала сроков', exact: true });
+    await timeline.getByRole('button', { name: 'Сроки: Согласовать план', exact: true }).waitFor();
+    await timeline.getByRole('button', { name: 'На день позже: Согласовать план', exact: true }).click();
+    stored = await page.evaluate(() => JSON.parse(localStorage.getItem('play-your-life-v1')));
+    assert.equal(stored.quests.find((q) => q.id === ids.target).dueAt, targetDate, 'перенос предшественника не меняет сроки зависимой задачи');
+    await timeline.getByRole('button', { name: 'Сроки: Согласовать план', exact: true }).dragTo(timeline.locator('.ptimeline-day').nth(2));
+    const shifted = await page.evaluate(() => JSON.parse(localStorage.getItem('play-your-life-v1')));
+    assert.equal(shifted.quests.find((q) => q.id === ids.prior).dueAt, await page.evaluate(async (day) => (await import('/src/tasksCalendar.ts')).addDays(day, 2), nextWeek));
+    await plan.getByLabel('Вид плана', { exact: true }).selectOption('list');
+    await prior.getByLabel('Статус: Согласовать план', { exact: true }).selectOption('done');
+    assert.equal(await task.locator('.pplan-warning').count(), 0);
+    await plan.getByRole('button', { name: 'Завершить день', exact: true }).click();
+    await plan.getByRole('region', { name: 'Вечерний обзор' }).getByText(/^Сегодня: 1 выполнено/).waitFor();
+    await plan.getByRole('button', { name: 'Закрыть обзор', exact: true }).click();
+    await page.reload();
+    await page.getByRole('button', { name: 'Продолжить игру на этом устройстве' }).click();
+    await openPlan();
+    await plan.getByRole('button', { name: 'Все задачи', exact: true }).click();
+    stored = await page.evaluate(() => JSON.parse(localStorage.getItem('play-your-life-v1')));
+    assert.deepEqual(stored.quests.find((q) => q.id === ids.target).planning.dependencyIds, [ids.prior]);
+    await plan.getByLabel('Вид плана', { exact: true }).selectOption('timeline');
     for (const theme of ['dark', 'light']) {
       if (mobile) {
         await page.locator('.pyl-tabbar').getByRole('button', { name: /^Ещё/ }).click();

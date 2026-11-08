@@ -19,7 +19,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { newAccountGame } from "../src/accountGame.ts";
-import { quickPlanningTask, moveTaskToDay, logTaskTime, savePlanningSettings } from '../src/planner.ts';
+import { quickPlanningTask, moveTaskToDay, logTaskTime, savePlanningSettings, setTaskDependencies } from '../src/planner.ts';
 import { actualMinutes, moveCount, planningSettings } from '../src/planningData.ts';
 const env = await initializeTestEnvironment({
   projectId: "demo-play-your-life",
@@ -570,6 +570,8 @@ test('настройки плана и структурированная ист
   const fresh = await driver.create(newAccountGame('Планировщик'));
   let state = quickPlanningTask(fresh.state, 'Проверить сохранение плана', uid);
   const id = state.quests[0].id;
+  state = quickPlanningTask(state, 'Зависимый шаг', uid);
+  state = setTaskDependencies(state, state.quests[1].id, [id], uid);
   state = moveTaskToDay(state, id, '2026-11-10', uid);
   state = moveTaskToDay(state, id, '2026-11-11', uid, 'Не хватило времени');
   state = logTaskTime(state, id, 40, uid);
@@ -577,6 +579,7 @@ test('настройки плана и структурированная ист
   assert.ok(await driver.save(state, fresh.revision));
   const loaded = await firebaseSave(db, uid).load();
   assert.equal(loaded.state.planningSettings.dailyMinutes, 120);
+  assert.deepEqual(loaded.state.quests[1].planning.dependencyIds, [id]);
   assert.equal(loaded.state.quests[0].planning.inbox, false);
   assert.equal(actualMinutes(loaded.state, id), 40);
   assert.equal(moveCount(loaded.state, id), 1);

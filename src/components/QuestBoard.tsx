@@ -238,6 +238,9 @@ export default function QuestBoard({
       )}
       {openTask && (
         <TaskWindow
+          key={openTask}
+          onOpenRelated={setOpenTask}
+          ownerId={ownerId}
           taskId={openTask}
           state={state}
           today={today}

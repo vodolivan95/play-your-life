@@ -1,4 +1,5 @@
-import { recordTaskSchedule } from './planningData.ts';
+import { recordTaskSchedule, validTaskPlanning } from './planningData.ts';
+import { validDependencyGraph } from './taskDependencies.ts';
 import { validProjectImage } from './projectImage.ts';
 import {
   dateKey,
@@ -540,12 +541,14 @@ export function saveTask(
     xp: difficulties[input.difficulty as keyof typeof difficulties],
     difficulty: input.difficulty,
   };
+  if (!validTaskPlanning(task.planning)) throw new Error('Проверь настройки планирования задачи.');
   let next: GameState = {
     ...state,
     quests: existing
       ? state.quests.map((q) => (q.id === task.id ? task : q))
       : [...state.quests, task],
   };
+  if (input.planning !== undefined && !validDependencyGraph(next.quests)) throw new Error('Связь создаёт цикл зависимостей.');
   if (existing?.goalId && existing.goalId !== task.goalId)
     next = syncGoalTasks(next, existing.goalId);
   if (task.goalId) next = syncGoalTasks(next, task.goalId);

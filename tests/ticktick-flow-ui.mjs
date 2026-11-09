@@ -117,11 +117,13 @@ try {
   const today = new Date().toISOString().slice(0,10);
   a.tasks.set('r1',{id:'r1',projectId:'english',title:'Купить билеты',status:0,dueDate:today+'T09:00:00+0000'});
   a.tasks.set('r2',{id:'r2',projectId:'english',title:'Записаться к врачу',status:0});
+  a.tasks.set('r3',{id:'r3',projectId:'english',title:'Подготовить отпуск на 2029 год',status:0,dueDate:'2029-06-01T09:00:00+0000'});
   await page.goto(harness(uid));
   await page.locator('.sidebar').getByRole('button',{name:/^Мои задачи/}).click();
   await page.getByRole('button',{name:/^Входящие/}).first().click();
   const inbox = page.getByRole('region',{name:'Входящие из TickTick'});
   await inbox.getByText('Купить билеты').waitFor();
+  await inbox.getByText('Подготовить отпуск на 2029 год').waitFor();
   if (process.env.SHOT) {
     for (const theme of ['dark','light']) {
       await page.evaluate(t=>{document.documentElement.dataset.theme=t;document.body.style.background=t==='dark'?'#0a0f20':'#eef3fb';document.querySelectorAll('.ticktick-inbox').forEach(e=>{e.parentElement.style.background='transparent'});},theme);
@@ -152,12 +154,14 @@ try {
   // 2. Задача в новую цель и новый этап.
   await row('Записаться к врачу').getByRole('button',{name:'Разобрать'}).click();
   await row('Записаться к врачу').getByRole('button',{name:'Вылечить зубы'}).click();
+  await row('Записаться к врачу').getByRole('button',{name:'Первый визит'}).click();
   await row('Записаться к врачу').getByRole('button',{name:'Принять в игру'}).click();
   await page.waitForFunction(uid=>JSON.parse(localStorage.getItem('ticktick-fixture-game:'+uid)).quests.length===2,uid);
   await page.getByRole('button',{name:'Календарь',exact:true}).click();
   assert.equal(await page.locator('.tcal-chip').filter({hasText:'Купить билеты'}).count(),1,'после принятия задача остаётся в календаре ровно один раз');
   let st = await stateOf(page,uid);
   assert.deepEqual(names(st.goals),['Бросить курить','Вылечить зубы'],'цели на месте после приёма');
+  assert.equal(st.quests.find(q=>q.name==='Записаться к врачу')?.stageId,'stage-1','входящую задачу можно назначить конкретному этапу');
   // 3. Перезагрузка: всё сохранилось и состояние валидно для загрузки приложением.
   await page.goto(harness(uid));
   await page.locator('.sidebar').getByRole('button',{name:/^Мои задачи/}).click();

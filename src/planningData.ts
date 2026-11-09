@@ -349,9 +349,14 @@ function repeatStepDays(rrule: string | undefined): { min: number; max: number }
   const freq = /FREQ=([A-Z]+)/.exec(rrule)?.[1];
   const interval = Math.max(1, Number(/INTERVAL=(\d+)/.exec(rrule)?.[1] ?? '1'));
   const byDay = /BYDAY=([^;]+)/.exec(rrule)?.[1];
+  const byMonthDay = /BYMONTHDAY=([^;]+)/.exec(rrule)?.[1];
   if (freq === 'DAILY') return { min: interval, max: interval };
   if (freq === 'WEEKLY') return byDay?.includes(',') ? undefined : { min: interval * 7, max: interval * 7 };
-  if (freq === 'MONTHLY') return { min: interval * 28, max: interval * 31 };
+  // MONTHLY с несколькими BYMONTHDAY (например, 1 и 15 числа) — следующее наступление может быть
+  // через несколько дней ИЛИ через почти весь месяц в зависимости от того, какая дата сработала;
+  // диапазон 28–31 день тут неверен и слишком узок, поэтому — как и для нескольких BYDAY —
+  // консервативно «неопределённо», а не ошибочно точный шаг.
+  if (freq === 'MONTHLY') return byMonthDay?.includes(',') ? undefined : { min: interval * 28, max: interval * 31 };
   if (freq === 'YEARLY') return { min: interval * 365, max: interval * 366 };
   return undefined;
 }

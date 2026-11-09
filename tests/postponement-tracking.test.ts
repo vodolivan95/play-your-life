@@ -99,6 +99,42 @@ test('TickTick: нераспознанный шаг повтора (нескол
   assert.equal(ambiguousMoveCount(s, id), 1);
 });
 
+test('TickTick: MONTHLY с одним BYMONTHDAY — перенос на ~месяц вперёд неопределён, на 5 дней — достоверен', () => {
+  let s = setup(); const id = s.quests[0].id;
+  s = moveTaskToDay(s, id, '2026-10-15', 'u');
+  s = withRepeat(s, id, 'RRULE:FREQ=MONTHLY;BYMONTHDAY=15');
+  s = updateTaskSettings(s, id, { dueAt: '2026-11-15', actionId: 'monthly-step' }); // ровно месяц — неопределённо
+  assert.equal(moveCount(s, id), 0);
+  assert.equal(ambiguousMoveCount(s, id), 1);
+  s = updateTaskSettings(s, id, { dueAt: '2026-11-20', actionId: 'monthly-real' }); // +5 дней от 11-15 — не шаг повтора
+  assert.equal(moveCount(s, id), 1);
+  assert.equal(ambiguousMoveCount(s, id), 1);
+});
+
+test('TickTick: MONTHLY с несколькими BYMONTHDAY — шаг непредсказуем, форвард всегда неопределён, назад всегда достоверен', () => {
+  let s = setup(); const id = s.quests[0].id;
+  s = moveTaskToDay(s, id, '2026-11-01', 'u');
+  s = withRepeat(s, id, 'RRULE:FREQ=MONTHLY;BYMONTHDAY=1,15');
+  s = updateTaskSettings(s, id, { dueAt: '2026-11-04', actionId: 'multi-monthday-fwd' }); // короткий сдвиг — всё равно неопределён, шаг не разбирается
+  assert.equal(moveCount(s, id), 0);
+  assert.equal(ambiguousMoveCount(s, id), 1);
+  s = updateTaskSettings(s, id, { dueAt: '2026-10-29', actionId: 'multi-monthday-back' }); // назад — всегда достоверно
+  assert.equal(moveCount(s, id), 1);
+  assert.equal(ambiguousMoveCount(s, id), 1);
+});
+
+test('TickTick: YEARLY — перенос на ~год вперёд неопределён, на 10 дней вперёд достоверен', () => {
+  let s = setup(); const id = s.quests[0].id;
+  s = moveTaskToDay(s, id, '2025-11-09', 'u');
+  s = withRepeat(s, id, 'RRULE:FREQ=YEARLY');
+  s = updateTaskSettings(s, id, { dueAt: '2026-11-09', actionId: 'yearly-step' });
+  assert.equal(moveCount(s, id), 0);
+  assert.equal(ambiguousMoveCount(s, id), 1);
+  s = updateTaskSettings(s, id, { dueAt: '2026-11-19', actionId: 'yearly-real' });
+  assert.equal(moveCount(s, id), 1);
+  assert.equal(ambiguousMoveCount(s, id), 1);
+});
+
 test('аналитика переносов: неделя/месяц, топ-10 и ставка откладывания', () => {
   let s = newAccountGame('Тест');
   const ids: string[] = [];

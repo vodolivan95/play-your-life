@@ -71,9 +71,10 @@ export default function TaskPlanningFields({ state, task, onChange, notify, onRe
     if (!peek) { setTimer(undefined); return; }
     const value = Math.min(43200, Math.round(peek.seconds / 60));
     if (value < 1) {
-      // 3.5: не навязываем минимум в 1 минуту — короткая сессия (<30 с) не искажает факт, просто не учитывается.
-      discardTimer(ownerId, task.id); setTimer(undefined);
-      notify('Сессия короче 30 секунд — время не учтено.');
+      // 3.5: сессия короче 30 секунд НЕ удаляется автоматически — остаётся на паузе, накопленные
+      // секунды не теряются; явный отказ от учёта — отдельная кнопка «Отменить» (discardTimer).
+      pauseTimer(ownerId, task.id); setTimer(readTimer(ownerId, task.id));
+      notify('Сессия короче 30 секунд — пока не учтена как факт. Таймер поставлен на паузу, время не потеряно: продолжите позже или отмените явно.');
       return;
     }
     if (!state.quests.some((q) => q.id === task.id)) {
@@ -81,10 +82,12 @@ export default function TaskPlanningFields({ state, task, onChange, notify, onRe
       notify('Задача не найдена — время сессии пока не учтено, таймер сохранён для повторной попытки.');
       return;
     }
-    // 3.1: сначала сохраняем время (apply) и только при успехе удаляем таймер (commitFinish) —
-    // тот же actionId переживает повторную попытку, поэтому повтор клика не задвоит время.
-    apply((s) => logTaskTime(s, task.id, value, ownerId, peek.actionId));
-    commitFinish(ownerId, task.id); setTimer(undefined);
+    // 3.1: сначала подтверждённо сохраняем время (apply возвращает true только при реальном
+    // успехе — см. ниже) и только тогда удаляем таймер (commitFinish). Тот же actionId
+    // переживает повторную попытку, поэтому повтор клика при неудаче не задвоит время.
+    const ok = apply((s) => logTaskTime(s, task.id, value, ownerId, peek.actionId));
+    if (ok) { commitFinish(ownerId, task.id); setTimer(undefined); }
+    // При неудаче apply() уже показал причину через notify() — таймер остаётся для повтора.
   }
   const moves = moveCount(state, task.id);
   const forward = forwardMoveCount(state, task.id);
@@ -93,8 +96,16 @@ export default function TaskPlanningFields({ state, task, onChange, notify, onRe
   const firstKnown = events.map(toOf).find((v) => v);
   const lastMove = [...events].reverse().find((e) => e.planningChange?.type === 'reschedule' && !e.planningChange.ambiguousRepeat);
   const ambiguous = ambiguousMoveCount(state, task.id);
-  function apply(action: (s: GameState) => GameState) {
-    onChange((s) => { try { return action(s); } catch (e) { queueMicrotask(() => notify((e as Error).message)); return s; } });
+  // Возвращает true только если действие ДЕЙСТВИТЕЛЬНО применилось без ошибки (тот же паттерн,
+  // что в src/components/room3d/RoomEngine.tsx: пробный синхронный запуск против известного
+  // состояния решает успех/неудачу для вызывающей стороны — React вызывает функцию-обновитель
+  // синхронно при onChange(fn), так что это не гадание, а реальная проверка). Второй, «настоящий»
+  // запуск — против самого свежего состояния через onChange — и его ошибки не пробрасываются
+  // наружу (решение уже принято пробным запуском), чтобы не показать два сообщения об одной ошибке.
+  function apply(action: (s: GameState) => GameState): boolean {
+    try { action(state); } catch (e) { notify(e instanceof Error ? e.message : 'Не удалось сохранить изменение.'); return false; }
+    onChange((s) => { try { return action(s); } catch { return s; } });
+    return true;
   }
   return <details className="twin-field">
     <summary>Планирование и время · зависимости{moves ? ` · переносов: ${moves}` : ''}</summary>

@@ -100,7 +100,15 @@ function ensureNoOtherActive(ownerId: string, taskId: string) {
 
 export function startTimer(ownerId: string, taskId: string, now = new Date()): TaskTimer {
   ensureNoOtherActive(ownerId, taskId);
-  const timer: TaskTimer = { taskId, actionId: crypto.randomUUID(), runningSince: now.toISOString(), accumulatedSeconds: 0 };
+  // actionId детерминирован из (taskId, момент старта) — НЕ случайный (3.2/5: таймер — это чисто
+  // локальное устройство хранилище, синхронизация между устройствами одного владельца не входит
+  // в этот этап и остаётся явным ограничением). Это не защищает от двух ДЕЙСТВИТЕЛЬНО независимых
+  // рабочих интервалов на двух устройствах (они законно должны засчитаться оба) — но если один и
+  // тот же сеанс таймера окажется виден на двух устройствах (например, localStorage синхронизирован
+  // функцией браузера), оба получат одинаковый actionId, и addPlanningEvent не даст задвоить именно
+  // этот интервал при попытке завершить его с двух сторон.
+  const actionId = `timer:${taskId}:${now.getTime()}`;
+  const timer: TaskTimer = { taskId, actionId, runningSince: now.toISOString(), accumulatedSeconds: 0 };
   const { timers } = readAll(ownerId); timers[taskId] = timer; writeAll(ownerId, timers);
   return timer;
 }
@@ -136,7 +144,7 @@ export function peekFinish(ownerId: string, taskId: string, now = new Date()): {
   if (!actionId) {
     // Таймер сохранён версией до 0.76.0 (раздел 3.1), ещё без actionId — присваиваем и
     // сохраняем сейчас, чтобы повторная попытка «Завершить» не создала второе событие.
-    actionId = crypto.randomUUID();
+    actionId = `timer:${taskId}:${Date.now()}`;
     timers[taskId] = { ...timer, actionId };
     writeAll(ownerId, timers);
   }
@@ -147,8 +155,11 @@ export function commitFinish(ownerId: string, taskId: string) {
   const { timers } = readAll(ownerId); delete timers[taskId]; writeAll(ownerId, timers);
 }
 /**
- * Сбрасывает таймер без учёта накопленного времени — например, сессия короче 30 секунд (3.5)
- * или задача удалена. В отличие от `commitFinish`, это осознанный отказ от времени, а не
+ * Сбрасывает таймер без учёта накопленного времени — вызывается ТОЛЬКО по явному действию
+ * пользователя (кнопка «Отменить»), не автоматически. В частности, сессия короче 30 секунд
+ * (3.5) не удаляется сама — таймер в этом случае просто остаётся на паузе, и накопленные
+ * секунды не теряются, пока пользователь сам не подтвердит отказ этой функцией или не
+ * продолжит накопление. В отличие от `commitFinish`, это осознанный отказ от времени, а не
  * удаление после его сохранения.
  */
 export function discardTimer(ownerId: string, taskId: string) {

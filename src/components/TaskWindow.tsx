@@ -57,7 +57,7 @@ function withTime(dueAt: string, time: string) {
   const day = dayOf(dueAt);
   return time ? `${day}T${time}` : day;
 }
-export default function TaskWindow({ taskId, state, today, onChange, onClose, onAdvanced, onProgress, onUndo, onDelete, onDuplicate, onTransfer, onPractice, onOpenRelated, ownerId, notify }: {
+export default function TaskWindow({ taskId, state, today, onChange, onClose, onAdvanced, onProgress, onComplete, onUndo, onDelete, onDuplicate, onTransfer, onPractice, onOpenRelated, ownerId, notify }: {
   taskId: string;
   ownerId?: string;
   onOpenRelated?: (id: string) => void;
@@ -67,6 +67,8 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
   onClose: () => void;
   onAdvanced?: (q: Quest) => void;
   onProgress?: (q: Quest) => void;
+  /** Отметить задачу выполненной сразу, минуя ввод числового прогресса. */
+  onComplete?: (q: Quest) => void;
   onUndo?: (q: Quest) => void;
   onDelete?: (q: Quest) => void;
   onDuplicate?: (q: Quest) => void;
@@ -406,7 +408,12 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
           {task.done && onPractice && <button type="button" className="primary-button" onClick={() => onPractice(task)}>↻ Практиковать снова</button>}
           {task.done && onUndo && <button type="button" className="secondary-button" onClick={() => onUndo(task)}>Отменить выполнение</button>}
           {onDelete && <button type="button" className="text-button" onClick={() => onDelete(task)}>Удалить</button>}
-          {onProgress && !task.done && !task.wontDo && <button type="button" className="secondary-button" onClick={() => onProgress(task)}>Продолжить</button>}
+          {onProgress && !task.done && !task.wontDo && (task.targetValue ?? 1) > 1 && (
+            <button type="button" className="secondary-button" onClick={() => onProgress(task)}>Продолжить</button>
+          )}
+          {onComplete && !task.done && !task.wontDo && (
+            <button type="button" className="primary-button" onClick={() => onComplete(task)}>✓ Отметить выполненным</button>
+          )}
           <button type="button" className="primary-button" onClick={onClose}>Готово</button>
         </footer>
       </section>

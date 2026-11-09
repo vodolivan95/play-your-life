@@ -177,7 +177,6 @@ export default function QuestBoard({
           quests={quests}
           today={today}
           onOpen={setOpenTask}
-          onProgress={startProgress}
         />
       )}
       {mode === "inbox" &&
@@ -195,7 +194,6 @@ export default function QuestBoard({
           quests={quests}
           today={today}
           onOpen={setOpenTask}
-          onProgress={startProgress}
         />
       )}
       {mode === "calendar" && (
@@ -252,6 +250,7 @@ export default function QuestBoard({
           onClose={() => setOpenTask(null)}
           onAdvanced={(q) => setForm({ quest: q, habitMode: false })}
           onProgress={(q) => { setOpenTask(null); startProgress(q); }}
+          onComplete={(q) => { setOpenTask(null); finish(q, q.targetValue ?? 1); }}
           onUndo={(q) => apply((s) => reopenQuest(s, q.id), "Отметка выполнения снята. Полученная награда остаётся и повторно не начислится.")}
           onDelete={deleteQuest}
           onDuplicate={duplicateQuestFlow}

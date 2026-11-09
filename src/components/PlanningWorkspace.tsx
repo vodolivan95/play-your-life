@@ -146,7 +146,7 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
       <p>Задачи, которые давно не продвигаются: часто переносятся, просрочены, заблокированы зависимостями, долго без подтверждённой активности или без уточнённого плана. Ничего не переносится и не меняется автоматически.</p>
       <ul className="pplan-list">{stuck.map((st) => {
         const q = own.find((t) => t.id === st.id)!;
-        return <li key={st.id} className="pplan-task">
+        return <li key={st.id} className="pplan-stuck-item">
           <div className="pplan-task-top"><button type="button" className="pplan-name" onClick={() => onOpen(q.id)}>{q.name}</button></div>
           <small>{st.categories.map((c) => stuckCategoryLabels[c]).join(' · ')}{st.daysSinceActivity !== undefined ? ` · Последняя активность: ${st.daysSinceActivity} дн. назад` : ''}</small>
           {st.blockedBy.length > 0 && <p className="pplan-warning">Ожидает: {st.blockedBy.map((b) => b.name).join(', ')}.</p>}

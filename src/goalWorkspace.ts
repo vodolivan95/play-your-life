@@ -1,5 +1,5 @@
 import type { GameState, Goal, GoalStage, Quest, Event } from './game.ts';
-import { planningDay, planningMetrics, planningSettings } from './planningData.ts';
+import { planningDay, planningMetrics } from './planningData.ts';
 import { dependencyBlockMessage } from './taskDependencies.ts';
 
 export function taskFraction(task: Quest) {
@@ -338,7 +338,6 @@ export function projectControl(
   state: GameState,
   goal: Goal,
   now = new Date(),
-  settings = planningSettings(state),
   metrics = planningMetrics(state),
 ): ProjectControl {
   const today = planningDay(now.toISOString())!;

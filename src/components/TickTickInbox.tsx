@@ -191,7 +191,7 @@ export default function TickTickInbox({ state, onChange, scope, focusRemoteId }:
   return <section className="ticktick-inbox" aria-label="Входящие из TickTick">
     <div className="ticktick-inbox-head">
       <h3>Входящие из TickTick{items.length > 0 && <span className="ticktick-badge-count" aria-label={`Задач: ${items.length}`}>{items.length}</span>}</h3>
-      <span className="ticktick-inbox-note">Задачи на ближайшие 4 месяца{manager.inboxNew > 0 ? ` · новых: ${manager.inboxNew}` : ''}</span>
+      <span className="ticktick-inbox-note">Без ограничения по сроку{manager.inboxNew > 0 ? ` · новых: ${manager.inboxNew}` : ''}</span>
       <button className="ticktick-refresh" disabled={manager.busy} onClick={() => void manager.refreshAll()}>{manager.inboxBusy ? 'Проверяем…' : 'Обновить'}</button>
     </div>
     {manager.inboxError && <p className="transfer-message" role="alert">{manager.inboxError}</p>}

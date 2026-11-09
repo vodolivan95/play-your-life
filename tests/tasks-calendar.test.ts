@@ -4,6 +4,7 @@ import {
   addDays,
   calendarDays,
   calendarItem,
+  calendarSegmentsForDay,
   daySummary,
   itemsForDay,
   mondayOf,
@@ -67,6 +68,41 @@ test('календарь: время берётся из срока и нача�
   assert.equal(range?.end, '11:00');
 });
 
+test('календарь: многодневный timed-период показывает начало, продолжение и конец через границу месяца', () => {
+  const startsAt = new Date(2026, 9, 30, 9, 15).toISOString();
+  const dueAt = new Date(2026, 10, 2, 16, 45).toISOString();
+  const item = calendarItem(quest({ id: 'span', startsAt, dueAt }));
+  assert.ok(item);
+  assert.equal(item.day, '2026-11-02', 'базовая запись остаётся прикреплена к сроку');
+  assert.equal(item.start, undefined, 'интервал через полночь не становится фиктивным часовым событием');
+  assert.equal(item.end, undefined);
+  assert.equal(item.spanStartDay, '2026-10-30');
+  assert.equal(item.spanEndDay, '2026-11-02');
+  assert.equal(item.spanStartTime, '09:15');
+  assert.equal(item.spanEndTime, '16:45');
+  const items = [item];
+  assert.deepEqual(calendarSegmentsForDay(items, '2026-10-29'), []);
+  assert.equal(calendarSegmentsForDay(items, '2026-10-30')[0].spanPart, 'start');
+  assert.equal(calendarSegmentsForDay(items, '2026-10-31')[0].spanPart, 'middle');
+  assert.equal(calendarSegmentsForDay(items, '2026-11-01')[0].spanPart, 'middle');
+  assert.equal(calendarSegmentsForDay(items, '2026-11-02')[0].spanPart, 'end');
+  assert.deepEqual(itemsForDay(items, '2026-10-31'), [], 'обычный список задач и summary не размножаются по сегментам');
+  assert.equal(daySummary(items, '2026-10-31').plan, 0);
+  assert.equal(daySummary(items, '2026-11-02').plan, 20);
+  assert.deepEqual(calendarSegmentsForDay(items, '2026-11-03'), []);
+});
+
+test('календарь: date-only диапазон включительно проходит через границу года без времени', () => {
+  const item = calendarItem(quest({ id: 'all-day-span', startsAt: '2026-12-31', dueAt: '2027-01-02' }));
+  assert.ok(item);
+  assert.equal(item.spanStartDay, '2026-12-31');
+  assert.equal(item.spanEndDay, '2027-01-02');
+  assert.equal(item.spanStartTime, undefined);
+  assert.equal(item.spanEndTime, undefined);
+  assert.equal(calendarSegmentsForDay([item], '2027-01-01')[0].spanPart, 'middle');
+  assert.equal(calendarSegmentsForDay([item], '2027-01-02')[0].spanPart, 'end');
+});
+
 test('календарь: дневной список — сначала без времени, потом по времени', () => {
   const local = (h: number) => new Date(2026, 9, 20, h, 0).toISOString();
   const items = [
@@ -106,6 +142,21 @@ test('календарь показывает новые датированны�
   ]);
   assert.equal(items[0].quest.id, 'ticktick:remote-all-day');
   assert.equal(items[0].quest.xp, 0, 'календарная проекция не выдаёт игровую награду');
+});
+
+test('многодневная запись TickTick отображается сегментом в каждом покрытом дне и остаётся read-only', () => {
+  const [item] = tickTickCalendarItems([
+    { projectId: 'work', sphere: 'health', remote: {
+      id: 'remote-span', projectId: 'work', title: 'Интервал TickTick',
+      startDate: '2026-10-28T12:00:00+0300', dueDate: '2026-10-31T12:00:00+0300',
+    } },
+  ]);
+  assert.ok(item);
+  const middle = calendarSegmentsForDay([item], '2026-10-29')[0];
+  assert.equal(middle?.source, 'ticktick');
+  assert.equal(middle?.remoteId, 'remote-span');
+  assert.equal(middle?.spanPart, 'middle');
+  assert.equal(middle?.quest.xp, 0);
 });
 
 test('календарь: сводка дня, ближайшая задача и нагрузка недели', () => {

@@ -160,10 +160,15 @@ try {
     await panel(page).getByRole('button',{name:'Синхронизировать сейчас'}).click();
     await panel(page).getByText('Нет сети.',{exact:false}).waitFor();
     assert.equal((await stateOf(page,uid)).xp,0);
+    // Статус синхронизации (0.76.0, раздел 6): ошибка последней попытки видна явно, с пометкой «нужен повтор/переподключение».
+    await panel(page).getByText('Последняя попытка обмена завершилась ошибкой',{exact:false}).waitFor();
     await ctx.setOffline(false);
     await page.waitForFunction(uid => JSON.parse(localStorage.getItem('ticktick-fixture-game:'+uid)).xp === 20, uid);
     await panel(page).getByText('Связанные задачи проектов синхронизированы.',{exact:true}).waitFor();
     assert.equal((await stateOf(page,uid)).xp,20); assert.equal((await stateOf(page,uid)).quests[0].done,true);
+    // Успешный повтор возвращает статус к «последняя успешная синхронизация» (без следа ошибки).
+    await panel(page).getByText('Последняя успешная синхронизация',{exact:false}).waitFor();
+    assert.equal(await panel(page).getByText('Последняя попытка обмена завершилась ошибкой',{exact:false}).count(),0);
     await page.reload();
     await panel(page).getByText('Доступ к TickTick подтверждён.',{exact:false}).waitFor();
     await panel(page).getByRole('button',{name:'Синхронизировать сейчас'}).click();

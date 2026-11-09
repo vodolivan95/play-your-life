@@ -5,7 +5,7 @@ import { updateTaskSettings } from './taskSettings.ts';
 import type { TaskPatch } from './taskSettings.ts';
 import { addDays, mondayOf } from './tasksCalendar.ts';
 import { addPlanningEvent, planningDay, planningMetrics, planningSettings, validDay, validPlanningSettings, validTaskPlanning } from './planningData.ts';
-import type { PlanningSettings, TaskPlanning } from './planningData.ts';
+import type { PlanningSettings, TaskPlanning, PostponeReasonCode } from './planningData.ts';
 import { fingerprint } from './stateFingerprint.ts';
 import { dependencyBlockMessage, validDependencyGraph, validDependencyIds } from './taskDependencies.ts';
 
@@ -49,7 +49,7 @@ export function quickPlanningTask(state: GameState, title: string, ownerId: stri
   const q = next.quests[next.quests.length - 1];
   return changeTaskPlanning(next, q.id, { inbox: !day, workflow: day ? 'ready' : 'planned' }, ownerId);
 }
-export function moveTaskToDay(state: GameState, id: string, day: string | null, ownerId: string, reason?: string, actionId?: string): GameState {
+export function moveTaskToDay(state: GameState, id: string, day: string | null, ownerId: string, reason?: string, actionId?: string, reasonCode?: PostponeReasonCode): GameState {
   const q = owned(state, id, ownerId);
   if (actionId && state.events.some((e) => e.id === actionId)) return state;
   const from = taskDay(q);
@@ -60,7 +60,7 @@ export function moveTaskToDay(state: GameState, id: string, day: string | null, 
     if (from === day) return changeTaskPlanning(state, id, { inbox: false }, ownerId);
     patch = from ? { shiftDays: Math.round((Date.parse(`${day}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / 86400000) } : { dueAt: day };
   }
-  const next = updateTaskSettings(state, id, { ...patch, moveReason: reason, actionId });
+  const next = updateTaskSettings(state, id, { ...patch, moveReason: reason, actionId, moveReasonCode: reasonCode });
   return changeTaskPlanning(next, id, { inbox: day === null }, ownerId);
 }
 export function setTaskWorkflow(state: GameState, id: string, workflow: NonNullable<TaskPlanning['workflow']> | 'done', ownerId: string): GameState {

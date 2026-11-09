@@ -50,13 +50,15 @@ try {
     await win.getByRole('button', { name: '30 мин', exact: true }).click();
     await win.getByLabel('Добавить фактическое время, мин').fill('20');
     await win.getByRole('button', { name: 'Учесть время', exact: true }).click();
-    await win.getByText('Учтено фактически: 20 мин', { exact: true }).waitFor();
+    // План уже установлен в 30 мин (строка выше) — текст включает отклонение от плана (0.76.0, Этап 2).
+    await win.getByText('Учтено фактически: 20 мин (план 30 мин, отклонение -10 мин)', { exact: true }).waitFor();
     await win.getByRole('button', { name: 'Готово', exact: true }).click();
     await plan.getByRole('button', { name: 'Настройки плана', exact: true }).click();
     const settings = plan.getByRole('form', { name: 'Настройки плана' });
     await settings.getByLabel('Доступно минут в день').fill('120');
     await settings.getByLabel('Резерв, %').fill('0');
     await settings.getByLabel('Главных задач в день').fill('2');
+    await settings.getByLabel('Предупреждать после переносов').fill('1');
     await settings.getByRole('button', { name: 'Сохранить настройки', exact: true }).click();
     const nextWeek = await page.evaluate(async () => {
       const { dateKey } = await import('/src/game.ts');
@@ -99,6 +101,18 @@ try {
     assert.equal(stored.planningSettings.dailyMinutes, 120);
     assert.equal(stored.events.filter((e) => e.planningChange?.type === 'reschedule').length, 1);
     assert.equal(stored.events.filter((e) => e.planningChange?.type === 'time').length, 1);
+    // Счётчик переносов на карточке и фильтр «Часто переношу» (0.76.0, разделы 5.1/5.2).
+    await task.getByText('Переносов: 1.', { exact: false }).waitFor();
+    await plan.getByLabel('Часто переношу (от 1 переносов)', { exact: true }).check();
+    await task.waitFor();
+    assert.equal(await plan.locator('.pplan-task').count(), 1, 'фильтр «Часто переношу» должен оставить задачу с переносами');
+    await plan.getByLabel('Часто переношу (от 1 переносов)', { exact: true }).uncheck();
+    // Возвращаем порог к значению по умолчанию — далее в тесте другая задача не должна
+    // получить собственное предупреждение «Переносов» (у неё 0 переносов, порог 1 бы не мешал,
+    // но следующая проверка .pplan-warning предполагает исходный порог по умолчанию).
+    await plan.getByRole('button', { name: 'Настройки плана', exact: true }).click();
+    await settings.getByLabel('Предупреждать после переносов').fill('3');
+    await settings.getByRole('button', { name: 'Сохранить настройки', exact: true }).click();
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'горизонтальное переполнение');
     assert.deepEqual(errors, []);
     // Предшественник блокирует выполнение; циклы отклоняются; перенос не каскадный.

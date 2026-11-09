@@ -1,4 +1,4 @@
-import { validTaskPlanning, validPlanningSettings, validPlanningEvent } from './planningData.ts';
+import { validTaskPlanning, validPlanningSettings, validPlanningEvent, validDay } from './planningData.ts';
 import { validPersonalState, validQuestExtension } from './questValidation.ts';
 import { SPHERE_PROGRESSION_MODEL } from './sphereProgress.ts';
 import { validCity, cityPrices, cityRooms } from './city.ts';
@@ -10,6 +10,7 @@ import { validMonthlyFocus } from './monthlyFocus.ts';
 import { validKeySpheres } from './lifePlanMap.ts';
 import { validReview, validMoodCheckins } from './keyResults.ts';
 import { validImportance } from './monthReport.ts';
+import { validWeeklyReview } from './weeklyReview.ts';
 import type { GameState, Quest } from './game.ts';
 import { validDependencyGraph } from './taskDependencies.ts';
 import {
@@ -503,4 +504,10 @@ export function validateState(value: unknown): asserts value is SavedState {
     return fail();
   if (!validMoodCheckins(value.moodCheckins)) return fail();
   if (!validImportance(value.sphereImportance)) return fail();
+  if (
+    value.weeklyReviews !== undefined &&
+    (!record(value.weeklyReviews) ||
+      !Object.entries(value.weeklyReviews).every(([key, r]) => validDay(key) && validWeeklyReview(r)))
+  )
+    return fail();
 }

@@ -289,6 +289,8 @@ export type MonthReflection = {
 };
 export type GameState = {
   planningSettings?: import('./planningData.ts').PlanningSettings;
+  /** Мастер недельного обзора (ТЗ «Этап 3», раздел 5): сохранённые итоги по неделям, ключ — понедельник 'YYYY-MM-DD'. */
+  weeklyReviews?: Record<string, import('./weeklyReview.ts').WeeklyReview>;
   habits?: import('./personalQuests').Habit[];
   habitCompletions?: import('./personalQuests').HabitCompletion[];
   coinTransactions?: import('./personalQuests').CoinTransaction[];

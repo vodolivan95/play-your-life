@@ -107,6 +107,12 @@ try {
     await task.waitFor();
     assert.equal(await plan.locator('.pplan-task').count(), 1, 'фильтр «Часто переношу» должен оставить задачу с переносами');
     await plan.getByLabel('Часто переношу (от 1 переносов)', { exact: true }).uncheck();
+    // Возвращаем порог к значению по умолчанию — далее в тесте другая задача не должна
+    // получить собственное предупреждение «Переносов» (у неё 0 переносов, порог 1 бы не мешал,
+    // но следующая проверка .pplan-warning предполагает исходный порог по умолчанию).
+    await plan.getByRole('button', { name: 'Настройки плана', exact: true }).click();
+    await settings.getByLabel('Предупреждать после переносов').fill('3');
+    await settings.getByRole('button', { name: 'Сохранить настройки', exact: true }).click();
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'горизонтальное переполнение');
     assert.deepEqual(errors, []);
     // Предшественник блокирует выполнение; циклы отклоняются; перенос не каскадный.

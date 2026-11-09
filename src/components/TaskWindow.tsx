@@ -15,6 +15,7 @@ import {
   updateTaskSettings,
 } from '../taskSettings';
 import type { DuePreset, TaskPatch } from '../taskSettings';
+import type { PostponeReasonCode } from '../planningData';
 import TaskLabelBadge from './TaskLabelBadge';
 import './TaskWindow.css';
 
@@ -83,6 +84,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
     [menuOpen, setMenuOpen] = useState(false),
     [activityOpen, setActivityOpen] = useState(false);
   const [moveReason, setMoveReason] = useState('');
+  const [moveReasonCode, setMoveReasonCode] = useState<PostponeReasonCode | undefined>(undefined);
   const subInput = useRef<HTMLInputElement>(null);
   if (!task) return null;
   const c = taskContribution(state, task),
@@ -94,7 +96,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
   function patch(p: TaskPatch, message?: string) {
     onChange((current) => {
       try {
-        const next = updateTaskSettings(current, task!.id, { ...p, moveReason });
+        const next = updateTaskSettings(current, task!.id, { ...p, moveReason, moveReasonCode });
         if (message) queueMicrotask(() => notify(message));
         return next;
       } catch (e) {
@@ -265,7 +267,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
           <div><small>В этап</small><b>{c.stage ? c.stage.name : '—'}</b><span>{c.stage ? `${c.stageTasks} задач в этапе` : 'без этапа'}</span></div>
         </div>
         <div className="twin-body">
-          <Suspense fallback={<p>Загрузка планирования…</p>}><TaskPlanningFields state={state} task={task} ownerId={ownerId ?? task.ownerId ?? 'local'} onChange={onChange} notify={notify} onReason={setMoveReason} onOpenRelated={(id) => { onClose(); if (onOpenRelated) onOpenRelated(id); else location.hash = taskRoute(id); }} /></Suspense>
+          <Suspense fallback={<p>Загрузка планирования…</p>}><TaskPlanningFields state={state} task={task} ownerId={ownerId ?? task.ownerId ?? 'local'} onChange={onChange} notify={notify} onReason={setMoveReason} onReasonCode={setMoveReasonCode} onOpenRelated={(id) => { onClose(); if (onOpenRelated) onOpenRelated(id); else location.hash = taskRoute(id); }} /></Suspense>
           <label className="twin-field">Название
             <input value={name} maxLength={100} disabled={locked} onChange={(e) => setName(e.target.value)}
               onBlur={() => name.trim() !== task.name && patch({ name })} />

@@ -1,4 +1,5 @@
 import { recordTaskSchedule, validTaskPlanning } from './planningData.ts';
+import type { PostponeReasonCode } from './planningData.ts';
 import { validDependencyGraph } from './taskDependencies.ts';
 import { difficulties } from './game.ts';
 import type { GameState, Quest } from './game.ts';
@@ -10,6 +11,8 @@ export type TaskPatch = {
   estimateMinutes?: number | null;
   priority?: Quest['priority'];
   moveReason?: string;
+  /** Категория причины переноса (необязательна); свободный текст moveReason остаётся отдельно. */
+  moveReasonCode?: PostponeReasonCode;
   actionId?: string;
   name?: string;
   notes?: string;
@@ -177,5 +180,5 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
   const clean = Object.fromEntries(Object.entries(q).filter(([, v]) => v !== undefined)) as Quest;
   const next = { ...state, quests: state.quests.map((item) => (item.id === id ? clean : item)) };
   if (patch.planning !== undefined && !validDependencyGraph(next.quests)) throw new Error('Связь создаёт цикл зависимостей.');
-  return recordTaskSchedule(next, old, clean, patch.moveReason, patch.actionId);
+  return recordTaskSchedule(next, old, clean, patch.moveReason, patch.actionId, patch.moveReasonCode);
 }

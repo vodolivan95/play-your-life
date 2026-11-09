@@ -67,6 +67,7 @@ import {
   toggleMonthlyFocus,
 } from '../monthlyFocus';
 import SphereIcon from './SphereIcon';
+import { postponementAnalytics, timeAnalytics } from '../planningData';
 import Icon from './Icon';
 import TaskLabelBadge from './TaskLabelBadge';
 import TaskWindow from './TaskWindow';
@@ -458,6 +459,12 @@ function Statistics({
   stageId?: string;
 }) {
   const data = goalStatistics(state, goal, stageId);
+  // Переносы и фактическое время — только по задачам этого проекта (или этапа), ТЗ «Этап 2», раздел 9.
+  const scopedIds = state.quests
+    .filter((q) => q.goalId === goal.id && (!stageId || q.stageId === stageId))
+    .map((q) => q.id);
+  const postponed = postponementAnalytics(state, new Date(), scopedIds);
+  const timing = timeAnalytics(state, scopedIds);
   const dates = data.rows.map((r) => r.date);
   const counts = Math.max(
     1,
@@ -602,6 +609,24 @@ function Statistics({
             История процентов появится после новых действий. Ранее не записанные
             значения не восстанавливаются.
           </p>
+        )}
+      </Card>
+      <Card title="Переносы и фактическое время">
+        {postponed.insufficientData ? (
+          <p className="gw-muted">Недостаточно данных: пока слишком мало задач {stageId ? 'этапа' : 'проекта'} с плановой датой.</p>
+        ) : (
+          <p className="gw-muted">
+            Перенесено вперёд: {Math.round((postponed.postponementRate ?? 0) * 100)}% запланированных задач.
+            Всего переносов: {postponed.totalMoves} (вперёд {postponed.forwardMoves}, назад {postponed.backwardMoves}).
+          </p>
+        )}
+        {timing.tasksWithBoth > 0 ? (
+          <p className="gw-muted">
+            Точность оценки времени: {Math.round((timing.planAccuracy ?? 0) * 100)}% по {timing.tasksWithBoth} задачам
+            (план {timing.plannedMinutes} мин, факт {timing.actualMinutes} мин).
+          </p>
+        ) : (
+          <p className="gw-muted">Пока нет задач {stageId ? 'этапа' : 'проекта'} с указанными планом и фактом времени одновременно.</p>
         )}
       </Card>
     </div>

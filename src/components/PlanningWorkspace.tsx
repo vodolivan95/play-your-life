@@ -4,7 +4,7 @@ import { dateKey, spheres } from '../game';
 import type { GameState, Quest } from '../game';
 import { addDays, mondayOf } from '../tasksCalendar';
 import { planningDay, planningMetrics, planningSettings } from '../planningData';
-import { applyWeekProposal, availableMinutes, changeTaskPlanning, inboxTask, moveTaskToDay, planningSummary, planningConflicts, proposeWeek, quickPlanningTask, savePlanningSettings, setTaskProject, setTaskWorkflow, taskDay, visiblePlanningTask } from '../planner';
+import { applyWeekProposal, availableMinutes, changeTaskPlanning, inboxTask, moveTaskToDay, planningSummary, planningConflicts, proposeWeek, quickPlanningTask, savePlanningSettings, setTaskProject, setTaskWorkflow, stuckCategoryLabels, stuckTasks, taskDay, visiblePlanningTask } from '../planner';
 import type { WeekProposal } from '../planner';
 import { updateTaskSettings } from '../taskSettings';
 import { dependentTasks, dependencyBlockers } from '../taskDependencies';
@@ -45,6 +45,7 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
   const start = scope === 'week' ? mondayOf(anchor) : scope === 'month' ? `${anchor.slice(0, 7)}-01` : day;
   const end = scope === 'week' ? addDays(start, 6) : scope === 'month' ? `${anchor.slice(0, 7)}-31` : day;
   const metrics = useMemo(() => planningMetrics(state), [state]);
+  const stuck = useMemo(() => stuckTasks(state, own, today, settings, metrics), [state, own, today, settings, metrics]);
   const shown = own.filter((q) => {
     if (scope === 'archive' ? !q.planning?.archivedAt : !visiblePlanningTask(q)) return false;
     if (scope === 'inbox' && !inboxTask(q)) return false;
@@ -141,6 +142,21 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
     </div>}
     <div className="pplan-stats" aria-label="Сводка плана"><span><b>{summary.done}/{summary.count}</b> Выполнено · {summary.percent}%</span><span><b>{fmt(summary.plan)}</b> План</span><span><b>{fmt(summary.remaining)}</b> Осталось</span><span><b>{fmt(summary.fact)}</b> Учтено всего по этим задачам</span></div>
     {conflicts.length > 0 && <details className="pplan-panel"><summary>Пересечения интервалов: {conflicts.length}</summary><p>Пересечения разрешены. Открой задачу, чтобы изменить время.</p><ul>{conflicts.map(([a, b]) => <li key={`${a.id}:${b.id}`}><button type="button" onClick={() => onOpen(a.id)}>{a.name}</button> пересекается с <button type="button" onClick={() => onOpen(b.id)}>{b.name}</button></li>)}</ul></details>}
+    {stuck.length > 0 && <details className="pplan-panel" aria-label="Застрявшие задачи"><summary>Застрявшие задачи: {stuck.length}</summary>
+      <p>Задачи, которые давно не продвигаются: часто переносятся, просрочены, заблокированы зависимостями, долго без подтверждённой активности или без уточнённого плана. Ничего не переносится и не меняется автоматически.</p>
+      <ul className="pplan-list">{stuck.map((st) => {
+        const q = own.find((t) => t.id === st.id)!;
+        return <li key={st.id} className="pplan-task">
+          <div className="pplan-task-top"><button type="button" className="pplan-name" onClick={() => onOpen(q.id)}>{q.name}</button></div>
+          <small>{st.categories.map((c) => stuckCategoryLabels[c]).join(' · ')}{st.daysSinceActivity !== undefined ? ` · Последняя активность: ${st.daysSinceActivity} дн. назад` : ''}</small>
+          {st.blockedBy.length > 0 && <p className="pplan-warning">Ожидает: {st.blockedBy.map((b) => b.name).join(', ')}.</p>}
+          <div className="pplan-row">
+            <button type="button" onClick={() => onOpen(q.id)}>Открыть</button>
+            <button type="button" aria-pressed={!!q.planning?.needsReview} onClick={() => apply((s) => changeTaskPlanning(s, q.id, { needsReview: !q.planning?.needsReview }, ownerId))}>{q.planning?.needsReview ? '✓ Отмечена для пересмотра' : 'Отметить для пересмотра'}</button>
+          </div>
+        </li>;
+      })}</ul>
+    </details>}
     {summary.unknown > 0 && <p role="status">Без оценки времени: {summary.unknown}. Расчёт нагрузки неполный.</p>}
     {mainCount > settings.mainLimit && <p className="pplan-warning" role="status">Главных задач {mainCount}, выбранный лимит {settings.mainLimit}. Пересмотри фокус дня.</p>}
     {doingCount > settings.wipLimit && <p className="pplan-warning" role="status">В работе {doingCount} задач при лимите {settings.wipLimit}. Заверши начатое перед новыми задачами.</p>}

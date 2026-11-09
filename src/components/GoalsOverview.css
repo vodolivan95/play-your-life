@@ -260,6 +260,17 @@
 .gl-card .goal-controls {
   margin: 0;
 }
+/* «Контроль проектов» (ТЗ «Этап 3», раздел 4) — краткая сводка внутри
+   существующего свёрнутого блока «Прогресс и сроки», без новых вкладок. */
+.goal-control-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+.goal-control-blocked {
+  color: #b91c1c;
+}
 .gl-monthly-focus-limit {
   display: block;
   margin-top: 8px;

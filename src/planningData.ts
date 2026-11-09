@@ -9,6 +9,8 @@ export type TaskPlanning = {
   workflow?: 'planned' | 'ready' | 'doing' | 'waiting';
   important?: boolean;
   urgent?: boolean;
+  /** Отмечена вручную как «требующая пересмотра» (ТЗ «Этап 3», раздел 3.2, модуль «Застрявшие задачи»). Не влияет ни на что, кроме отображения — ручная заметка пользователя себе. */
+  needsReview?: boolean;
 };
 export type PlanningSettings = {
   dailyMinutes: number;
@@ -71,12 +73,12 @@ export function validDay(v: unknown): v is string {
 }
 export function validTaskPlanning(v: unknown): boolean {
   return v === undefined || (obj(v)
-    && Object.keys(v).every((k) => ['dependencyIds', 'mainDay', 'inbox', 'archivedAt', 'workflow', 'important', 'urgent'].includes(k))
+    && Object.keys(v).every((k) => ['dependencyIds', 'mainDay', 'inbox', 'archivedAt', 'workflow', 'important', 'urgent', 'needsReview'].includes(k))
     && (v.dependencyIds === undefined || validDependencyIds(v.dependencyIds))
     && (v.mainDay === undefined || validDay(v.mainDay))
     && (v.archivedAt === undefined || instant(v.archivedAt))
     && (v.workflow === undefined || ['planned', 'ready', 'doing', 'waiting'].includes(String(v.workflow)))
-    && ['inbox', 'important', 'urgent'].every((k) => v[k] === undefined || typeof v[k] === 'boolean'));
+    && ['inbox', 'important', 'urgent', 'needsReview'].every((k) => v[k] === undefined || typeof v[k] === 'boolean'));
 }
 export function validPlanningSettings(v: unknown): v is PlanningSettings {
   return obj(v) && Object.keys(v).length === 6

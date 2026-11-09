@@ -4,7 +4,7 @@ import { newAccountGame } from '../src/accountGame.ts';
 import { backupText, restoreBackup } from '../src/backup.ts';
 import { validateState } from '../src/stateValidation.ts';
 import { actualMinutes, moveCount, planningSettings, validPlanningSettings } from '../src/planningData.ts';
-import { applyWeekProposal, availableMinutes, changeTaskPlanning, inboxTask, logTaskTime, moveTaskToDay, planningConflicts, proposeWeek, quickPlanningTask, savePlanningSettings, setTaskWorkflow } from '../src/planner.ts';
+import { applyWeekProposal, availableMinutes, changeTaskPlanning, inboxTask, logTaskTime, moveTaskToDay, planningConflicts, proposeWeek, quickPlanningTask, savePlanningSettings, setTaskDependencies, setTaskWorkflow, stuckTasks } from '../src/planner.ts';
 import { duplicateQuest } from '../src/personalQuests.ts';
 import { mergeStates } from '../src/stateMerge.ts';
 import { assembleFromCloud, splitForCloud } from '../src/cloudSplit.ts';
@@ -148,4 +148,53 @@ test('завершение не обходит отказ от задачи и �
   assert.throws(() => setTaskWorkflow(s, id, 'done', 'u'), /приостановлен/);
   assert.equal(s.xp, 0);
   assert.equal(s.quests[0].done, false);
+});
+
+// ТЗ «Этап 3», раздел 3 «Застрявшие задачи» (stuckTasks()).
+test('застрявшие задачи: частые переносы и просрочка — отдельные категории одной задачи', () => {
+  let s = setup(); const id = s.quests[0].id;
+  s = moveTaskToDay(s, id, '2000-01-01', 'u'); // первоначальное назначение — не перенос.
+  s = moveTaskToDay(s, id, '2000-01-02', 'u', undefined, 'm1');
+  s = moveTaskToDay(s, id, '2000-01-03', 'u', undefined, 'm2');
+  s = moveTaskToDay(s, id, '2000-01-01', 'u', undefined, 'm3');
+  assert.equal(moveCount(s, id), 3);
+  const stuck = stuckTasks(s, s.quests, dateKey(), planningSettings(s));
+  const found = stuck.find((t) => t.id === id)!;
+  assert.ok(found.categories.includes('oftenPostponed'));
+  assert.ok(found.categories.includes('overdue'));
+  assert.equal(found.moves, 3);
+});
+test('застрявшие задачи: ожидание зависимости видно через blockedBy', () => {
+  let s = setup(); const dep = s.quests[0].id;
+  s = quickPlanningTask(s, 'Второй шаг', 'u'); const id = s.quests[1].id;
+  s = setTaskDependencies(s, id, [dep], 'u');
+  const stuck = stuckTasks(s, s.quests, dateKey(), planningSettings(s));
+  const found = stuck.find((t) => t.id === id)!;
+  assert.ok(found.categories.includes('waitingForDependency'));
+  assert.deepEqual(found.blockedBy, [{ id: dep, name: 'Первый шаг' }]);
+  // Выполненная зависимость больше не блокирует и не числится застрявшей по этой причине.
+  s = completeQuest(s, dep);
+  const after = stuckTasks(s, s.quests, dateKey(), planningSettings(s));
+  assert.equal(after.find((t) => t.id === id)?.categories.includes('waitingForDependency') ?? false, false);
+});
+test('застрявшие задачи: долгое отсутствие подтверждённой активности и план без даты', () => {
+  const s = setup(); const id = s.quests[0].id;
+  const farFuture = new Date(Date.now() + 20 * 86400000);
+  const stuck = stuckTasks(s, s.quests, dateKey(farFuture), planningSettings(s), undefined, farFuture);
+  const found = stuck.find((t) => t.id === id)!;
+  assert.ok(found.categories.includes('longNoConfirmedActivity'));
+  assert.ok(found.categories.includes('needsPlanReview'));
+  assert.ok(found.daysSinceActivity! >= 20);
+});
+test('застрявшие задачи: задача на будущую дату не считается застрявшей из-за давности создания', () => {
+  let s = setup(); const id = s.quests[0].id;
+  s = moveTaskToDay(s, id, '2099-01-01', 'u');
+  const farFuture = new Date(Date.now() + 20 * 86400000);
+  const stuck = stuckTasks(s, s.quests, dateKey(farFuture), planningSettings(s), undefined, farFuture);
+  assert.equal(stuck.find((t) => t.id === id)?.categories.includes('longNoConfirmedActivity') ?? false, false);
+});
+test('застрявшие задачи: выполненные и архивные задачи не попадают в список', () => {
+  let s = setup(); const id = s.quests[0].id;
+  s = completeQuest(s, id);
+  assert.deepEqual(stuckTasks(s, s.quests, dateKey(), planningSettings(s)), []);
 });

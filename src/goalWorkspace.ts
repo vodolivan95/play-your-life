@@ -1,4 +1,6 @@
 import type { GameState, Goal, GoalStage, Quest, Event } from './game.ts';
+import { planningDay, planningMetrics, planningSettings } from './planningData.ts';
+import { dependencyBlockMessage } from './taskDependencies.ts';
 
 export function taskFraction(task: Quest) {
   return task.done
@@ -290,4 +292,89 @@ export function goalActivityStreak(
     d.setDate(d.getDate() - 1);
   }
   return count;
+}
+
+// ---------------------------------------------------------------------------
+// «Контроль проектов» (ТЗ «Этап 3», раздел 4). Только вычисляемые значения —
+// ничего не сохраняется в GameState. Переиспользует существующие данные:
+// goalHistory() (последняя активность), nextGoalTask()/stageAccess() (следующий
+// доступный шаг), planningMetrics() (переносы), dependencyBlockMessage() (причина
+// блокировки следующей задачи).
+// ---------------------------------------------------------------------------
+export type ProjectStatus =
+  | 'advancing'
+  | 'needsAttention'
+  | 'noNextStep'
+  | 'hasOverdueStages'
+  | 'noConfirmedActivity';
+export const projectStatusLabels: Record<ProjectStatus, string> = {
+  advancing: 'Продвигается',
+  needsAttention: 'Требует внимания',
+  noNextStep: 'Нет доступного следующего шага',
+  hasOverdueStages: 'Есть просроченные этапы',
+  noConfirmedActivity: 'Нет подтверждённой активности',
+};
+/** Дней без подтверждённой активности/прогресса, после которых проект считается «нет активности». */
+export const PROJECT_NO_ACTIVITY_DAYS = 14;
+export type ProjectControl = {
+  status: ProjectStatus;
+  /** ISO-дата последнего события проекта (задача/перенос/время/создание) — goalHistory()[0]. */
+  lastActivity?: string;
+  daysSinceActivity?: number;
+  /** Дней с последнего ЗАВЕРШЕНИЯ задачи проекта (прогресса), а не любой активности. */
+  daysWithoutProgress?: number;
+  openTasks: number;
+  doneTasks: number;
+  overdueTasks: number;
+  /** Сумма достоверных переносов (planningMetrics) по всем задачам проекта. */
+  confirmedPostponements: number;
+  /** Ближайший срок — из незавершённых этапов, открытых задач или самого проекта. */
+  nearestDeadline?: string;
+  nextTask?: Quest;
+  /** Причина блокировки nextTask зависимостями, если задача найдена, но заблокирована. */
+  nextTaskBlockedReason?: string;
+};
+export function projectControl(
+  state: GameState,
+  goal: Goal,
+  now = new Date(),
+  settings = planningSettings(state),
+  metrics = planningMetrics(state),
+): ProjectControl {
+  const today = planningDay(now.toISOString())!;
+  const tasks = state.quests.filter((q) => q.goalId === goal.id);
+  const open = tasks.filter((q) => !q.done && !q.planning?.archivedAt && !q.wontDo);
+  const doneTasks = tasks.filter((q) => q.done).length;
+  const overdueTasks = open.filter((q) => {
+    const d = planningDay(q.dueAt ?? q.startsAt);
+    return d && d < today;
+  }).length;
+  const confirmedPostponements = tasks.reduce((sum, q) => sum + (metrics.get(q.id)?.moves ?? 0), 0);
+  const history = goalHistory(state, goal);
+  const lastActivity = history[0]?.date;
+  const daysSinceActivity = lastActivity ? Math.floor((now.getTime() - Date.parse(lastActivity)) / 86400000) : undefined;
+  const lastProgress = history.find((e) => e.kind === 'quest')?.date;
+  const daysWithoutProgress = lastProgress ? Math.floor((now.getTime() - Date.parse(lastProgress)) / 86400000) : undefined;
+  const openStages = (goal.stages ?? []).filter((s) => !stageMetrics(state, goal, s).complete);
+  const nearestDeadline = [goal.dueAt, ...openStages.map((s) => s.dueAt), ...open.map((q) => q.dueAt)]
+    .filter((v): v is string => !!v)
+    .sort()[0];
+  const nextTask = nextGoalTask(state, goal, now);
+  const nextTaskBlockedReason = nextTask ? dependencyBlockMessage(state.quests, nextTask) : undefined;
+  const hasOverdueStages = openStages.some((s) => s.dueAt && Date.parse(s.dueAt) < now.getTime());
+  const progress = goalProgressValue(state, goal);
+  const status: ProjectStatus = hasOverdueStages
+    ? 'hasOverdueStages'
+    : !nextTask && progress < 100
+      ? 'noNextStep'
+      : daysSinceActivity === undefined || daysSinceActivity >= PROJECT_NO_ACTIVITY_DAYS
+        ? 'noConfirmedActivity'
+        : overdueTasks > 0 || confirmedPostponements > 0
+          ? 'needsAttention'
+          : 'advancing';
+  return {
+    status, lastActivity, daysSinceActivity, daysWithoutProgress,
+    openTasks: open.length, doneTasks, overdueTasks, confirmedPostponements,
+    nearestDeadline, nextTask, nextTaskBlockedReason,
+  };
 }

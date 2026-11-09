@@ -4,10 +4,10 @@ import { progressQuest, saveCustomQuest } from './personalQuests.ts';
 import { updateTaskSettings } from './taskSettings.ts';
 import type { TaskPatch } from './taskSettings.ts';
 import { addDays, mondayOf } from './tasksCalendar.ts';
-import { addPlanningEvent, planningDay, planningMetrics, planningSettings, validDay, validPlanningSettings, validTaskPlanning } from './planningData.ts';
+import { addPlanningEvent, planningDay, planningMetrics, planningSettings, taskPlanningEvents, validDay, validPlanningSettings, validTaskPlanning } from './planningData.ts';
 import type { PlanningSettings, TaskPlanning, PostponeReasonCode } from './planningData.ts';
 import { fingerprint } from './stateFingerprint.ts';
-import { dependencyBlockMessage, validDependencyGraph, validDependencyIds } from './taskDependencies.ts';
+import { dependencyBlockMessage, dependencyBlockers, validDependencyGraph, validDependencyIds } from './taskDependencies.ts';
 
 export function visiblePlanningTask(q: Quest): boolean { return !q.planning?.archivedAt && !q.wontDo; }
 export function inboxTask(q: Quest): boolean {
@@ -106,6 +106,44 @@ export function planningSummary(state: GameState, quests: Quest[], metrics = pla
   const done = active.filter((q) => q.done).length;
   return { count: active.length, done, percent: active.length ? Math.round(done / active.length * 100) : 0,
     plan, remaining, fact, unknown: active.filter((q) => !q.done && !q.estimateMinutes).length };
+}
+
+// ---------------------------------------------------------------------------
+// «Застрявшие задачи» (ТЗ «Этап 3», раздел 3). Только существующие данные (planningMetrics,
+// taskPlanningEvents, dependencyBlockers). Отсутствие новых записей НЕ считается доказательством
+// того, что пользователь не работал над задачей (раздел 3 ТЗ) — категория 'longNoConfirmedActivity'
+// лишь показывает, когда зафиксирована последняя ПОДТВЕРЖДЁННАЯ активность, не делая вывод о том,
+// что её не было вовсе.
+// ---------------------------------------------------------------------------
+export type StuckCategory = 'oftenPostponed' | 'overdue' | 'waitingForDependency' | 'longNoConfirmedActivity' | 'needsPlanReview';
+export const stuckCategoryLabels: Record<StuckCategory, string> = {
+  oftenPostponed: 'Часто переносится', overdue: 'Просрочена', waitingForDependency: 'Ожидает другую задачу',
+  longNoConfirmedActivity: 'Долго без подтверждённой активности', needsPlanReview: 'Требует уточнения плана',
+};
+export type StuckTask = { id: string; categories: StuckCategory[]; moves: number; blockedBy: { id: string; name: string }[]; daysSinceActivity?: number };
+const STUCK_NO_ACTIVITY_DAYS = 14;
+const STUCK_NO_PLAN_DAYS = 7;
+export function stuckTasks(state: GameState, quests: Quest[], today: string, settings: PlanningSettings, metrics = planningMetrics(state), now = new Date()): StuckTask[] {
+  const result: StuckTask[] = [];
+  for (const q of quests) {
+    if (!visiblePlanningTask(q) || q.done) continue;
+    const categories: StuckCategory[] = [];
+    const moves = metrics.get(q.id)?.moves ?? 0;
+    if (moves >= settings.moveWarning) categories.push('oftenPostponed');
+    const d = taskDay(q);
+    if (d && d < today) categories.push('overdue');
+    const blockedBy = dependencyBlockers(quests, q);
+    if (blockedBy.length > 0) categories.push('waitingForDependency');
+    const events = taskPlanningEvents(state, q.id);
+    const lastKnown = events[events.length - 1]?.date ?? q.createdAt;
+    const daysSinceActivity = lastKnown ? Math.floor((now.getTime() - Date.parse(lastKnown)) / 86400000) : undefined;
+    // Только для задач, чья плановая дата не в будущем — иначе это не «застряла», а «ещё не наступила».
+    if (daysSinceActivity !== undefined && daysSinceActivity >= STUCK_NO_ACTIVITY_DAYS && (!d || d <= today)) categories.push('longNoConfirmedActivity');
+    const createdDaysAgo = q.createdAt ? Math.floor((now.getTime() - Date.parse(q.createdAt)) / 86400000) : undefined;
+    if (!d && createdDaysAgo !== undefined && createdDaysAgo >= STUCK_NO_PLAN_DAYS) categories.push('needsPlanReview');
+    if (categories.length) result.push({ id: q.id, categories, moves, blockedBy: blockedBy.map((b) => ({ id: b.id, name: b.name })), daysSinceActivity });
+  }
+  return result;
 }
 export type WeekProposal = { anchor: string; revision: number; assignments: { id: string; day: string; original?: string; originalStart?: string }[]; unplaced: string[] };
 const planRevision = (state: GameState) => fingerprint({ quests: state.quests, settings: planningSettings(state), day: dateKey() });

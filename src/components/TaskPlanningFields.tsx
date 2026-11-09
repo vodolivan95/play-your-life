@@ -51,10 +51,17 @@ export default function TaskPlanningFields({ state, task, onChange, notify, onRe
 }) {
   const [minutes, setMinutes] = useState('');
   const [timer, setTimer] = useState(() => readTimer(ownerId, task.id));
+  // Если владелец/задача сменились без перемонтирования компонента — пересчитываем состояние
+  // прямо во время рендера («adjusting state during render» из react.dev/learn/you-might-not-need-an-effect),
+  // а не в useEffect: синхронный setState в теле эффекта помечается react-hooks/set-state-in-effect
+  // как причина лишних каскадных рендеров, а здесь это ровно производное от пропсов состояние.
+  const [timerKey, setTimerKey] = useState(`${ownerId}:${task.id}`);
+  const nextTimerKey = `${ownerId}:${task.id}`;
+  if (timerKey !== nextTimerKey) { setTimerKey(nextTimerKey); setTimer(readTimer(ownerId, task.id)); }
   // Таймер хранится в localStorage этого устройства, отдельно по владельцу (src/taskTimer.ts,
   // ТЗ 3.3), а не в GameState — обновляем отображение раз в секунду, пока он запущен, перечитывая
-  // сохранённый момент старта.
-  useEffect(() => { setTimer(readTimer(ownerId, task.id)); }, [ownerId, task.id]);
+  // сохранённый момент старта. Этот эффект не нарушает то же правило: setTimer вызывается не
+  // синхронно в теле эффекта, а асинхронно в callback'е setInterval.
   useEffect(() => {
     if (!timer?.runningSince) return;
     const i = setInterval(() => setTimer(readTimer(ownerId, task.id)), 1000);

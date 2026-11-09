@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
-import type { GameState, Quest } from '../game';
+import type { Event, GameState, Quest } from '../game';
 import {
-  actualMinutes, forwardMoveCount, moveCount, planningSettings, postponeReasons, taskPlanningEvents,
+  actualMinutes, ambiguousMoveCount, forwardMoveCount, moveCount, planningSettings, postponeReasons, taskPlanningEvents,
 } from '../planningData';
 import type { PostponeReasonCode } from '../planningData';
 import { logTaskTime } from '../planner';
 import { updateTaskSettings } from '../taskSettings';
-import { discardTimer, elapsedSeconds, finishTimer, formatElapsed, pauseTimer, readTimer, resumeTimer, startTimer } from '../taskTimer';
+import {
+  activeTimer, commitFinish, discardTimer, elapsedSeconds, formatElapsed, isTimerStorageCorrupted, pauseTimer, peekFinish, readTimer, resumeTimer, startTimer,
+} from '../taskTimer';
 import TaskDependencyFields from './TaskDependencyFields';
 
 /** Мягкая текстовая градация числа переносов (ТЗ 4.6): без цветных блоков, только формулировка. Пороги 1–2/3–4/5+ фиксированы относительно настраиваемого moveWarning, который остаётся порогом явного предупреждения ниже. */
@@ -18,26 +20,79 @@ function moveTier(moves: number): '' | 'neutral' | 'notice' | 'attention' {
   return 'attention';
 }
 
+/**
+ * Строка истории одного события планирования. Значения сужаемого union-типа
+ * `PlanningChange` сначала читаются в локальные переменные, а не передаются в замыкание
+ * `.find()` напрямую — сужение TypeScript по `?.type === …` не распространяется внутрь
+ * вложенной функции (TS2339 в CI на предыдущей версии этого файла), поэтому дальше
+ * работаем с уже вычисленными примитивами.
+ */
+function historyLine(e: Event): string {
+  const change = e.planningChange;
+  const when = new Date(e.date).toLocaleString('ru-RU');
+  if (!change) return when;
+  if (change.type === 'time') return `${when} · ${change.minutes} мин`;
+  const from = change.from ? new Date(change.from).toLocaleString('ru-RU') : 'Без даты';
+  const to = change.to ? new Date(change.to).toLocaleString('ru-RU') : 'Без даты';
+  const prefix = change.type === 'retime' ? 'Время: ' : '';
+  const autoSuffix = change.type === 'reschedule' && change.ambiguousRepeat ? ' · причина изменения неизвестна (возможно, повтор TickTick)' : '';
+  // code — в отдельную переменную до .find(): сужение TypeScript по дискриминанту 'type' не
+  // переживает вход во вложенное замыкание (см. комментарий к historyLine выше).
+  const code = change.reasonCode;
+  const reasonLabel = code ? postponeReasons.find((r) => r.code === code)?.label : undefined;
+  const reasonSuffix = reasonLabel ? ` · ${reasonLabel}` : '';
+  const freeTextSuffix = change.reason ? ` · ${change.reason}` : '';
+  return `${when} · ${prefix}${from} → ${to}${autoSuffix}${reasonSuffix}${freeTextSuffix}`;
+}
+
 export default function TaskPlanningFields({ state, task, onChange, notify, onReason, onReasonCode, onOpenRelated, ownerId }: {
   state: GameState; task: Quest; ownerId: string; onChange: Dispatch<SetStateAction<GameState>>; notify: (s: string) => void;
   onReason: (s: string) => void; onReasonCode: (c: PostponeReasonCode | undefined) => void; onOpenRelated: (id: string) => void;
 }) {
   const [minutes, setMinutes] = useState('');
-  const [timer, setTimer] = useState(() => readTimer(task.id));
-  // Таймер хранится в localStorage этого устройства (src/taskTimer.ts), не в GameState — обновляем
-  // отображение раз в секунду, пока он запущен, перечитывая сохранённый момент старта.
-  useEffect(() => { setTimer(readTimer(task.id)); }, [task.id]);
+  const [timer, setTimer] = useState(() => readTimer(ownerId, task.id));
+  // Таймер хранится в localStorage этого устройства, отдельно по владельцу (src/taskTimer.ts,
+  // ТЗ 3.3), а не в GameState — обновляем отображение раз в секунду, пока он запущен, перечитывая
+  // сохранённый момент старта.
+  useEffect(() => { setTimer(readTimer(ownerId, task.id)); }, [ownerId, task.id]);
   useEffect(() => {
     if (!timer?.runningSince) return;
-    const i = setInterval(() => setTimer(readTimer(task.id)), 1000);
+    const i = setInterval(() => setTimer(readTimer(ownerId, task.id)), 1000);
     return () => clearInterval(i);
-  }, [task.id, timer?.runningSince]);
+  }, [ownerId, task.id, timer?.runningSince]);
+  // Другой уже запущенный таймер этого владельца (ТЗ 3.2: один активный таймер на пользователя) —
+  // показываем предупреждение заранее, не только после попытки старта.
+  const otherRunning = activeTimer(ownerId, task.id);
+  const otherRunningTask = otherRunning && state.quests.find((q) => q.id === otherRunning.taskId);
+  const timerStorageCorrupted = isTimerStorageCorrupted(ownerId);
+  function finishActiveTimer(current: typeof timer) {
+    if (!current) return;
+    const peek = peekFinish(ownerId, task.id);
+    if (!peek) { setTimer(undefined); return; }
+    const value = Math.min(43200, Math.round(peek.seconds / 60));
+    if (value < 1) {
+      // 3.5: не навязываем минимум в 1 минуту — короткая сессия (<30 с) не искажает факт, просто не учитывается.
+      discardTimer(ownerId, task.id); setTimer(undefined);
+      notify('Сессия короче 30 секунд — время не учтено.');
+      return;
+    }
+    if (!state.quests.some((q) => q.id === task.id)) {
+      // Задача не найдена в текущем состоянии — не удаляем таймер, чтобы не потерять время незаметно (3.1/3.4).
+      notify('Задача не найдена — время сессии пока не учтено, таймер сохранён для повторной попытки.');
+      return;
+    }
+    // 3.1: сначала сохраняем время (apply) и только при успехе удаляем таймер (commitFinish) —
+    // тот же actionId переживает повторную попытку, поэтому повтор клика не задвоит время.
+    apply((s) => logTaskTime(s, task.id, value, ownerId, peek.actionId));
+    commitFinish(ownerId, task.id); setTimer(undefined);
+  }
   const moves = moveCount(state, task.id);
   const forward = forwardMoveCount(state, task.id);
   const events = taskPlanningEvents(state, task.id);
   const toOf = (e: (typeof events)[number]) => (e.planningChange?.type !== 'time' ? e.planningChange?.to : undefined);
   const firstKnown = events.map(toOf).find((v) => v);
-  const lastMove = [...events].reverse().find((e) => e.planningChange?.type === 'reschedule' && !e.planningChange.auto);
+  const lastMove = [...events].reverse().find((e) => e.planningChange?.type === 'reschedule' && !e.planningChange.ambiguousRepeat);
+  const ambiguous = ambiguousMoveCount(state, task.id);
   function apply(action: (s: GameState) => GameState) {
     onChange((s) => { try { return action(s); } catch (e) { queueMicrotask(() => notify((e as Error).message)); return s; } });
   }
@@ -58,37 +113,44 @@ export default function TaskPlanningFields({ state, task, onChange, notify, onRe
       <input type="number" min={1} max={43200} step={1} required value={minutes} aria-label="Добавить фактическое время, мин" placeholder="Фактические минуты" onChange={(e) => setMinutes(e.target.value)} />
       <button type="submit" disabled={!minutes}>Учесть время</button>
     </form>
+    {timerStorageCorrupted && <p role="alert">
+      Не удалось прочитать сохранённый таймер этого устройства — данные повреждены. Если время не учтено, добавьте его вручную выше.
+    </p>}
     {!task.done && <div className="twin-inline" aria-label="Таймер фактического времени">
-      {!timer && <button type="button" onClick={() => setTimer(startTimer(task.id))}>Начать отсчёт времени</button>}
+      {!timer && !otherRunning && <button type="button" onClick={() => {
+        try { setTimer(startTimer(ownerId, task.id)); } catch (e) { notify((e as Error).message); }
+      }}>Начать отсчёт времени</button>}
+      {!timer && otherRunning && <p role="status">
+        Уже идёт отсчёт времени{otherRunningTask ? ` задачи «${otherRunningTask.name}»` : ' другой задачи'} — поставьте его на паузу или завершите, прежде чем начать этот.
+      </p>}
       {timer?.runningSince && <>
         <span role="timer">Идёт: {formatElapsed(elapsedSeconds(timer))}</span>
-        <button type="button" onClick={() => setTimer(pauseTimer(task.id))}>Пауза</button>
-        <button type="button" onClick={() => {
-          const seconds = elapsedSeconds(timer);
-          const value = Math.max(1, Math.round(seconds / 60));
-          const actionId = crypto.randomUUID();
-          apply((s) => logTaskTime(s, task.id, value, ownerId, actionId));
-          finishTimer(task.id); setTimer(undefined);
-        }}>Завершить</button>
+        <button type="button" onClick={() => setTimer(pauseTimer(ownerId, task.id))}>Пауза</button>
+        <button type="button" onClick={() => finishActiveTimer(timer)}>Завершить</button>
       </>}
       {timer && !timer.runningSince && <>
         <span>На паузе: {formatElapsed(elapsedSeconds(timer))}</span>
-        <button type="button" onClick={() => setTimer(resumeTimer(task.id))}>Продолжить</button>
         <button type="button" onClick={() => {
-          const seconds = elapsedSeconds(timer);
-          const value = Math.max(1, Math.round(seconds / 60));
-          const actionId = crypto.randomUUID();
-          apply((s) => logTaskTime(s, task.id, value, ownerId, actionId));
-          finishTimer(task.id); setTimer(undefined);
-        }}>Завершить</button>
-        <button type="button" onClick={() => { discardTimer(task.id); setTimer(undefined); }}>Отменить</button>
+          try { setTimer(resumeTimer(ownerId, task.id)); } catch (e) { notify((e as Error).message); }
+        }}>Продолжить</button>
+        <button type="button" onClick={() => finishActiveTimer(timer)}>Завершить</button>
+        <button type="button" onClick={() => { discardTimer(ownerId, task.id); setTimer(undefined); }}>Отменить</button>
       </>}
     </div>}
+    {task.done && timer && <p role="status">
+      У завершённой задачи осталось неучтённое время таймера: {formatElapsed(elapsedSeconds(timer))}.
+      {' '}<button type="button" onClick={() => finishActiveTimer(timer)}>Учесть это время</button>{' '}
+      <button type="button" onClick={() => { discardTimer(ownerId, task.id); setTimer(undefined); }}>Отменить без учёта</button>
+    </p>}
     {moves > 0 && <p data-move-tier={moveTier(moves)}>
       Переносов: {moves}{forward ? ` (вперёд: ${forward})` : ''}
       {firstKnown ? ` · первая известная дата: ${new Date(firstKnown).toLocaleDateString('ru-RU')}` : ''}
       {lastMove?.date ? ` · последнее изменение: ${new Date(lastMove.date).toLocaleDateString('ru-RU')}` : ''}
     </p>}
+    {ambiguous > 0 && <p><small>
+      Ещё {ambiguous} {ambiguous === 1 ? 'изменение даты' : 'изменения даты'} вперёд с совпадающим шагом повтора TickTick — неизвестно,
+      ручной перенос это или автоматическое наступление следующего повтора, поэтому в счётчик выше не включено.
+    </small></p>}
     {moves >= planningSettings(state).moveWarning && <p role="status">
       Задача переносилась {moves} раз. Можно уменьшить её объём, разбить на подзадачи, назначить конкретное время, пересмотреть приоритет или проверить, актуальна ли она ещё.
     </p>}
@@ -102,8 +164,6 @@ export default function TaskPlanningFields({ state, task, onChange, notify, onRe
     </div>}
     <h4>История планирования</h4>
     {events.length === 0 ? <p>Истории пока нет. Изменения дат и учёт времени появятся здесь.</p>
-      : <ul>{events.map((e) => <li key={e.id}>{new Date(e.date).toLocaleString('ru-RU')} · {e.planningChange?.type === 'time'
-        ? `${e.planningChange.minutes} мин`
-        : `${e.planningChange?.type === 'retime' ? 'Время: ' : ''}${e.planningChange?.from ? new Date(e.planningChange.from).toLocaleString('ru-RU') : 'Без даты'} → ${e.planningChange?.to ? new Date(e.planningChange.to).toLocaleString('ru-RU') : 'Без даты'}${e.planningChange?.type === 'reschedule' && e.planningChange.auto ? ' · автоматически (повтор TickTick)' : ''}${e.planningChange?.reasonCode ? ` · ${postponeReasons.find((r) => r.code === e.planningChange?.reasonCode)?.label ?? ''}` : ''}${e.planningChange?.reason ? ` · ${e.planningChange.reason}` : ''}`}</li>)}</ul>}
+      : <ul>{events.map((e) => <li key={e.id}>{historyLine(e)}</li>)}</ul>}
   </details>;
 }

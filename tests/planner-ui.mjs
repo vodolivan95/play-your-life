@@ -50,7 +50,8 @@ try {
     await win.getByRole('button', { name: '30 мин', exact: true }).click();
     await win.getByLabel('Добавить фактическое время, мин').fill('20');
     await win.getByRole('button', { name: 'Учесть время', exact: true }).click();
-    await win.getByText('Учтено фактически: 20 мин', { exact: true }).waitFor();
+    // План уже установлен в 30 мин (строка выше) — текст включает отклонение от плана (0.76.0, Этап 2).
+    await win.getByText('Учтено фактически: 20 мин (план 30 мин, отклонение -10 мин)', { exact: true }).waitFor();
     await win.getByRole('button', { name: 'Готово', exact: true }).click();
     await plan.getByRole('button', { name: 'Настройки плана', exact: true }).click();
     const settings = plan.getByRole('form', { name: 'Настройки плана' });

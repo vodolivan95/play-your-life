@@ -37,8 +37,13 @@ export default function MonthReport({
   const month = selectedMonth ?? localMonth;
   const r = monthReport(state, month);
   const s = r.summary;
+  // За ВЫБРАННЫЙ месяц (может быть прошлым — навигация стрелками выше): переносы и учтённое
+  // время строго в его границах, по дате события. Переносов — отдельно подтверждённые/неопределённые.
   const moves = monthlyMoves(state, month);
   const monthMinutes = monthlyActualMinutes(state, month);
+  // За ВСЁ ВРЕМЯ (не зависит от выбранного месяца — это общий паттерн, а не часть отчёта за
+  // конкретный месяц, поэтому подписано отдельно): общий счётчик, точность оценки, топ-10
+  // (ТЗ «Этап 2 — исправление», раздел 5.1).
   const postponed = postponementAnalytics(state);
   const accuracy = timeAnalytics(state);
   const change = r.xpChange;
@@ -143,19 +148,31 @@ export default function MonthReport({
       </div>
 
       <section className="mrep-card">
-        <header><div><h3>Переносы и точность планирования</h3><p>Общая история, не только этот месяц — чтобы было видно повторяющийся паттерн.</p></div></header>
+        <header><div><h3>Переносы — {monthLabel(month).toLowerCase()}</h3><p>Подтверждённые переносы этого месяца; неопределённые изменения повторяющихся задач TickTick — отдельно.</p></div></header>
+        <p className="mrep-small">
+          Переносов: {moves.moves}{moves.moves ? ` (вперёд ${moves.forward}, назад ${moves.moves - moves.forward})` : ''}.{' '}
+          Учтённое время: {monthMinutes} мин{monthMinutes ? ` (≈ ${(monthMinutes / 60).toFixed(1)} ч)` : ''}.{' '}
+          Задач выполнено: {s.quests}.
+        </p>
+        {moves.ambiguous > 0 && <p className="mrep-small">
+          Ещё {moves.ambiguous} {moves.ambiguous === 1 ? 'изменение' : 'изменения'} даты повторяющихся задач с неизвестной причиной (возможно, автоповтор TickTick) — не входят в счётчик выше.
+        </p>}
+      </section>
+
+      <section className="mrep-card">
+        <header><div><h3>Переносы и точность — за всё время</h3><p>Общая история по всем месяцам, не только по выбранному — чтобы было видно повторяющийся паттерн.</p></div></header>
         {postponed.insufficientData ? <p className="mrep-small">Недостаточно данных: ещё слишком мало задач с плановой датой.</p> : (
           <>
             <div className="mrep-row">
               <div><span>Переносов вперёд из запланированных задач</span><b>{Math.round((postponed.postponementRate ?? 0) * 100)}%</b></div>
               <div className="mrep-track"><i style={{ width: `${(postponed.postponementRate ?? 0) * 100}%` }} /></div>
             </div>
-            <p className="mrep-small">Всего переносов: {postponed.totalMoves} (вперёд {postponed.forwardMoves}, назад {postponed.backwardMoves}) по {postponed.tasksWithMoves} задачам, в среднем {postponed.averagePerTask.toFixed(1)} на задачу.</p>
+            <p className="mrep-small">Всего переносов: {postponed.totalMoves} (вперёд {postponed.forwardMoves}, назад {postponed.backwardMoves}) по {postponed.tasksWithMoves} задачам, в среднем {postponed.averagePerTask.toFixed(1)} на задачу.{postponed.ambiguousMoves ? ` Ещё ${postponed.ambiguousMoves} изменений с неизвестной причиной не включены.` : ''}</p>
           </>
         )}
-        {accuracy.planAccuracy !== undefined && (
-          <p className="mrep-small">Точность оценки времени (Plan Accuracy): {Math.round(accuracy.planAccuracy * 100)}% по {accuracy.tasksWithBoth} задачам с планом и фактом{accuracy.averageDeviationMinutes !== undefined ? `, среднее отклонение ${accuracy.averageDeviationMinutes >= 0 ? '+' : ''}${Math.round(accuracy.averageDeviationMinutes)} мин` : ''}.</p>
-        )}
+        {accuracy.planAccuracy !== undefined ? (
+          <p className="mrep-small">Точность оценки времени (Plan Accuracy): {Math.round(accuracy.planAccuracy * 100)}% по {accuracy.tasksWithBoth} завершённым задачам с планом и фактом{accuracy.averageDeviationMinutes !== undefined ? `, среднее отклонение ${accuracy.averageDeviationMinutes >= 0 ? '+' : ''}${Math.round(accuracy.averageDeviationMinutes)} мин` : ''}.</p>
+        ) : <p className="mrep-small">Точность оценки времени появится, когда хотя бы одна завершённая задача будет иметь и план, и факт.</p>}
         {postponed.top10.length > 0 && <details>
           <summary>Топ самых переносимых задач</summary>
           {postponed.top10.map((t) => (

@@ -618,15 +618,16 @@ function Statistics({
           <p className="gw-muted">
             Перенесено вперёд: {Math.round((postponed.postponementRate ?? 0) * 100)}% запланированных задач.
             Всего переносов: {postponed.totalMoves} (вперёд {postponed.forwardMoves}, назад {postponed.backwardMoves}).
+            {postponed.ambiguousMoves ? ` Ещё ${postponed.ambiguousMoves} изменений с неизвестной причиной (повтор TickTick?) не включены.` : ''}
           </p>
         )}
         {timing.tasksWithBoth > 0 ? (
           <p className="gw-muted">
-            Точность оценки времени: {Math.round((timing.planAccuracy ?? 0) * 100)}% по {timing.tasksWithBoth} задачам
+            Точность оценки времени: {Math.round((timing.planAccuracy ?? 0) * 100)}% по {timing.tasksWithBoth} завершённым задачам
             (план {timing.plannedMinutes} мин, факт {timing.actualMinutes} мин).
           </p>
         ) : (
-          <p className="gw-muted">Пока нет задач {stageId ? 'этапа' : 'проекта'} с указанными планом и фактом времени одновременно.</p>
+          <p className="gw-muted">Пока нет завершённых задач {stageId ? 'этапа' : 'проекта'} с указанными планом и фактом времени одновременно.</p>
         )}
       </Card>
     </div>

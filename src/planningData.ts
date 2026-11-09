@@ -40,8 +40,20 @@ export type PlanningChange =
       from?: string; to?: string; reason?: string; reasonCode?: PostponeReasonCode;
       /** Только для 'reschedule': новая дата позже ('forward') или раньше ('backward') прежней. */
       direction?: 'forward' | 'backward';
-      /** Перенос обнаружен синхронизацией TickTick у задачи с активным повторением (repeatFlag) — скорее всего, это обычное наступление следующего повтора, а не перенос пользователем (ТЗ, раздел 12). Событие сохраняется для прозрачности, но не считается в основном счётчике и аналитике переносов. */
-      auto?: true;
+      /**
+       * Причину изменения даты нельзя достоверно определить (ТЗ «Этап 2 — исправление», раздел 2):
+       * задача несёт активное повторение TickTick (repeatFlag), сдвиг вперёд, и этот сдвиг по
+       * длительности совпадает с шагом повтора (или шаг повтора невозможно надёжно разобрать из
+       * RRULE) — тогда это может быть как автоматическое наступление следующего повтора, так и
+       * ручной перенос пользователя, случайно совпавший по длительности с шагом повтора.
+       * Перенос назад никогда не помечается так (автоповтор не может сдвигать дату назад), и
+       * перенос вперёд на длительность, НЕ совпадающую с шагом повтора, тоже не помечается —
+       * такой сдвиг не может быть автоматическим наступлением следующего повтора по определению,
+       * значит это достоверный перенос пользователя. Событие сохраняется в истории для
+       * прозрачности, но не входит в основной счётчик/аналитику переносов, которые требуют
+       * доказанной причины.
+       */
+      ambiguousRepeat?: true;
     }
   | { type: 'time'; minutes: number };
 
@@ -79,12 +91,12 @@ export function validPlanningEvent(e: Record<string, unknown>): boolean {
   if (!obj(v) || e.kind !== 'planning' || e.xp !== 0 || typeof e.sourceId !== 'string' || !e.sourceId) return false;
   if (v.type === 'time') return Object.keys(v).length === 2 && integer(v.minutes, 1, 43200);
   return ['schedule', 'reschedule', 'retime'].includes(String(v.type))
-    && Object.keys(v).every((k) => ['type', 'from', 'to', 'reason', 'reasonCode', 'direction', 'auto'].includes(k))
+    && Object.keys(v).every((k) => ['type', 'from', 'to', 'reason', 'reasonCode', 'direction', 'ambiguousRepeat'].includes(k))
     && (v.from === undefined || instant(v.from)) && (v.to === undefined || instant(v.to))
     && (v.reason === undefined || (typeof v.reason === 'string' && v.reason.length <= 300))
     && (v.reasonCode === undefined || postponeReasons.some((r) => r.code === v.reasonCode))
     && (v.direction === undefined || (v.type === 'reschedule' && ['forward', 'backward'].includes(String(v.direction))))
-    && (v.auto === undefined || (v.type === 'reschedule' && v.auto === true))
+    && (v.ambiguousRepeat === undefined || (v.type === 'reschedule' && v.ambiguousRepeat === true))
     && (v.from !== undefined || v.to !== undefined);
 }
 export function planningSettings(state: GameState): PlanningSettings {
@@ -101,17 +113,21 @@ export function taskPlanningEvents(state: GameState, id: string): Event[] {
   return state.events.filter((e) => e.sourceId === id && e.planningChange)
     .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
 }
-/** Переносы без учёта тех, что синхронизация пометила 'auto' (вероятное наступление следующего повтора TickTick, см. PlanningChange.auto). */
+/** Достоверные переносы — без событий с недоказанной причиной (см. PlanningChange.ambiguousRepeat). */
 export function moveCount(state: GameState, id: string): number {
-  return taskPlanningEvents(state, id).filter((e) => e.planningChange?.type === 'reschedule' && !e.planningChange.auto).length;
+  return taskPlanningEvents(state, id).filter((e) => e.planningChange?.type === 'reschedule' && !e.planningChange.ambiguousRepeat).length;
 }
-/** Отдельно — перенос вперёд (TOR 4.2/6.4: именно они считаются «откладыванием»), тоже без 'auto'. */
+/** Отдельно — перенос вперёд (TOR 4.2/6.4: именно они считаются «откладыванием»), тоже только достоверные. */
 export function forwardMoveCount(state: GameState, id: string): number {
-  return taskPlanningEvents(state, id).filter((e) => e.planningChange?.type === 'reschedule' && !e.planningChange.auto && e.planningChange.direction === 'forward').length;
+  return taskPlanningEvents(state, id).filter((e) => e.planningChange?.type === 'reschedule' && !e.planningChange.ambiguousRepeat && e.planningChange.direction === 'forward').length;
 }
 /** Изменения времени в пределах того же дня — отдельная категория по ТЗ, не входит в moveCount. */
 export function retimeCount(state: GameState, id: string): number {
   return taskPlanningEvents(state, id).filter((e) => e.planningChange?.type === 'retime').length;
+}
+/** Изменения даты вперёд с недоказанной причиной (см. PlanningChange.ambiguousRepeat) — отдельная категория, не включается ни в moveCount, ни в forwardMoveCount, но не скрывается из истории/аналитики (ТЗ «Этап 2 — исправление», разделы 2 и 4.3). */
+export function ambiguousMoveCount(state: GameState, id: string): number {
+  return taskPlanningEvents(state, id).filter((e) => e.planningChange?.type === 'reschedule' && e.planningChange.ambiguousRepeat).length;
 }
 export function actualMinutes(state: GameState, id: string): number {
   return taskPlanningEvents(state, id).reduce((sum, e) => sum + (e.planningChange?.type === 'time' ? e.planningChange.minutes : 0), 0);
@@ -122,7 +138,7 @@ export function planningMetrics(state: GameState): Map<string, { moves: number; 
     if (!e.sourceId || !e.planningChange) continue;
     const value = result.get(e.sourceId) ?? { moves: 0, minutes: 0 };
     if (e.planningChange.type === 'time') value.minutes += e.planningChange.minutes;
-    if (e.planningChange.type === 'reschedule' && !e.planningChange.auto) value.moves++;
+    if (e.planningChange.type === 'reschedule' && !e.planningChange.ambiguousRepeat) value.moves++;
     result.set(e.sourceId, value);
   }
   return result;
@@ -137,18 +153,34 @@ const weekStart = (day: string) => {
   d.setDate(d.getDate() - dow);
   return planningDay(d.toISOString())!;
 };
+/** Последний день (включительно) недели, начинающейся с `weekFrom` (понедельник). */
+const weekEnd = (weekFrom: string) => {
+  const d = new Date(`${weekFrom}T12:00:00`);
+  d.setDate(d.getDate() + 6);
+  return planningDay(d.toISOString())!;
+};
+/** Последний день (включительно) календарного месяца, начинающегося с `monthFrom` ('YYYY-MM-01'). */
+const monthEnd = (monthFrom: string) => {
+  const d = new Date(`${monthFrom}T12:00:00`);
+  d.setMonth(d.getMonth() + 1);
+  d.setDate(d.getDate() - 1);
+  return planningDay(d.toISOString())!;
+};
 function reschedules(state: GameState, ids?: Set<string>) {
-  return state.events.filter((e) => e.planningChange?.type === 'reschedule' && !e.planningChange.auto
+  return state.events.filter((e) => e.planningChange?.type === 'reschedule' && !e.planningChange.ambiguousRepeat
     && (!ids || (e.sourceId && ids.has(e.sourceId))));
 }
 export type PostponedTask = { id: string; name: string; sphere: string; moves: number };
 export type PostponementAnalytics = {
+  /** Всего достоверно классифицированных изменений дат (без недоказанных, см. ambiguousMoves). */
   totalMoves: number;
   tasksWithMoves: number;
   movesThisWeek: number;
   movesThisMonth: number;
   forwardMoves: number;
   backwardMoves: number;
+  /** Изменения даты вперёд у повторяющихся задач TickTick с недоказанной причиной — ни автоматическое наступление следующего повтора, ни ручной перенос не доказаны (ТЗ «Этап 2 — исправление», раздел 2). Не входят в totalMoves/forwardMoves и не скрыты — показываются отдельно. */
+  ambiguousMoves: number;
   averagePerTask: number;
   mostPostponed?: PostponedTask;
   top10: PostponedTask[];
@@ -165,7 +197,9 @@ export function postponementAnalytics(state: GameState, now = new Date(), questI
   const ids = questIds ? new Set(questIds) : undefined;
   const today = planningDay(now.toISOString())!;
   const weekFrom = weekStart(today);
+  const weekTo = weekEnd(weekFrom);
   const monthFrom = today.slice(0, 7) + '-01';
+  const monthTo = monthEnd(monthFrom);
   const events = reschedules(state, ids);
   const byTask = new Map<string, { moves: number; forward: number }>();
   let movesThisWeek = 0, movesThisMonth = 0, forwardMoves = 0, backwardMoves = 0;
@@ -177,8 +211,15 @@ export function postponementAnalytics(state: GameState, now = new Date(), questI
     if (direction === 'forward') { entry.forward++; forwardMoves++; } else backwardMoves++;
     byTask.set(e.sourceId, entry);
     const day = planningDay(e.date)!;
-    if (day >= weekFrom) movesThisWeek++;
-    if (day >= monthFrom) movesThisMonth++;
+    // Верхняя граница обязательна: без неё событие, записанное в будущем (рассинхрон часов
+    // устройства, перенесённый вручную момент события в тестах) ошибочно попадало бы в
+    // статистику текущей недели/месяца (ТЗ «Этап 2 — исправление», раздел 4.1).
+    if (day >= weekFrom && day <= weekTo) movesThisWeek++;
+    if (day >= monthFrom && day <= monthTo) movesThisMonth++;
+  }
+  let ambiguousMoves = 0;
+  for (const e of state.events) {
+    if (e.sourceId && (!ids || ids.has(e.sourceId)) && e.planningChange?.type === 'reschedule' && e.planningChange.ambiguousRepeat) ambiguousMoves++;
   }
   const tasksById = new Map(state.quests.map((q) => [q.id, q]));
   const top10: PostponedTask[] = [...byTask.entries()]
@@ -186,17 +227,25 @@ export function postponementAnalytics(state: GameState, now = new Date(), questI
     // Стабильная сортировка при равенстве: по числу переносов, затем по id задачи.
     .sort((a, b) => b.moves - a.moves || a.id.localeCompare(b.id))
     .slice(0, 10);
-  // Задачи, у которых когда-либо была известна плановая дата (есть хотя бы одно 'schedule'/'reschedule'/'retime' событие с 'to').
+  // Задачи с известной плановой датой: либо есть историческое событие планирования с 'to'
+  // (включая 'schedule' на существующей задаче), либо у задачи ПРЯМО СЕЙЧАС есть dueAt/startsAt —
+  // так учитываются задачи, созданные сразу с готовой датой (например, синхронизированные из
+  // TickTick при первом импорте) и задачи старше появления журнала переноса, у которых нет
+  // события 'schedule', но план всё равно известен (ТЗ «Этап 2 — исправление», раздел 4.2).
   const scheduledTaskIds = new Set(
     state.events.filter((e) => e.sourceId && (!ids || ids.has(e.sourceId)) && e.planningChange && e.planningChange.type !== 'time' && e.planningChange.to).map((e) => e.sourceId!),
   );
+  for (const q of state.quests) {
+    if (ids && !ids.has(q.id)) continue;
+    if (q.dueAt || q.startsAt) scheduledTaskIds.add(q.id);
+  }
   const postponedForwardTaskIds = new Set([...byTask.entries()].filter(([, v]) => v.forward > 0).map(([id]) => id));
   const MIN_SCHEDULED_FOR_RATE = 5;
   const insufficientData = scheduledTaskIds.size < MIN_SCHEDULED_FOR_RATE;
   return {
     totalMoves: events.length,
     tasksWithMoves: byTask.size,
-    movesThisWeek, movesThisMonth, forwardMoves, backwardMoves,
+    movesThisWeek, movesThisMonth, forwardMoves, backwardMoves, ambiguousMoves,
     averagePerTask: byTask.size ? events.length / byTask.size : 0,
     mostPostponed: top10[0],
     top10,
@@ -205,15 +254,29 @@ export function postponementAnalytics(state: GameState, now = new Date(), questI
   };
 }
 export type TimeAnalytics = {
+  /** Сумма плановых минут по всем задачам (включая незавершённые — текущий план, не итог). */
   plannedMinutes: number;
+  /** Сумма учтённых фактических минут по всем задачам (включая незавершённые). */
   actualMinutes: number;
-  /** Среднее отклонение факт−план по задачам с обоими значениями (минуты; положительное — дольше плана). */
+  /** Среднее отклонение факт−план (минуты; положительное — дольше плана) — только по ЗАВЕРШЁННЫМ задачам с обоими значениями, см. комментарий к timeAnalytics(). */
   averageDeviationMinutes?: number;
-  /** Точность оценки (Plan Accuracy): среднее по задачам с обоими значениями от 1 − |факт−план|/план, клампится в [0;1]. 1 — оценка точна, 0 — отклонение ≥ 100% плана и больше. Отражает именно точность оценки длительности, а не долю выполненных задач. */
+  /** Точность оценки (Plan Accuracy): среднее по завершённым задачам с обоими значениями от 1 − |факт−план|/план, клампится в [0;1]. 1 — оценка точна, 0 — отклонение ≥ 100% плана и больше. Отражает именно точность оценки длительности, а не долю выполненных задач. */
   planAccuracy?: number;
+  /** Число завершённых задач с известными планом и фактом, вошедших в расчёт отклонения/точности. */
   tasksWithBoth: number;
 };
-/** `questIds` — ограничить подсчёт конкретным набором задач (сфера/проект/неделя/месяц); по умолчанию — все задачи с историей. */
+/**
+ * `questIds` — ограничить подсчёт конкретным набором задач (сфера/проект/неделя/месяц); по умолчанию — все задачи с историей.
+ *
+ * Отклонение факт−план и точность оценки (`planAccuracy`) считаются только по ЗАВЕРШЁННЫМ
+ * задачам (`task.done`): у незавершённой задачи учтённое время — это ещё не окончательный
+ * результат, а промежуточная сессия работы (например, через таймер), и сравнивать её с полной
+ * плановой длительностью как с итогом было бы искажением (ТЗ «Этап 2 — исправление», раздел 5.2).
+ * `plannedMinutes`/`actualMinutes` в сумме включают все задачи (в том числе незавершённые) —
+ * это просто текущие итоги «запланировано»/«учтено», а не утверждение о финальном результате.
+ * Задача без зафиксированного факта (0 минут) по-прежнему считается «неизвестной» и не входит
+ * в расчёт точности — `actual` остаётся falsy (раздел 5.3), в расчёт не подставляется ноль.
+ */
 export function timeAnalytics(state: GameState, questIds?: Iterable<string>): TimeAnalytics {
   const ids = questIds ? new Set(questIds) : undefined;
   let plannedMinutes = 0, actualMinutesTotal = 0, deviationSum = 0, accuracySum = 0, tasksWithBoth = 0;
@@ -222,7 +285,7 @@ export function timeAnalytics(state: GameState, questIds?: Iterable<string>): Ti
     const actual = actualMinutes(state, task.id);
     if (task.estimateMinutes) plannedMinutes += task.estimateMinutes;
     actualMinutesTotal += actual;
-    if (task.estimateMinutes && actual) {
+    if (task.estimateMinutes && actual && task.done) {
       deviationSum += actual - task.estimateMinutes;
       accuracySum += Math.max(0, 1 - Math.abs(actual - task.estimateMinutes) / task.estimateMinutes);
       tasksWithBoth++;
@@ -235,16 +298,22 @@ export function timeAnalytics(state: GameState, questIds?: Iterable<string>): Ti
     tasksWithBoth,
   };
 }
-/** Переносы, обнаруженные в течение календарного месяца 'YYYY-MM' — по дате события (ТЗ 6.2, карточки отчёта месяца). */
-export function monthlyMoves(state: GameState, month: string): { moves: number; forward: number } {
-  let moves = 0, forward = 0;
+/**
+ * Переносы, обнаруженные в течение календарного месяца 'YYYY-MM' — по дате события, а не по
+ * дате задачи (ТЗ 6.2, карточки отчёта месяца). `e.date.startsWith(month)` сравнивает ISO-дату
+ * события как строку в UTC: `planningDay()`/локальный календарный день здесь не нужен, так как
+ * сравнивается с границами того же `month`, а не с сегодняшним локальным днём (в отличие от
+ * `postponementAnalytics`, где локальный день пользователя важен для «текущей» недели/месяца).
+ */
+export function monthlyMoves(state: GameState, month: string): { moves: number; forward: number; ambiguous: number } {
+  let moves = 0, forward = 0, ambiguous = 0;
   for (const e of state.events) {
-    if (e.planningChange?.type !== 'reschedule' || e.planningChange.auto) continue;
-    if (!e.date.startsWith(month)) continue;
+    if (e.planningChange?.type !== 'reschedule' || !e.date.startsWith(month)) continue;
+    if (e.planningChange.ambiguousRepeat) { ambiguous++; continue; }
     moves++;
     if (e.planningChange.direction === 'forward') forward++;
   }
-  return { moves, forward };
+  return { moves, forward, ambiguous };
 }
 /** Фактическое время, учтённое в течение календарного месяца — по дате записи, а не по дате задачи. */
 export function monthlyActualMinutes(state: GameState, month: string): number {
@@ -267,6 +336,25 @@ export function addPlanningEvent(state: GameState, task: Quest, change: Planning
   if (state.events.length >= 100000) throw new Error('История слишком большая. Скачай резервную копию перед продолжением.');
   return { ...state, events: [event, ...state.events] };
 }
+/**
+ * Грубый разбор интервала повторения из RRULE `repeatFlag` TickTick (например
+ * `RRULE:FREQ=DAILY;INTERVAL=30`). Возвращает ожидаемую разницу в днях между соседними
+ * автоматическими повторениями — точную для DAILY/WEEKLY (без набора нескольких дней недели),
+ * диапазон для MONTHLY/YEARLY (число дней в месяце/году не фиксировано). `undefined` — если
+ * FREQ не распознана или неделя с несколькими BYDAY (там интервал между повторами непостоянен,
+ * например «по будням» даёт то 1, то 3 дня) — тогда шаг повтора нельзя надёжно предсказать.
+ */
+function repeatStepDays(rrule: string | undefined): { min: number; max: number } | undefined {
+  if (!rrule) return undefined;
+  const freq = /FREQ=([A-Z]+)/.exec(rrule)?.[1];
+  const interval = Math.max(1, Number(/INTERVAL=(\d+)/.exec(rrule)?.[1] ?? '1'));
+  const byDay = /BYDAY=([^;]+)/.exec(rrule)?.[1];
+  if (freq === 'DAILY') return { min: interval, max: interval };
+  if (freq === 'WEEKLY') return byDay?.includes(',') ? undefined : { min: interval * 7, max: interval * 7 };
+  if (freq === 'MONTHLY') return { min: interval * 28, max: interval * 31 };
+  if (freq === 'YEARLY') return { min: interval * 365, max: interval * 366 };
+  return undefined;
+}
 export function recordTaskSchedule(state: GameState, old: Quest | undefined, task: Quest, reason?: string, id?: string, reasonCode?: PostponeReasonCode): GameState {
   const from = old?.dueAt ?? old?.startsAt;
   const to = task.dueAt ?? task.startsAt;
@@ -279,21 +367,34 @@ export function recordTaskSchedule(state: GameState, old: Quest | undefined, tas
   const dayChanged = !!from && !!to && fromDay !== toDay;
   const timeOnlyChanged = !!from && !!to && fromDay === toDay;
   const type: PlanningChange['type'] = dayChanged ? 'reschedule' : timeOnlyChanged ? 'retime' : 'schedule';
-  const direction: 'forward' | 'backward' | undefined = dayChanged && fromDay && toDay
-    ? (toDay > fromDay ? 'forward' : 'backward') : undefined;
+  const dayDelta = dayChanged && fromDay && toDay
+    ? Math.round((Date.parse(`${toDay}T12:00:00Z`) - Date.parse(`${fromDay}T12:00:00Z`)) / 86400000) : undefined;
+  const direction: 'forward' | 'backward' | undefined = dayDelta !== undefined ? (dayDelta > 0 ? 'forward' : 'backward') : undefined;
   // Open API v1 TickTick не различает «следующий повтор» и ручной перенос одной и той же
-  // связанной задачи — обе операции одинаково меняют dueDate того же id. Раз задача несёт
-  // repeatFlag, обнаруженный перенос её календарного дня помечается 'auto' и не входит в
-  // основной счётчик/аналитику, но остаётся в истории (ТЗ, раздел 12; ограничение описано в
-  // docs/planning-system-2.0/STAGE2_IMPLEMENTATION.md).
-  const auto: true | undefined = type === 'reschedule' && task.tickTickRepeatFlag ? true : undefined;
+  // связанной задачи: обе операции одинаково меняют dueDate того же id, и в самом API нет
+  // отдельного поля «причина изменения» (ТЗ «Этап 2 — исправление», раздел 2, пункты 1–3).
+  // Единственный доступный факт — ожидаемый шаг повтора из RRULE. Автоматическое наступление
+  // следующего повтора ВСЕГДА сдвигает дату вперёд на этот шаг — никогда не назад и никогда на
+  // другую длительность. Поэтому:
+  //   - перенос назад — никогда не 'ambiguousRepeat' (автоповтор не умеет сдвигать дату назад);
+  //   - перенос вперёд НЕ совпадающий с шагом повтора — тоже не 'ambiguousRepeat': такой сдвиг
+  //     не может быть автоматическим наступлением следующего повтора по определению, значит это
+  //     достоверный перенос пользователя (пример из ТЗ: ежедневная задача, перенесённая с 10 на
+  //     12 ноября — сдвиг на 2 дня не совпадает с шагом «раз в день», и засчитывается как перенос);
+  //   - перенос вперёд, совпадающий с шагом повтора (или если шаг повтора не удалось разобрать) —
+  //     причину нельзя доказать ни в одну сторону, помечается 'ambiguousRepeat'.
+  // Событие сохраняется в истории в любом случае, с явной меткой неопределённости там, где она
+  // есть (ограничение документировано в docs/planning-system-2.0/STAGE2_IMPLEMENTATION.md).
+  const step = type === 'reschedule' ? repeatStepDays(task.tickTickRepeatFlag) : undefined;
+  const ambiguousRepeat: true | undefined = type === 'reschedule' && task.tickTickRepeatFlag && direction === 'forward'
+    && (!step || (dayDelta !== undefined && dayDelta >= step.min && dayDelta <= step.max)) ? true : undefined;
   const change: PlanningChange = {
     type,
     ...(from ? { from } : {}), ...(to ? { to } : {}),
     ...(reason?.trim() ? { reason: reason.trim() } : {}),
     ...(reasonCode ? { reasonCode } : {}),
     ...(direction ? { direction } : {}),
-    ...(auto ? { auto } : {}),
+    ...(ambiguousRepeat ? { ambiguousRepeat } : {}),
   };
   return addPlanningEvent(state, task, change, id);
 }

@@ -20,6 +20,8 @@ export type TickTickManager = {
   save: () => Promise<void>;
   suggest: () => void;
   incoming: IncomingTask[];
+  /** Датированные записи сопоставленных списков для календаря, включая даты за пределами inbox-окна. */
+  calendarTasks: IncomingTask[];
   inboxBusy: boolean;
   inboxError: string;
   loadIncoming: () => Promise<void>;

@@ -146,6 +146,31 @@ export function findIncomingTasks(
   return found;
 }
 
+/** All dated mapped-list tasks for the calendar, independent of the shorter four-month inbox window. */
+export function findTickTickCalendarTasks(
+  connection: TickTickConnection,
+  remoteByProject: Record<string, RemoteTask[]>,
+): IncomingTask[] {
+  const linked = new Set(Object.values(connection.links).map((link) => link.remoteId));
+  const seen = new Set<string>();
+  const found: IncomingTask[] = [];
+  for (const sphere of spheres) {
+    const projectId = connection.sphereLists?.[sphere.id];
+    if (!projectId) continue;
+    for (const remote of remoteByProject[projectId] ?? []) {
+      if (!remote || typeof remote.id !== 'string' || !idPattern.test(remote.id) || seen.has(remote.id) ||
+        linked.has(remote.id) || typeof remote.title !== 'string' || !remote.title.trim() ||
+        ((remote.status ?? 0) !== 0 && remote.status !== 2) || (remote.content ?? '').includes('[PYL:')) continue;
+      let fields: ReturnType<typeof remoteFields>;
+      try { fields = remoteFields(remote); } catch { continue; }
+      if (!fields.dueAt && !fields.startsAt) continue;
+      seen.add(remote.id);
+      found.push({ remote: { ...remote, projectId: remote.projectId || projectId }, projectId, sphere: sphere.id });
+    }
+  }
+  return found;
+}
+
 /** Входящие, срок или начало которых приходится на точный локальный календарный день сегодня. */
 export function incomingForToday(incoming: IncomingTask[], now: Date = new Date()): IncomingTask[] {
   const today = dateKey(now);

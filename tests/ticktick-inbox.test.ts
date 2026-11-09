@@ -14,6 +14,7 @@ import {
   incomingForToday,
   dismissIncomingTask,
   findIncomingTasks,
+  findTickTickCalendarTasks,
   formatIncomingDate,
   inboxHorizon,
   incomingForScope,
@@ -138,6 +139,21 @@ test('входящие: задача из списка, привязанного
   connection.sphereLists = { english: 'life', growth: 'life' };
   const found = findIncomingTasks(connection, byProject([remote('same')]));
   assert.equal(found.length, 1);
+});
+
+test('календарь TickTick включает дальние датированные записи, но не связанные и бездаты', () => {
+  const { connection } = setup();
+  connection.links = { 'local-1': { remoteId: 'linked', local: 'a', remote: 'b' } };
+  connection.dismissed = ['dismissed'];
+  const tasks = byProject([
+    remote('far', { dueDate: '2031-01-01' }),
+    remote('completed', { dueDate: '2031-01-02', status: 2 }),
+    remote('linked', { dueDate: '2031-01-03' }),
+    remote('dismissed', { dueDate: '2031-01-04' }),
+    remote('undated'),
+  ]);
+  assert.equal(findIncomingTasks(connection, tasks).some((item) => item.remote.id === 'far'), false, 'входящие сохраняют четырёхмесячное окно');
+  assert.deepEqual(findTickTickCalendarTasks(connection, tasks).map((item) => item.remote.id), ['far', 'completed', 'dismissed']);
 });
 
 test('входящие в scope: фильтр использует список сферы, а не подсказку item.sphere', () => {

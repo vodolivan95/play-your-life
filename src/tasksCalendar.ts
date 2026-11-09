@@ -1,5 +1,7 @@
 import { dateKey, difficulties } from './game.ts';
 import type { Quest } from './game.ts';
+import { remoteFields } from './ticktick.ts';
+import type { IncomingTask } from './ticktickInbox.ts';
 
 /** Виды календаря задач: день, неделя, две недели, месяц. */
 export type CalendarView = 'day' | 'week' | 'twoWeeks' | 'month';
@@ -17,6 +19,9 @@ export type CalendarItem = {
   /** Время начала «ЧЧ:ММ», если у задачи есть время. */
   start?: string;
   end?: string;
+  /** Входящая запись TickTick показывается без создания локальной задачи. */
+  source?: 'game' | 'ticktick';
+  remoteId?: string;
 };
 
 export function parseDay(key: string): Date {
@@ -121,6 +126,27 @@ export function calendarItem(quest: Quest): CalendarItem | undefined {
 
 export function calendarItems(quests: Quest[]): CalendarItem[] {
   return quests.filter((q) => !q.planning?.archivedAt).map(calendarItem).filter((item): item is CalendarItem => !!item);
+}
+
+/** Датированные входящие TickTick как read-only записи календаря; связанные задачи сюда не дублируются. */
+export function tickTickCalendarItems(incoming: IncomingTask[]): CalendarItem[] {
+  return incoming.flatMap(({ remote, sphere }) => {
+    const fields = remoteFields(remote);
+    const quest: Quest = {
+      id: `ticktick:${remote.id}`,
+      name: remote.title,
+      sphere,
+      xp: 0,
+      done: remote.status === 2,
+      difficulty: 'Medium',
+      startsAt: fields.startsAt,
+      dueAt: fields.dueAt,
+      notes: fields.notes,
+      priority: fields.priority,
+    };
+    const item = calendarItem(quest);
+    return item ? [{ ...item, source: 'ticktick' as const, remoteId: remote.id }] : [];
+  });
 }
 
 export function itemsForDay(items: CalendarItem[], day: string): CalendarItem[] {

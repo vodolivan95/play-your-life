@@ -7,7 +7,7 @@ import type { TickTickConnection } from './ticktick';
 import { emptyTickTickSettings, validateTickTickSettings } from './ticktickSettings';
 import type { TickTickSettings } from './ticktickSettings';
 import type { TickTickManager } from './tickTickContext';
-import { acceptIncomingTask, dismissIncomingTask, findIncomingTasks, mappedProjectIds } from './ticktickInbox';
+import { acceptIncomingTask, dismissIncomingTask, findIncomingTasks, findTickTickCalendarTasks, mappedProjectIds } from './ticktickInbox';
 import type { IncomingChoice, IncomingTask } from './ticktickInbox';
 import { isTickTickAutoSyncDue, TICKTICK_AUTO_SYNC_INTERVAL_MS } from './ticktickScheduler';
 
@@ -56,10 +56,15 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
   const [dirty, setDirty] = useState(false);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const inboxKey = `${storageKey}:inbox`;
+  const calendarKey = `${storageKey}:calendar`;
   const [incoming, setIncoming] = useState<IncomingTask[]>(() => {
     try { const raw = JSON.parse(localStorage.getItem(inboxKey) ?? '[]'); return Array.isArray(raw) ? raw as IncomingTask[] : []; } catch { return []; }
   });
   useEffect(() => { try { localStorage.setItem(inboxKey, JSON.stringify(incoming)); } catch { /* кэш необязателен */ } }, [incoming, inboxKey]);
+  const [calendarTasks, setCalendarTasks] = useState<IncomingTask[]>(() => {
+    try { const raw = JSON.parse(localStorage.getItem(calendarKey) ?? '[]'); return Array.isArray(raw) ? raw as IncomingTask[] : []; } catch { return []; }
+  });
+  useEffect(() => { try { localStorage.setItem(calendarKey, JSON.stringify(calendarTasks)); } catch { /* cache is optional */ } }, [calendarTasks, calendarKey]);
   const [inboxBusy, setInboxBusy] = useState(false);
   const [inboxNew, setInboxNew] = useState(0);
   const [inboxError, setInboxError] = useState('');
@@ -175,6 +180,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
         byProject[projectId] = data.tasks;
       }
       const fresh = findIncomingTasks(c, byProject);
+      setCalendarTasks(findTickTickCalendarTasks(c, byProject));
       // Подгружаем только новое: уже известные задачи остаются как есть, исчезнувшие из TickTick убираются.
       const known = new Set(latest.current.incoming.map(i => i.remote.id));
       setInboxNew(fresh.filter(i => !known.has(i.remote.id)).length);
@@ -202,6 +208,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
       if (accepted.remoteUpdate) await request(c, `/api/task/${encodeURIComponent(item.remote.id)}`, 'POST', accepted.remoteUpdate);
       onChange(state => { try { return acceptIncomingTask(state, c, item, choice, taskId, userId ?? 'local').state; } catch { return state; } });
       setIncoming(list => list.filter(i => i.remote.id !== remoteId));
+      setCalendarTasks(list => list.filter(i => i.remote.id !== remoteId));
       try {
         const next = c.auth === 'firebase' ? validateTickTickSettings(await request(c, '/settings', 'PUT', settings(accepted.connection))) : settings(accepted.connection);
         setConnection({ ...c, ...next });
@@ -240,6 +247,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
       const saved = c.auth === 'firebase' ? validateTickTickSettings(await request(c, '/settings', 'PUT', settings(next))) : settings(next);
       setConnection({ ...c, ...saved });
       setIncoming(list => list.filter(i => i.remote.id !== remoteId));
+      setCalendarTasks(list => list.filter(i => i.remote.id !== remoteId));
     } finally { working.current = false; setBusy(false); }
   }
   async function disconnect() {
@@ -249,7 +257,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     working.current = true; setBusy(true);
     try {
       await request(c, '/disconnect', 'POST');
-      setConnection(null); setProjects([]); setIncoming([]); setConnected(false); setDirty(false); setLastSyncError(false);
+      setConnection(null); setProjects([]); setIncoming([]); setCalendarTasks([]); setConnected(false); setDirty(false); setLastSyncError(false);
       setStatus('TickTick отключён. Задачи и прогресс в обоих приложениях сохранены.');
     } finally { working.current = false; setBusy(false); }
   }
@@ -313,7 +321,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     const c = latest.current.connection;
     return c ? request<T>(c, path, method, data) : Promise.reject(new Error('TickTick не подключён.'));
   };
-  return { request: bridge, connection, status, lastSyncError, busy, projects, connected, signedIn, dirty, restoreBlocked, configure, refresh, sync, save, disconnect, incoming, inboxBusy, inboxError, inboxNew, loadIncoming, refreshAll, acceptIncoming, dismissIncoming, deleteIncoming,
+  return { request: bridge, connection, status, lastSyncError, busy, projects, connected, signedIn, dirty, restoreBlocked, configure, refresh, sync, save, disconnect, incoming, calendarTasks, inboxBusy, inboxError, inboxNew, loadIncoming, refreshAll, acceptIncoming, dismissIncoming, deleteIncoming,
     update: patch => { if (!working.current) { setConnection(c => c ? { ...c, ...patch } : c); setDirty(true); } },
     suggest: () => { const c = latest.current.connection; if (c && !working.current) { setConnection({ ...c, sphereLists: matchSphereLists(projects, c.sphereLists) }); setDirty(true); } },
   };

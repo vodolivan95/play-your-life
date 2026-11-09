@@ -30,13 +30,14 @@ function dayOf(value?: string) {
 function withTime(day: string, time: string) {
   return time ? `${day}T${time}` : day;
 }
-function Row({ item, state, busy, listName, scope, onAccept, onDismiss, onDelete, onChange }: {
+function Row({ item, state, busy, listName, scope, expand, onAccept, onDismiss, onDelete, onChange }: {
   item: IncomingTask;
   state: GameState;
   onChange: Dispatch<SetStateAction<GameState>>;
   busy: boolean;
   listName: string;
   scope?: IncomingScope;
+  expand?: boolean;
   onAccept: (choice: IncomingChoice) => Promise<string>;
   onDismiss: () => Promise<void>;
   onDelete: () => Promise<void>;
@@ -46,7 +47,7 @@ function Row({ item, state, busy, listName, scope, onAccept, onDismiss, onDelete
   const [goalId, setGoalId] = useState(initialGoal?.id ?? '');
   const [stageId, setStageId] = useState(() => openStages(initialGoal).find((s) => s.id === scope?.stageId)?.id ?? '');
   const [error, setError] = useState('');
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(expand ?? false);
   const [single, setSingle] = useState(false);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState('');
@@ -169,7 +170,7 @@ function Row({ item, state, busy, listName, scope, onAccept, onDismiss, onDelete
     {error && <p className="transfer-message" role="alert">{error}</p>}
   </li>;
 }
-export default function TickTickInbox({ state, onChange, scope }: { state: GameState; onChange: Dispatch<SetStateAction<GameState>>; scope?: IncomingScope }) {
+export default function TickTickInbox({ state, onChange, scope, focusRemoteId }: { state: GameState; onChange: Dispatch<SetStateAction<GameState>>; scope?: IncomingScope; focusRemoteId?: string | null }) {
   const manager = useContext(TickTickContext);
   const [shown, setShown] = useState(pageSize);
   const [notice, setNotice] = useState('');
@@ -184,6 +185,8 @@ export default function TickTickInbox({ state, onChange, scope }: { state: GameS
   if (!manager || !active) return null;
   const names = new Map(manager.projects.map((p) => [p.id, p.name]));
   const items = incomingForScope(manager.incoming, manager.connection!, scope);
+  const focusIndex = items.findIndex((item) => item.remote.id === focusRemoteId);
+  const visibleItems = items.slice(0, Math.max(shown, focusIndex + 1));
   const mapped = !scope || Boolean(manager.connection?.sphereLists?.[scope.sphereId]);
   return <section className="ticktick-inbox" aria-label="Входящие из TickTick">
     <div className="ticktick-inbox-head">
@@ -194,14 +197,14 @@ export default function TickTickInbox({ state, onChange, scope }: { state: GameS
     {manager.inboxError && <p className="transfer-message" role="alert">{manager.inboxError}</p>}
     {!mapped && <p className="empty">Сопоставь эту сферу со списком в настройках TickTick ниже и сохрани настройки.</p>}
     {mapped && !items.length && !manager.inboxError && <p className="empty">{manager.inboxBusy ? 'Загружаем входящие…' : scope ? 'Новых задач в списке этой сферы нет.' : 'Новых задач в сопоставленных списках нет.'}</p>}
-    {items.length > 0 && <ul className="ticktick-inbox-list">
-      {items.slice(0, shown).map((item) => <Row key={`${scope?.sphereId ?? ''}:${scope?.goalId ?? ''}:${scope?.stageId ?? ''}:${item.remote.id}`} item={item} state={state} onChange={onChange} busy={manager.busy} scope={scope}
+      {items.length > 0 && <ul className="ticktick-inbox-list">
+      {visibleItems.map((item) => <Row key={`${scope?.sphereId ?? ''}:${scope?.goalId ?? ''}:${scope?.stageId ?? ''}:${item.remote.id}`} item={item} state={state} onChange={onChange} busy={manager.busy} scope={scope} expand={item.remote.id === focusRemoteId}
         listName={names.get(item.projectId) ?? 'без названия'}
         onAccept={async (choice) => { const message = await manager.acceptIncoming(item.remote.id, choice); setNotice(message); return message; }}
         onDismiss={() => manager.dismissIncoming(item.remote.id)}
         onDelete={async () => { await manager.deleteIncoming(item.remote.id, item.projectId); setNotice(`Задача «${item.remote.title}» удалена из игры и из TickTick.`); }} />)}
     </ul>}
-    {items.length > shown && <button className="text-button" onClick={() => setShown((n) => n + pageSize)}>Показать ещё ({items.length - shown})</button>}
+    {items.length > visibleItems.length && <button className="text-button" onClick={() => setShown((n) => Math.max(n, focusIndex + 1) + pageSize)}>Показать ещё ({items.length - visibleItems.length})</button>}
     {notice && <p className="transfer-message" role="status">{notice}</p>}
   </section>;
 }

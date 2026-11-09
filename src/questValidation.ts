@@ -55,6 +55,9 @@ export function validQuestExtension(q: Record<string, unknown>) {
     (q.virtualRewardId === undefined ||
       virtualRewards.some((i) => i.id === q.virtualRewardId)) &&
     (q.tickTickSync === undefined || q.tickTickSync === false) &&
+    (q.tickTickRepeatFlag === undefined ||
+      (text(q.tickTickRepeatFlag) &&
+        String(q.tickTickRepeatFlag).length <= 200)) &&
     (q.repeat === undefined ||
       ["daily", "weekdays", "weekly", "monthly"].includes(String(q.repeat))) &&
     (q.subtasks === undefined ||

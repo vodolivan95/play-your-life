@@ -31,6 +31,7 @@ export default function TickTickConnection({ demo }: { demo: boolean }) {
           void action(manager.refresh);
         }}>Обновить подключение</button>}
       </div>
+      {!ready && c?.lastSync && <p className="ticktick-unsaved" role="alert">Подключение потеряно — нужно переподключение. Последняя успешная синхронизация была {new Date(c.lastSync).toLocaleString('ru-RU')}; с тех пор задачи могли измениться и в игре, и в TickTick без обмена между ними.</p>}
       {!ready && <p className="score-note">После разрешения доступа на сайте TickTick вы вернётесь сюда. Подключение подтверждается загрузкой ваших списков, затем можно настроить обмен.</p>}
       {c && ready && <>
         {c.auth !== 'firebase' && <p className="score-note">Это прежнее подключение на устройстве. Войдите в PLAY YOUR LIFE и переподключите TickTick для сохранения настроек в аккаунте.</p>}
@@ -60,7 +61,10 @@ export default function TickTickConnection({ demo }: { demo: boolean }) {
           <button className="primary-button" disabled={manager.busy || !manager.dirty || spheres.some(s => c.sphereLists?.[s.id] && !manager.projects.some(p => p.id === c.sphereLists?.[s.id]))} onClick={() => void action(manager.save)}>Сохранить настройки</button>
           <button className="secondary-button" disabled={manager.busy || manager.dirty || !hasTickTickTargets(c)} onClick={() => void action(() => manager.sync())}>Синхронизировать сейчас</button>
         </div>
-        {c.lastSync && <small>Последняя попытка обмена: {new Date(c.lastSync).toLocaleString('ru-RU')}</small>}
+        {c.lastSync && <p className={manager.lastSyncError ? 'ticktick-unsaved' : 'score-note'} role={manager.lastSyncError ? 'alert' : undefined}>
+          {manager.lastSyncError ? 'Последняя попытка обмена завершилась ошибкой' : 'Последняя успешная синхронизация'}: {new Date(c.lastSync).toLocaleString('ru-RU')}.
+          {manager.lastSyncError ? ' Задачи могут быть не актуальны — повторите синхронизацию или переподключите TickTick.' : ''}
+        </p>}
       </>}
       {c && <button className="text-button" disabled={manager.busy} onClick={() => {
         if (window.confirm('Отключить TickTick для этого подключения? Задачи и прогресс сохранятся.')) void action(manager.disconnect);

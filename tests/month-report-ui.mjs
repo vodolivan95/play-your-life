@@ -50,7 +50,8 @@ try {
       }
       await page.locator('.mrep').waitFor();
       assert.equal(await page.locator('.mrep-sphere').count(), 10, 'Десять сфер в отчёте');
-      assert.ok(await page.locator('.mrep-kpis > div').count() === 5, 'Пять показателей');
+      // Семь показателей: пять исходных плюс «Переносов за месяц» и «Время учтено» (0.76.0, Этап 2).
+      assert.ok(await page.locator('.mrep-kpis > div').count() === 7, 'Семь показателей');
       for (const selector of ['.mrep-goals', '.mrep-habits', '.mrep-achievements']) {
         assert.equal(await page.locator(selector).count(), 1, 'Обзорные карточки сохранены без дублирования');
       }

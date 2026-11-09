@@ -13,6 +13,8 @@ export type RemoteTask = {
   dueDate?: string | null;
   priority?: number;
   status?: number;
+  /** RRULE активного повторения TickTick, та же задача меняет dueDate при наступлении следующего повтора (Open API v1 не выдаёт отдельный экземпляр). */
+  repeatFlag?: string | null;
 };
 export type TickTickConnection = {
   auth?: 'firebase';
@@ -203,6 +205,9 @@ export function remoteFields(remote: RemoteTask) {
       : remote.priority === 1
         ? 'low'
         : 'normal') as Quest['priority'],
+    // Не отправляется обратно в TickTick; только чтобы не путать наступление следующего
+    // повтора с переносом (planningData.ts → recordTaskSchedule).
+    tickTickRepeatFlag: remote.repeatFlag || undefined,
   };
 }
 export function remoteFingerprint(remote: RemoteTask) {

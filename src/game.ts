@@ -148,6 +148,8 @@ export type Quest = {
   labelId?: string;
   tickTickSharedAt?: string;
   tickTickSync?: false;
+  /** RRULE активного повторения из TickTick (поле repeatFlag Open API v1), только для чтения. Не отправляется обратно. Используется, чтобы не считать переносом автоматическое наступление следующего повторения той же связанной задачи. */
+  tickTickRepeatFlag?: string;
   repeat?: 'daily' | 'weekdays' | 'weekly' | 'monthly';
   subtasks?: { id: string; title: string; done: boolean }[];
   /** Закреплена в меню «⋯» задачи — показывается первой в списках задач. */

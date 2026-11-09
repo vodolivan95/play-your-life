@@ -22,14 +22,13 @@ import GameArt from './GameArt';
 import ProjectArt from './ProjectArt';
 import GoalWorkspace from './GoalWorkspace';
 import QuestWizard from './QuestWizard';
-import { goalProgressValue, stageMetrics } from '../goalWorkspace';
+import { goalProgressValue } from '../goalWorkspace';
 import {
   deadlineLabel,
   goalCardPace,
   goalDaysLeft,
   goalNextStep,
   goalSortNames,
-  goalUpcomingTasks,
   goalsSummary,
   isGoalDone,
   shortDate,
@@ -93,7 +92,6 @@ export default function GoalsBoard({
   const [goalFilter, setGoalFilter] = useState('active');
   const [sphereFilter, setSphereFilter] = useState('all');
   const [sort, setSort] = useState<GoalSort>('due');
-  const [previewId, setPreviewId] = useState<string | null>(null);
   const [editor, setEditor] = useState<Editor | null>(null);
   const [taskDraft, setTaskDraft] = useState<Partial<Quest> | null>(null);
   const monthNow = new Date();
@@ -170,10 +168,6 @@ export default function GoalsBoard({
     ),
     sort,
   );
-  // Ищем выбранный проект по всем целям, а не только по видимому списку:
-  // карточки «Главных проектов месяца» показываются отдельно и не входят
-  // в visibleGoals, но боковая панель должна находить и их по клику.
-  const preview = state.goals.find((g) => g.id === previewId) ?? visibleGoals[0];
   const usedSpheres = spheres.filter((sp) =>
     state.goals.some((g) => g.sphere === sp.id),
   );
@@ -198,9 +192,8 @@ export default function GoalsBoard({
     const pace = goalCardPace(state, g);
     return (
       <section
-        className={`gl-card ${isMain ? 'is-main' : ''} ${preview?.id === g.id ? 'is-selected' : ''}`}
+        className={`gl-card ${isMain ? 'is-main' : ''}`}
         key={g.id}
-        onClick={() => setPreviewId(g.id)}
         style={{ '--gl-color': sphere.color } as CSSProperties}
       >
         <div className="gl-head">
@@ -543,7 +536,6 @@ export default function GoalsBoard({
         </div>
       )}
       {!goal ? (
-        <div className="gl-layout">
         <div className="gl-list">
           <div className="gl-list-head">
             <h3 className="gl-section-heading">{listHeading}</h3>
@@ -569,83 +561,6 @@ export default function GoalsBoard({
               </p>
             </div>
           )}
-        </div>
-        {preview && (
-          <aside className="gl-side" aria-label="Кратко о выбранном проекте">
-            <div className="gl-side-kicker">Выбранный проект</div>
-            <h2>{preview.name}</h2>
-            <p className="gl-side-meta">
-              {spheres.find((sp) => sp.id === preview.sphere)?.name} ·{' '}
-              {deadlineLabel(preview)}
-            </p>
-            <div className="gl-progress-label">
-              <span>Прогресс</span>
-              <b>{progress(preview)}%</b>
-            </div>
-            <div
-              className="gl-bar"
-              style={
-                {
-                  '--gl-color': spheres.find((sp) => sp.id === preview.sphere)?.color,
-                } as CSSProperties
-              }
-            >
-              <span style={{ width: `${progress(preview)}%` }} />
-            </div>
-            <h3>Этапы</h3>
-            {preview.stages?.length ? (
-              <ul className="gl-stage-list">
-                {preview.stages.slice(0, 6).map((stage) => {
-                  const m = stageMetrics(state, preview, stage);
-                  return (
-                    <li key={stage.id} className={m.complete ? 'is-done' : ''}>
-                      <span className="gl-dot" aria-hidden="true" />
-                      <span className="gl-stage-name">{stage.name}</span>
-                      <b>{m.complete ? 'готово' : `${Math.round(m.progress)}%`}</b>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <p className="gl-side-empty">Этапов пока нет.</p>
-            )}
-            <h3>Ближайшие задачи</h3>
-            {goalUpcomingTasks(state, preview).length ? (
-              <ul className="gl-task-list">
-                {goalUpcomingTasks(state, preview).map((task) => (
-                  <li key={task.id}>
-                    <span>{task.name}</span>
-                    {task.dueAt && (
-                      <small>
-                        {new Date(task.dueAt).toLocaleDateString('ru-RU', {
-                          day: 'numeric',
-                          month: 'short',
-                        })}
-                      </small>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="gl-side-empty">Открытых задач нет.</p>
-            )}
-            {(() => {
-              const previewPace = goalCardPace(state, preview);
-              return (
-                <span className={`gl-pace gl-pace-${previewPace.tone}`}>
-                  {previewPace.text}
-                </span>
-              );
-            })()}
-            <button
-              className="primary-button gl-plan"
-              onClick={() => onSelect(preview.id)}
-            >
-              Открыть проект
-              <Icon name="arrow" size={16} />
-            </button>
-          </aside>
-        )}
         </div>
       ) : (
         <GoalWorkspace ownerId={ownerId} key={`${goal.id}:${stageId ?? 'goal'}`} state={state} goal={goal} stageId={stageId} onChange={onChange}

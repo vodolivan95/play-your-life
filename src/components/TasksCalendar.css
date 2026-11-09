@@ -113,6 +113,7 @@
   transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.2s;
 }
 .tcal-chip:hover { transform: translateY(-1px) scale(1.01); filter: saturate(1.25) brightness(1.06); }
+.tcal-chip.is-ticktick { border-right: 1px dashed color-mix(in srgb, var(--t-text) 55%, transparent); }
 .tcal-chip.is-done { opacity: 0.55; text-decoration: line-through; }
 .tcal-chip.is-wontdo { opacity: 0.45; text-decoration: line-through; }
 .tcal-chip.is-selected { box-shadow: 0 0 0 2px var(--t-text), 0 4px 14px color-mix(in srgb, var(--c) 26%, transparent); }

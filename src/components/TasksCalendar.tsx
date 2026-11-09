@@ -14,9 +14,11 @@ import {
   parseDay,
   questReward,
   shiftAnchor,
+  tickTickCalendarItems,
   weekLoad,
 } from '../tasksCalendar';
 import type { CalendarItem, CalendarView } from '../tasksCalendar';
+import type { IncomingTask } from '../ticktickInbox';
 import './TasksCalendar.css';
 
 const weekdays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
@@ -45,19 +47,19 @@ const timeFromOffset = (y: number) => {
 function Chip({ item, selected, onPick, label, onDragStart, onDragEnd, dragging }: { item: CalendarItem; selected: boolean; onPick: () => void; label?: string; onDragStart: (e: DragEvent) => void; onDragEnd: () => void; dragging: boolean }) {
   const { quest } = item;
   // Перенос связанных с TickTick задач тоже разрешён: новая дата уходит туда обычным обменом.
-  const movable = !quest.done && !quest.wontDo;
+  const movable = item.source !== 'ticktick' && !quest.done && !quest.wontDo;
   return (
     <button
       type="button"
-      className={`tcal-chip${quest.done ? ' is-done' : ''}${quest.wontDo ? ' is-wontdo' : ''}${selected ? ' is-selected' : ''}${dragging ? ' is-dragging' : ''}`}
+      className={`tcal-chip${quest.done ? ' is-done' : ''}${quest.wontDo ? ' is-wontdo' : ''}${item.source === 'ticktick' ? ' is-ticktick' : ''}${selected ? ' is-selected' : ''}${dragging ? ' is-dragging' : ''}`}
       style={{ '--c': colorOf(quest) } as CSSProperties}
       onClick={onPick}
       draggable={movable}
       onDragStart={movable ? onDragStart : undefined}
       onDragEnd={onDragEnd}
-      title={`${quest.name}${quest.tickTickSharedAt ? ' · перенос уйдёт в TickTick' : ''}`}
+      title={`${quest.name}${item.source === 'ticktick' ? ' · из TickTick, только просмотр' : quest.tickTickSharedAt ? ' · перенос уйдёт в TickTick' : ''}`}
     >
-      {label ?? `${item.start ? `${item.start} ` : ''}${quest.pinned ? '📌 ' : ''}${quest.tickTickSharedAt ? '⟳ ' : ''}${quest.name}`}
+      {label ?? `${item.start ? `${item.start} ` : ''}${quest.pinned ? '📌 ' : ''}${item.source === 'ticktick' || quest.tickTickSharedAt ? '⟳ ' : ''}${quest.name}`}
     </button>
   );
 }
@@ -67,12 +69,17 @@ export default function TasksCalendar({
   quests,
   today,
   onOpen,
+  incoming = [],
+  onOpenIncoming,
   onMove,
   onResize,
 }: {
   quests: Quest[];
   today: string;
   onOpen: (quest: Quest) => void;
+  /** Активная задача TickTick открывается через её штатный разбор, не как локальная копия. */
+  incoming?: IncomingTask[];
+  onOpenIncoming?: (remoteId: string) => void;
   /** Перенос задачи на другой день перетаскиванием: столько дней сдвинуть срок. */
   onMove?: (quest: Quest, days: number) => void;
   /** Протяжка начала/конца задачи за стрелочку на краю блока: новые «ЧЧ:ММ» начала и конца в тот же день. */
@@ -86,7 +93,11 @@ export default function TasksCalendar({
   const [overDay, setOverDay] = useState('');
   const [resize, setResize] = useState<{ id: string; day: string; edge: 'start' | 'end'; colTop: number; start: string; end: string } | null>(null);
   const suppressClick = useRef(false);
-  const items = useMemo(() => calendarItems(quests), [quests]);
+  const items = useMemo(() => [...calendarItems(quests), ...tickTickCalendarItems(incoming)], [quests, incoming]);
+  const pickItem = (item: CalendarItem) => {
+    setSelectedId(item.quest.id);
+    if (item.source !== 'ticktick') onOpen(item.quest);
+  };
   const startDrag = (item: CalendarItem) => (e: DragEvent) => {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', item.quest.id);
@@ -107,7 +118,7 @@ export default function TasksCalendar({
     const id = e.dataTransfer.getData('text/plain') || draggedId;
     endDrag();
     const item = items.find((x) => x.quest.id === id);
-    if (!item || item.day === day || !onMove) return;
+    if (!item || item.source === 'ticktick' || item.day === day || !onMove) return;
     const days = Math.round((parseDay(day).getTime() - parseDay(item.day).getTime()) / 86400000);
     if (days) onMove(item.quest, days);
   };
@@ -277,7 +288,7 @@ export default function TasksCalendar({
                     </button>
                     <div className={`tcal-list${focused ? ' is-scroll' : ''}${view === 'twoWeeks' ? ' is-tall' : ''}`}>
                       {shown.map((item) => (
-                        <Chip key={item.quest.id} item={item} selected={selectedId === item.quest.id} onPick={() => { setSelectedId(item.quest.id); onOpen(item.quest); }} onDragStart={startDrag(item)} onDragEnd={endDrag} dragging={draggedId === item.quest.id} />
+                        <Chip key={item.quest.id} item={item} selected={selectedId === item.quest.id} onPick={() => pickItem(item)} onDragStart={startDrag(item)} onDragEnd={endDrag} dragging={draggedId === item.quest.id} />
                       ))}
                     </div>
                     {!focused && list.length > limit && <span className="tcal-more">ещё {list.length - limit}</span>}
@@ -307,7 +318,7 @@ export default function TasksCalendar({
                 {days.map((day) => (
                   <div key={day} className={overDay === day ? 'is-drop' : ''} onDragOver={allowDrop(day)} onDragLeave={() => setOverDay((d) => (d === day ? '' : d))} onDrop={dropOnDay(day)}>
                     {itemsForDay(items, day).filter((item) => !item.start).map((item) => (
-                      <Chip key={item.quest.id} item={item} selected={selectedId === item.quest.id} onPick={() => { setSelectedId(item.quest.id); onOpen(item.quest); }} label={`${item.quest.tickTickSharedAt ? '⟳ ' : ''}${item.quest.name}`} onDragStart={startDrag(item)} onDragEnd={endDrag} dragging={draggedId === item.quest.id} />
+                      <Chip key={item.quest.id} item={item} selected={selectedId === item.quest.id} onPick={() => pickItem(item)} label={`${item.source === 'ticktick' || item.quest.tickTickSharedAt ? '⟳ ' : ''}${item.quest.name}`} onDragStart={startDrag(item)} onDragEnd={endDrag} dragging={draggedId === item.quest.id} />
                     ))}
                   </div>
                 ))}
@@ -332,19 +343,19 @@ export default function TasksCalendar({
                       const end = live?.end ?? item.end!;
                       const top = ((minutesOf(start) - firstHour * 60) / 60) * hourHeight + 1;
                       const height = Math.max(26, ((minutesOf(end) - minutesOf(start)) / 60) * hourHeight - 3);
-                      const movable = !item.quest.done;
-                      const resizable = !item.quest.done && !!onResize;
+                      const movable = item.source !== 'ticktick' && !item.quest.done;
+                      const resizable = item.source !== 'ticktick' && !item.quest.done && !!onResize;
                       return (
                         <button
                           key={item.quest.id}
                           type="button"
                           className={`tcal-event${item.quest.done ? ' is-done' : ''}${selectedId === item.quest.id ? ' is-selected' : ''}${draggedId === item.quest.id ? ' is-dragging' : ''}${live ? ' is-resizing' : ''}${resizable ? ' is-resizable' : ''}`}
                           style={{ '--c': colorOf(item.quest), top, height } as CSSProperties}
-                          onClick={() => { if (!suppressClick.current) { setSelectedId(item.quest.id); onOpen(item.quest); } }}
+                          onClick={() => { if (!suppressClick.current) pickItem(item); }}
                           draggable={movable && !resize}
                           onDragStart={movable ? startDrag(item) : undefined}
                           onDragEnd={endDrag}
-                          title={item.quest.tickTickSharedAt ? 'Перенос уйдёт в TickTick' : undefined}
+                          title={item.source === 'ticktick' ? 'Из TickTick · только просмотр' : item.quest.tickTickSharedAt ? 'Перенос уйдёт в TickTick' : undefined}
                         >
                           {resizable && (
                             <span
@@ -357,7 +368,7 @@ export default function TasksCalendar({
                               <svg width="14" height="8" viewBox="0 0 14 8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l5-4 5 4" /></svg>
                             </span>
                           )}
-                          <b>{item.quest.name}</b>
+                          <b>{item.source === 'ticktick' ? '⟳ ' : ''}{item.quest.name}</b>
                           <span>{start} – {end}</span>
                           {resizable && (
                             <span
@@ -386,10 +397,12 @@ export default function TasksCalendar({
           <span className="tcal-detail-bar" />
           <div>
             <strong>{selected.quest.name}</strong>
-            <span>{longDate(selected.day)}{selected.start ? `, ${selected.start}–${selected.end}` : ', весь день'} · {sphereOf(selected.quest.sphere)?.name ?? 'Сфера'} · {selected.quest.tickTickSharedAt ? 'TickTick' : 'только в игре'}</span>
+            <span>{longDate(selected.day)}{selected.start ? `, ${selected.start}–${selected.end}` : ', весь день'} · {sphereOf(selected.quest.sphere)?.name ?? 'Сфера'} · {selected.source === 'ticktick' ? 'TickTick · синхронизировано' : selected.quest.tickTickSharedAt ? 'TickTick' : 'только в игре'}</span>
           </div>
-          <b>+{questReward(selected.quest)} XP</b>
-          <button type="button" onClick={() => onOpen(selected.quest)}>Открыть задачу</button>
+          <b>{selected.source === 'ticktick' ? 'TickTick' : `+${questReward(selected.quest)} XP`}</b>
+          {selected.source === 'ticktick'
+            ? <button type="button" onClick={() => onOpenIncoming?.(selected.remoteId ?? '')}>Открыть действия задачи</button>
+            : <button type="button" onClick={() => onOpen(selected.quest)}>Открыть задачу</button>}
         </div>
       ) : (
         <p className="tcal-empty">{items.length ? 'Нажмите на задачу, чтобы увидеть подробности.' : 'В календаре пока нет задач со сроком. Добавьте срок задаче, и она появится здесь.'}</p>

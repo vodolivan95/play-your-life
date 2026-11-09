@@ -134,9 +134,19 @@ try {
     await inbox.screenshot({path:'/tmp/inbox-open.png'});
     await inbox.locator('li',{hasText:'Купить билеты'}).getByRole('button',{name:'Свернуть'}).click();
   }
+  // Внутренний календарь показывает входящую датированную задачу до принятия в игру;
+  // бездатная входящая задача остаётся только во входящих.
+  await page.getByRole('button',{name:'Календарь',exact:true}).click();
+  const incomingCalendar = page.locator('.tcal');
+  const remoteCalendarItem = incomingCalendar.locator('.tcal-chip').filter({hasText:'Купить билеты'});
+  await remoteCalendarItem.waitFor();
+  assert.equal(await remoteCalendarItem.count(),1,'датированная задача TickTick отображается в календаре до принятия');
+  assert.equal(await incomingCalendar.locator('.tcal-chip').filter({hasText:'Записаться к врачу'}).count(),0,'бездатная задача TickTick не попадает в календарь');
+  await remoteCalendarItem.click();
+  await incomingCalendar.getByRole('button',{name:'Открыть действия задачи',exact:true}).click();
+  await inbox.locator('li',{hasText:'Купить билеты'}).getByRole('button',{name:'Принять в игру'}).waitFor();
   // 1. Одиночная задача без цели.
   const row = t => inbox.locator('li',{hasText:t});
-  await row('Купить билеты').getByRole('button',{name:'Разобрать'}).click();
   await row('Купить билеты').getByRole('button',{name:'Без проекта'}).click();
   await row('Купить билеты').getByRole('button',{name:'Принять в игру'}).click();
   // 2. Задача в новую цель и новый этап.
@@ -144,6 +154,8 @@ try {
   await row('Записаться к врачу').getByRole('button',{name:'Вылечить зубы'}).click();
   await row('Записаться к врачу').getByRole('button',{name:'Принять в игру'}).click();
   await page.waitForFunction(uid=>JSON.parse(localStorage.getItem('ticktick-fixture-game:'+uid)).quests.length===2,uid);
+  await page.getByRole('button',{name:'Календарь',exact:true}).click();
+  assert.equal(await page.locator('.tcal-chip').filter({hasText:'Купить билеты'}).count(),1,'после принятия задача остаётся в календаре ровно один раз');
   let st = await stateOf(page,uid);
   assert.deepEqual(names(st.goals),['Бросить курить','Вылечить зубы'],'цели на месте после приёма');
   // 3. Перезагрузка: всё сохранилось и состояние валидно для загрузки приложением.

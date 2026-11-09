@@ -71,6 +71,7 @@ export default function QuestBoard({
     [progress, setProgress] = useState<Quest | null>(null),
     [progressValue, setProgressValue] = useState(0),
     [celebrate, setCelebrate] = useState("");
+  const [focusIncomingId, setFocusIncomingId] = useState<string | null>(null);
   useEffect(() => {
     if (initialTaskId) onInitialTaskOpened?.();
     // Один раз при открытии страницы: задача уже передана в начальное состояние.
@@ -154,12 +155,12 @@ export default function QuestBoard({
             <button
               type="button"
               className="secondary-button pyl-tasks-sync"
-              aria-label="Синхронизировать задачи с TickTick"
-              title="Сверить статусы и сроки связанных задач"
+              aria-label={mode === "calendar" ? "Синхронизировать календарь с TickTick" : "Синхронизировать задачи с TickTick"}
+              title={mode === "calendar" ? "Обновить связанные задачи и календарные записи TickTick" : "Сверить статусы и сроки связанных задач"}
               disabled={manager.busy || manager.dirty}
-              onClick={() => void manager.sync()}
+              onClick={() => void (mode === "calendar" ? manager.refreshAll() : manager.sync())}
             >
-              {manager.busy ? "Синхронизация…" : "Синхронизировать"}
+              {manager.busy ? "Синхронизация…" : mode === "calendar" ? "Обновить календарь" : "Синхронизировать"}
             </button>
           )}
           {mode !== "plan" && <button className="primary-button" onClick={() => onCreate()}>＋ Новая задача</button>}
@@ -181,7 +182,7 @@ export default function QuestBoard({
       )}
       {mode === "inbox" &&
         (connected ? (
-          <TickTickInbox state={state} onChange={onChange} />
+          <TickTickInbox state={state} onChange={onChange} focusRemoteId={focusIncomingId} />
         ) : (
           <p className="pyl-tasks-empty">
             TickTick не подключён. Подключи его в профиле, и новые задачи из
@@ -201,6 +202,8 @@ export default function QuestBoard({
         <TasksCalendar
           quests={quests}
           today={today}
+          incoming={connected ? manager?.calendarTasks ?? [] : []}
+          onOpenIncoming={(remoteId) => { setFocusIncomingId(remoteId); setMode("inbox"); }}
           onOpen={(q) => setOpenTask(q.id)}
           onMove={(q, days) => {
             try {

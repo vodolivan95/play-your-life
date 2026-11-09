@@ -10,6 +10,7 @@ import {
   nextItem,
   questsForCalendarDay,
   shiftAnchor,
+  tickTickCalendarItems,
   weekLoad,
 } from '../src/tasksCalendar.ts';
 import type { Quest } from '../src/game.ts';
@@ -89,6 +90,22 @@ test('список на сегодня включает только задач�
     questsForCalendarDay(tasks, '2026-10-20').map((q) => q.id),
     ['today-all-day', 'today-later'],
   );
+});
+
+test('календарь показывает новые датированные задачи TickTick без импорта в игру и не показывает задачи без даты', () => {
+  const items = tickTickCalendarItems([
+    { projectId: 'work', sphere: 'health', remote: { id: 'remote-all-day', projectId: 'work', title: 'Событие на весь день', dueDate: '2026-10-28T00:00:00+0300' } },
+    { projectId: 'work', sphere: 'health', remote: { id: 'remote-timed', projectId: 'work', title: 'Встреча', dueDate: '2026-10-28T19:30:00+0300' } },
+    { projectId: 'work', sphere: 'health', remote: { id: 'remote-undated', projectId: 'work', title: 'Без даты' } },
+  ]);
+  const timedDate = new Date('2026-10-28T19:30:00+0300');
+  const timedClock = `${String(timedDate.getHours()).padStart(2, '0')}:${String(timedDate.getMinutes()).padStart(2, '0')}`;
+  assert.deepEqual(items.map((item) => [item.remoteId, item.day, item.start, item.source]), [
+    ['remote-all-day', '2026-10-28', undefined, 'ticktick'],
+    ['remote-timed', items[1].day, timedClock, 'ticktick'],
+  ]);
+  assert.equal(items[0].quest.id, 'ticktick:remote-all-day');
+  assert.equal(items[0].quest.xp, 0, 'календарная проекция не выдаёт игровую награду');
 });
 
 test('календарь: сводка дня, ближайшая задача и нагрузка недели', () => {

@@ -148,9 +148,9 @@ export default function MonthReport({
       </div>
 
       <section className="mrep-card">
-        <header><div><h3>Переносы — {monthLabel(month).toLowerCase()}</h3><p>Подтверждённые переносы этого месяца; неопределённые изменения повторяющихся задач TickTick — отдельно.</p></div></header>
+        <header><div><h3>Переносы за выбранный месяц</h3><p>Подтверждённые переносы этого месяца; неопределённые изменения повторяющихся задач TickTick — отдельно.</p></div></header>
         <p className="mrep-small">
-          Переносов: {moves.moves}{moves.moves ? ` (вперёд ${moves.forward}, назад ${moves.moves - moves.forward})` : ''}.{' '}
+          За {monthLabel(month).toLowerCase()}: перенесено {moves.moves}{moves.moves ? ` (вперёд ${moves.forward}, назад ${moves.moves - moves.forward})` : ''}.{' '}
           Учтённое время: {monthMinutes} мин{monthMinutes ? ` (≈ ${(monthMinutes / 60).toFixed(1)} ч)` : ''}.{' '}
           Задач выполнено: {s.quests}.
         </p>

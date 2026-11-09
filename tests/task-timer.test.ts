@@ -30,9 +30,9 @@ test('таймер: старт/пауза/продолжить/завершит�
   const peek = peekFinish('u1', 'q1', new Date('2026-11-09T10:12:30.000Z')); // ещё +2.5 мин
   assert.equal(peek?.seconds, 300 + 150);
   assert.ok(peek?.actionId, 'у таймера есть устойчивый actionId');
-  assert.equal(readTimer('u1', 'q1'), undefined, 'peekFinish не удаляет таймер (3.1)');
+  assert.ok(readTimer('u1', 'q1'), 'peekFinish НЕ удаляет таймер (3.1) — он остаётся до commitFinish');
   commitFinish('u1', 'q1');
-  assert.equal(readTimer('u1', 'q1'), undefined);
+  assert.equal(readTimer('u1', 'q1'), undefined, 'commitFinish удаляет таймер');
 });
 
 test('3.1: actionId сохраняется на всю сессию таймера и переживает повторную попытку завершения', () => {

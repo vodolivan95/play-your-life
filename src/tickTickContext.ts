@@ -4,6 +4,8 @@ import type { IncomingChoice, IncomingTask } from './ticktickInbox';
 export type TickTickManager = {
   connection: TickTickConnection | null;
   status: string;
+  /** Последняя попытка обмена (sync) завершилась ошибкой — сам текст status не парсится, это отдельный флаг (0.76.0, раздел 6). */
+  lastSyncError: boolean;
   busy: boolean;
   connected: boolean;
   signedIn: boolean;

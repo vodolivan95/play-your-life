@@ -39,23 +39,28 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settings = planningSettings(state);
   const [draftSettings, setDraftSettings] = useState(settings);
+  const [oftenPostponed, setOftenPostponed] = useState(false);
   const own = state.quests.filter((q) => !q.ownerId || q.ownerId === ownerId);
   const day = scope === 'tomorrow' ? addDays(today, 1) : scope === 'today' ? today : anchor;
   const start = scope === 'week' ? mondayOf(anchor) : scope === 'month' ? `${anchor.slice(0, 7)}-01` : day;
   const end = scope === 'week' ? addDays(start, 6) : scope === 'month' ? `${anchor.slice(0, 7)}-31` : day;
+  const metrics = useMemo(() => planningMetrics(state), [state]);
   const shown = own.filter((q) => {
     if (scope === 'archive' ? !q.planning?.archivedAt : !visiblePlanningTask(q)) return false;
     if (scope === 'inbox' && !inboxTask(q)) return false;
     const d = taskDay(q);
     if (scope === 'overdue' && (q.done || !d || d >= today)) return false;
     if (['today', 'tomorrow', 'week', 'month'].includes(scope) && (!d || d < start || d > end)) return false;
+    // «Часто переношу» (ТЗ «0.76.0», раздел 5.2): только достоверные переносы (metrics.moves,
+    // см. planningMetrics()), порог — настраиваемый settings.moveWarning. Отдельный быстрый
+    // фильтр, не новая страница — сужает уже существующий список «Мой план».
+    if (oftenPostponed && (metrics.get(q.id)?.moves ?? 0) < settings.moveWarning) return false;
     return (!project || q.goalId === project) && (!sphere || q.sphere === sphere) && (!priority || (q.priority ?? 'normal') === priority)
       && (doneFilter === 'all' || q.done === (doneFilter === 'done'))
       && (!query.trim() || `${q.name} ${q.notes ?? ''}`.toLocaleLowerCase('ru-RU').includes(query.trim().toLocaleLowerCase('ru-RU')));
   }).sort((a, b) => Number(b.planning?.mainDay === day) - Number(a.planning?.mainDay === day)
     || Number(a.done) - Number(b.done) || (taskDay(a) ?? '9999').localeCompare(taskDay(b) ?? '9999') || a.name.localeCompare(b.name, 'ru'));
   const activeIds = selected.filter((id) => shown.some((q) => q.id === id));
-  const metrics = useMemo(() => planningMetrics(state), [state]);
   const summary = planningSummary(state, shown, metrics);
   const conflicts = planningConflicts(shown);
   const mainCount = own.filter((q) => visiblePlanningTask(q) && !q.done && q.planning?.mainDay === day).length;
@@ -152,6 +157,7 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
       <select aria-label="Проект плана" value={project} onChange={(e) => setProject(e.target.value)}><option value="">Все проекты</option>{state.goals.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select>
       <select aria-label="Приоритет плана" value={priority} onChange={(e) => setPriority(e.target.value)}><option value="">Все приоритеты</option><option value="high">Высокий</option><option value="normal">Обычный</option><option value="low">Низкий</option></select>
       <select aria-label="Выполнение плана" value={doneFilter} onChange={(e) => setDoneFilter(e.target.value)}><option value="all">Все статусы</option><option value="open">Невыполненные</option><option value="done">Выполненные</option></select>
+      <label><input type="checkbox" checked={oftenPostponed} onChange={(e) => setOftenPostponed(e.target.checked)} /> Часто переношу (от {settings.moveWarning} переносов)</label>
     </div>
     <div className="pplan-panel"><div className="pplan-row"><button type="button" onClick={() => setSelected(activeIds.length === shown.length ? [] : shown.map((q) => q.id))}>Выбрать все показанные</button><span>Выбрано: {activeIds.length}</span></div>
       {activeIds.length > 0 && <div className="pplan-row"><label>Новая дата<input type="date" required value={batchDay} onChange={(e) => setBatchDay(e.target.value)} /></label><label>Причина переноса<input maxLength={300} value={reason} onChange={(e) => setReason(e.target.value)} /></label>

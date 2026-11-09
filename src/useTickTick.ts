@@ -46,6 +46,11 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     return null;
   });
   const [status, setStatus] = useState('');
+  // Отдельный флаг (не выводится из текста status): завершилась ли последняя попытка обмена
+  // ошибкой — нужен, чтобы явно показать «нужно переподключение/повтор», а не полагаться на
+  // разбор текста сообщения (ТЗ «0.76.0», раздел 6: «не объявлять задачи актуальными, если
+  // последняя синхронизация завершилась ошибкой»).
+  const [lastSyncError, setLastSyncError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [connected, setConnected] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -123,7 +128,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
   async function sync(taskIds?: readonly string[], automatic = false, removals?: SyncOptions['removals']) {
     const current = latest.current;
     if (working.current || !current.connection || !current.connected || current.dirty || current.state.profile.mode === 'demo') return;
-    if (!navigator.onLine) { setStatus('Нет сети. Изменения задач сохранены в игре; обмен продолжится после подключения.'); return; }
+    if (!navigator.onLine) { setStatus('Нет сети. Изменения задач сохранены в игре; обмен продолжится после подключения.'); setLastSyncError(true); return; }
     working.current = true; setBusy(true);
     lastSyncAttemptAt.current = Date.now();
     let held: HeldRemovals | undefined;
@@ -142,9 +147,13 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
       held = result.held;
       const lines = [...(held && automatic ? [summarizeHeldRemovals(held)] : []), ...applied.warnings];
       setStatus(lines.length ? lines.join('\n') : 'Связанные задачи проектов синхронизированы.');
+      // Прерванный обмен (result.stopped) — не полная ошибка: часть изменений уже сохранена,
+      // и предупреждения уже видны в status. Полноценной ошибкой считается исключение ниже.
+      setLastSyncError(false);
     } catch (error) {
       if (error instanceof Error && error.message.endsWith('(401)')) setConnected(false);
       setStatus(error instanceof Error ? error.message : 'Не удалось синхронизировать.');
+      setLastSyncError(true);
     } finally { working.current = false; setBusy(false); }
     // Массовое удаление без явного согласия не выполняется: при ручном обмене спрашиваем, при автоматическом только сообщаем.
     if (held && !automatic) await sync(taskIds, false, window.confirm(describeHeldRemovals(held)) ? 'confirm' : 'keep');
@@ -240,7 +249,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     working.current = true; setBusy(true);
     try {
       await request(c, '/disconnect', 'POST');
-      setConnection(null); setProjects([]); setIncoming([]); setConnected(false); setDirty(false);
+      setConnection(null); setProjects([]); setIncoming([]); setConnected(false); setDirty(false); setLastSyncError(false);
       setStatus('TickTick отключён. Задачи и прогресс в обоих приложениях сохранены.');
     } finally { working.current = false; setBusy(false); }
   }
@@ -304,7 +313,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     const c = latest.current.connection;
     return c ? request<T>(c, path, method, data) : Promise.reject(new Error('TickTick не подключён.'));
   };
-  return { request: bridge, connection, status, busy, projects, connected, signedIn, dirty, restoreBlocked, configure, refresh, sync, save, disconnect, incoming, inboxBusy, inboxError, inboxNew, loadIncoming, refreshAll, acceptIncoming, dismissIncoming, deleteIncoming,
+  return { request: bridge, connection, status, lastSyncError, busy, projects, connected, signedIn, dirty, restoreBlocked, configure, refresh, sync, save, disconnect, incoming, inboxBusy, inboxError, inboxNew, loadIncoming, refreshAll, acceptIncoming, dismissIncoming, deleteIncoming,
     update: patch => { if (!working.current) { setConnection(c => c ? { ...c, ...patch } : c); setDirty(true); } },
     suggest: () => { const c = latest.current.connection; if (c && !working.current) { setConnection({ ...c, sphereLists: matchSphereLists(projects, c.sphereLists) }); setDirty(true); } },
   };

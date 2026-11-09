@@ -58,6 +58,7 @@ try {
     await settings.getByLabel('Доступно минут в день').fill('120');
     await settings.getByLabel('Резерв, %').fill('0');
     await settings.getByLabel('Главных задач в день').fill('2');
+    await settings.getByLabel('Предупреждать после переносов').fill('1');
     await settings.getByRole('button', { name: 'Сохранить настройки', exact: true }).click();
     const nextWeek = await page.evaluate(async () => {
       const { dateKey } = await import('/src/game.ts');
@@ -100,6 +101,12 @@ try {
     assert.equal(stored.planningSettings.dailyMinutes, 120);
     assert.equal(stored.events.filter((e) => e.planningChange?.type === 'reschedule').length, 1);
     assert.equal(stored.events.filter((e) => e.planningChange?.type === 'time').length, 1);
+    // Счётчик переносов на карточке и фильтр «Часто переношу» (0.76.0, разделы 5.1/5.2).
+    await task.getByText('Переносов: 1.', { exact: false }).waitFor();
+    await plan.getByLabel('Часто переношу (от 1 переносов)', { exact: true }).check();
+    await task.waitFor();
+    assert.equal(await plan.locator('.pplan-task').count(), 1, 'фильтр «Часто переношу» должен оставить задачу с переносами');
+    await plan.getByLabel('Часто переношу (от 1 переносов)', { exact: true }).uncheck();
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'горизонтальное переполнение');
     assert.deepEqual(errors, []);
     // Предшественник блокирует выполнение; циклы отклоняются; перенос не каскадный.

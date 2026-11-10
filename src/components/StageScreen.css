@@ -280,7 +280,6 @@
 .ss-route {
   overflow-x: auto;
   scrollbar-width: none;
-  scroll-snap-type: x proximity;
   margin: 0 -4px;
   padding: 6px 4px;
 }
@@ -296,7 +295,6 @@
 .ss-route li {
   display: flex;
   align-items: center;
-  scroll-snap-align: start;
 }
 .ss .ss-stop,
 .ss-goal {

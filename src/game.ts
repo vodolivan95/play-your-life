@@ -289,6 +289,8 @@ export type MonthReflection = {
 };
 export type GameState = {
   planningSettings?: import('./planningData.ts').PlanningSettings;
+  /** Текущая сессия таймера фокуса (ТЗ «Этап 4.1»). Одно поле — одна активная сессия на игрока. См. focusSessions.ts. */
+  focusSession?: import('./planningData.ts').ActiveFocusSession;
   habits?: import('./personalQuests').Habit[];
   habitCompletions?: import('./personalQuests').HabitCompletion[];
   coinTransactions?: import('./personalQuests').CoinTransaction[];

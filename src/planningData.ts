@@ -57,7 +57,65 @@ export type PlanningChange =
        */
       ambiguousRepeat?: true;
     }
-  | { type: 'time'; minutes: number };
+  | {
+      type: 'time';
+      /** Целые минуты — для прежней аналитики план/факт. У сессии таймера = округлённые `session.focusedSeconds` (может быть 0 у сессии короче 30 секунд). */
+      minutes: number;
+      /** Рабочая сессия таймера фокуса (ТЗ «Этап 4.1», раздел 4). Отсутствует у времени, внесённого вручную, и у записей таймера до 0.78.0. */
+      session?: FocusSessionData;
+    };
+
+/** Режимы таймера фокуса (ТЗ «Этап 4.1», раздел 3). Длительности и названия — в `src/focusSessions.ts`. */
+export const FOCUS_MODE_IDS = ['quick', 'short', 'standard', 'extended', 'deep', 'long', 'marathon', 'custom'] as const;
+export type FocusModeId = (typeof FOCUS_MODE_IDS)[number];
+/** Верхняя граница одной сессии вместе с продлениями — 12 часов. */
+export const FOCUS_MAX_SECONDS = 43200;
+export const FOCUS_MAX_SEGMENTS = 300;
+export const FOCUS_FIRST_ACTION_MAX = 200;
+export const FOCUS_RESULT_MAX = 500;
+/** Непрерывный отрезок работы. Паузы — промежутки между отрезками, отдельно не хранятся. */
+export type FocusSegment = { start: string; end?: string };
+/**
+ * Завершённая рабочая сессия — хранится внутри события истории `planningChange` (один источник
+ * данных: это же событие читают задача, этап, проект, сфера и месячный отчёт).
+ * Проект, этап и сфера берутся из самого события (`goalId`, `stageId`, `sphere`) — они фиксируются
+ * на момент сессии и не меняются при последующем переносе задачи (ТЗ, раздел 5.4).
+ */
+export type FocusSessionData = {
+  mode: FocusModeId;
+  /** Плановое время с учётом продлений, секунды. */
+  plannedSeconds: number;
+  /** Подтверждённое рабочее время, секунды, без округления до минут. */
+  focusedSeconds: number;
+  /** Сумма пауз между отрезками работы, секунды. */
+  pausedSeconds: number;
+  startedAt: string;
+  /** Конец последнего отрезка работы. */
+  endedAt: string;
+  /** 'completed' — отработано всё плановое время; 'interrupted' — завершена досрочно (засчитано фактическое время). */
+  status: 'completed' | 'interrupted';
+  segments: { start: string; end: string }[];
+  firstAction?: string;
+  result?: string;
+};
+/**
+ * Текущая (не завершённая) сессия. Хранится в `GameState.focusSession` — одно поле, поэтому у
+ * игрока не может быть двух активных сессий; вместе с сохранением попадает в облако и
+ * восстанавливается после обновления страницы, повторного входа и на другом устройстве.
+ * Состояния «активна / на паузе / время истекло» не хранятся, а вычисляются из отрезков и
+ * планового времени (`focusSnapshot()` в `src/focusSessions.ts`).
+ */
+export type ActiveFocusSession = {
+  id: string;
+  taskId: string;
+  mode: FocusModeId;
+  plannedSeconds: number;
+  startedAt: string;
+  /** Только последний отрезок может быть открытым (без `end`) — тогда отсчёт идёт. */
+  segments: FocusSegment[];
+  firstAction?: string;
+  updatedAt: string;
+};
 
 export const defaultPlanningSettings: PlanningSettings = {
   dailyMinutes: 480, weekdays: [1, 2, 3, 4, 5], reservePercent: 20,
@@ -87,11 +145,47 @@ export function validPlanningSettings(v: unknown): v is PlanningSettings {
     && Array.isArray(v.weekdays) && v.weekdays.every((d) => integer(d, 0, 6))
     && new Set(v.weekdays).size === v.weekdays.length;
 }
+const shortText = (v: unknown, max: number) => v === undefined || (typeof v === 'string' && v.length <= max);
+function validSegments(v: unknown, allowOpen: boolean): v is FocusSegment[] {
+  return Array.isArray(v) && v.length <= FOCUS_MAX_SEGMENTS && v.every((s, i) => obj(s)
+    && Object.keys(s).every((k) => k === 'start' || k === 'end') && instant(s.start)
+    && (s.end === undefined
+      ? allowOpen && i === v.length - 1
+      : instant(s.end) && Date.parse(s.end as string) >= Date.parse(s.start as string)));
+}
+export function validFocusSessionData(v: unknown): boolean {
+  if (!obj(v)) return false;
+  if (!Object.keys(v).every((k) => ['mode', 'plannedSeconds', 'focusedSeconds', 'pausedSeconds', 'startedAt', 'endedAt', 'status', 'segments', 'firstAction', 'result'].includes(k))) return false;
+  if (!FOCUS_MODE_IDS.includes(v.mode as FocusModeId)) return false;
+  if (!integer(v.plannedSeconds, 60, FOCUS_MAX_SECONDS) || !integer(v.focusedSeconds, 1, FOCUS_MAX_SECONDS) || !integer(v.pausedSeconds, 0, 31 * 86400)) return false;
+  if (!instant(v.startedAt) || !instant(v.endedAt) || Date.parse(v.endedAt as string) < Date.parse(v.startedAt as string)) return false;
+  if (v.status !== 'completed' && v.status !== 'interrupted') return false;
+  const segments = v.segments;
+  if (!validSegments(segments, false) || segments.length === 0) return false;
+  // Подтверждённое время не может превышать сумму сохранённых отрезков работы (допуск — секунда на округление).
+  const worked = segments.reduce((sum, s) => sum + (Date.parse(s.end as string) - Date.parse(s.start)), 0) / 1000;
+  if ((v.focusedSeconds as number) > worked + 1) return false;
+  return shortText(v.firstAction, FOCUS_FIRST_ACTION_MAX) && shortText(v.result, FOCUS_RESULT_MAX);
+}
+export function validActiveFocus(v: unknown): v is ActiveFocusSession {
+  return obj(v)
+    && Object.keys(v).every((k) => ['id', 'taskId', 'mode', 'plannedSeconds', 'startedAt', 'segments', 'firstAction', 'updatedAt'].includes(k))
+    && typeof v.id === 'string' && /^[A-Za-z0-9_-]{1,80}$/.test(v.id)
+    && typeof v.taskId === 'string' && !!v.taskId && v.taskId.length <= 200
+    && FOCUS_MODE_IDS.includes(v.mode as FocusModeId)
+    && integer(v.plannedSeconds, 60, FOCUS_MAX_SECONDS)
+    && instant(v.startedAt) && instant(v.updatedAt)
+    && validSegments(v.segments, true)
+    && shortText(v.firstAction, FOCUS_FIRST_ACTION_MAX);
+}
 export function validPlanningEvent(e: Record<string, unknown>): boolean {
   const v = e.planningChange;
   if (v === undefined) return true;
   if (!obj(v) || e.kind !== 'planning' || e.xp !== 0 || typeof e.sourceId !== 'string' || !e.sourceId) return false;
-  if (v.type === 'time') return Object.keys(v).length === 2 && integer(v.minutes, 1, 43200);
+  if (v.type === 'time') {
+    if (v.session === undefined) return Object.keys(v).length === 2 && integer(v.minutes, 1, 43200);
+    return Object.keys(v).length === 3 && integer(v.minutes, 0, 43200) && validFocusSessionData(v.session);
+  }
   return ['schedule', 'reschedule', 'retime'].includes(String(v.type))
     && Object.keys(v).every((k) => ['type', 'from', 'to', 'reason', 'reasonCode', 'direction', 'ambiguousRepeat'].includes(k))
     && (v.from === undefined || instant(v.from)) && (v.to === undefined || instant(v.to))
@@ -329,7 +423,7 @@ export function monthlyActualMinutes(state: GameState, month: string): number {
 export function addPlanningEvent(state: GameState, task: Quest, change: PlanningChange, id: string = crypto.randomUUID(), now = new Date()): GameState {
   const event: Event = {
     id, sourceId: task.id, sphere: task.sphere, title: change.type === 'time'
-      ? `Учтено ${change.minutes} мин: ${task.name}` : `Плановая дата: ${task.name}`,
+      ? (change.session ? `Фокус: ${task.name}` : `Учтено ${change.minutes} мин: ${task.name}`) : `Плановая дата: ${task.name}`,
     xp: 0, kind: 'planning', date: now.toISOString(), planningChange: change,
     ...(task.goalId ? { goalId: task.goalId } : {}), ...(task.stageId ? { stageId: task.stageId } : {}),
   };

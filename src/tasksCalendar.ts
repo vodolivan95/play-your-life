@@ -19,6 +19,12 @@ export type CalendarItem = {
   /** Время начала «ЧЧ:ММ», если у задачи есть время. */
   start?: string;
   end?: string;
+  /** Границы многодневного интервала; базовая запись задачи остаётся одной. */
+  spanStartDay?: string;
+  spanEndDay?: string;
+  spanStartTime?: string;
+  spanEndTime?: string;
+  spanPart?: 'start' | 'middle' | 'end';
   /** Входящая запись TickTick показывается без создания локальной задачи. */
   source?: 'game' | 'ticktick';
   remoteId?: string;
@@ -99,13 +105,22 @@ function plusMinutes(time: string, minutes: number) {
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
-/** Задача для календаря: день по сроку (или началу), время — только если оно есть. */
+/** Базовая запись задачи; многодневный период разворачивается только для отображения. */
 export function calendarItem(quest: Quest): CalendarItem | undefined {
   const base = quest.dueAt || quest.startsAt;
   if (!base) return undefined;
   const day = calendarDay(base);
   if (!day) return undefined;
   const item: CalendarItem = { quest, day };
+  const spanStartDay = calendarDay(quest.startsAt);
+  const spanEndDay = calendarDay(quest.dueAt);
+  if (spanStartDay && spanEndDay && spanStartDay < spanEndDay) {
+    item.spanStartDay = spanStartDay;
+    item.spanEndDay = spanEndDay;
+    if (quest.startsAt && hasTime(quest.startsAt)) item.spanStartTime = clock(quest.startsAt);
+    if (quest.dueAt && hasTime(quest.dueAt)) item.spanEndTime = clock(quest.dueAt);
+    return item;
+  }
   const startsTimed = hasTime(quest.startsAt) && quest.startsAt;
   const dueTimed = hasTime(quest.dueAt) && quest.dueAt;
   if (startsTimed && dueTimed && calendarDay(startsTimed) === calendarDay(dueTimed)) {
@@ -152,6 +167,25 @@ export function tickTickCalendarItems(incoming: IncomingTask[]): CalendarItem[] 
 export function itemsForDay(items: CalendarItem[], day: string): CalendarItem[] {
   return items
     .filter((item) => item.day === day)
+    .sort((a, b) => {
+      if (!!a.start !== !!b.start) return a.start ? 1 : -1;
+      return (a.start ?? '').localeCompare(b.start ?? '') || a.quest.name.localeCompare(b.quest.name, 'ru');
+    });
+}
+
+/** Сегменты диапазона только для рисования календаря; XP и исходная задача не дублируются. */
+export function calendarSegmentsForDay(items: CalendarItem[], day: string): CalendarItem[] {
+  return items
+    .flatMap<CalendarItem>((item) => {
+      if (!item.spanStartDay || !item.spanEndDay) return item.day === day ? [item] : [];
+      if (day < item.spanStartDay || day > item.spanEndDay) return [];
+      const spanPart: NonNullable<CalendarItem['spanPart']> = day === item.spanStartDay ? 'start' : day === item.spanEndDay ? 'end' : 'middle';
+      return [{
+        ...item,
+        day,
+        spanPart,
+      }];
+    })
     .sort((a, b) => {
       if (!!a.start !== !!b.start) return a.start ? 1 : -1;
       return (a.start ?? '').localeCompare(b.start ?? '') || a.quest.name.localeCompare(b.quest.name, 'ru');

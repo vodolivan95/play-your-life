@@ -48,6 +48,9 @@ try {
       { id: "cal-today", name: "Задача TickTick на весь день", sphere: "sport", xp: 20, done: false, difficulty: "Medium", dueAt: today },
       { id: "cal-timed", name: "Задача TickTick с временем", sphere: "sport", xp: 20, done: false, difficulty: "Medium", startsAt: start.toISOString(), dueAt: end.toISOString() },
     );
+    const rangeStart = new Date(); rangeStart.setDate(2); rangeStart.setMonth(rangeStart.getMonth() + 1); rangeStart.setHours(9, 15, 0, 0);
+    const rangeEnd = new Date(rangeStart); rangeEnd.setDate(rangeStart.getDate() + 2); rangeEnd.setHours(16, 45, 0, 0);
+    s.quests.push({ id: "cal-range", name: "Многодневная задача", sphere: "sport", xp: 20, done: false, difficulty: "Medium", startsAt: rangeStart.toISOString(), dueAt: rangeEnd.toISOString() });
     localStorage.setItem("play-your-life-v1", JSON.stringify(s));
   });
   await page.getByRole("button", { name: "Продолжить игру на этом устройстве" }).click();
@@ -106,6 +109,52 @@ try {
   assert.deepEqual(rep[0].subtasks.map((t) => [t.title, t.done]), [["Первый шаг", true]]);
   await win.getByRole("button", { name: "Сохранить" }).click();
   await win.waitFor({ state: "detached" });
+  const rangeDays = await page.evaluate(async () => {
+    const { dateKey } = await import("/src/game.ts");
+    const q = JSON.parse(localStorage.getItem("play-your-life-v1")).quests.find((item) => item.id === "cal-range");
+    const start = new Date(q.startsAt);
+    const middle = new Date(start); middle.setDate(middle.getDate() + 1);
+    return { start: dateKey(start), middle: dateKey(middle), end: dateKey(new Date(q.dueAt)), startsAt: q.startsAt, dueAt: q.dueAt };
+  });
+  await calendar.getByRole("button", { name: "Вперёд" }).click();
+  const monthRangeChip = (day) => calendar.locator(`.tcal-cell[data-day="${day}"] .tcal-chip`).filter({ hasText: "Многодневная задача" });
+  const monthStart = monthRangeChip(rangeDays.start);
+  assert.equal(await monthStart.count(), 1);
+  assert.match(await monthStart.getAttribute("class"), /is-range-start/);
+  assert.match(await monthStart.innerText(), /Начало 09:15/);
+  assert.equal(await monthRangeChip(rangeDays.middle).count(), 1);
+  assert.match(await monthRangeChip(rangeDays.middle).getAttribute("class"), /is-range-middle/);
+  assert.match(await monthRangeChip(rangeDays.middle).innerText(), /Продолжение/);
+  assert.equal(await monthRangeChip(rangeDays.end).count(), 1);
+  assert.match(await monthRangeChip(rangeDays.end).getAttribute("class"), /is-range-end/);
+  assert.match(await monthRangeChip(rangeDays.end).innerText(), /Окончание 16:45/);
+  assert.match(await monthStart.getAttribute("title"), /период/);
+  await monthStart.click();
+  await win.waitFor();
+  const unchangedRange = await page.evaluate(() => JSON.parse(localStorage.getItem("play-your-life-v1")).quests.find((item) => item.id === "cal-range"));
+  assert.equal(unchangedRange.startsAt, rangeDays.startsAt);
+  assert.equal(unchangedRange.dueAt, rangeDays.dueAt);
+  await win.getByRole("button", { name: "Готово" }).click();
+  await win.waitFor({ state: "detached" });
+
+  await calendar.getByRole("button", { name: "Неделя", exact: true }).click();
+  for (const [day, part] of [[rangeDays.start, "start"], [rangeDays.middle, "middle"], [rangeDays.end, "end"]]) {
+    const segment = calendar.locator(`.tcal-allday > div[data-day="${day}"] .tcal-chip`).filter({ hasText: "Многодневная задача" });
+    assert.equal(await segment.count(), 1, `недельный вид показывает сегмент ${part}`);
+    assert.match(await segment.getAttribute("class"), new RegExp(`is-range-${part}`));
+  }
+  assert.equal(await calendar.locator(".tcal-event").filter({ hasText: "Многодневная задача" }).count(), 0, "междневный период не схлопывается в однодневное timed-событие");
+
+  await calendar.getByRole("button", { name: "День", exact: true }).click();
+  await calendar.getByRole("button", { name: "Вперёд" }).click();
+  const dayRange = calendar.locator(`.tcal-allday > div[data-day="${rangeDays.start}"] .tcal-chip`).filter({ hasText: "Многодневная задача" });
+  assert.equal(await dayRange.count(), 1, "дневной вид показывает часть диапазона, покрывающую выбранный день");
+  assert.match(await dayRange.getAttribute("class"), /is-range-start/);
+
+  await calendar.getByRole("button", { name: "2 недели", exact: true }).click();
+  for (const day of [rangeDays.start, rangeDays.middle, rangeDays.end]) assert.equal(await monthRangeChip(day).count(), 1);
+  await calendar.getByRole("button", { name: "Месяц", exact: true }).click();
+  await calendar.getByRole("button", { name: "Сегодня", exact: true }).click();
   // В дневном виде клик также открывает окно и для задачи на весь день, и для события со временем.
   await calendar.getByRole("button", { name: "День", exact: true }).click();
   const allDay = calendar.locator(".tcal-allday .tcal-chip").filter({ hasText: "Задача TickTick на весь день" });
@@ -118,6 +167,24 @@ try {
   await win.waitFor();
   await win.getByRole("button", { name: "Сохранить" }).click();
   await win.waitFor({ state: "detached" });
+  await calendar.getByRole("button", { name: "Месяц", exact: true }).click();
+  await calendar.getByRole("button", { name: "Сегодня", exact: true }).click();
+  await calendar.getByRole("button", { name: "Вперёд" }).click();
+  const dragTargetDay = await page.evaluate(async (sourceDay) => {
+    const { dateKey } = await import("/src/game.ts");
+    const day = new Date(`${sourceDay}T12:00:00`); day.setDate(day.getDate() + 3); return dateKey(day);
+  }, rangeDays.middle);
+  await monthRangeChip(rangeDays.middle).dragTo(calendar.locator(`.tcal-cell[data-day="${dragTargetDay}"]`));
+  const expectedShiftedRange = {
+    startsAt: new Date(Date.parse(rangeDays.startsAt) + 3 * 86400000).toISOString(),
+    dueAt: new Date(Date.parse(rangeDays.dueAt) + 3 * 86400000).toISOString(),
+  };
+  await page.waitForFunction((expected) => {
+    const q = JSON.parse(localStorage.getItem("play-your-life-v1")).quests.find((item) => item.id === "cal-range");
+    return q?.startsAt === expected.startsAt && q?.dueAt === expected.dueAt;
+  }, expectedShiftedRange, { timeout: 5000 });
+  const movedRange = await page.evaluate(() => JSON.parse(localStorage.getItem("play-your-life-v1")).quests.find((item) => item.id === "cal-range"));
+  assert.equal(Date.parse(movedRange.dueAt) - Date.parse(movedRange.startsAt), Date.parse(rangeDays.dueAt) - Date.parse(rangeDays.startsAt));
   // Сразу после полуночи в Москве выполненная задача относится к новому дню,
   // а отказ от задачи не увеличивает календарную нагрузку.
   await page.clock.install({ time: new Date('2026-11-07T00:15:00+03:00') });

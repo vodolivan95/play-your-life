@@ -1,9 +1,8 @@
 import type { GameState, Goal } from './game.ts';
 import { addDays, mondayOf } from './tasksCalendar.ts';
-import { planningDay, validDay } from './planningData.ts';
+import { planningDay, planningMetrics, validDay } from './planningData.ts';
 import { visiblePlanningTask, taskDay } from './planner.ts';
-import { projectControl } from './goalWorkspace.ts';
-import type { ProjectStatus } from './goalWorkspace.ts';
+import { goalHistory, nextGoalTask } from './goalWorkspace.ts';
 import { isGoalDone } from './goalsOverview.ts';
 
 // ---------------------------------------------------------------------------
@@ -65,26 +64,59 @@ export function weeklyReviewTotals(state: GameState, weekFrom: string, now = new
   return { weekStart: weekFrom, weekEnd: weekTo, done, undone, overdue, moves, actualMinutes };
 }
 
+// --- Шаг 2: проблемные задачи --------------------------------------------
+export type WeeklyReviewProblemTask = { id: string; name: string; moves: number; overdue: boolean };
+/** Чаще всего переносимые и просроченные незавершённые задачи — «предложить открыть для пересмотра» (ТЗ 3, раздел 5.1, шаг 2). */
+export function weeklyReviewProblemTasks(state: GameState, now = new Date(), limit = MAX_WEEKLY_REVIEW_PROBLEM_TASKS): WeeklyReviewProblemTask[] {
+  const today = planningDay(now.toISOString())!;
+  const metrics = planningMetrics(state);
+  const items: WeeklyReviewProblemTask[] = [];
+  for (const q of state.quests) {
+    if (!visiblePlanningTask(q) || q.done) continue;
+    const moves = metrics.get(q.id)?.moves ?? 0;
+    const d = taskDay(q);
+    const overdue = !!d && d < today;
+    if (moves > 0 || overdue) items.push({ id: q.id, name: q.name, moves, overdue });
+  }
+  return items
+    .sort((a, b) => b.moves - a.moves || Number(b.overdue) - Number(a.overdue))
+    .slice(0, limit);
+}
+
 // --- Шаг 3: продвижение проектов ----------------------------------------
+export type WeeklyReviewProjectStatus = 'advanced' | 'needsAttention' | 'noActivity';
+export const weeklyReviewProjectStatusLabels: Record<WeeklyReviewProjectStatus, string> = {
+  advanced: 'Продвинулся на этой неделе',
+  needsAttention: 'Есть следующий шаг, но без активности на неделе',
+  noActivity: 'Нет подтверждённой активности и следующего шага',
+};
 export type WeeklyReviewProjectEntry = {
   goalId: string;
   name: string;
-  status: ProjectStatus;
+  status: WeeklyReviewProjectStatus;
   /** Этапы проекта, завершённые в пределах недели. */
   stagesCompletedThisWeek: number;
 };
-/** Только активные (не на паузе, не завершённые) проекты — как и projectControl() на карточках. */
+/**
+ * Только активные (не на паузе, не завершённые) проекты. Самостоятельная упрощённая версия —
+ * не зависит от более подробного «Контроля проектов» модуля 3.2 (ещё не влит в main на момент
+ * написания), чтобы этот модуль собирался и проверялся независимо.
+ */
 export function weeklyReviewProjects(state: GameState, weekFrom: string, now = new Date()): WeeklyReviewProjectEntry[] {
   const weekTo = addDays(weekFrom, 6);
+  const inWeek = (d?: string) => !!d && d >= weekFrom && d <= weekTo;
   return state.goals
     .filter((g) => !isGoalDone(g) && !g.paused)
     .map((g) => {
-      const control = projectControl(state, g, now);
-      const stagesCompletedThisWeek = (g.stages ?? []).filter((s) => {
-        const d = s.completedAt ? planningDay(s.completedAt) : undefined;
-        return !!d && d >= weekFrom && d <= weekTo;
-      }).length;
-      return { goalId: g.id, name: g.name, status: control.status, stagesCompletedThisWeek };
+      const history = goalHistory(state, g);
+      const advancedThisWeek = history.some((e) => inWeek(planningDay(e.date)));
+      const stagesCompletedThisWeek = (g.stages ?? []).filter((s) => inWeek(s.completedAt ? planningDay(s.completedAt) : undefined)).length;
+      const status: WeeklyReviewProjectStatus = advancedThisWeek
+        ? 'advanced'
+        : nextGoalTask(state, g, now)
+          ? 'needsAttention'
+          : 'noActivity';
+      return { goalId: g.id, name: g.name, status, stagesCompletedThisWeek };
     });
 }
 
@@ -115,7 +147,7 @@ export function validWeeklyReview(v: unknown): v is WeeklyReview {
     r.projects.every((p) => typeof p === 'object' && p !== null &&
       typeof (p as Record<string, unknown>).goalId === 'string' &&
       typeof (p as Record<string, unknown>).name === 'string' &&
-      ['advancing', 'needsAttention', 'noNextStep', 'hasOverdueStages', 'noConfirmedActivity'].includes((p as Record<string, unknown>).status as string) &&
+      ['advanced', 'needsAttention', 'noActivity'].includes((p as Record<string, unknown>).status as string) &&
       typeof (p as Record<string, unknown>).stagesCompletedThisWeek === 'number') &&
     Array.isArray(r.problemTaskIds) && r.problemTaskIds.length <= MAX_WEEKLY_REVIEW_PROBLEM_TASKS &&
     r.problemTaskIds.every((id) => typeof id === 'string') &&

@@ -52,7 +52,7 @@ try {
     await win.getByRole('button', { name: 'Учесть время', exact: true }).click();
     // План уже установлен в 30 мин (строка выше) — текст включает отклонение от плана (0.76.0, Этап 2).
     await win.getByText('Учтено фактически: 20 мин (план 30 мин, отклонение -10 мин)', { exact: true }).waitFor();
-    await win.getByRole('button', { name: 'Готово', exact: true }).click();
+    await win.getByRole('button', { name: 'Сохранить', exact: true }).click();
     await plan.getByRole('button', { name: 'Настройки плана', exact: true }).click();
     const settings = plan.getByRole('form', { name: 'Настройки плана' });
     await settings.getByLabel('Доступно минут в день').fill('120');
@@ -136,7 +136,7 @@ try {
     await priorWin.getByLabel('Добавить предшественника', { exact: true }).selectOption(ids.target);
     await priorWin.getByRole('button', { name: 'Добавить зависимость', exact: true }).click();
     await page.getByText('Связь создаёт цикл зависимостей.', { exact: true }).waitFor();
-    await priorWin.getByRole('button', { name: 'Готово', exact: true }).click();
+    await priorWin.getByRole('button', { name: 'Сохранить', exact: true }).click();
     await task.getByLabel('Статус: Подготовить план', { exact: true }).selectOption('done');
     stored = await page.evaluate(() => JSON.parse(localStorage.getItem('play-your-life-v1')));
     assert.equal(stored.quests.find((q) => q.id === ids.target).done, false);

@@ -279,12 +279,20 @@ try {
       ),
       'Страница цели шире экрана',
     );
+    // На телефоне ссылка может оказаться под нижним меню — сначала в центр экрана.
+    await stageA
+      .getByRole('link', { name: 'Продолжить →' })
+      .evaluate((el) => el.scrollIntoView({ block: 'center' }));
     await stageA.getByRole('link', { name: 'Продолжить →' }).click({ force: true });
     await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.a}`);
     await workspace.getByRole('link', { name: 'Перейти к проекту →' }).click();
     await stageB
       .getByRole('button', { name: 'Раскрыть этап: Разговорная практика' })
       .click();
+    // На телефоне ссылка может оказаться под нижним меню — сначала в центр экрана.
+    await stageB
+      .getByRole('link', { name: 'Продолжить →' })
+      .evaluate((el) => el.scrollIntoView({ block: 'center' }));
     await stageB.getByRole('link', { name: 'Продолжить →' }).click({ force: true });
     await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.b}`);
     await page.goBack();

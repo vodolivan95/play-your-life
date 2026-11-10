@@ -24,7 +24,7 @@ import type { ActiveFocusSession, FocusModeId, FocusSessionData } from './planni
 
 // ───────────────────────── Конфигурация ─────────────────────────
 
-export type FocusMode = { id: Exclude<FocusModeId, 'custom'>; minutes: number; name: string; purpose: string };
+export type FocusMode = { id: Exclude<FocusModeId, 'custom' | 'stopwatch'>; minutes: number; name: string; purpose: string };
 /** Семь готовых режимов (ТЗ, раздел 3). */
 export const FOCUS_MODES: readonly FocusMode[] = [
   { id: 'quick', minutes: 5, name: 'Быстрый старт', purpose: 'Преодоление трудностей с началом' },
@@ -50,6 +50,7 @@ export const NO_SPHERE_NAME = 'Без сферы';
 
 export function focusModeName(mode: FocusModeId | 'manual'): string {
   if (mode === 'manual') return 'Вручную';
+  if (mode === 'stopwatch') return 'Секундомер';
   if (mode === 'custom') return 'Своя продолжительность';
   return FOCUS_MODES.find((m) => m.id === mode)?.name ?? 'Фокус';
 }
@@ -135,6 +136,8 @@ function gapsMs(intervals: Interval[]) {
 export type FocusStatus = 'active' | 'paused' | 'expired';
 export type FocusSnapshot = {
   status: FocusStatus;
+  /** true — секундомер: показывать прошедшее время, а не остаток; плана и продления нет. */
+  stopwatch: boolean;
   plannedSeconds: number;
   /** Подтверждённое рабочее время к этому моменту. */
   focusedSeconds: number;
@@ -153,6 +156,7 @@ export function focusSnapshot(session: ActiveFocusSession, now = new Date()): Fo
   const focusedSeconds = Math.min(session.plannedSeconds, Math.floor(worked / 1000));
   return {
     status,
+    stopwatch: session.mode === 'stopwatch',
     plannedSeconds: session.plannedSeconds,
     focusedSeconds,
     pausedSeconds: Math.floor((gapsMs(line.intervals) + trailing) / 1000),
@@ -215,6 +219,22 @@ export function startFocus(
     },
   };
 }
+/**
+ * Начать секундомер: отсчёт вверх без планового времени. Это та же сессия и та же запись в
+ * истории, что у таймера, — время обоих попадает в один отчёт, и одновременно может идти
+ * только что-то одно. Пауза, продолжение и завершение — общие (`pauseFocus`, `resumeFocus`,
+ * `finishFocus`). Забытый секундомер останавливается сам через 12 часов.
+ */
+export function startStopwatch(
+  state: GameState,
+  input: { taskId: string; firstAction?: string },
+  now = new Date(),
+  id: string = crypto.randomUUID(),
+): GameState {
+  const started = startFocus(state, { ...input, minutes: FOCUS_CUSTOM_MINUTES.max }, now, id);
+  if (started === state || !started.focusSession) return started;
+  return { ...started, focusSession: { ...started.focusSession, mode: 'stopwatch', plannedSeconds: FOCUS_MAX_SECONDS } };
+}
 /** Пауза: учёт рабочего времени прекращается. Повторная пауза ничего не меняет. */
 export function pauseFocus(state: GameState, now = new Date()): GameState {
   const session = state.focusSession;
@@ -228,7 +248,7 @@ export function resumeFocus(state: GameState, now = new Date()): GameState {
   const session = state.focusSession;
   if (!session) return state;
   const line = timeline(session, now.getTime());
-  if (line.expiredAt !== undefined) throw new Error('Время сессии истекло. Продли её или заверши.');
+  if (line.expiredAt !== undefined) throw new Error(session.mode === 'stopwatch' ? 'Секундомер дошёл до предела в 12 часов. Заверши сессию.' : 'Время сессии истекло. Продли её или заверши.');
   if (line.running) return state;
   if (line.intervals.length >= FOCUS_MAX_SEGMENTS) throw new Error('Слишком много пауз в одной сессии. Заверши её и начни новую.');
   return withSession(state, { ...session, segments: [...closedSegments(line.intervals), { start: now.toISOString() }] }, now);
@@ -241,6 +261,7 @@ export function resumeFocus(state: GameState, now = new Date()): GameState {
 export function extendFocus(state: GameState, minutes: number, now = new Date()): GameState {
   const session = state.focusSession;
   if (!session) return state;
+  if (session.mode === 'stopwatch') throw new Error('У секундомера нет планового времени — продлевать нечего.');
   checkMinutes(minutes);
   const plannedSeconds = session.plannedSeconds + minutes * 60;
   if (plannedSeconds > FOCUS_MAX_SECONDS) throw new Error('Сессия не может быть длиннее 12 часов. Заверши её и начни новую.');
@@ -283,7 +304,8 @@ export function finishFocus(
     pausedSeconds: Math.floor(gapsMs(line.intervals) / 1000),
     startedAt: new Date(line.intervals[0][0]).toISOString(),
     endedAt: new Date(endedAt).toISOString(),
-    status: focusedSeconds >= session.plannedSeconds ? 'completed' : 'interrupted',
+    // У секундомера нет плана, значит нет и «досрочно»: любая его сессия завершена.
+    status: session.mode === 'stopwatch' || focusedSeconds >= session.plannedSeconds ? 'completed' : 'interrupted',
     segments: closedSegments(line.intervals),
     ...(session.firstAction ? { firstAction: session.firstAction } : {}),
     ...(result ? { result } : {}),
@@ -316,6 +338,7 @@ export type FocusRecord = {
   stageId?: string;
   sphere: string;
   seconds: number;
+  /** Нет у секундомера и у времени, внесённого вручную. */
   plannedSeconds?: number;
   pausedSeconds: number;
   startedAt: string;
@@ -342,7 +365,7 @@ function recordOf(e: Event): FocusRecord | undefined {
   }
   if (!(s.focusedSeconds > 0)) return undefined;
   return {
-    ...base, seconds: s.focusedSeconds, plannedSeconds: s.plannedSeconds, pausedSeconds: s.pausedSeconds,
+    ...base, seconds: s.focusedSeconds, ...(s.mode === 'stopwatch' ? {} : { plannedSeconds: s.plannedSeconds }), pausedSeconds: s.pausedSeconds,
     startedAt: s.startedAt, endedAt: s.endedAt, mode: s.mode, status: s.status,
     ...(s.firstAction ? { firstAction: s.firstAction } : {}), ...(s.result ? { result: s.result } : {}),
     intervals: s.segments.map((seg): Interval => [Date.parse(seg.start), Date.parse(seg.end)]),

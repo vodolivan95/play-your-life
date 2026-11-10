@@ -65,8 +65,12 @@ export type PlanningChange =
       session?: FocusSessionData;
     };
 
-/** Режимы таймера фокуса (ТЗ «Этап 4.1», раздел 3). Длительности и названия — в `src/focusSessions.ts`. */
-export const FOCUS_MODE_IDS = ['quick', 'short', 'standard', 'extended', 'deep', 'long', 'marathon', 'custom'] as const;
+/**
+ * Режимы сессии фокуса (ТЗ «Этап 4.1», раздел 3). Длительности и названия — в `src/focusSessions.ts`.
+ * 'stopwatch' — секундомер: отсчёт вверх без планового времени (по поручению Ивана от 10 ноября 2026
+ * таймер и секундомер — два способа работы, но время обоих попадает в один отчёт).
+ */
+export const FOCUS_MODE_IDS = ['quick', 'short', 'standard', 'extended', 'deep', 'long', 'marathon', 'custom', 'stopwatch'] as const;
 export type FocusModeId = (typeof FOCUS_MODE_IDS)[number];
 /** Верхняя граница одной сессии вместе с продлениями — 12 часов. */
 export const FOCUS_MAX_SECONDS = 43200;
@@ -83,7 +87,7 @@ export type FocusSegment = { start: string; end?: string };
  */
 export type FocusSessionData = {
   mode: FocusModeId;
-  /** Плановое время с учётом продлений, секунды. */
+  /** Плановое время с учётом продлений, секунды. У секундомера плана нет — здесь его технический предел (`FOCUS_MAX_SECONDS`). */
   plannedSeconds: number;
   /** Подтверждённое рабочее время, секунды, без округления до минут. */
   focusedSeconds: number;

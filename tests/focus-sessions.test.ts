@@ -5,7 +5,7 @@ import type { GameState } from '../src/game.ts';
 import {
   comparisonText, dayFocus, discardFocus, extendFocus, finishFocus, FOCUS_MODES, FocusBusyError, focusByTask, focusComparison,
   focusEventId, focusHeatLevel, focusRecords, focusSlices, focusSnapshot, focusTotals, formatClock, formatFocus, monthFocus,
-  NO_SPHERE, pauseFocus, projectFocus, recordDays, resumeFocus, stageFocus, startFocus, taskFocusHistory, taskFocusSeconds,
+  NO_SPHERE, pauseFocus, projectFocus, recordDays, resumeFocus, stageFocus, startFocus, startStopwatch, taskFocusHistory, taskFocusSeconds,
 } from '../src/focusSessions.ts';
 import { actualMinutes, validActiveFocus, validPlanningEvent } from '../src/planningData.ts';
 import { logTaskTime, quickPlanningTask } from '../src/planner.ts';
@@ -293,6 +293,44 @@ test('Тест 11. Сравнение: текущий месяц — с тем �
   // 31 марта сравнивается с февралём целиком — интервал обрезается последним днём февраля.
   assert.deepEqual(focusComparison(s, '2026-03', {}, at(2026, 3, 31)).previousRange, { from: '2026-02-01', to: '2026-02-28' });
   assert.equal(comparisonText(focusComparison(setup(), '2026-11', {}, at(2026, 11, 10))), 'В обоих периодах фокуса пока нет');
+});
+
+test('секундомер и таймер — два способа работы, один отчёт: время обоих складывается', () => {
+  let s = setup('Первая', 'Вторая');
+  const a = idOf(s, 'Первая'); const b = idOf(s, 'Вторая');
+  const t0 = at(2026, 11, 10, 10, 0);
+  s = startStopwatch(s, { taskId: a }, t0, 'sw-1');
+  assert.equal(s.focusSession?.mode, 'stopwatch');
+  assert.ok(validActiveFocus(s.focusSession));
+  const running = focusSnapshot(s.focusSession!, plus(t0, 200));
+  assert.equal(running.stopwatch, true);
+  assert.equal(running.status, 'active', 'секундомер не «истекает» вместе с каким-либо планом');
+  assert.equal(running.focusedSeconds, 200 * 60);
+  // Пока идёт секундомер, таймер начать нельзя, и наоборот — активная сессия одна.
+  assert.throws(() => startFocus(s, { taskId: b, minutes: 25 }, plus(t0, 1), 'tm-1'), FocusBusyError);
+  assert.throws(() => extendFocus(s, 5, plus(t0, 1)), /секундомер/i);
+  s = pauseFocus(s, plus(t0, 40));
+  s = resumeFocus(s, plus(t0, 50));
+  s = finishFocus(s, { result: 'Готово' }, plus(t0, 73)); // 40 + 23 = 63 минуты работы
+  const stopwatch = taskFocusHistory(s, a)[0];
+  assert.equal(stopwatch.mode, 'stopwatch');
+  assert.equal(stopwatch.seconds, 63 * 60);
+  assert.equal(stopwatch.pausedSeconds, 10 * 60);
+  assert.equal(stopwatch.plannedSeconds, undefined, 'у секундомера нет планового времени');
+  assert.equal(stopwatch.status, 'completed');
+  assert.ok(validPlanningEvent(s.events.find((e) => e.id === focusEventId('sw-1')) as unknown as Record<string, unknown>));
+  assert.throws(() => startStopwatch(startFocus(s, { taskId: b, minutes: 25 }, plus(t0, 80), 'tm-2'), { taskId: a }, plus(t0, 81), 'sw-2'), FocusBusyError);
+  // Таймер по другой задаче в тот же день — в отчёте одна общая сумма.
+  s = session(s, b, plus(t0, 90), 25, 25);
+  const month = monthFocus(s, '2026-11', {}, at(2026, 11, 10, 23));
+  assert.equal(month.totalSeconds, (63 + 25) * 60);
+  assert.equal(month.sessions, 2);
+  assert.equal(month.days[9].seconds, (63 + 25) * 60);
+  // Забытый секундомер останавливается на пределе 12 часов.
+  const blank = setup();
+  const forgotten = startStopwatch(blank, { taskId: blank.quests[0].id }, t0);
+  assert.equal(focusSnapshot(forgotten.focusSession!, plus(t0, 3000)).status, 'expired');
+  assert.equal(focusSnapshot(forgotten.focusSession!, plus(t0, 3000)).focusedSeconds, 12 * 3600);
 });
 
 test('время, внесённое вручную, входит в фокус той же записью — «Фокус» равен «Учтено фактически»', () => {

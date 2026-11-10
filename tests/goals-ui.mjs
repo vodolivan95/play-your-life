@@ -279,12 +279,20 @@ try {
       ),
       'Страница цели шире экрана',
     );
+    // На телефоне ссылка может оказаться под нижним меню — сначала в центр экрана.
+    await stageA
+      .getByRole('link', { name: 'Продолжить →' })
+      .evaluate((el) => el.scrollIntoView({ block: 'center' }));
     await stageA.getByRole('link', { name: 'Продолжить →' }).click({ force: true });
     await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.a}`);
     await workspace.getByRole('link', { name: 'Перейти к проекту →' }).click();
     await stageB
       .getByRole('button', { name: 'Раскрыть этап: Разговорная практика' })
       .click();
+    // На телефоне ссылка может оказаться под нижним меню — сначала в центр экрана.
+    await stageB
+      .getByRole('link', { name: 'Продолжить →' })
+      .evaluate((el) => el.scrollIntoView({ block: 'center' }));
     await stageB.getByRole('link', { name: 'Продолжить →' }).click({ force: true });
     await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.b}`);
     await page.goBack();
@@ -306,7 +314,7 @@ try {
       .click();
     await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.a}`);
     assert.equal(await tabs.getByRole('button').count(), 5);
-    await workspace.locator('.gw-reward-content').click();
+    await workspace.locator('.ss-reward').click();
     await workspace
       .locator('dialog[open]')
       .getByRole('heading', { name: '🏆 Награды этапа', exact: true })
@@ -462,11 +470,11 @@ try {
       'Страница этапа шире экрана',
     );
     for (const name of [
-      'Задачи',
-      'Временная шкала',
+      'Фокус дня',
+      'Психология',
+      'Прогресс',
       'Настройки',
-      'Статистика',
-      'Обзор',
+      'Задачи',
     ])
       await tabs.getByRole('button', { name, exact: true }).click();
     // Пустой ручной этап входит в среднее, поэтому проект завершён только

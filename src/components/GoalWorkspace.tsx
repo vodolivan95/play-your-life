@@ -75,6 +75,8 @@ import { focusSlices, formatFocus } from '../focusCore';
 const FocusStats = lazy(() => import('./FocusStats'));
 import './GoalWorkspace.css';
 
+const StageScreen = lazy(() => import('./StageScreen'));
+
 type Props = {
   ownerId: string;
   state: GameState;
@@ -757,6 +759,8 @@ export default function GoalWorkspace(p: Props) {
   const history = goalHistory(state, goal, stage?.id);
   const nextTask = nextGoalTask(state, goal);
   const activeStage = activeGoalStage(state, goal, new Date(now));
+  // На экране этапа «Почему важен этот этап» относится к открытому этапу.
+  const whyStage = stage ?? activeStage;
   const streak = goalActivityStreak(state, goal);
   const completed = stages.filter(
     (s) => stageMetrics(state, goal, s).complete,
@@ -1277,46 +1281,114 @@ export default function GoalWorkspace(p: Props) {
       </Card>
     );
   }
-  const days = stageDays(goal);
-  return (
-    <div className="gw-workspace">
-      <nav className="gw-breadcrumbs" aria-label="Навигационная цепочка">
-        <button onClick={() => p.onSelect(null)}>Проекты</button>
-        <span>›</span>
-        <a href={`#${goalRoute(goal.id)}`}>{goal.name}</a>
-        {stage && (
-          <>
-            <span>›</span>
-            <span>
-              Этап {stages.indexOf(stage) + 1}. {stage.name}
-            </span>
-          </>
-        )}
-      </nav>
-      {goal.paused && !stage && (
-        <div className="gw-paused-banner">
-          <span>Проект на паузе — срок и серия активности не учитываются</span>
-          <button
-            className="primary-button"
-            onClick={() => {
-              if (mutate((s) => saveGoal(s, { ...goal, paused: false })))
-                p.onNotify('Проект возобновлён.');
-            }}
-          >
-            Возобновить проект
-          </button>
-        </div>
-      )}
-      <section className={`gw-banner ${stageId ? 'gw-banner-compact' : ''}`}>
-        <img
-          className="gw-banner-image"
-          src={
-            goal.image ||
-            sphereAssets[goal.sphere as keyof typeof sphereAssets]
-              .buildingThumbnail
-          }
-          alt=""
-        />
+  function woopCard() {
+    return (
+                  <Card title="WOOP" icon="woop">
+                    <p className="gw-muted">
+                      Желание → Результат → Препятствие → План.
+                    </p>
+                    {goal.woop &&
+                    (goal.woop.wish ||
+                      goal.woop.outcome ||
+                      goal.woop.obstacle ||
+                      goal.woop.plan) ? (
+                      <dl className="gw-woop-list">
+                        <div>
+                          <dt>Желание</dt>
+                          <dd>{goal.woop.wish || '—'}</dd>
+                        </div>
+                        <div>
+                          <dt>Результат</dt>
+                          <dd>{goal.woop.outcome || '—'}</dd>
+                        </div>
+                        <div>
+                          <dt>Препятствие</dt>
+                          <dd>{goal.woop.obstacle || '—'}</dd>
+                        </div>
+                        <div>
+                          <dt>План</dt>
+                          <dd>{goal.woop.plan || '—'}</dd>
+                        </div>
+                      </dl>
+                    ) : null}
+                    <button
+                      className="text-button"
+                      onClick={() => setDetail({ kind: 'woop' })}
+                    >
+                      {goal.woop ? 'Изменить' : '＋ Заполнить WOOP'}
+                    </button>
+                  </Card>
+    );
+  }
+  function ifThenCard() {
+    return (
+                  <Card title="Если-То план" icon="ifThen" className="gw-checkpoints">
+                    <p className="gw-muted">
+                      Заранее решите, как отреагировать на препятствие — так
+                      проще не бросить на полпути.
+                    </p>
+                    <ul className="gw-checkpoint-list gw-if-then-list">
+                      {(goal.ifThenRules ?? []).map((r) => (
+                        <li key={r.id}>
+                          <span>
+                            <b>Если</b> {r.ifText} <b>→ то</b> {r.thenText}
+                          </span>
+                          <button
+                            className="gw-icon-button"
+                            aria-label={`Удалить правило: если ${r.ifText}`}
+                            onClick={() =>
+                              mutate((s) =>
+                                removeGoalIfThenRule(s, goal.id, r.id),
+                              )
+                            }
+                          >
+                            ×
+                          </button>
+                        </li>
+                      ))}
+                      {!goal.ifThenRules?.length && (
+                        <li className="gw-muted">Правил пока нет.</li>
+                      )}
+                    </ul>
+                    {(goal.ifThenRules?.length ?? 0) < MAX_GOAL_IF_THEN_RULES && (
+                      <form
+                        className="gw-checkpoint-form gw-if-then-form"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const form = e.currentTarget;
+                          const data = new FormData(form);
+                          const ifText = String(data.get('ifText') ?? '');
+                          const thenText = String(data.get('thenText') ?? '');
+                          if (
+                            mutate((s) =>
+                              addGoalIfThenRule(s, goal.id, ifText, thenText),
+                            )
+                          )
+                            form.reset();
+                        }}
+                      >
+                        <input
+                          name="ifText"
+                          placeholder="Если… (например: не хочется идти на тренировку)"
+                          maxLength={GOAL_IF_THEN_TEXT_MAX}
+                          required
+                        />
+                        <input
+                          name="thenText"
+                          placeholder="То… (например: сделаю хотя бы 10 минут)"
+                          maxLength={GOAL_IF_THEN_TEXT_MAX}
+                          required
+                        />
+                        <button className="text-button" type="submit">
+                          ＋ Добавить правило
+                        </button>
+                      </form>
+                    )}
+                  </Card>
+    );
+  }
+  function projectTools() {
+    return (
         <div className="gw-banner-tools">
           <button aria-label="Изменить обложку проекта" onClick={p.onEditGoal}>
             ✎
@@ -1382,6 +1454,51 @@ export default function GoalWorkspace(p: Props) {
             </div>
           </details>
         </div>
+    );
+  }
+  const days = stageDays(goal);
+  const stageScreen = !!stage && !stageAccess(state, goal, stage);
+  return (
+    <div className="gw-workspace">
+      <nav className="gw-breadcrumbs" aria-label="Навигационная цепочка">
+        <button onClick={() => p.onSelect(null)}>Проекты</button>
+        <span>›</span>
+        <a href={`#${goalRoute(goal.id)}`}>{goal.name}</a>
+        {stage && (
+          <>
+            <span>›</span>
+            <span>
+              Этап {stages.indexOf(stage) + 1}. {stage.name}
+            </span>
+          </>
+        )}
+      </nav>
+      {goal.paused && !stage && (
+        <div className="gw-paused-banner">
+          <span>Проект на паузе — срок и серия активности не учитываются</span>
+          <button
+            className="primary-button"
+            onClick={() => {
+              if (mutate((s) => saveGoal(s, { ...goal, paused: false })))
+                p.onNotify('Проект возобновлён.');
+            }}
+          >
+            Возобновить проект
+          </button>
+        </div>
+      )}
+      {!stageScreen && (
+      <section className={`gw-banner ${stageId ? 'gw-banner-compact' : ''}`}>
+        <img
+          className="gw-banner-image"
+          src={
+            goal.image ||
+            sphereAssets[goal.sphere as keyof typeof sphereAssets]
+              .buildingThumbnail
+          }
+          alt=""
+        />
+        {projectTools()}
         <div className="gw-banner-copy">
           <div className="gw-banner-sphere">
             <SphereIcon id={goal.sphere} />
@@ -1443,6 +1560,7 @@ export default function GoalWorkspace(p: Props) {
           )}
         </div>
       </section>
+      )}
       {stageId && (!stage || stageAccess(state, goal, stage)) ? (
         <Card title={stage ? 'Этап заблокирован' : 'Этап не найден'}>
           <p>
@@ -1462,6 +1580,96 @@ export default function GoalWorkspace(p: Props) {
             Перейти к проекту →
           </a>
         </Card>
+      ) : stageScreen && stage && group ? (
+        <Suspense fallback={<p className="gw-muted">Загружаем этап…</p>}>
+          <StageScreen
+            state={state}
+            goal={goal}
+            stage={stage}
+            stops={stages.map((s) => {
+              const status = stageState(state, goal, s, new Date(now));
+              return {
+                id: s.id,
+                name: s.name,
+                label: stageLabels[status],
+                state: status,
+                href: `#${goalRoute(goal.id, s.id)}`,
+                blocked: stageAccess(state, goal, s) || '',
+              };
+            })}
+            tasks={group.tasks}
+            progress={group.progress}
+            complete={group.complete}
+            xp={xp}
+            coins={coins}
+            statusLabel={stageLabels[stageState(state, goal, stage, new Date(now))]}
+            daysLeft={stageDays(stage, new Date(now)).remaining}
+            period={
+              stage.startsAt && stage.dueAt
+                ? `${shortDate(stage.startsAt)} → ${shortDate(stage.dueAt)}`
+                : stage.startsAt
+                  ? `с ${shortDate(stage.startsAt)}`
+                  : stage.dueAt
+                    ? `до ${shortDate(stage.dueAt)}`
+                    : 'Срок этапа не задан'
+            }
+            sphereName={sphere.name}
+            image={
+              goal.image ||
+              sphereAssets[goal.sphere as keyof typeof sphereAssets]
+                .buildingThumbnail
+            }
+            projectHref={`#${goalRoute(goal.id)}`}
+            stageRing={<ProgressRing value={group.progress} label="Прогресс этапа" />}
+            projectRing={
+              <ProgressRing value={goalProgress} label="Общий прогресс проекта" />
+            }
+            projectTools={projectTools()}
+            taskLocked={(task) =>
+              stage.status === 'paused' ||
+              (!!task.startsAt && Date.parse(task.startsAt) > now)
+            }
+            taskDateLine={taskDateLine}
+            onToggleTask={(task) => (task.done ? undoFinish(task) : finish(task))}
+            onOpenTask={(task) => setDetail({ kind: 'task', task })}
+            onAddTask={() => p.onAddTask(stage.id)}
+            onEditStage={() => p.onEditStage(stage)}
+            onDetail={(kind) => setDetail({ kind })}
+            onNotify={p.onNotify}
+            slots={{
+              calendar: (
+                <StageCalendar
+                  stage={stage}
+                  tasks={group.tasks}
+                  onTask={(task) => setDetail({ kind: 'task', task })}
+                />
+              ),
+              timeline: (
+                <Timeline stage={stage} onEdit={() => p.onEditStage(stage)} />
+              ),
+              statistics: (
+                <>
+                  <Statistics state={state} goal={goal} stageId={stage.id} />
+                  <Suspense fallback={null}>
+                    <FocusStats
+                      state={state}
+                      goal={goal}
+                      stageId={stage.id}
+                      onOpenStage={(id) => {
+                        window.location.hash = goalRoute(goal.id, id);
+                      }}
+                    />
+                  </Suspense>
+                </>
+              ),
+              management: management(),
+              rewards: rewards(),
+              woop: woopCard(),
+              ifThen: ifThenCard(),
+              history: <Card title="История этапа">{historyList(8)}</Card>,
+            }}
+          />
+        </Suspense>
       ) : (
         <>
           {stage && (
@@ -1982,104 +2190,8 @@ export default function GoalWorkspace(p: Props) {
                       Все события →
                     </button>
                   </Card>
-                  <Card title="WOOP" icon="woop">
-                    <p className="gw-muted">
-                      Желание → Результат → Препятствие → План.
-                    </p>
-                    {goal.woop &&
-                    (goal.woop.wish ||
-                      goal.woop.outcome ||
-                      goal.woop.obstacle ||
-                      goal.woop.plan) ? (
-                      <dl className="gw-woop-list">
-                        <div>
-                          <dt>Желание</dt>
-                          <dd>{goal.woop.wish || '—'}</dd>
-                        </div>
-                        <div>
-                          <dt>Результат</dt>
-                          <dd>{goal.woop.outcome || '—'}</dd>
-                        </div>
-                        <div>
-                          <dt>Препятствие</dt>
-                          <dd>{goal.woop.obstacle || '—'}</dd>
-                        </div>
-                        <div>
-                          <dt>План</dt>
-                          <dd>{goal.woop.plan || '—'}</dd>
-                        </div>
-                      </dl>
-                    ) : null}
-                    <button
-                      className="text-button"
-                      onClick={() => setDetail({ kind: 'woop' })}
-                    >
-                      {goal.woop ? 'Изменить' : '＋ Заполнить WOOP'}
-                    </button>
-                  </Card>
-                  <Card title="Если-То план" icon="ifThen" className="gw-checkpoints">
-                    <p className="gw-muted">
-                      Заранее решите, как отреагировать на препятствие — так
-                      проще не бросить на полпути.
-                    </p>
-                    <ul className="gw-checkpoint-list gw-if-then-list">
-                      {(goal.ifThenRules ?? []).map((r) => (
-                        <li key={r.id}>
-                          <span>
-                            <b>Если</b> {r.ifText} <b>→ то</b> {r.thenText}
-                          </span>
-                          <button
-                            className="gw-icon-button"
-                            aria-label={`Удалить правило: если ${r.ifText}`}
-                            onClick={() =>
-                              mutate((s) =>
-                                removeGoalIfThenRule(s, goal.id, r.id),
-                              )
-                            }
-                          >
-                            ×
-                          </button>
-                        </li>
-                      ))}
-                      {!goal.ifThenRules?.length && (
-                        <li className="gw-muted">Правил пока нет.</li>
-                      )}
-                    </ul>
-                    {(goal.ifThenRules?.length ?? 0) < MAX_GOAL_IF_THEN_RULES && (
-                      <form
-                        className="gw-checkpoint-form gw-if-then-form"
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          const form = e.currentTarget;
-                          const data = new FormData(form);
-                          const ifText = String(data.get('ifText') ?? '');
-                          const thenText = String(data.get('thenText') ?? '');
-                          if (
-                            mutate((s) =>
-                              addGoalIfThenRule(s, goal.id, ifText, thenText),
-                            )
-                          )
-                            form.reset();
-                        }}
-                      >
-                        <input
-                          name="ifText"
-                          placeholder="Если… (например: не хочется идти на тренировку)"
-                          maxLength={GOAL_IF_THEN_TEXT_MAX}
-                          required
-                        />
-                        <input
-                          name="thenText"
-                          placeholder="То… (например: сделаю хотя бы 10 минут)"
-                          maxLength={GOAL_IF_THEN_TEXT_MAX}
-                          required
-                        />
-                        <button className="text-button" type="submit">
-                          ＋ Добавить правило
-                        </button>
-                      </form>
-                    )}
-                  </Card>
+                  {woopCard()}
+                  {ifThenCard()}
                 </>
               )}
             </aside>
@@ -2174,10 +2286,10 @@ export default function GoalWorkspace(p: Props) {
                           ? mutate((s) =>
                               saveGoal(s, { ...goal, finalResult: text }),
                             )
-                          : detail.kind === 'stageWhy' && activeStage
+                          : detail.kind === 'stageWhy' && whyStage
                             ? mutate((s) =>
                                 saveStage(s, goal.id, {
-                                  ...activeStage,
+                                  ...whyStage,
                                   whyImportant: text,
                                 }),
                               )
@@ -2225,7 +2337,7 @@ export default function GoalWorkspace(p: Props) {
                         : detail.kind === 'finalResult'
                           ? (goal.finalResult ?? '')
                           : detail.kind === 'stageWhy'
-                            ? (activeStage?.whyImportant ?? '')
+                            ? (whyStage?.whyImportant ?? '')
                             : (goal.motivation ?? '')
                   }
                 />

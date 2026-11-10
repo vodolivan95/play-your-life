@@ -1,0 +1,7 @@
+.focus-bar{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:6px 8px 6px 14px;border-radius:999px;background:#12244aee;color:#fff;border:1px solid #5aa2ff66;box-shadow:0 10px 28px #0006;backdrop-filter:blur(12px)}
+.focus-bar button{font:inherit;border:0;background:none;color:inherit;cursor:pointer}
+.focus-bar-open{flex:1;min-width:0;display:flex;align-items:center;gap:10px;text-align:left;padding:4px 0}
+.focus-bar-open b{font-size:18px;font-variant-numeric:tabular-nums;color:#7fc4ff}
+.focus-bar[data-status='expired'] .focus-bar-open b{color:#c4a9ff}
+.focus-bar-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600}
+.focus-bar>button:not(.focus-bar-open){flex:none;width:36px;height:36px;border-radius:50%;background:#ffffff1f;font-size:14px}

@@ -4,8 +4,8 @@ import { newAccountGame } from '../src/accountGame.ts';
 import type { GameState } from '../src/game.ts';
 import {
   comparisonText, dayFocus, discardFocus, extendFocus, finishFocus, FOCUS_MODES, FocusBusyError, focusByTask, focusComparison,
-  focusEventId, focusHeatLevel, focusRecords, focusSlices, focusSnapshot, focusTotals, formatClock, formatFocus, monthFocus,
-  NO_SPHERE, pauseFocus, projectFocus, recordDays, resumeFocus, stageFocus, startFocus, startStopwatch, taskFocusHistory, taskFocusSeconds,
+  focusEventId, focusHeatLevel, focusModeLabel, focusRecords, focusSlices, focusSnapshot, focusTotals, formatClock, formatFocus, monthFocus,
+  NO_SPHERE, normalizeFocusState, pauseFocus, projectFocus, recordDays, resumeFocus, stageFocus, startFocus, startStopwatch, taskFocusHistory, taskFocusSeconds,
 } from '../src/focusSessions.ts';
 import { actualMinutes, validActiveFocus, validPlanningEvent } from '../src/planningData.ts';
 import { logTaskTime, quickPlanningTask } from '../src/planner.ts';
@@ -152,6 +152,39 @@ test('одна активная сессия на игрока; повтор с�
   assert.equal(empty.focusSession, undefined);
   const cancelled = discardFocus(startFocus(done, { taskId: b, minutes: 5 }, plus(t0, 30)));
   assert.equal(cancelled.events.length, done.events.length);
+});
+
+test('слияние двух устройств: независимые пауза и продолжение одной сессии дают корректное сохранение', () => {
+  const s0 = setup(); const id = s0.quests[0].id;
+  const t0 = at(2026, 11, 10, 10, 0);
+  const base = startFocus(s0, { taskId: id, minutes: 60 }, t0, 'shared');
+  // Первое устройство: пауза в 10:05, продолжение в 10:10. Второе: пауза в 10:06, продолжение в 10:11.
+  const first = resumeFocus(pauseFocus(base, plus(t0, 5)), plus(t0, 10));
+  const second = resumeFocus(pauseFocus(base, plus(t0, 6)), plus(t0, 11));
+  const merged = mergeStates(base, first, second);
+  assert.doesNotThrow(() => validateState(JSON.parse(JSON.stringify(merged))), 'слитое сохранение проходит проверку');
+  const segments = merged.focusSession!.segments;
+  assert.equal(segments.filter((s) => s.end === undefined).length, 1, 'открытый отрезок один');
+  assert.equal(segments[segments.length - 1].end, undefined, 'и он последний');
+  assert.deepEqual(segments.map((s) => s.start), [t0.toISOString(), plus(t0, 10).toISOString()]);
+  assert.equal(segments[0].end, plus(t0, 6).toISOString(), 'пересекающиеся отрезки объединены');
+  const snap = focusSnapshot(merged.focusSession!, plus(t0, 20));
+  assert.equal(snap.status, 'active');
+  assert.equal(snap.focusedSeconds, 16 * 60, '6 минут до паузы и 10 после — время не удвоено');
+  assert.equal(normalizeFocusState(merged), merged, 'уже правильная сессия не меняется');
+  assert.equal(normalizeFocusState(s0), s0);
+  // Одно устройство завершило сессию, другое в это время поставило её на паузу — сессия не «воскресает».
+  const finished = finishFocus(base, {}, plus(t0, 30));
+  const pausedElsewhere = pauseFocus(base, plus(t0, 12));
+  for (const result of [mergeStates(base, finished, pausedElsewhere), mergeStates(base, pausedElsewhere, finished)]) {
+    assert.equal(result.focusSession, undefined);
+    assert.equal(focusRecords(result).length, 1);
+    assert.doesNotThrow(() => validateState(JSON.parse(JSON.stringify(result))));
+  }
+});
+
+test('подписи режима в истории задачи: интервал, своя длительность, секундомер, вручную', () => {
+  assert.deepEqual((['deep', 'quick', 'custom', 'stopwatch', 'manual'] as const).map(focusModeLabel), ['60 мин', '5 мин', 'Своя длительность', 'Секундомер', 'Вручную']);
 });
 
 test('Тесты 5–7. Одна запись даёт время задаче, этапу и проекту; перенос задачи не переписывает историю', () => {

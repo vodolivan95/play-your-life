@@ -3,6 +3,7 @@ import { spheres } from '../game';
 import type { GameState, Quest } from '../game';
 import { calendarItem } from '../tasksCalendar';
 import { taskContribution } from '../taskSettings';
+import { focusByTask, formatFocus } from '../focusSessions';
 import TaskLabelBadge from './TaskLabelBadge';
 import './GoalTaskList.css';
 
@@ -19,13 +20,15 @@ export default function GoalTaskList({ state, quests, today, onOpen, onProgress 
   const inGoal = (q: Quest) => !!q.goalId && state.goals.some((g) => g.id === q.goalId);
   const goals = state.goals.filter((g) => shown.some((q) => q.goalId === g.id));
   const loose = shown.filter((q) => !inGoal(q));
+  const focus = focusByTask(state);
   const row = (q: Quest) => {
     const c = taskContribution(state, q);
+    const focused = focus.get(q.id) ?? 0;
     const late = !q.done && !q.wontDo && (calendarItem(q)?.day ?? '9') < today;
     return (
       <li key={q.id} className={q.wontDo ? 'gtl-item is-wontdo' : q.done ? 'gtl-item is-done' : 'gtl-item'}>
         <button type="button" className="gtl-row" onClick={() => onOpen(q.id)}>
-          <span className="gtl-name"><span>{q.pinned ? '📌 ' : ''}{q.tickTickSharedAt ? '⟳ ' : ''}{q.name}</span><TaskLabelBadge labelId={q.labelId} labels={state.taskLabels} /></span>
+          <span className="gtl-name"><span>{q.pinned ? '📌 ' : ''}{q.tickTickSharedAt ? '⟳ ' : ''}{q.name}</span><TaskLabelBadge labelId={q.labelId} labels={state.taskLabels} />{focused > 0 && <small className="gtl-focus">⏱ {formatFocus(focused)}</small>}</span>
           <span className={late ? 'gtl-due is-late' : 'gtl-due'}>{short(calendarItem(q)?.day)}</span>
           <span className="gtl-xp">+{c.xp} XP</span>
         </button>

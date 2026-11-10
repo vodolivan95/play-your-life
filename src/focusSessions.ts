@@ -20,7 +20,7 @@ import type { Event, GameState, Quest } from './game.ts';
 import {
   addPlanningEvent, FOCUS_FIRST_ACTION_MAX, FOCUS_MAX_SECONDS, FOCUS_MAX_SEGMENTS, FOCUS_RESULT_MAX,
 } from './planningData.ts';
-import type { ActiveFocusSession, FocusModeId, FocusSessionData } from './planningData.ts';
+import type { ActiveFocusSession, FocusModeId, FocusSegment, FocusSessionData } from './planningData.ts';
 
 // ───────────────────────── Конфигурация ─────────────────────────
 
@@ -53,6 +53,12 @@ export function focusModeName(mode: FocusModeId | 'manual'): string {
   if (mode === 'stopwatch') return 'Секундомер';
   if (mode === 'custom') return 'Своя продолжительность';
   return FOCUS_MODES.find((m) => m.id === mode)?.name ?? 'Фокус';
+}
+/** Короткая подпись режима записи для истории: «30 мин», «Своя длительность», «Секундомер», «Вручную». */
+export function focusModeLabel(mode: FocusModeId | 'manual'): string {
+  const preset = FOCUS_MODES.find((m) => m.id === mode);
+  if (preset) return `${preset.minutes} мин`;
+  return mode === 'custom' ? 'Своя длительность' : focusModeName(mode);
 }
 export function focusModeForMinutes(minutes: number): FocusModeId {
   return FOCUS_MODES.find((m) => m.minutes === minutes)?.id ?? 'custom';
@@ -162,6 +168,43 @@ export function focusSnapshot(session: ActiveFocusSession, now = new Date()): Fo
     pausedSeconds: Math.floor((gapsMs(line.intervals) + trailing) / 1000),
     remainingSeconds: Math.max(0, session.plannedSeconds - focusedSeconds),
   };
+}
+
+/**
+ * Приводит текущую сессию в порядок после слияния сохранений с двух устройств (замечание ревью
+ * к PR #306). Слияние объединяет массивы отрезков как множества, поэтому, если одну сессию
+ * независимо ставили на паузу и продолжали на двух устройствах, получается несколько открытых
+ * отрезков и пересечения — такое сохранение не прошло бы проверку. Здесь:
+ * - отрезки упорядочиваются, пересекающиеся объединяются;
+ * - открытым остаётся только самый поздний; более ранний открытый закрывается началом следующего;
+ * - если запись этой сессии уже есть в истории (на другом устройстве её завершили), текущая
+ *   сессия убирается — иначе она «воскресла» бы после слияния.
+ * Состояние без сессии или с уже правильной сессией возвращается без изменений.
+ */
+export function normalizeFocusState(state: GameState): GameState {
+  const session = state.focusSession;
+  if (!session || !Array.isArray(session.segments)) return state;
+  const eventId = focusEventId(session.id);
+  if (state.events.some((e) => e.id === eventId)) return withoutSession(state);
+  const raw = session.segments
+    .map((s): Interval => [Date.parse(s.start), s.end === undefined ? Infinity : Date.parse(s.end)])
+    .filter(([a, b]) => Number.isFinite(a) && !Number.isNaN(b) && b >= a)
+    .sort((x, y) => x[0] - y[0] || x[1] - y[1]);
+  const lastOpen = raw.reduce((latest, [a, b]) => (b === Infinity ? Math.max(latest, a) : latest), -Infinity);
+  const merged: Interval[] = [];
+  raw.forEach(([start, rawEnd], i) => {
+    const next = raw.slice(i + 1).find(([a]) => a > start);
+    const end = rawEnd === Infinity && start !== lastOpen ? (next ? next[0] : start) : rawEnd;
+    const last = merged[merged.length - 1];
+    if (last && start <= last[1]) last[1] = Math.max(last[1], end);
+    else merged.push([start, end]);
+  });
+  const segments: FocusSegment[] = merged.map(([a, b]) => (b === Infinity
+    ? { start: new Date(a).toISOString() }
+    : { start: new Date(a).toISOString(), end: new Date(b).toISOString() }));
+  const same = segments.length === session.segments.length
+    && segments.every((s, i) => s.start === session.segments[i].start && s.end === session.segments[i].end);
+  return same ? state : { ...state, focusSession: { ...session, segments } };
 }
 
 /** Попытка начать вторую сессию. Интерфейс предлагает: вернуться к текущей, завершить её или отменить действие. */

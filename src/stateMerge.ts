@@ -26,6 +26,7 @@
  */
 import { canonical } from './stateFingerprint.ts';
 import type { GameState } from './game.ts';
+import { normalizeFocusState } from './focusSessions.ts';
 
 /** Пути вида 'spheres.*.xp' — '*' совпадает с любым ключом словаря на этом уровне. */
 const ADDITIVE_PATHS = ['xp', 'coins', 'spheres.*.xp'];
@@ -205,5 +206,8 @@ function mergeValue(base: unknown, local: unknown, remote: unknown, path: string
  * перепроверяется по доказательствам заново, слияние лишь готовит кандидата.
  */
 export function mergeStates(base: GameState, local: GameState, remote: GameState): GameState {
-  return mergeObject(base, local as unknown as Record<string, unknown>, remote as unknown as Record<string, unknown>, []) as unknown as GameState;
+  const merged = mergeObject(base, local as unknown as Record<string, unknown>, remote as unknown as Record<string, unknown>, []) as unknown as GameState;
+  // Единственное место со знанием схемы: отрезки текущей сессии фокуса после слияния «как множества»
+  // нужно упорядочить, иначе результат не пройдёт validateState() (см. normalizeFocusState).
+  return normalizeFocusState(merged);
 }

@@ -14,6 +14,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction, ReactNode } from 'react';
 import Icon from './components/Icon';
 const LifeCity = lazy(() => import('./components/LifeCity'));
+const FocusBar = lazy(() => import('./components/FocusBar'));
 import GameArt from './components/GameArt';
 import Avatar from './components/Avatar';
 import DataBackup from './components/DataBackup';
@@ -693,6 +694,9 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
               </div>
             )}
             {page === 'quests' && <HabitsPage state={state} onChange={setState} ownerId={userId ?? 'local'} today={today} notify={notify} />}
+            {state.focusSession && (page === 'tasks' || page === 'goals') && (
+              <Suspense fallback={null}><FocusBar state={state} onChange={setState} onOpen={setSphereTaskId} /></Suspense>
+            )}
             {page === 'tasks' && <QuestBoard
               initialTaskId={pendingTask}
               onInitialTaskOpened={() => setPendingTask(null)}

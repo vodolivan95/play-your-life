@@ -410,7 +410,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
           {task.done && onPractice && <button type="button" className="primary-button" onClick={() => onPractice(task)}>↻ Практиковать снова</button>}
           {task.done && onUndo && <button type="button" className="secondary-button" onClick={() => onUndo(task)}>Отменить выполнение</button>}
           {onDelete && <button type="button" className="text-button" onClick={() => onDelete(task)}>Удалить</button>}
-          {onProgress && !task.done && !task.wontDo && <button type="button" className="secondary-button" onClick={() => onProgress(task)}>Продолжить</button>}
+          {onProgress && !task.done && !task.wontDo && (task.targetValue ?? 1) > 1 && <button type="button" className="secondary-button" onClick={() => onProgress(task)}>Продолжить</button>}
           {onComplete && !task.done && !task.wontDo && <button type="button" className="primary-button" onClick={() => onComplete(task)}>✓ Выполнить</button>}
           {/* Правки сохраняются сразу; кнопка только закрывает окно и не отмечает задачу выполненной. */}
           <button type="button" className={onComplete && !task.done && !task.wontDo ? 'secondary-button' : 'primary-button'} onClick={onClose}>Сохранить</button>

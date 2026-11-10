@@ -17,13 +17,11 @@ export default function TodayTasks({
   quests,
   today,
   onOpen,
-  onProgress,
 }: {
   state: GameState;
   quests: Quest[];
   today: string;
   onOpen: (id: string) => void;
-  onProgress: (q: Quest) => void;
 }) {
   const [showDone, setShowDone] = useState(true);
   const scheduledToday = questsForCalendarDay(quests, today);
@@ -45,14 +43,10 @@ export default function TodayTasks({
           <span className="gtl-due">{short(today)}</span>
           <span className="gtl-xp">+{c.xp} XP</span>
         </button>
-        {q.done ? (
+        {q.done && (
           <span className="gtl-ok" aria-label="Выполнено">
             ✓
           </span>
-        ) : (
-          <button type="button" className="gtl-go" onClick={() => onProgress(q)}>
-            Продолжить
-          </button>
         )}
       </li>
     );

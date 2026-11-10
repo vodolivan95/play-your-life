@@ -8,7 +8,7 @@ import type { PostponeReasonCode } from '../planningData';
 import { logTaskTime } from '../planner';
 import { updateTaskSettings } from '../taskSettings';
 import {
-  activeTimer, commitFinish, discardTimer, elapsedSeconds, formatElapsed, isTimerStorageCorrupted, pauseTimer, peekFinish, readTimer, resumeTimer, startTimer,
+  commitFinish, discardTimer, elapsedSeconds, formatElapsed, isTimerStorageCorrupted, pauseTimer, peekFinish, readTimer, resumeTimer,
 } from '../taskTimer';
 import TaskDependencyFields from './TaskDependencyFields';
 
@@ -67,10 +67,9 @@ export default function TaskPlanningFields({ state, task, onChange, notify, onRe
     const i = setInterval(() => setTimer(readTimer(ownerId, task.id)), 1000);
     return () => clearInterval(i);
   }, [ownerId, task.id, timer?.runningSince]);
-  // Другой уже запущенный таймер этого владельца (ТЗ 3.2: один активный таймер на пользователя) —
-  // показываем предупреждение заранее, не только после попытки старта.
-  const otherRunning = activeTimer(ownerId, task.id);
-  const otherRunningTask = otherRunning && state.quests.find((q) => q.id === otherRunning.taskId);
+  // С 0.78.0 новые отсчёты (таймер и секундомер) запускаются из блока «Фокус» окна задачи
+  // (src/focusSessions.ts) и сохраняются вместе с игрой. Здесь остаётся только возможность
+  // завершить или отменить секундомер, запущенный прежней версией на этом устройстве.
   const timerStorageCorrupted = isTimerStorageCorrupted(ownerId);
   function finishActiveTimer(current: typeof timer) {
     if (!current) return;
@@ -134,13 +133,7 @@ export default function TaskPlanningFields({ state, task, onChange, notify, onRe
     {timerStorageCorrupted && <p role="alert">
       Не удалось прочитать сохранённый таймер этого устройства — данные повреждены. Если время не учтено, добавьте его вручную выше.
     </p>}
-    {!task.done && <div className="twin-inline" aria-label="Таймер фактического времени">
-      {!timer && !otherRunning && <button type="button" onClick={() => {
-        try { setTimer(startTimer(ownerId, task.id)); } catch (e) { notify((e as Error).message); }
-      }}>Начать отсчёт времени</button>}
-      {!timer && otherRunning && <p role="status">
-        Уже идёт отсчёт времени{otherRunningTask ? ` задачи «${otherRunningTask.name}»` : ' другой задачи'} — поставьте его на паузу или завершите, прежде чем начать этот.
-      </p>}
+    {!task.done && timer && <div className="twin-inline" aria-label="Секундомер прежней версии">
       {timer?.runningSince && <>
         <span role="timer">Идёт: {formatElapsed(elapsedSeconds(timer))}</span>
         <button type="button" onClick={() => setTimer(pauseTimer(ownerId, task.id))}>Пауза</button>

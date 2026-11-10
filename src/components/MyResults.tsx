@@ -9,6 +9,7 @@ import {
 } from '../keyResults';
 import type { CarryPlan, MonthReview, ReviewPlan, ReviewPlanCheck } from '../keyResults';
 import { victoryOf } from '../personalResults';
+import { monthFocusSentence } from '../focusCore';
 import './MyResults.css';
 
 const outcomeOptions: { id: ReviewPlanCheck['outcome']; label: string }[] = [
@@ -191,6 +192,13 @@ export default function MyResults({ state, onChange, notify, selectedMonth, onOp
         <label><span className="sr-only">Главный вывод месяца</span><textarea rows={4} maxLength={2000} aria-label="Главный вывод месяца"
           value={review.conclusion ?? reflection?.lessons ?? ''} placeholder="Какой подход работал? Что стало понятно?"
           onChange={(event) => patch({ conclusion: event.target.value })} /></label>
+        <button type="button" className="text-button" onClick={() => {
+          const sentence = monthFocusSentence(state, month);
+          const current = review.conclusion ?? reflection?.lessons ?? '';
+          if (current.includes(sentence)) { notify('Эта фраза уже есть в выводе.'); return; }
+          patch({ conclusion: `${current.trim() ? `${current.trim()}\n` : ''}${sentence}`.slice(0, 2000) });
+          notify('Время фокуса добавлено в вывод — текст можно править и дополнять.');
+        }}>⏱ Добавить время фокуса за месяц</button>
         <details className="kr-context"><summary>Важные обстоятельства <span>Необязательно</span></summary>
           <textarea rows={3} maxLength={2000} aria-label="Важные обстоятельства месяца" value={review.context ?? ''}
             placeholder="Если для понимания месяца важны отпуск, переезд или другие обстоятельства"

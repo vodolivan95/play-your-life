@@ -1,5 +1,5 @@
 import { dependencyBlockMessage } from '../taskDependencies';
-import { useState, useRef, useEffect, lazy, Suspense } from 'react';
+import { lazy, Suspense, useState, useRef, useEffect } from 'react';
 import type { Dispatch, SetStateAction, ReactNode } from 'react';
 import {
   completeQuest,
@@ -71,6 +71,8 @@ import { postponementAnalytics, timeAnalytics } from '../planningData';
 import Icon from './Icon';
 import TaskLabelBadge from './TaskLabelBadge';
 import TaskWindow from './TaskWindow';
+import { focusSlices, formatFocus } from '../focusCore';
+const FocusStats = lazy(() => import('./FocusStats'));
 import './GoalWorkspace.css';
 
 const StageScreen = lazy(() => import('./StageScreen'));
@@ -1527,6 +1529,10 @@ export default function GoalWorkspace(p: Props) {
               </span>
             )}
             <span>
+              ⏱ Всего фокуса
+              <small>{formatFocus(focusSlices(state, { goalId: goal.id }).reduce((sum, s) => sum + s.seconds, 0))}</small>
+            </span>
+            <span>
               ▥ {tasks.filter((q) => q.done).length} из {tasks.length} задач
               <small>
                 {completed} из {stages.length} этапов
@@ -1642,7 +1648,19 @@ export default function GoalWorkspace(p: Props) {
                 <Timeline stage={stage} onEdit={() => p.onEditStage(stage)} />
               ),
               statistics: (
-                <Statistics state={state} goal={goal} stageId={stage.id} />
+                <>
+                  <Statistics state={state} goal={goal} stageId={stage.id} />
+                  <Suspense fallback={null}>
+                    <FocusStats
+                      state={state}
+                      goal={goal}
+                      stageId={stage.id}
+                      onOpenStage={(id) => {
+                        window.location.hash = goalRoute(goal.id, id);
+                      }}
+                    />
+                  </Suspense>
+                </>
               ),
               management: management(),
               rewards: rewards(),
@@ -1922,6 +1940,12 @@ export default function GoalWorkspace(p: Props) {
                 <Timeline stage={stage} onEdit={() => p.onEditStage(stage)} />
               )}
               {stage && tab === 'settings' && management()}
+              {tab === 'statistics' && (
+                <Suspense fallback={null}>
+                  <FocusStats state={state} goal={goal} stageId={stage?.id}
+                    onOpenStage={(id) => { window.location.hash = goalRoute(goal.id, id); }} />
+                </Suspense>
+              )}
               {tab === 'statistics' && (
                 <Statistics state={state} goal={goal} stageId={stage?.id} />
               )}
@@ -2464,6 +2488,7 @@ export default function GoalWorkspace(p: Props) {
           onClose={() => setDetail(null)}
           onAdvanced={(task) => p.onEditTask(task)}
           onProgress={(task) => { setDetail(null); startProgress(task); }}
+          onComplete={(task) => { if (finish(task)) setDetail(null); }}
           onUndo={undoFinish}
           onDelete={deleteTask}
           onDuplicate={duplicateTask}

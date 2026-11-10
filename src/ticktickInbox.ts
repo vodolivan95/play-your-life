@@ -84,15 +84,48 @@ export function formatIncomingDate(value?: string | null): string {
   return `${day}, ${time}`;
 }
 
+const markerPattern = /\[PYL:([\w-]+)/;
+/**
+ * Задачи TickTick со служебной меткой `[PYL:id]`, которые на самом деле являются копиями:
+ * «Дублировать» в TickTick копирует заметку вместе с меткой, поэтому копия раньше считалась
+ * той же игровой задачей и не показывалась ни во «Входящих», ни в календаре. Копия — это
+ * задача, чья метка уже привязана к другой задаче TickTick, либо одна из нескольких несвязанных
+ * задач с одинаковой меткой, либо задача с меткой игровой задачи, которой в игре уже нет
+ * (если передан `localTaskIds`). Единственная несвязанная задача с меткой существующей игровой
+ * задачи остаётся «своей»: её связь восстановит сервер после сбоя создания.
+ */
+function gameOwnedFilter(connection: TickTickConnection, remoteByProject: Record<string, RemoteTask[]>, localTaskIds?: ReadonlySet<string>) {
+  const linkedByLocal = new Map(Object.entries(connection.links).map(([localId, link]) => [localId, link.remoteId]));
+  const markerOwners = new Map<string, Set<string>>();
+  for (const list of Object.values(remoteByProject))
+    for (const remote of list ?? []) {
+      const marker = markerPattern.exec(remote?.content ?? '')?.[1];
+      if (!marker || typeof remote.id !== 'string') continue;
+      markerOwners.set(marker, (markerOwners.get(marker) ?? new Set<string>()).add(remote.id));
+    }
+  return (remote: RemoteTask) => {
+    const content = remote.content ?? '';
+    if (!content.includes('[PYL:')) return false;
+    const marker = markerPattern.exec(content)?.[1];
+    if (!marker) return true;
+    const linkedRemote = linkedByLocal.get(marker);
+    if (linkedRemote) return linkedRemote === remote.id;
+    if (localTaskIds && !localTaskIds.has(marker)) return false;
+    return (markerOwners.get(marker)?.size ?? 1) < 2;
+  };
+}
+
 export function findIncomingTasks(
   connection: TickTickConnection,
   remoteByProject: Record<string, RemoteTask[]>,
+  localTaskIds?: ReadonlySet<string>,
 ): IncomingTask[] {
   const linked = new Set(
     Object.values(connection.links).map((link) => link.remoteId),
   );
   const dismissed = new Set(connection.dismissed);
   const seen = new Set<string>();
+  const gameOwned = gameOwnedFilter(connection, remoteByProject, localTaskIds);
   const found: IncomingTask[] = [];
   for (const sphere of spheres) {
     const projectId = connection.sphereLists?.[sphere.id];
@@ -109,8 +142,9 @@ export function findIncomingTasks(
         !remote.title.trim() ||
         // Выполненные и отменённые задачи не предлагаем.
         (remote.status ?? 0) !== 0 ||
-        // Задачи, созданные самой игрой, уже имеют связь или восстановятся сервером.
-        (remote.content ?? '').includes('[PYL:')
+        // Задачи, созданные самой игрой, уже имеют связь или восстановятся сервером;
+        // копии, сделанные в TickTick вместе с меткой, — новые задачи.
+        gameOwned(remote)
       )
         continue;
       seen.add(remote.id);
@@ -128,9 +162,11 @@ export function findIncomingTasks(
 export function findTickTickCalendarTasks(
   connection: TickTickConnection,
   remoteByProject: Record<string, RemoteTask[]>,
+  localTaskIds?: ReadonlySet<string>,
 ): IncomingTask[] {
   const linked = new Set(Object.values(connection.links).map((link) => link.remoteId));
   const seen = new Set<string>();
+  const gameOwned = gameOwnedFilter(connection, remoteByProject, localTaskIds);
   const found: IncomingTask[] = [];
   for (const sphere of spheres) {
     const projectId = connection.sphereLists?.[sphere.id];
@@ -138,7 +174,7 @@ export function findTickTickCalendarTasks(
     for (const remote of remoteByProject[projectId] ?? []) {
       if (!remote || typeof remote.id !== 'string' || !idPattern.test(remote.id) || seen.has(remote.id) ||
         linked.has(remote.id) || typeof remote.title !== 'string' || !remote.title.trim() ||
-        ((remote.status ?? 0) !== 0 && remote.status !== 2) || (remote.content ?? '').includes('[PYL:')) continue;
+        ((remote.status ?? 0) !== 0 && remote.status !== 2) || gameOwned(remote)) continue;
       let fields: ReturnType<typeof remoteFields>;
       try { fields = remoteFields(remote); } catch { continue; }
       if (!fields.dueAt && !fields.startsAt) continue;

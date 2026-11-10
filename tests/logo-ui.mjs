@@ -107,7 +107,7 @@ try {
       assert.equal(await page.locator('.sidebar .pyl-player').count(), 1);
       const buttons = page.locator('.sidebar .pyl-menu-nav .pyl-nav-item');
       assert.equal(await buttons.count(), 12);
-      for (const [index, id] of ['home','spheres','tasks','quests','goals','budget','tree','achievements','shop','city','statistics','profile'].entries()) {
+      for (const [index, id] of ['home','spheres','goals','tasks','quests','budget','tree','achievements','shop','city','statistics','profile'].entries()) {
         const button = buttons.nth(index);
         const box = await button.boundingBox();
         assert.ok(box.y >= 0 && box.y + box.height <= height && box.height >= 24, `${id} must fit the sidebar`);

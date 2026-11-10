@@ -132,7 +132,7 @@ try {
         const q = JSON.parse(localStorage.getItem('play-your-life-v1')).quests.find(q => q.id === 'ui-sphere-task');
         return { notes: q.notes, clock: new Date(q.dueAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) };
       }), { notes: 'Комментарий из сферы', clock: '16:30' }, 'комментарий и время выполнения сохраняются из меню сферы');
-      await taskDialog.getByRole('button', { name: 'Готово' }).click();
+      await taskDialog.getByRole('button', { name: 'Сохранить' }).click();
       await daily.getByRole('button', { name: `Выполнить: ${taskName}` }).click();
       await page.waitForFunction(() => JSON.parse(localStorage.getItem('play-your-life-v1')).quests.find(q => q.id === 'ui-sphere-task').done);
       assert.deepEqual(await page.evaluate(() => {

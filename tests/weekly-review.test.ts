@@ -15,17 +15,12 @@ import {
   weeklyReviewTotals,
   weeklyReviews,
 } from '../src/weeklyReview.ts';
-import type { GameState } from '../src/game.ts';
-
 function fixture() {
   let s = initialState();
   s = saveGoal(s, { name: 'Цель', sphere: 'english', target: 100, reward: 200, progressMode: 'tasks' });
   const id = s.goals.at(-1)!.id;
   s = saveStage(s, id, { name: 'Этап', status: 'active', completionMode: 'tasks' });
   return { s, id, a: s.goals.at(-1)!.stages![0].id };
-}
-function goal(s: GameState, id: string) {
-  return s.goals.find((g) => g.id === id)!;
 }
 
 test('недельный обзор: якорь недели — всегда понедельник', () => {

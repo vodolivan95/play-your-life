@@ -101,12 +101,13 @@ try {
     assert.equal(stored.planningSettings.dailyMinutes, 120);
     assert.equal(stored.events.filter((e) => e.planningChange?.type === 'reschedule').length, 1);
     assert.equal(stored.events.filter((e) => e.planningChange?.type === 'time').length, 1);
-    // Счётчик переносов на карточке и фильтр «Часто переношу» (0.76.0, разделы 5.1/5.2).
+    // Счётчик переносов на карточке и быстрый фильтр «Часто переношу» (0.76.0, разделы 5.1/5.2;
+    // 0.77.0 — заменён с чекбокса на кнопку быстрого фильтра, раздел 2.2 ТЗ «Этап 3»).
     await task.getByText('Переносов: 1.', { exact: false }).waitFor();
-    await plan.getByLabel('Часто переношу (от 1 переносов)', { exact: true }).check();
+    await plan.getByRole('button', { name: 'Часто переношу', exact: true }).click();
     await task.waitFor();
     assert.equal(await plan.locator('.pplan-task').count(), 1, 'фильтр «Часто переношу» должен оставить задачу с переносами');
-    await plan.getByLabel('Часто переношу (от 1 переносов)', { exact: true }).uncheck();
+    await plan.getByRole('button', { name: 'Часто переношу', exact: true }).click();
     // Возвращаем порог к значению по умолчанию — далее в тесте другая задача не должна
     // получить собственное предупреждение «Переносов» (у неё 0 переносов, порог 1 бы не мешал,
     // но следующая проверка .pplan-warning предполагает исходный порог по умолчанию).

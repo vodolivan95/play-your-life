@@ -4,7 +4,7 @@ import { dateKey, spheres } from '../game';
 import type { GameState, Quest } from '../game';
 import { addDays, mondayOf } from '../tasksCalendar';
 import { planningDay, planningMetrics, planningSettings } from '../planningData';
-import { applyWeekProposal, availableMinutes, changeTaskPlanning, inboxTask, moveTaskToDay, planningSummary, planningConflicts, proposeWeek, quickPlanningTask, savePlanningSettings, setTaskProject, setTaskWorkflow, stuckCategoryLabels, stuckTasks, taskDay, visiblePlanningTask } from '../planner';
+import { applyWeekProposal, availableMinutes, changeTaskPlanning, inboxTask, moveTaskToDay, planningSummary, planningConflicts, proposeWeek, quickPlanningTask, savePlanningSettings, setTaskProject, setTaskWorkflow, stuckCategoryLabels, stuckTasks, taskDay, visiblePlanningTask, executionOverview } from '../planner';
 import type { WeekProposal } from '../planner';
 import { updateTaskSettings } from '../taskSettings';
 import { dependentTasks, dependencyBlockers } from '../taskDependencies';
@@ -14,6 +14,14 @@ const PlanningTimeline = lazy(() => import('./PlanningTimeline'));
 type Scope = 'today' | 'tomorrow' | 'week' | 'month' | 'all' | 'inbox' | 'overdue' | 'archive';
 type View = 'list' | 'kanban' | 'matrix' | 'timeline';
 const scopes: [Scope, string][] = [['today', 'Сегодня'], ['tomorrow', 'Завтра'], ['week', 'Неделя'], ['month', 'Месяц'], ['all', 'Все задачи'], ['inbox', 'Входящие'], ['overdue', 'Просроченные'], ['archive', 'Архив']];
+type QuickFilter = '' | 'attention' | 'oftenPostponed' | 'noDate' | 'project' | 'blocked';
+// Быстрые фильтры «Контроля выполнения» (ТЗ «Этап 3», раздел 2.2). Независимы от вкладок периода:
+// действуют на весь план владельца («часто переношу» должен работать «за всё время, независимо от
+// выбранной даты календаря» — раздел 2.2 ТЗ), поэтому включение фильтра переводит scope в «all».
+const quickFilters: [Exclude<QuickFilter, ''>, string][] = [
+  ['attention', 'Требуют внимания'], ['oftenPostponed', 'Часто переношу'], ['noDate', 'Без даты'],
+  ['project', 'Связанные с проектами'], ['blocked', 'Заблокированные'],
+];
 const workflows = [['planned', 'Запланировано'], ['ready', 'К выполнению'], ['doing', 'В работе'], ['waiting', 'Ожидает'], ['done', 'Завершено']] as const;
 const fmt = (n: number) => n >= 60 ? `${Math.floor(n / 60)} ч ${n % 60 ? `${n % 60} мин` : ''}`.trim() : `${n} мин`;
 const labelDay = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' });
@@ -39,23 +47,29 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settings = planningSettings(state);
   const [draftSettings, setDraftSettings] = useState(settings);
-  const [oftenPostponed, setOftenPostponed] = useState(false);
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>('');
   const own = state.quests.filter((q) => !q.ownerId || q.ownerId === ownerId);
   const day = scope === 'tomorrow' ? addDays(today, 1) : scope === 'today' ? today : anchor;
   const start = scope === 'week' ? mondayOf(anchor) : scope === 'month' ? `${anchor.slice(0, 7)}-01` : day;
   const end = scope === 'week' ? addDays(start, 6) : scope === 'month' ? `${anchor.slice(0, 7)}-31` : day;
   const metrics = useMemo(() => planningMetrics(state), [state]);
   const stuck = useMemo(() => stuckTasks(state, own, today, settings, metrics), [state, own, today, settings, metrics]);
+  const overview = useMemo(() => executionOverview(state, own, today, settings, metrics), [state, own, today, settings, metrics]);
+  const oftenPostponedTask = (q: Quest) => (metrics.get(q.id)?.moves ?? 0) >= settings.moveWarning;
+  const blockedTask = (q: Quest) => dependencyBlockers(state.quests, q).length > 0;
   const shown = own.filter((q) => {
     if (scope === 'archive' ? !q.planning?.archivedAt : !visiblePlanningTask(q)) return false;
     if (scope === 'inbox' && !inboxTask(q)) return false;
     const d = taskDay(q);
     if (scope === 'overdue' && (q.done || !d || d >= today)) return false;
-    if (['today', 'tomorrow', 'week', 'month'].includes(scope) && (!d || d < start || d > end)) return false;
-    // «Часто переношу» (ТЗ «0.76.0», раздел 5.2): только достоверные переносы (metrics.moves,
-    // см. planningMetrics()), порог — настраиваемый settings.moveWarning. Отдельный быстрый
-    // фильтр, не новая страница — сужает уже существующий список «Мой план».
-    if (oftenPostponed && (metrics.get(q.id)?.moves ?? 0) < settings.moveWarning) return false;
+    // Быстрые фильтры действуют на весь план «за всё время» (ТЗ «Этап 3», раздел 2.2), поэтому
+    // окно периода («Сегодня»/«Неделя»/«Месяц») игнорируется, пока выбран быстрый фильтр.
+    if (!quickFilter && ['today', 'tomorrow', 'week', 'month'].includes(scope) && (!d || d < start || d > end)) return false;
+    if (quickFilter === 'oftenPostponed' && !(!q.done && oftenPostponedTask(q))) return false;
+    if (quickFilter === 'noDate' && (q.done || d)) return false;
+    if (quickFilter === 'project' && (q.done || !q.goalId)) return false;
+    if (quickFilter === 'blocked' && (q.done || !blockedTask(q))) return false;
+    if (quickFilter === 'attention' && !(!q.done && ((d && d < today) || oftenPostponedTask(q) || blockedTask(q)))) return false;
     return (!project || q.goalId === project) && (!sphere || q.sphere === sphere) && (!priority || (q.priority ?? 'normal') === priority)
       && (doneFilter === 'all' || q.done === (doneFilter === 'done'))
       && (!query.trim() || `${q.name} ${q.notes ?? ''}`.toLocaleLowerCase('ru-RU').includes(query.trim().toLocaleLowerCase('ru-RU')));
@@ -122,7 +136,21 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
       <fieldset><legend>Дни для планирования</legend><div className="pplan-row">{['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'].map((label, n) => <label key={n}><input type="checkbox" checked={draftSettings.weekdays.includes(n)} onChange={(e) => setDraftSettings({ ...draftSettings, weekdays: e.target.checked ? [...draftSettings.weekdays, n] : draftSettings.weekdays.filter((d) => d !== n) })} /> {label}</label>)}</div></fieldset>
       <div className="pplan-row"><button type="submit">Сохранить настройки</button><button type="button" onClick={() => setSettingsOpen(false)}>Отмена</button></div>
     </form>}
-    <nav className="pplan-row" aria-label="Период плана">{scopes.map(([id, label]) => <button key={id} type="button" aria-pressed={scope === id} onClick={() => { setScope(id); setSelected([]); }}>{label}{id === 'inbox' ? ` (${own.filter(inboxTask).length})` : ''}</button>)}</nav>
+    <nav className="pplan-row" aria-label="Период плана">{scopes.map(([id, label]) => <button key={id} type="button" aria-pressed={scope === id && !quickFilter} onClick={() => { setScope(id); setQuickFilter(''); setSelected([]); }}>{label}{id === 'inbox' ? ` (${own.filter(inboxTask).length})` : ''}</button>)}</nav>
+    <div className="pplan-stats" aria-label="Контроль выполнения">
+      <button type="button" className="pplan-stat" onClick={() => { setScope('all'); setQuickFilter(''); setSelected([]); }}><b>{overview.totalActive}</b> Всего активных</button>
+      <button type="button" className="pplan-stat" onClick={() => { setScope('today'); setQuickFilter(''); setSelected([]); }}><b>{overview.plannedToday}</b> На сегодня</button>
+      <span><b>{overview.doneToday}</b> Выполнено сегодня</span>
+      <button type="button" className="pplan-stat" onClick={() => { setScope('overdue'); setQuickFilter(''); setSelected([]); }}><b>{overview.overdue}</b> Просрочено</button>
+      <button type="button" className="pplan-stat" onClick={() => { setScope('all'); setQuickFilter('oftenPostponed'); setSelected([]); }}><b>{overview.oftenPostponed}</b> Часто переносится</button>
+      <button type="button" className="pplan-stat" onClick={() => { setScope('all'); setQuickFilter('blocked'); setSelected([]); }}><b>{overview.blocked}</b> Заблокировано</button>
+      <button type="button" className="pplan-stat" onClick={() => { setScope('all'); setQuickFilter('noDate'); setSelected([]); }}><b>{overview.noDate}</b> Без даты</button>
+      <button type="button" className="pplan-stat" onClick={() => { setScope('all'); setQuickFilter('project'); setSelected([]); }}><b>{overview.inActiveProjects}</b> По активным проектам</button>
+    </div>
+    <nav className="pplan-row" aria-label="Быстрые фильтры плана">
+      {quickFilters.map(([id, label]) => <button key={id} type="button" aria-pressed={quickFilter === id} onClick={() => { setQuickFilter((v) => v === id ? '' : id); setScope('all'); setSelected([]); }}>{label}</button>)}
+      <button type="button" aria-pressed={scope === 'all' && !quickFilter} onClick={() => { setScope('all'); setQuickFilter(''); setDoneFilter('open'); setSelected([]); }}>Все активные задачи</button>
+    </nav>
     <div className="pplan-row">
       <label>Дата плана<input type="date" value={anchor} onChange={(e) => e.target.value && setAnchor(e.target.value)} /></label>
       <label>Вид<select aria-label="Вид плана" value={view} onChange={(e) => setView(e.target.value as View)}><option value="list">Список</option><option value="kanban">Канбан</option><option value="matrix">Важность и срочность</option><option value="timeline">Шкала сроков</option></select></label>
@@ -173,7 +201,6 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
       <select aria-label="Проект плана" value={project} onChange={(e) => setProject(e.target.value)}><option value="">Все проекты</option>{state.goals.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select>
       <select aria-label="Приоритет плана" value={priority} onChange={(e) => setPriority(e.target.value)}><option value="">Все приоритеты</option><option value="high">Высокий</option><option value="normal">Обычный</option><option value="low">Низкий</option></select>
       <select aria-label="Выполнение плана" value={doneFilter} onChange={(e) => setDoneFilter(e.target.value)}><option value="all">Все статусы</option><option value="open">Невыполненные</option><option value="done">Выполненные</option></select>
-      <label><input type="checkbox" checked={oftenPostponed} onChange={(e) => setOftenPostponed(e.target.checked)} /> Часто переношу (от {settings.moveWarning} переносов)</label>
     </div>
     <div className="pplan-panel"><div className="pplan-row"><button type="button" onClick={() => setSelected(activeIds.length === shown.length ? [] : shown.map((q) => q.id))}>Выбрать все показанные</button><span>Выбрано: {activeIds.length}</span></div>
       {activeIds.length > 0 && <div className="pplan-row"><label>Новая дата<input type="date" required value={batchDay} onChange={(e) => setBatchDay(e.target.value)} /></label><label>Причина переноса<input maxLength={300} value={reason} onChange={(e) => setReason(e.target.value)} /></label>

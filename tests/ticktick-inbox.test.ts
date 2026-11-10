@@ -133,6 +133,29 @@ test('входящие: только новые активные задачи с
   );
 });
 
+test('копия задачи в TickTick с той же меткой [PYL] показывается как новая задача', () => {
+  const { connection } = setup();
+  connection.links = { 'task-a': { remoteId: 'original', local: 'a', remote: 'b' } };
+  const dated = { dueDate: '2026-11-10T13:00:00.000+0000' };
+  const tasks = byProject([
+    // Связанная задача и её копия с новым названием: TickTick экранирует скобки метки.
+    remote('original', { ...dated, content: 'x\n\\[PYL:task-a\\]' }),
+    remote('copy-of-linked', { ...dated, title: 'Новое название', content: 'x\n\\[PYL:task-a\\]' }),
+    // Две несвязанные копии одной метки — обе новые.
+    remote('twin-1', { ...dated, content: '[PYL:task-b]' }),
+    remote('twin-2', { ...dated, content: '[PYL:task-b]' }),
+    // Единственная несвязанная задача с меткой существующей игровой задачи — связь восстановит сервер.
+    remote('pending', { ...dated, content: '[PYL:task-c]' }),
+    // Метка задачи, которой в игре уже нет, — новая задача.
+    remote('orphan', { ...dated, content: '[PYL:task-gone]' }),
+  ]);
+  const local = new Set(['task-a', 'task-b', 'task-c']);
+  const expected = ['copy-of-linked', 'twin-1', 'twin-2', 'orphan'];
+  assert.deepEqual(findIncomingTasks(connection, tasks, local).map((item) => item.remote.id), expected);
+  assert.deepEqual(findTickTickCalendarTasks(connection, tasks, local).map((item) => item.remote.id), expected);
+  // Без списка игровых задач «осиротевшая» метка по-прежнему считается своей.
+  assert.deepEqual(findIncomingTasks(connection, tasks).map((item) => item.remote.id), expected.slice(0, 3));
+});
 test('входящие: задача из списка, привязанного к двум сферам, показывается один раз', () => {
   const { connection } = setup();
   connection.sphereLists = { english: 'life', growth: 'life' };

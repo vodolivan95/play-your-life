@@ -58,7 +58,7 @@ function withTime(dueAt: string, time: string) {
   const day = dayOf(dueAt);
   return time ? `${day}T${time}` : day;
 }
-export default function TaskWindow({ taskId, state, today, onChange, onClose, onAdvanced, onProgress, onUndo, onDelete, onDuplicate, onTransfer, onPractice, onOpenRelated, ownerId, notify }: {
+export default function TaskWindow({ taskId, state, today, onChange, onClose, onAdvanced, onProgress, onComplete, onUndo, onDelete, onDuplicate, onTransfer, onPractice, onOpenRelated, ownerId, notify }: {
   taskId: string;
   ownerId?: string;
   onOpenRelated?: (id: string) => void;
@@ -68,6 +68,8 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
   onClose: () => void;
   onAdvanced?: (q: Quest) => void;
   onProgress?: (q: Quest) => void;
+  /** Отметить задачу выполненной прямо из окна (кнопка «✓ Выполнить»). */
+  onComplete?: (task: Quest) => void;
   onUndo?: (q: Quest) => void;
   onDelete?: (q: Quest) => void;
   onDuplicate?: (q: Quest) => void;
@@ -409,7 +411,9 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
           {task.done && onUndo && <button type="button" className="secondary-button" onClick={() => onUndo(task)}>Отменить выполнение</button>}
           {onDelete && <button type="button" className="text-button" onClick={() => onDelete(task)}>Удалить</button>}
           {onProgress && !task.done && !task.wontDo && <button type="button" className="secondary-button" onClick={() => onProgress(task)}>Продолжить</button>}
-          <button type="button" className="primary-button" onClick={onClose}>Готово</button>
+          {onComplete && !task.done && !task.wontDo && <button type="button" className="primary-button" onClick={() => onComplete(task)}>✓ Выполнить</button>}
+          {/* Правки сохраняются сразу; кнопка только закрывает окно и не отмечает задачу выполненной. */}
+          <button type="button" className={onComplete && !task.done && !task.wontDo ? 'secondary-button' : 'primary-button'} onClick={onClose}>Сохранить</button>
         </footer>
       </section>
     </div>

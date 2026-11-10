@@ -104,19 +104,19 @@ try {
   const rep = await page.evaluate(() => JSON.parse(localStorage.getItem("play-your-life-v1")).quests.filter((q) => q.repeat === "daily"));
   assert.equal(rep.length, 1);
   assert.deepEqual(rep[0].subtasks.map((t) => [t.title, t.done]), [["Первый шаг", true]]);
-  await win.getByRole("button", { name: "Готово" }).click();
+  await win.getByRole("button", { name: "Сохранить" }).click();
   await win.waitFor({ state: "detached" });
   // В дневном виде клик также открывает окно и для задачи на весь день, и для события со временем.
   await calendar.getByRole("button", { name: "День", exact: true }).click();
   const allDay = calendar.locator(".tcal-allday .tcal-chip").filter({ hasText: "Задача TickTick на весь день" });
   await allDay.click();
   await win.waitFor();
-  await win.getByRole("button", { name: "Готово" }).click();
+  await win.getByRole("button", { name: "Сохранить" }).click();
   await win.waitFor({ state: "detached" });
   const timed = calendar.locator(".tcal-event").filter({ hasText: "Задача TickTick с временем" });
   await timed.click();
   await win.waitFor();
-  await win.getByRole("button", { name: "Готово" }).click();
+  await win.getByRole("button", { name: "Сохранить" }).click();
   await win.waitFor({ state: "detached" });
   // Сразу после полуночи в Москве выполненная задача относится к новому дню,
   // а отказ от задачи не увеличивает календарную нагрузку.

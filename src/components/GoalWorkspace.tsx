@@ -2376,6 +2376,7 @@ export default function GoalWorkspace(p: Props) {
           onClose={() => setDetail(null)}
           onAdvanced={(task) => p.onEditTask(task)}
           onProgress={(task) => { setDetail(null); startProgress(task); }}
+          onComplete={(task) => { if (finish(task)) setDetail(null); }}
           onUndo={undoFinish}
           onDelete={deleteTask}
           onDuplicate={duplicateTask}

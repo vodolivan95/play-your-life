@@ -22,7 +22,7 @@ import GameArt from './GameArt';
 import ProjectArt from './ProjectArt';
 import GoalWorkspace from './GoalWorkspace';
 import QuestWizard from './QuestWizard';
-import { goalProgressValue } from '../goalWorkspace';
+import { goalProgressValue, projectControl, projectStatusLabels } from '../goalWorkspace';
 import {
   deadlineLabel,
   goalCardPace,
@@ -190,6 +190,9 @@ export default function GoalsBoard({
     const isMain = mainGoal?.id === g.id;
     const isMonthlyFocus = monthlyFocusIds.has(g.id);
     const pace = goalCardPace(state, g);
+    // «Контроль проектов» (ТЗ «Этап 3», раздел 4) — только для активных, не завершённых проектов:
+    // для проекта на паузе/завершённого продвижение намеренно не отслеживается (см. Goal.paused).
+    const control = !done && !g.paused ? projectControl(state, g) : undefined;
     return (
       <section
         className={`gl-card ${isMain ? 'is-main' : ''}`}
@@ -298,6 +301,7 @@ export default function GoalsBoard({
               )}
             </p>
             <span className={`gl-pace gl-pace-${pace.tone}`}>{pace.text}</span>
+            {control && control.status !== 'advancing' && <span className={`gl-pace gl-pace-behind`}>{projectStatusLabels[control.status]}</span>}
           </div>
           <details className="goal-controls">
             <summary>Прогресс и сроки</summary>{' '}
@@ -357,6 +361,36 @@ export default function GoalsBoard({
                 {durationLabel(g.startsAt, g.dueAt)}
               </small>
             </div>
+            {control && (
+              <div className="goal-control-summary">
+                <small>
+                  Статус: {projectStatusLabels[control.status]} · последняя активность —{' '}
+                  {control.lastActivity
+                    ? `${control.daysSinceActivity} дн. назад`
+                    : 'не зафиксирована'}
+                  {!!control.daysWithoutProgress &&
+                    ` · без продвижения ${control.daysWithoutProgress} дн.`}
+                </small>
+                <small>
+                  Задачи: {control.openTasks} открыто, {control.doneTasks} выполнено
+                  {control.overdueTasks > 0 && `, ${control.overdueTasks} просрочено`}
+                  {control.confirmedPostponements > 0 &&
+                    ` · подтверждённых переносов: ${control.confirmedPostponements}`}
+                </small>
+                {control.nearestDeadline && (
+                  <small>Ближайший срок: {formatDate(control.nearestDeadline)}</small>
+                )}
+                {control.nextTask ? (
+                  control.nextTaskBlockedReason && (
+                    <small className="goal-control-blocked">
+                      Следующий шаг заблокирован: {control.nextTaskBlockedReason}
+                    </small>
+                  )
+                ) : (
+                  <small className="goal-control-blocked">Нет следующего шага</small>
+                )}
+              </div>
+            )}
           </details>
           <div className="gl-card-actions">
             {!done && (

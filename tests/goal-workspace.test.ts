@@ -31,6 +31,7 @@ import {
   goalHistory,
   stageDays,
   goalPaceStatus,
+  projectControl,
 } from '../src/goalWorkspace.ts';
 import { goalRoute, readGoalRoute } from '../src/goalRoutes.ts';
 import { validateState } from '../src/stateValidation.ts';
@@ -740,4 +741,99 @@ test('если-то план: добавление и удаление прав�
     full = addGoalIfThenRule(full, f.id, `если ${i}`, `то ${i}`);
   assert.equal(goal(full, f.id).ifThenRules!.length, 8);
   assert.throws(() => addGoalIfThenRule(full, f.id, 'лишнее если', 'лишнее то'));
+});
+// ТЗ «Этап 3», раздел 4 «Контроль проектов» (projectControl()).
+test('контроль проектов: без задач — нет следующего шага, активность — создание проекта', () => {
+  const f = fixture();
+  const control = projectControl(f.s, goal(f.s, f.id));
+  assert.equal(control.status, 'noNextStep');
+  assert.equal(control.openTasks, 0);
+  assert.equal(control.doneTasks, 0);
+  assert.equal(control.overdueTasks, 0);
+  assert.equal(control.confirmedPostponements, 0);
+  assert.equal(control.nextTask, undefined);
+  assert.equal(control.nextTaskBlockedReason, undefined);
+  assert.ok(control.lastActivity);
+  assert.equal(control.daysSinceActivity, 0);
+});
+test('контроль проектов: доступная задача без срока и переносов — проект продвигается', () => {
+  const f = fixture();
+  const s = saveTask(f.s, {
+    name: 'Шаг',
+    sphere: 'english',
+    difficulty: 'Micro',
+    goalId: f.id,
+    stageId: f.a,
+  });
+  const control = projectControl(s, goal(s, f.id));
+  assert.equal(control.status, 'advancing');
+  assert.equal(control.nextTask!.name, 'Шаг');
+  assert.equal(control.nextTaskBlockedReason, undefined);
+  assert.equal(control.overdueTasks, 0);
+  assert.equal(control.openTasks, 1);
+});
+test('контроль проектов: просроченный этап перекрывает остальные статусы', () => {
+  const f = fixture();
+  let s = saveTask(f.s, {
+    name: 'Шаг',
+    sphere: 'english',
+    difficulty: 'Micro',
+    goalId: f.id,
+    stageId: f.a,
+  });
+  s = saveStage(s, f.id, {
+    ...goal(s, f.id).stages![0],
+    dueAt: '2000-01-01T00:00:00Z',
+  });
+  const control = projectControl(s, goal(s, f.id));
+  assert.equal(control.status, 'hasOverdueStages');
+});
+test('контроль проектов: просроченная задача без переноса — требует внимания', () => {
+  const f = fixture();
+  const s = saveTask(f.s, {
+    name: 'Просроченная',
+    sphere: 'english',
+    difficulty: 'Micro',
+    goalId: f.id,
+    stageId: f.a,
+    dueAt: '2000-01-01T00:00:00Z',
+  });
+  const control = projectControl(s, goal(s, f.id));
+  assert.equal(control.status, 'needsAttention');
+  assert.equal(control.overdueTasks, 1);
+});
+test('контроль проектов: долгое отсутствие подтверждённой активности', () => {
+  const f = fixture();
+  const s = saveTask(f.s, {
+    name: 'Шаг',
+    sphere: 'english',
+    difficulty: 'Micro',
+    goalId: f.id,
+    stageId: f.a,
+  });
+  const farFuture = new Date(Date.now() + 20 * 86400000);
+  const control = projectControl(s, goal(s, f.id), farFuture);
+  assert.equal(control.status, 'noConfirmedActivity');
+  assert.ok(control.daysSinceActivity! >= 20);
+});
+test('контроль проектов: завершённая задача задаёт дату прогресса отдельно от общей активности', () => {
+  const f = fixture();
+  let s = saveTask(f.s, {
+    name: 'Готово',
+    sphere: 'english',
+    difficulty: 'Micro',
+    goalId: f.id,
+    stageId: f.a,
+  });
+  s = completeQuest(s, s.quests.at(-1)!.id);
+  s = saveTask(s, {
+    name: 'Ещё шаг',
+    sphere: 'english',
+    difficulty: 'Micro',
+    goalId: f.id,
+    stageId: f.a,
+  });
+  const control = projectControl(s, goal(s, f.id));
+  assert.equal(control.doneTasks, 1);
+  assert.equal(control.daysWithoutProgress, 0);
 });

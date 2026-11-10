@@ -90,8 +90,12 @@ test('продвижение проектов: завершённая задач
   // ищем свой проект по id, а не по первому элементу списка.
   const monday = mondayOf(dateKey());
   const now = new Date(`${addDays(monday, 5)}T12:00:00Z`);
+  // Две задачи, не одна: при единственной задаче её завершение даёт 100% прогресса
+  // (progressMode: 'tasks') — проект считается завершённым и вовсе выпадает из списка.
   const f = fixture();
-  let s = backdateGoal(saveTask(f.s, { name: 'Шаг', sphere: 'english', difficulty: 'Micro', goalId: f.id, stageId: f.a }), f.id);
+  let s = saveTask(f.s, { name: 'Шаг 1', sphere: 'english', difficulty: 'Micro', goalId: f.id, stageId: f.a });
+  s = saveTask(s, { name: 'Шаг 2', sphere: 'english', difficulty: 'Micro', goalId: f.id, stageId: f.a });
+  s = backdateGoal(s, f.id);
   s = completeQuest(s, s.quests.at(-1)!.id);
   const advanced = weeklyReviewProjects(s, monday, now).find((p) => p.goalId === f.id)!;
   assert.equal(advanced.status, 'advanced');

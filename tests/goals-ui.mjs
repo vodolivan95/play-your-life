@@ -306,7 +306,7 @@ try {
       .click();
     await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.a}`);
     assert.equal(await tabs.getByRole('button').count(), 5);
-    await workspace.locator('.gw-reward-content').click();
+    await workspace.locator('.ss-reward').click();
     await workspace
       .locator('dialog[open]')
       .getByRole('heading', { name: '🏆 Награды этапа', exact: true })
@@ -462,11 +462,11 @@ try {
       'Страница этапа шире экрана',
     );
     for (const name of [
-      'Задачи',
-      'Временная шкала',
+      'Фокус дня',
+      'Психология',
+      'Прогресс',
       'Настройки',
-      'Статистика',
-      'Обзор',
+      'Задачи',
     ])
       await tabs.getByRole('button', { name, exact: true }).click();
     // Пустой ручной этап входит в среднее, поэтому проект завершён только

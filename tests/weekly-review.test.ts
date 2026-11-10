@@ -15,6 +15,8 @@ import {
   weeklyReviewTotals,
   weeklyReviews,
 } from '../src/weeklyReview.ts';
+import type { GameState } from '../src/game.ts';
+
 function fixture() {
   let s = initialState();
   s = saveGoal(s, { name: 'Цель', sphere: 'english', target: 100, reward: 200, progressMode: 'tasks' });
@@ -70,31 +72,47 @@ test('проблемные задачи: часто переносимые и п
   assert.equal(problems.find((p) => p.id === id)!.overdue, true);
 });
 
+// Проект считается создан «только что» (planning.ts, saveGoal(): created = dateKey() реального
+// времени, перезаписать нельзя), а добавление задачи само пишет событие планирования с реальной
+// отметкой времени (planEvent() в planning.ts) — для теста статусов «нужно внимание»/«нет
+// активности» переносим дату создания проекта в прошлое и убираем это несущественное для теста
+// событие о самом добавлении задачи, иначе оно всегда попадало бы в текущую неделю обзора.
+function backdateGoal(s: GameState, id: string, created = '2020-01-01'): GameState {
+  return { ...s, goals: s.goals.map((g) => (g.id === id ? { ...g, created } : g)) };
+}
+function withoutGoalEvents(s: GameState, goalId: string): GameState {
+  return { ...s, events: s.events.filter((e) => e.goalId !== goalId) };
+}
+
 test('продвижение проектов: завершённая задача на неделе — «продвинулся», иначе по наличию следующего шага', () => {
   // Событие награды за завершённую задачу датируется реальным временем (game.ts, award()) —
-  // поэтому неделя обзора берётся текущей.
+  // поэтому неделя обзора берётся текущей. В initialState() уже есть демо-проект «b2» —
+  // ищем свой проект по id, а не по первому элементу списка.
   const monday = mondayOf(dateKey());
   const now = new Date(`${addDays(monday, 5)}T12:00:00Z`);
   const f = fixture();
-  let s = saveTask(f.s, { name: 'Шаг', sphere: 'english', difficulty: 'Micro', goalId: f.id, stageId: f.a });
+  let s = backdateGoal(saveTask(f.s, { name: 'Шаг', sphere: 'english', difficulty: 'Micro', goalId: f.id, stageId: f.a }), f.id);
   s = completeQuest(s, s.quests.at(-1)!.id);
-  const [advanced] = weeklyReviewProjects(s, monday, now);
+  const advanced = weeklyReviewProjects(s, monday, now).find((p) => p.goalId === f.id)!;
   assert.equal(advanced.status, 'advanced');
   // Без активности на неделе, но с доступной задачей — «нужно внимание».
   const f2 = fixture();
-  const s2 = saveTask(f2.s, { name: 'Шаг', sphere: 'english', difficulty: 'Micro', goalId: f2.id, stageId: f2.a });
-  const [needsAttention] = weeklyReviewProjects(s2, monday, now);
+  const s2 = withoutGoalEvents(backdateGoal(saveTask(f2.s, { name: 'Шаг', sphere: 'english', difficulty: 'Micro', goalId: f2.id, stageId: f2.a }), f2.id), f2.id);
+  const needsAttention = weeklyReviewProjects(s2, monday, now).find((p) => p.goalId === f2.id)!;
   assert.equal(needsAttention.status, 'needsAttention');
   // Без задач вовсе — «нет активности».
   const f3 = fixture();
-  const [noActivity] = weeklyReviewProjects(f3.s, monday, now);
+  const s3 = backdateGoal(f3.s, f3.id);
+  const noActivity = weeklyReviewProjects(s3, monday, now).find((p) => p.goalId === f3.id)!;
   assert.equal(noActivity.status, 'noActivity');
 });
 
 test('продвижение проектов: проекты на паузе и завершённые не попадают в список', () => {
   const f = fixture();
   const s = { ...f.s, goals: f.s.goals.map((g) => (g.id === f.id ? { ...g, paused: true } : g)) };
-  assert.equal(weeklyReviewProjects(s, mondayOf(dateKey())).length, 0);
+  // В initialState() уже есть незавершённый демо-проект «b2» — он останется в списке, важно
+  // только что ПОСТАВЛЕННОГО на паузу проекта f.id в нём больше нет.
+  assert.equal(weeklyReviewProjects(s, mondayOf(dateKey())).some((p) => p.goalId === f.id), false);
 });
 
 test('подтверждение обзора: ограничение фокуса, понедельник, валидация, сохранение и чтение истории', () => {

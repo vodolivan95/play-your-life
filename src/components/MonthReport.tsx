@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { GameState } from '../game';
 import { monthKey, monthLabel, moveMonth, validMonth } from '../monthly';
@@ -6,7 +6,10 @@ import { monthReport, setImportance } from '../monthReport';
 import { monthlyActualMinutes, monthlyMoves, postponementAnalytics, timeAnalytics } from '../planningData';
 import { victoryOf } from '../personalResults';
 import { carriedPlans } from '../keyResults';
+import { taskRoute } from '../taskRoutes';
 import './MonthReport.css';
+
+const FocusMonth = lazy(() => import('./FocusMonth'));
 
 const ratingTitles = ['', 'Тяжёлый месяц', 'Неровный месяц', 'Спокойный месяц', 'Хороший месяц', 'Отличный месяц'];
 const flagText = { focus: 'Важно, но мало внимания', overload: 'Усилий больше, чем важности', ok: 'Совпадает', none: 'Отметь важность' } as const;
@@ -112,6 +115,10 @@ export default function MonthReport({
           ))}
         </div>
       </section>
+
+      <Suspense fallback={null}>
+        <FocusMonth state={state} month={month} onOpenTask={(id) => { location.hash = taskRoute(id); }} />
+      </Suspense>
 
       {s.partial && (
         <p className="mrep-note">ⓘ Подробный учёт задач, проектов и оценок сфер {s.trackingSince ? `ведётся с ${new Date(s.trackingSince).toLocaleDateString('ru-RU')}` : 'ещё не начат'}. Старые записи могут быть неполными; их XP включён в общий результат.</p>

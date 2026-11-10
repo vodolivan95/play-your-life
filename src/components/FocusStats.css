@@ -1,0 +1,21 @@
+.fst{display:grid;gap:12px}
+.fst h4{margin:6px 0 0;font-size:13px}
+.fst-periods{display:flex;flex-wrap:wrap;gap:6px}
+.fst-periods button{font:inherit;font-size:12px;font-weight:700;border-radius:999px;padding:6px 12px;border:1px solid color-mix(in srgb,currentColor 18%,transparent);background:none;color:inherit;cursor:pointer}
+.fst-periods button[aria-pressed='true']{background:#3aa0ff;border-color:#3aa0ff;color:#fff}
+.fst-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.fst-cards>div{display:grid;gap:2px;padding:10px 12px;border-radius:14px;background:color-mix(in srgb,currentColor 6%,transparent);border:1px solid color-mix(in srgb,currentColor 12%,transparent);min-width:0}
+.fst-cards small{font-size:11px;opacity:.7}.fst-cards b{font-size:16px;overflow-wrap:anywhere}
+.fst-chart{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:4px;height:120px;align-items:end}
+.fst-chart button{font:inherit;height:100%;display:grid;grid-template-rows:1fr auto;align-items:end;justify-items:center;gap:4px;border:0;background:none;color:inherit;cursor:pointer;padding:0;min-width:0}
+.fst-chart i{display:block;width:70%;min-height:2px;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,#5ab0ff,#7c5cff);align-self:end}
+.fst-chart button[aria-pressed='true'] i{outline:2px solid #5ab0ff;outline-offset:2px}
+.fst-chart small{font-size:10px;opacity:.65}
+.fst-day{display:grid;gap:8px;padding:10px 12px;border-radius:14px;background:color-mix(in srgb,currentColor 6%,transparent);font-size:13px}
+.fst-bars{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.fst-bars li>*{font:inherit;width:100%;display:grid;grid-template-columns:1fr auto;gap:4px 10px;border:0;background:none;color:inherit;text-align:left;padding:0}
+.fst-bars button{cursor:pointer}
+.fst-bar-name{font-size:13px;font-weight:600;overflow-wrap:anywhere}
+.fst-bar-value{font-size:12px;opacity:.75;white-space:nowrap}
+.fst-bar-track{grid-column:1/-1;height:8px;border-radius:999px;background:color-mix(in srgb,currentColor 10%,transparent);overflow:hidden}
+.fst-bar-track i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#3aa0ff,#7c5cff)}

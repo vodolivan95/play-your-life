@@ -1,5 +1,6 @@
 import { lazy, Suspense, useRef, useState } from 'react';
 const TaskPlanningFields = lazy(() => import('./TaskPlanningFields'));
+const FocusSection = lazy(() => import('./FocusSection'));
 import type { Dispatch, SetStateAction } from 'react';
 import { difficulties, spheres } from '../game';
 import type { GameState, Quest } from '../game';
@@ -268,6 +269,7 @@ export default function TaskWindow({ taskId, state, today, onChange, onClose, on
           <div><small>В проект</small><b>{c.goal ? `${c.goalShare}%` : '—'}</b><span>{c.goal ? c.goal.name : 'вне проекта'}</span></div>
           <div><small>В этап</small><b>{c.stage ? c.stage.name : '—'}</b><span>{c.stage ? `${c.stageTasks} задач в этапе` : 'без этапа'}</span></div>
         </div>
+        <Suspense fallback={null}><FocusSection state={state} task={task} onChange={onChange} notify={notify} onOpenTask={(id) => { onClose(); if (onOpenRelated) onOpenRelated(id); else location.hash = taskRoute(id); }} /></Suspense>
         <div className="twin-body">
           <Suspense fallback={<p>Загрузка планирования…</p>}><TaskPlanningFields state={state} task={task} ownerId={ownerId ?? task.ownerId ?? 'local'} onChange={onChange} notify={notify} onReason={setMoveReason} onReasonCode={setMoveReasonCode} onOpenRelated={(id) => { onClose(); if (onOpenRelated) onOpenRelated(id); else location.hash = taskRoute(id); }} /></Suspense>
           <label className="twin-field">Название

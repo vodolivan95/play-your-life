@@ -43,3 +43,4 @@
 .pyl-tasks-badge{margin-left:8px;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#2f7de1;color:#fff;font-size:12px;display:inline-flex;align-items:center;justify-content:center}
 .pyl-tasks-empty{margin:0;padding:22px;border-radius:18px;border:1.5px dashed #b9c6da;color:#5b6b82;text-align:center}
 :root[data-theme='dark'] .pyl-tasks-empty{color:#9fb0cc;border-color:#ffffff33}
+.gtl-focus{flex:none;font-size:11px;font-weight:700;opacity:.7;white-space:nowrap}

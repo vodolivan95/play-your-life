@@ -10,6 +10,7 @@ import { updateTaskSettings } from '../taskSettings';
 import { dependentTasks, dependencyBlockers } from '../taskDependencies';
 import './PlanningWorkspace.css';
 const PlanningTimeline = lazy(() => import('./PlanningTimeline'));
+const WeeklyReviewWizard = lazy(() => import('./WeeklyReviewWizard'));
 
 type Scope = 'today' | 'tomorrow' | 'week' | 'month' | 'all' | 'inbox' | 'overdue' | 'archive';
 type View = 'list' | 'kanban' | 'matrix' | 'timeline';
@@ -45,6 +46,7 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
   const [proposal, setProposal] = useState<WeekProposal | null>(null);
   const [review, setReview] = useState<'morning' | 'evening' | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [weeklyReviewOpen, setWeeklyReviewOpen] = useState(false);
   const settings = planningSettings(state);
   const [draftSettings, setDraftSettings] = useState(settings);
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('');
@@ -128,7 +130,8 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
     </li>;
   }
   return <section className="pplan" aria-label="Мой план">
-    <header className="pplan-head"><div><h2>Мой план</h2><p>Проекты, время и следующий шаг.</p></div><button type="button" onClick={() => { setDraftSettings(settings); setSettingsOpen((v) => !v); }}>Настройки плана</button></header>
+    <header className="pplan-head"><div><h2>Мой план</h2><p>Проекты, время и следующий шаг.</p></div><button type="button" onClick={() => setWeeklyReviewOpen(true)}>Недельный обзор</button><button type="button" onClick={() => { setDraftSettings(settings); setSettingsOpen((v) => !v); }}>Настройки плана</button></header>
+    {weeklyReviewOpen && <Suspense fallback={null}><WeeklyReviewWizard state={state} onClose={() => setWeeklyReviewOpen(false)} onApply={apply} onOpenTask={onOpen} /></Suspense>}
     {!state.planningSettings && <p>Пока используется базовый бюджет: 8 часов по будням, резерв 20%. Уточни доступное время в настройках плана.</p>}
     {settingsOpen && <form className="pplan-panel" aria-label="Настройки плана" onSubmit={(e) => { e.preventDefault(); apply((s) => savePlanningSettings(s, draftSettings)); setSettingsOpen(false); }}>
       <h3>Доступное время и ограничения</h3><p>Рабочий день минус резерв. Расчёт использует часовой пояс устройства.</p>

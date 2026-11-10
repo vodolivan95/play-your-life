@@ -291,6 +291,8 @@ export type GameState = {
   planningSettings?: import('./planningData.ts').PlanningSettings;
   /** Текущая сессия таймера фокуса (ТЗ «Этап 4.1»). Одно поле — одна активная сессия на игрока. См. focusSessions.ts. */
   focusSession?: import('./planningData.ts').ActiveFocusSession;
+  /** Мастер недельного обзора (ТЗ «Этап 3», раздел 5): сохранённые итоги по неделям, ключ — понедельник 'YYYY-MM-DD'. */
+  weeklyReviews?: Record<string, import('./weeklyReview.ts').WeeklyReview>;
   habits?: import('./personalQuests').Habit[];
   habitCompletions?: import('./personalQuests').HabitCompletion[];
   coinTransactions?: import('./personalQuests').CoinTransaction[];

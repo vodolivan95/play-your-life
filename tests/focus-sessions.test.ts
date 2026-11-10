@@ -183,6 +183,15 @@ test('слияние двух устройств: независимые пау�
   }
 });
 
+test('фраза для личных итогов месяца берёт фактическое время', async () => {
+  const { monthFocusSentence } = await import('../src/focusCore.ts');
+  let s = setup(); const id = s.quests[0].id;
+  s = session(s, id, at(2026, 11, 3, 10), 150);
+  s = session(s, id, at(2026, 10, 3, 10), 60);
+  assert.equal(monthFocusSentence(s, '2026-11'), 'За ноябрь на проекты и задачи ушло 2 ч 30 мин фокуса.');
+  assert.equal(monthFocusSentence(s, '2026-09'), 'За сентябрь на проекты и задачи ушло 0 мин фокуса.');
+});
+
 test('подписи режима в истории задачи: интервал, своя длительность, секундомер, вручную', () => {
   assert.deepEqual((['deep', 'quick', 'custom', 'stopwatch', 'manual'] as const).map(focusModeLabel), ['60 мин', '5 мин', 'Своя длительность', 'Секундомер', 'Вручную']);
 });

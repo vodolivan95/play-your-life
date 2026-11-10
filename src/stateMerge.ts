@@ -26,7 +26,7 @@
  */
 import { canonical } from './stateFingerprint.ts';
 import type { GameState } from './game.ts';
-import { normalizeFocusState } from './focusSessions.ts';
+import { normalizeFocusState } from './focusCore.ts';
 
 /** Пути вида 'spheres.*.xp' — '*' совпадает с любым ключом словаря на этом уровне. */
 const ADDITIVE_PATHS = ['xp', 'coins', 'spheres.*.xp'];

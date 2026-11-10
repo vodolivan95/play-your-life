@@ -71,7 +71,7 @@ import { postponementAnalytics, timeAnalytics } from '../planningData';
 import Icon from './Icon';
 import TaskLabelBadge from './TaskLabelBadge';
 import TaskWindow from './TaskWindow';
-import { focusSlices, formatFocus } from '../focusSessions';
+import { focusSlices, formatFocus } from '../focusCore';
 const FocusStats = lazy(() => import('./FocusStats'));
 import './GoalWorkspace.css';
 

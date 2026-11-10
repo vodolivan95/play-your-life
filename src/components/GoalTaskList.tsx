@@ -3,7 +3,7 @@ import { spheres } from '../game';
 import type { GameState, Quest } from '../game';
 import { calendarItem } from '../tasksCalendar';
 import { taskContribution } from '../taskSettings';
-import { focusByTask, formatFocus } from '../focusSessions';
+import { focusByTask, formatFocus } from '../focusCore';
 import TaskLabelBadge from './TaskLabelBadge';
 import './GoalTaskList.css';
 

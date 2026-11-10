@@ -179,8 +179,10 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
         if (!Array.isArray(data?.tasks)) throw new Error('TickTick не вернул список задач.');
         byProject[projectId] = data.tasks;
       }
-      const fresh = findIncomingTasks(c, byProject);
-      setCalendarTasks(findTickTickCalendarTasks(c, byProject));
+      // Копия, сделанная в TickTick вместе с меткой [PYL:id], — новая задача, а не уже связанная.
+      const localTaskIds = new Set(latest.current.state.quests.map(q => q.id));
+      const fresh = findIncomingTasks(c, byProject, localTaskIds);
+      setCalendarTasks(findTickTickCalendarTasks(c, byProject, localTaskIds));
       // Подгружаем только новое: уже известные задачи остаются как есть, исчезнувшие из TickTick убираются.
       const known = new Set(latest.current.incoming.map(i => i.remote.id));
       setInboxNew(fresh.filter(i => !known.has(i.remote.id)).length);

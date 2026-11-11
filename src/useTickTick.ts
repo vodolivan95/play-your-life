@@ -260,6 +260,15 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     try {
       await request(c, '/disconnect', 'POST');
       setConnection(null); setProjects([]); setIncoming([]); setCalendarTasks([]); setConnected(false); setDirty(false); setLastSyncError(false);
+      onChange(current => ({
+        ...current,
+        quests: current.quests.map(task => {
+          if (!task.tickTickSharedAt) return task;
+          const unlinked = { ...task };
+          delete unlinked.tickTickSharedAt;
+          return unlinked;
+        }),
+      }));
       setStatus('TickTick отключён. Задачи и прогресс в обоих приложениях сохранены.');
     } finally { working.current = false; setBusy(false); }
   }

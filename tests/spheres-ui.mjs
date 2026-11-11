@@ -118,13 +118,13 @@ try {
       await taskDialog.waitFor();
       assert.equal(await page.locator('.screen-spheres').isVisible(), true, 'меню открывается поверх сферы');
       await taskDialog.getByLabel('Комментарий / заметка').fill('Комментарий из сферы');
-      await taskDialog.getByLabel('Время выполнения').fill('16:30');
+      await taskDialog.getByLabel('Время окончания').fill('16:30');
       await page.waitForFunction(() => {
         const q = JSON.parse(localStorage.getItem('play-your-life-v1')).quests.find(q => q.id === 'ui-sphere-task');
         return q.notes === 'Комментарий из сферы' && q.dueAt && new Date(q.dueAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) === '16:30';
       }).catch(async (error) => {
         console.error('Сохранённая задача:', await page.evaluate(() => JSON.parse(localStorage.getItem('play-your-life-v1')).quests.find(q => q.id === 'ui-sphere-task')));
-        console.error('Поле времени:', await taskDialog.getByLabel('Время выполнения').inputValue());
+        console.error('Поле времени:', await taskDialog.getByLabel('Время окончания').inputValue());
         console.error('Уведомление:', await page.locator('.toast').allTextContents());
         throw error;
       });

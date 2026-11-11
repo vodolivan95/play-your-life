@@ -24,6 +24,7 @@ function setup(count: number) {
     name: `Задача ${i + 1}`,
     goalId: undefined,
     stageId: undefined,
+    createdAt: '2026-10-01T00:00:00.000Z',
     sourceType: 'USER_CREATED' as const,
     done: false,
     completedAt: undefined,
@@ -288,6 +289,7 @@ test('задача, перенесённая в другой сопоставл�
     name: `Перенос ${i}`,
     goalId: undefined,
     stageId: undefined,
+    createdAt: '2026-10-01T00:00:00.000Z',
     sourceType: 'USER_CREATED' as const,
     done: false,
   }));

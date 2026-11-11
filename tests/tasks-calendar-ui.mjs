@@ -90,14 +90,14 @@ try {
   await win.waitFor();
   assert.match(await win.locator(".twin-ring").innerText(), /\+20/);
   assert.equal(await win.getByRole("button", { name: /^Сложная/ }).isDisabled(), true);
-  await win.getByRole("button", { name: "Завтра", exact: true }).click();
-  await win.getByRole("button", { name: "Выбрать дату" }).click();
-  await win.getByLabel("Дата выполнения").waitFor();
-  assert.equal(await win.getByRole("switch").isDisabled(), false);
   const tomorrow = await page.evaluate(async () => {
     const { dateKey } = await import("/src/game.ts");
     const d = new Date(); d.setDate(d.getDate() + 1); return dateKey(d);
   });
+  await win.getByRole("button", { name: "Завтра", exact: true }).click();
+  await win.getByLabel("Дата окончания").waitFor();
+  assert.equal(await win.getByLabel("Дата окончания").inputValue(), tomorrow);
+  assert.equal(await win.getByRole("switch").isDisabled(), false);
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("play-your-life-v1")).quests.filter((q) => q.dueAt));
   assert.ok(saved.some((q) => q.dueAt === tomorrow));
   await win.getByRole("button", { name: "Каждый день" }).click();

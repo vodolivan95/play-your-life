@@ -25,7 +25,7 @@ function Fixture() {
     const saved = localStorage.getItem(key); if(saved) return JSON.parse(saved);
     const s = newAccountGame('Тестовый игрок'); s.profile.onboardingComplete = true;
     s.goals = [{id:'goal-1', name:'Моя цель', sphere:'english', current:0, target:1, created:'2026-10-01', reward:0, rewarded:false, progressMode:'tasks'}];
-    s.quests = [{id:'task-' + uid, name:'Учить слова', sphere:'english', xp:20, difficulty:'Medium', done:false, goalId:'goal-1', ownerId:uid}];
+    s.quests = [{id:'task-' + uid, name:'Учить слова', sphere:'english', xp:20, difficulty:'Medium', done:false, goalId:'goal-1', ownerId:uid, createdAt:'2026-10-01T00:00:00.000Z'}];
     return s;
   });
   useEffect(() => localStorage.setItem(key, JSON.stringify(state)), [state]);
@@ -192,11 +192,14 @@ try {
     await stranger.goto(harness('other-'+width)+'#profile');
     await panel(stranger).getByText('Аккаунт TickTick не подключён',{exact:false}).waitFor();
     assert.equal(await panel(stranger).locator('select').count(),0);
-    const before=await stateOf(page,uid); page.once('dialog',d=>d.accept());
+    const before=await stateOf(page,uid);
+    const disconnectedState=structuredClone(before);
+    for (const task of disconnectedState.quests) delete task.tickTickSharedAt;
+    page.once('dialog',d=>d.accept());
     await panel(page).getByRole('button',{name:'Отключить TickTick'}).click();
     await panel(page).getByText('TickTick отключён. Задачи и прогресс',{exact:false}).waitFor();
     assert.equal(await page.getByRole('button',{name:'Восстановить из файла'}).isDisabled(),false);
-    assert.deepEqual(await stateOf(page,uid),before); assert.equal(account(uid).tasks.size,1);
+    assert.deepEqual(await stateOf(page,uid),disconnectedState); assert.equal(account(uid).tasks.size,1);
     assert.deepEqual(errors,[]);
     await ctx.close(); await nextCtx.close(); await strangerCtx.close();
   }

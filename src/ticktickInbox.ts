@@ -248,6 +248,7 @@ export function acceptIncomingTask(
     difficulty: 'Medium',
     goalId: goal.id,
     stageId: stage?.id,
+    tickTickSharedAt: new Date().toISOString(),
   });
   const task = next.quests.find((q) => q.id === taskId);
   if (!task) throw new Error('Не удалось добавить задачу.');
@@ -297,7 +298,7 @@ function acceptSingleTask(
   const fields = withChoiceTime(remoteFields(incoming.remote), choice);
   const name = fields.name.trim().slice(0, maxTaskName);
   if (!name) throw new Error('У задачи TickTick нет названия.');
-  const next = saveTask(state, { ...fields, id: taskId, name, sphere: choice.sphere, difficulty: 'Medium', sourceType: 'USER_CREATED', ownerId, rewardCoins: 0 });
+  const next = saveTask(state, { ...fields, id: taskId, name, sphere: choice.sphere, difficulty: 'Medium', sourceType: 'USER_CREATED', ownerId, rewardCoins: 0, tickTickSharedAt: new Date().toISOString() });
   const task = next.quests.find((q) => q.id === taskId);
   if (!task) throw new Error('Не удалось добавить задачу.');
   const scoped = { ...connection, projectId: incoming.projectId };

@@ -105,6 +105,10 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Walk through every section on desktop and phone (no errors, no blank screens)
         run: npm run test:smoke-ui
+      - name: Verify room exit remains available while loading
+        run: node tests/room-loading-ui.mjs
+      - name: Verify focus persistence and single recording on desktop and phone
+        run: node --experimental-strip-types --no-warnings tests/focus-ui.mjs
       - run: npm run test:key-results-ui
       - run: npm run test:month-report-ui
       - name: Save section previews
@@ -113,6 +117,7 @@ jobs:
         with:
           name: sections-previews
           path: |
+            work/focus/
             work/smoke/
             work/key-results/
             work/month-report/

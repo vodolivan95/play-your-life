@@ -46,16 +46,26 @@ function storageKey(ownerId: string): string {
 }
 
 function readAll(ownerId: string): { timers: StoredTimers; corrupted: boolean } {
+  const empty = (): StoredTimers => Object.create(null) as StoredTimers;
   try {
     const raw = localStorage.getItem(storageKey(ownerId));
-    if (!raw) return { timers: {}, corrupted: false };
+    if (!raw) return { timers: empty(), corrupted: false };
     const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return { timers: {}, corrupted: true };
-    return { timers: parsed as StoredTimers, corrupted: false };
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return { timers: empty(), corrupted: true };
+    for (const [id, value] of Object.entries(parsed)) {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return { timers: empty(), corrupted: true };
+      const timer = value as Partial<TaskTimer>;
+      if (timer.taskId !== id || typeof timer.accumulatedSeconds !== 'number'
+        || !Number.isFinite(timer.accumulatedSeconds) || timer.accumulatedSeconds < 0
+        || (timer.actionId !== undefined && (typeof timer.actionId !== 'string' || !timer.actionId))
+        || (timer.runningSince !== undefined && (typeof timer.runningSince !== 'string' || !Number.isFinite(Date.parse(timer.runningSince)))))
+        return { timers: empty(), corrupted: true };
+    }
+    return { timers: Object.assign(empty(), parsed), corrupted: false };
   } catch {
     // Невалидный JSON — отличаем от «пусто» (3.4), чтобы вызывающая сторона могла явно
     // сообщить о повреждении, а не тихо продолжить как будто таймеров никогда не было.
-    return { timers: {}, corrupted: true };
+    return { timers: empty(), corrupted: true };
   }
 }
 function writeAll(ownerId: string, all: StoredTimers) {
@@ -78,7 +88,8 @@ export function isTimerStorageCorrupted(ownerId: string): boolean {
 
 /** Текущий таймер задачи, если он запущен или стоит на паузе с накопленным временем. */
 export function readTimer(ownerId: string, taskId: string): TaskTimer | undefined {
-  return readAll(ownerId).timers[taskId];
+  const { timers } = readAll(ownerId);
+  return Object.hasOwn(timers, taskId) ? timers[taskId] : undefined;
 }
 
 /**
@@ -99,6 +110,8 @@ function ensureNoOtherActive(ownerId: string, taskId: string) {
 }
 
 export function startTimer(ownerId: string, taskId: string, now = new Date()): TaskTimer {
+  const existing = readTimer(ownerId, taskId);
+  if (existing) return existing;
   ensureNoOtherActive(ownerId, taskId);
   // actionId детерминирован из (taskId, момент старта) — НЕ случайный (3.2/5: таймер — это чисто
   // локальное устройство хранилище, синхронизация между устройствами одного владельца не входит

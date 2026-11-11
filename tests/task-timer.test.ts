@@ -113,3 +113,29 @@ test('discardTimer сбрасывает таймер без возврата в�
   discardTimer('u5', 'q3');
   assert.equal(readTimer('u5', 'q3'), undefined);
 });
+
+test('аудит: некорректная запись внутри объекта распознаётся без падения activeTimer', () => {
+  for (const value of [null, 1, {}, { taskId: 'q', accumulatedSeconds: -1 },
+    { taskId: 'q', accumulatedSeconds: 0, runningSince: 'bad-date' },
+    { taskId: 'other', accumulatedSeconds: 0 }]) {
+    localStorage.setItem('play-your-life-task-timer-v1:invalid-record', JSON.stringify({ q: value }));
+    assert.equal(isTimerStorageCorrupted('invalid-record'), true);
+    assert.equal(readTimer('invalid-record', 'q'), undefined);
+    assert.equal(activeTimer('invalid-record'), undefined);
+  }
+});
+
+test('аудит: имя задачи из прототипа не становится сохранённым таймером', () => {
+  assert.equal(readTimer('prototype-owner', 'toString'), undefined);
+  assert.equal(readTimer('prototype-owner', '__proto__'), undefined);
+});
+
+test('аудит: повторный старт той же задачи сохраняет накопленное время и actionId', () => {
+  const first = startTimer('repeat-owner', 'q', new Date('2026-11-09T10:00:00Z'));
+  const repeated = startTimer('repeat-owner', 'q', new Date('2026-11-09T10:05:00Z'));
+  assert.deepEqual(repeated, first);
+  assert.equal(peekFinish('repeat-owner', 'q', new Date('2026-11-09T10:06:00Z'))?.seconds, 360);
+  pauseTimer('repeat-owner', 'q', new Date('2026-11-09T10:06:00Z'));
+  startTimer('repeat-owner', 'q', new Date('2026-11-09T10:07:00Z'));
+  assert.equal(readTimer('repeat-owner', 'q')?.accumulatedSeconds, 360);
+});

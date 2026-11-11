@@ -505,6 +505,7 @@
 :root[data-theme="dark"] .gl-pace-ahead { color: #84ecb8; }
 :root[data-theme="dark"] .gl-pace-behind { color: #ef9797; }
 :root[data-theme="dark"] .gl-pace-on-track { background: #1a2b3f; color: #97c6f6; }
+:root[data-theme="dark"] .goal-control-blocked { color: #ef9797; }
 :root[data-theme="dark"] .gl-monthly-focus-limit { color: #9db0da; }
 :root[data-theme="dark"] .gl-plan { background: #1b3242; color: #95c8e4; }
 :root[data-theme="dark"] .gl-pause-toggle { background: #141b30; color: #9db0da; }
@@ -520,16 +521,6 @@
 :root[data-theme="dark"] .gl-featured-head h3 { color: #e0e6f3; }
 :root[data-theme="dark"] .gl-featured-count { background: #3d3419; color: #ffd066; }
 :root[data-theme="dark"] .gl-add-slot { border: 2px dashed #3b495e; }
-:root[data-theme="dark"] .gl-side { background: #151d33; }
-:root[data-theme="dark"] .gl-side-kicker { color: #9db0da; }
-:root[data-theme="dark"] .gl-side-meta { color: #9db0da; }
-:root[data-theme="dark"] .gl-side-empty { color: #9db0da; }
-:root[data-theme="dark"] .gl-stage-list li,
-:root[data-theme="dark"] .gl-task-list li { background: #141b31; }
-:root[data-theme="dark"] .gl-stage-name,
-:root[data-theme="dark"] .gl-task-list li span { color: #e0e6f3; }
-:root[data-theme="dark"] .gl-stage-list b { color: #b2c0e2; }
-:root[data-theme="dark"] .gl-task-list small { color: #9db0da; }
 
 /* components/LifeCity.css */
 :root[data-theme="dark"] .city-summary b { color: #a5b6f1; }

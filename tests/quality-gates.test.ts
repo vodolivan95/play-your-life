@@ -34,6 +34,7 @@ test('версия приложения одна во всех местах', ()
   assert.equal(lock.packages[''].version, version, 'package-lock.json (корень)');
   assert.match(read('index.html'), new RegExp(`<meta name="application-version" content="${version.replaceAll('.', '\\.')}"`), 'index.html');
   assert.match(read('AGENTS.md'), new RegExp(`Текущая версия приложения — \\*\\*${version.replaceAll('.', '\\.')}\\*\\*`), 'AGENTS.md');
+  assert.ok(read('README.md').includes(`Текущая версия приложения — **${version}**`), 'README.md');
   const heading = read('CHANGELOG.md').match(/^## (\d+\.\d+\.\d+)/m);
   assert.equal(heading?.[1], version, 'первая запись CHANGELOG.md');
 });

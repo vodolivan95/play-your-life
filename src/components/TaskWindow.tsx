@@ -7,6 +7,7 @@ import { TickTickContext } from "../tickTickContext";
 import { taskRoute } from "../taskRoutes";
 import {
   canChangeDifficulty,
+  difficultyLockReason,
   difficultyLabels,
   repeatLabels,
   taskContribution,
@@ -803,6 +804,7 @@ function TaskWindowContent({
               <span>Сложность</span>
               <select
                 aria-label="Сложность"
+                aria-describedby={difficultyLockReason(task) ? "task-difficulty-lock" : undefined}
                 disabled={!canChangeDifficulty(task) || locked}
                 value={task.difficulty}
                 onChange={(e) => patch({ difficulty: e.target.value })}
@@ -813,6 +815,7 @@ function TaskWindowContent({
                   </option>
                 ))}
               </select>
+              {difficultyLockReason(task) && <small id="task-difficulty-lock" className="twin-field-hint">{difficultyLockReason(task)}</small>}
             </label>
             <label>
               <Icon name="calendar" size={35} />

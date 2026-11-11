@@ -86,6 +86,16 @@ try {
   let dialog = p.locator("section.twin");
   await dialog.waitFor();
   await dialog.getByText("Фокус:", { exact: false }).first().waitFor();
+  // The direct review URL uses a legacy starter task without sourceType.
+  for (const level of ["Micro", "Simple", "Medium", "Hard", "Very Hard"]) {
+    await dialog.getByLabel("Сложность", { exact: true }).selectOption(level);
+    assert.equal(await dialog.getByLabel("Сложность", { exact: true }).inputValue(), level);
+  }
+  await p.reload();
+  await dialog.waitFor();
+  assert.equal(await dialog.getByLabel("Сложность", { exact: true }).inputValue(), "Very Hard");
+  await dialog.getByLabel("Сложность", { exact: true }).selectOption("Medium");
+
   for (const width of [360, 390, 768, 1024, 1440, 1920]) {
     await p.setViewportSize({ width, height: 1200 });
     const overflow = await dialog.evaluate((el) => ({

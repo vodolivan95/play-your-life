@@ -75,8 +75,16 @@ function shiftDate(value: string, days: number): string {
   date.setDate(date.getDate() + days);
   return date.toISOString();
 }
+export function difficultyLockReason(q: Quest): string | undefined {
+  if (q.done) return 'Задача выполнена: сложность зафиксирована.';
+  if (q.rewardLocked || (q.currentValue ?? 0) > 0)
+    return 'Прогресс уже начат: сложность и награда зафиксированы.';
+  if (q.sourceType === 'SYSTEM') return 'Сложность системной задачи задана приложением.';
+  return undefined;
+}
 export function canChangeDifficulty(q: Quest) {
-  return q.sourceType === 'USER_CREATED' && !q.rewardLocked && !(q.currentValue ?? 0);
+  // Legacy and starter tasks can lack sourceType; absence is not an explicit SYSTEM lock.
+  return difficultyLockReason(q) === undefined;
 }
 export function taskContribution(state: GameState, q: Quest) {
   const xp = q.sourceType === 'USER_CREATED' ? difficulties[q.difficulty as keyof typeof difficulties] ?? q.xp : q.xp;
@@ -136,7 +144,7 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
     q.notes = patch.notes.trim() || undefined;
   }
   if (patch.difficulty !== undefined && patch.difficulty !== old.difficulty) {
-    if (!canChangeDifficulty(old)) throw new Error('Сложность этой задачи изменить нельзя.');
+    if (!canChangeDifficulty(old)) throw new Error(difficultyLockReason(old));
     if (!Object.hasOwn(difficulties, patch.difficulty)) throw new Error('Выбери сложность.');
     q.difficulty = patch.difficulty;
     q.xp = difficulties[patch.difficulty as keyof typeof difficulties];

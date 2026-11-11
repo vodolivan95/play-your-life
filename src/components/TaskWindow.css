@@ -1837,3 +1837,5 @@
   }
 }
 @media(max-width:600px){.twin .twin-parameters>div{grid-template-columns:minmax(0,1fr)}.twin .twin-parameters label,.twin .twin-parameters label:has(input[type=datetime-local]),.twin .twin-parameters label:last-child{grid-column:1;grid-row:auto}:root .pyl-overlay .twin .twin-parameters select{padding-left:10px!important;padding-right:32px!important}}
+
+.twin-field-hint { grid-column: 1 / -1; font-size: 10px; line-height: 1.4; color: #a8bad3; }

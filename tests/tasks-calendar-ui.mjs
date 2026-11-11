@@ -56,6 +56,7 @@ try {
   await page.getByRole("button", { name: "Продолжить игру на этом устройстве" }).click();
   await page.locator(".sidebar").getByRole("button", { name: /^Мои задачи/ }).click();
   // Список: сводка и блок «Задачи по целям и этапам» с фильтром.
+  await page.locator(".tsum > div").first().waitFor();
   assert.equal(await page.locator(".tsum > div").count(), 6);
   const gtl = page.locator(".gtl");
   await gtl.waitFor();
@@ -134,7 +135,7 @@ try {
   const unchangedRange = await page.evaluate(() => JSON.parse(localStorage.getItem("play-your-life-v1")).quests.find((item) => item.id === "cal-range"));
   assert.equal(unchangedRange.startsAt, rangeDays.startsAt);
   assert.equal(unchangedRange.dueAt, rangeDays.dueAt);
-  await win.getByRole("button", { name: "Готово" }).click();
+  await win.getByRole("button", { name: "Сохранить", exact: true }).click();
   await win.waitFor({ state: "detached" });
 
   await calendar.getByRole("button", { name: "Неделя", exact: true }).click();

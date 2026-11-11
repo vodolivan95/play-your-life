@@ -26,6 +26,11 @@
 .twin-time{display:flex;align-items:center;gap:8px;font-weight:500;font-size:12px;color:var(--tw-mute)}
 .twin-time input{width:110px;padding:6px 10px}
 .twin-time-row{display:flex;flex-wrap:wrap;gap:16px}
+.twin-range-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.twin-range-endpoint{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;background:var(--tw-card);border:1px solid var(--tw-line);border-radius:14px;padding:10px}
+.twin-range-endpoint>strong{grid-column:1/-1;color:var(--tw-acc);font-size:13px}
+.twin-range-endpoint label{display:grid;gap:5px;min-width:0;color:var(--tw-mute);font-size:11px;font-weight:600}
+.twin-range-endpoint input{width:100%;min-width:0;padding:8px}
 .twin-sync{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--tw-card);border:1px solid var(--tw-line);border-radius:16px;padding:12px 14px}
 .twin-sync div{display:grid;gap:2px}.twin-sync small{color:var(--tw-mute);font-size:12px}
 .twin-sync button{position:relative;flex:none;width:52px;height:30px;border-radius:999px;border:0;background:#8a96aa66;cursor:pointer;transition:background .2s}
@@ -65,3 +70,5 @@
   .twin-overlay .twin *{visibility:visible}
   .twin-close,.twin-head-actions,.twin-foot,.twin-sync{display:none}
 }
+
+@media(max-width:520px){.twin-range-row{grid-template-columns:1fr}}

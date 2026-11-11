@@ -10,7 +10,7 @@ import './GoalTaskList.css';
 const filters = [['all', 'Все'], ['game', 'Игра'], ['ticktick', 'TickTick']] as const;
 const short = (day?: string) => (day ? new Date(`${day.slice(0, 10)}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) : 'без срока');
 
-export default function GoalTaskList({ state, quests, today, onOpen, onProgress }: { state: GameState; quests: Quest[]; today: string; onOpen: (id: string) => void; onProgress: (q: Quest) => void }) {
+export default function GoalTaskList({ state, quests, today, onOpen }: { state: GameState; quests: Quest[]; today: string; onOpen: (id: string) => void }) {
   const [filter, setFilter] = useState<(typeof filters)[number][0]>('all');
   const [showDone, setShowDone] = useState(false);
   const shown = quests
@@ -32,9 +32,7 @@ export default function GoalTaskList({ state, quests, today, onOpen, onProgress 
           <span className={late ? 'gtl-due is-late' : 'gtl-due'}>{short(calendarItem(q)?.day)}</span>
           <span className="gtl-xp">+{c.xp} XP</span>
         </button>
-        {q.wontDo ? <span className="gtl-wontdo" aria-label="Не делаем">⊘</span> : q.done ? <span className="gtl-ok" aria-label="Выполнено">✓</span> : (
-          <button type="button" className="gtl-go" onClick={() => onProgress(q)}>Продолжить</button>
-        )}
+        {q.wontDo ? <span className="gtl-wontdo" aria-label="Не делаем">⊘</span> : q.done ? <span className="gtl-ok" aria-label="Выполнено">✓</span> : null}
       </li>
     );
   };

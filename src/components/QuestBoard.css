@@ -476,8 +476,7 @@
   height: 36px;
   color: #1d6096;
 }
-.pyl-quest-dialog label,
-.pyl-overlay label {
+.pyl-quest-dialog label {
   font-size: 13px;
   display: grid;
   gap: 8px;
@@ -485,8 +484,7 @@
 }
 .pyl-quest-dialog input:not([type="file"]),
 .pyl-quest-dialog textarea,
-.pyl-quest-dialog select,
-.pyl-overlay input {
+.pyl-quest-dialog select {
   width: 100%;
   border: 1px solid #c8e4fa;
   border-radius: 7px;
@@ -607,8 +605,7 @@
   font-size: 14px;
   line-height: 1.6;
 }
-.pyl-quest-dialog footer,
-.pyl-overlay footer {
+.pyl-quest-dialog footer {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
@@ -624,30 +621,6 @@
   padding: 12px;
   color: #aa324d;
   font-size: 13px;
-}
-.pyl-overlay {
-  position: fixed;
-  inset: 0;
-  background: #163b6477;
-  display: grid;
-  place-items: center;
-  z-index: 1100;
-  padding: 16px;
-}
-.pyl-overlay form {
-  width: min(450px, 100%);
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  display: grid;
-  gap: 16px;
-  box-sizing: border-box;
-}
-.pyl-overlay h2 {
-  font-size: 20px;
-}
-.pyl-overlay footer button {
-  min-height: 40px;
 }
 .pyl-celebration {
   position: fixed;

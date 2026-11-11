@@ -20,6 +20,7 @@ const sources = [
   'components/LifeCity.css',
   'components/ProjectCompletionDialog.css',
   'components/ProjectImagePicker.css',
+  'components/Overlay.css',
   'components/QuestBoard.css',
   'components/RewardShop.css',
   'components/SphereCity.css',

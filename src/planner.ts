@@ -8,6 +8,7 @@ import { addPlanningEvent, planningDay, planningMetrics, planningSettings, taskP
 import type { PlanningSettings, TaskPlanning, PostponeReasonCode } from './planningData.ts';
 import { fingerprint } from './stateFingerprint.ts';
 import { dependencyBlockMessage, dependencyBlockers, validDependencyGraph, validDependencyIds } from './taskDependencies.ts';
+import { goalProgressValue } from './goalWorkspace.ts';
 
 export function visiblePlanningTask(q: Quest): boolean { return !q.planning?.archivedAt && !q.wontDo; }
 export function inboxTask(q: Quest): boolean {
@@ -144,6 +145,32 @@ export function stuckTasks(state: GameState, quests: Quest[], today: string, set
     if (categories.length) result.push({ id: q.id, categories, moves, blockedBy: blockedBy.map((b) => ({ id: b.id, name: b.name })), daysSinceActivity });
   }
   return result;
+}
+export type ExecutionOverview = {
+  totalActive: number; plannedToday: number; doneToday: number; overdue: number;
+  oftenPostponed: number; blocked: number; noDate: number; inActiveProjects: number;
+};
+/**
+ * Компактная сводка «Контроль выполнения» (ТЗ «Этап 3», раздел 2.1). Использует только уже
+ * существующие данные GameState/planningMetrics — новых полей и новой страницы не создаёт.
+ * `quests` — список задач, по которому считается сводка (обычно все задачи владельца, не
+ * отфильтрованные текущим видом «Моего плана» — сводка должна отражать весь план целиком).
+ */
+export function executionOverview(state: GameState, quests: Quest[], today: string, settings: PlanningSettings, metrics = planningMetrics(state)): ExecutionOverview {
+  const active = quests.filter((q) => visiblePlanningTask(q) && !q.done);
+  const doneToday = quests.filter((q) => visiblePlanningTask(q) && q.done && planningDay(q.completedAt) === today).length;
+  let plannedToday = 0, overdue = 0, oftenPostponed = 0, blocked = 0, noDate = 0, inActiveProjects = 0;
+  for (const q of active) {
+    const d = taskDay(q);
+    if (d === today) plannedToday++;
+    if (d && d < today) overdue++;
+    if ((metrics.get(q.id)?.moves ?? 0) >= settings.moveWarning) oftenPostponed++;
+    if (dependencyBlockers(quests, q).length > 0) blocked++;
+    if (!d) noDate++;
+    const goal = q.goalId ? state.goals.find((g) => g.id === q.goalId) : undefined;
+    if (goal && !goal.paused && goalProgressValue(state, goal) < 100) inActiveProjects++;
+  }
+  return { totalActive: active.length, plannedToday, doneToday, overdue, oftenPostponed, blocked, noDate, inActiveProjects };
 }
 export type WeekProposal = { anchor: string; revision: number; assignments: { id: string; day: string; original?: string; originalStart?: string }[]; unplaced: string[] };
 const planRevision = (state: GameState) => fingerprint({ quests: state.quests, settings: planningSettings(state), day: dateKey() });

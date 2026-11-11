@@ -109,6 +109,7 @@ jobs:
         run: node tests/room-loading-ui.mjs
       - name: Verify focus persistence and single recording on desktop and phone
         run: node --experimental-strip-types --no-warnings tests/focus-ui.mjs
+      - run: npm run test:weekly-review-ui
       - run: npm run test:key-results-ui
       - run: npm run test:month-report-ui
       - name: Save section previews

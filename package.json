@@ -1,7 +1,7 @@
 {
   "name": "play-your-life",
   "private": true,
-  "version": "0.79.1",
+  "version": "0.80.2",
   "type": "module",
   "engines": {
     "node": ">=24 <25"
@@ -26,6 +26,7 @@
     "test:key-results-ui": "node tests/key-results-ui.mjs",
     "test:month-report-ui": "node tests/month-report-ui.mjs",
     "test:smoke-ui": "node --experimental-strip-types --no-warnings tests/smoke-ui.mjs",
+    "test:weekly-review-ui": "node tests/weekly-review-ui.mjs",
     "check:budgets": "node scripts/check-budgets.mjs",
     "test:spellcheck-ui": "node tests/spellcheck-ui.mjs"
   },

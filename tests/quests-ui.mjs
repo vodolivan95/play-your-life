@@ -11,6 +11,10 @@ async function openTasks(page, mobile) {
   } else {
     await page.locator(".sidebar").getByRole("button", { name: /^Мои задачи/ }).click();
   }
+  // С 0.70.0 страницы разделов грузятся по требованию (React.lazy), поэтому после
+  // клика по меню раздел появляется не мгновенно. Ждём сам раздел: `count()` ниже
+  // не ждёт появления элементов и на незагруженной странице вернёт 0.
+  await page.locator(".pyl-quest-modes").first().waitFor({ state: "visible" });
 }
 await mkdir("work", { recursive: true });
 const server = spawn(
@@ -172,9 +176,10 @@ try {
     d = page.locator(".pyl-quest-dialog");
     assert.equal(await d.getByLabel("Лайфкоины за задачу").isDisabled(), false);
     await d.getByRole("button", { name: "Закрыть", exact: true }).click();
-    await card.getByRole("button", { name: "Продолжить", exact: true }).click();
-    await page.locator(".pyl-overlay input").fill("1");
-    await page.getByRole("button", { name: "Сохранить прогресс", exact: true }).click();
+    // С 0.80.0 отдельной кнопки «Продолжить» в строке нет: задача выполняется из своего окна.
+    assert.equal(await card.getByRole("button", { name: "Продолжить", exact: true }).count(), 0);
+    await card.locator(".gtl-row").click();
+    await page.getByRole("dialog", { name: /Пробежать 10 км/ }).getByRole("button", { name: "✓ Выполнить", exact: true }).click();
     await page.locator(".pyl-celebration button").click();
     await page.reload();
     await page

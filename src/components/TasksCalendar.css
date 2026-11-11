@@ -116,6 +116,9 @@
 .tcal-chip.is-ticktick { border-right: 1px dashed color-mix(in srgb, var(--t-text) 55%, transparent); }
 .tcal-chip.is-done { opacity: 0.55; text-decoration: line-through; }
 .tcal-chip.is-wontdo { opacity: 0.45; text-decoration: line-through; }
+.tcal-chip.is-range-start { border-radius: 10px 4px 4px 10px; }
+.tcal-chip.is-range-middle { border-left-color: color-mix(in srgb, var(--c) 55%, var(--t-line)); border-radius: 4px; }
+.tcal-chip.is-range-end { border-right: 3px solid var(--c); border-radius: 4px 10px 10px 4px; }
 .tcal-chip.is-selected { box-shadow: 0 0 0 2px var(--t-text), 0 4px 14px color-mix(in srgb, var(--c) 26%, transparent); }
 .tcal-chip[draggable="true"] { cursor: grab; }
 .tcal-chip.is-dragging { opacity: 0.4; }

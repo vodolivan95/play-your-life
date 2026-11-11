@@ -351,6 +351,11 @@ try {
       .click();
     await workspace.getByRole('button', { name: /Возобновить этап/ }).click();
     await workspace.getByRole('button', { name: /^Выучить слова/ }).click();
+    const taskWindow = workspace.getByRole('dialog');
+    await taskWindow.getByLabel('Дата окончания').fill('2020-01-03');
+    await taskWindow.getByLabel('Время окончания').fill('10:30');
+    await taskWindow.getByLabel('Дата начала').fill('2020-01-02');
+    await taskWindow.getByLabel('Время начала').fill('09:00');
     await workspace
       .getByRole('dialog')
       .getByRole('button', { name: 'Расширенные настройки', exact: true })
@@ -364,15 +369,24 @@ try {
     await unchangedTask
       .getByRole('button', { name: 'Сохранить задачу' })
       .click();
-    const undated = await page.evaluate(
+    const dateRange = await page.evaluate(
       (id) =>
-        JSON.parse(localStorage.getItem('play-your-life-v1')).quests.find(
-          (q) => q.goalId === id && q.name === 'Выучить слова',
-        ),
+        (() => {
+          const q = JSON.parse(localStorage.getItem('play-your-life-v1')).quests.find(
+            (item) => item.goalId === id && item.name === 'Выучить слова',
+          );
+          const clock = (value) => {
+            const date = new Date(value);
+            return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+          };
+          return { startsAt: q.startsAt, dueAt: q.dueAt, startTime: clock(q.startsAt), endTime: clock(q.dueAt) };
+        })(),
       ids.id,
     );
-    assert.equal(undated.startsAt, undefined);
-    assert.equal(undated.dueAt, undefined);
+    assert.ok(dateRange.startsAt);
+    assert.ok(dateRange.dueAt);
+    assert.equal(dateRange.startTime, '09:00');
+    assert.equal(dateRange.endTime, '10:30');
     await workspace.getByRole('button', { name: /^Выучить слова/ }).click();
     await workspace.getByRole('dialog').getByRole('button', { name: 'Продолжить', exact: true }).click();
     const partialDialog = workspace.getByRole('dialog');
@@ -628,6 +642,41 @@ try {
     await workspace
       .getByRole('img', { name: 'Общий прогресс проекта: 68%' })
       .waitFor();
+    await workspace
+      .getByRole('button', { name: 'Ⅱ Поставить на паузу', exact: true })
+      .click();
+    await workspace
+      .getByText('Проект на паузе — срок и серия активности не учитываются', { exact: true })
+      .waitFor();
+    assert.equal(
+      await page.evaluate(
+        (id) =>
+          JSON.parse(localStorage.getItem('play-your-life-v1')).goals.find(
+            (g) => g.id === id,
+          ).paused,
+        ids.manual,
+      ),
+      true,
+    );
+    await workspace
+      .getByRole('button', { name: '▶ Возобновить проект', exact: true })
+      .click();
+    assert.equal(
+      await workspace
+        .getByText('Проект на паузе — срок и серия активности не учитываются', { exact: true })
+        .count(),
+      0,
+    );
+    assert.equal(
+      await page.evaluate(
+        (id) =>
+          JSON.parse(localStorage.getItem('play-your-life-v1')).goals.find(
+            (g) => g.id === id,
+          ).paused,
+        ids.manual,
+      ),
+      false,
+    );
     await page.evaluate(() => {
       const state = JSON.parse(localStorage.getItem('play-your-life-v1'));
       state.xp = 1000000;

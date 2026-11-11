@@ -1,7 +1,9 @@
 /* Широкий игровой hero остаётся основой; детальная «Следующая вершина» встроена справа снизу. */
+.app-shell .main-wrap > main.screen-home { width: 100%; max-width: none; }
+@media (max-width: 760px) { .app-shell .main-wrap > main.screen-home { padding-inline: 14px; } }
 .home-dashboard > .peak-banner { grid-column: 1 / -1; min-width: 0; }
 .peak-banner { container: peak / inline-size; color: #f5f7ff; }
-.peak-stage { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr) minmax(370px, 420px); align-items: end; gap: clamp(18px, 3cqi, 36px); min-height: clamp(520px, 42cqi, 650px); overflow: hidden; padding: clamp(20px, 3cqi, 40px); border: 1px solid #ffffff20; border-radius: clamp(20px, 2.5cqi, 32px); background: linear-gradient(145deg, #142750, #09152c 72%); box-shadow: 0 22px 54px #0005, inset 0 1px 0 #ffffff18; }
+.peak-stage { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr) minmax(390px, min(42%, 520px)); align-items: end; gap: clamp(18px, 3cqi, 36px); height: clamp(600px, 42cqi, 680px); min-height: clamp(600px, 42cqi, 680px); overflow: hidden; padding: clamp(20px, 3cqi, 40px); border: 1px solid #ffffff20; border-radius: clamp(20px, 2.5cqi, 32px); background: linear-gradient(145deg, #142750, #09152c 72%); box-shadow: 0 22px 54px #0005, inset 0 1px 0 #ffffff18; }
 .peak-art { position: absolute; inset: 0; z-index: -2; overflow: hidden; }
 .peak-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 48%; }
 .peak-art-light { display: block; }
@@ -25,25 +27,25 @@
 .home-dashboard .peak-features button { display: flex; align-items: center; gap: 9px; padding: 0; border: 0; background: transparent; color: #eff4ff; text-align: left; cursor: pointer; }
 .peak-feature-icon { display: grid; place-items: center; width: 42px; height: 42px; flex: none; border: 1px solid #ffffff35; border-radius: 13px; background: #ffffff18; color: #ffe08a; font-size: 22px; font-weight: 800; }
 .peak-features button > span:last-child { font-size: clamp(10px, .9cqi, 13px); line-height: 1.25; }
-.peak-card { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 7px; width: 100%; min-width: 0; max-height: 100%; padding: 13px; border: 1px solid #ffd36bc7; border-radius: 22px; background: linear-gradient(155deg, #07162ceF, #091832ec 76%); box-shadow: 0 18px 40px #02091780, 0 0 25px #edb74420, inset 0 1px 0 #ffffff25; -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%); }
+.peak-card { position: relative; z-index: 1; display: flex; flex: 0 0 510px; flex-direction: column; gap: 7px; width: 100%; height: 510px; min-width: 0; min-height: 510px; overflow: hidden; padding: 13px; border: 1px solid #ffd36bc7; border-radius: 22px; background: linear-gradient(155deg, #07162ceF, #091832ec 76%); box-shadow: 0 18px 40px #02091780, 0 0 25px #edb74420, inset 0 1px 0 #ffffff25; -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%); }
 .peak-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .peak-card-controls { display: flex; align-items: center; gap: 4px; }
 .home-dashboard .peak-card-controls button { display: grid; place-items: center; width: 23px; height: 23px; padding: 0; border: 1px solid #93aacb88; border-radius: 50%; background: #142c4bc9; color: #ffe08a; font: inherit; font-size: 19px; line-height: 1; cursor: pointer; }
 .home-dashboard .peak-card-controls button:disabled { opacity: .45; cursor: default; }
 .home-dashboard .peak-banner .peak-card h2 { margin: 0; color: #ffd36b; font-size: 12px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
 .peak-card-count { padding: 4px 8px; border-radius: 999px; background: #ffffff20; color: #ffe08a; font-size: 10px; font-weight: 800; white-space: nowrap; }
-.peak-card-intro { display: grid; grid-template-columns: minmax(0, 1fr) 100px; align-items: center; gap: 9px; min-height: 83px; }
+.peak-card-intro { display: grid; grid-template-columns: minmax(0, 1fr) 100px; align-items: center; gap: 9px; height: 83px; min-height: 83px; flex: none; }
 .peak-card-copy { min-width: 0; }
 .home-dashboard .peak-banner p.peak-card-goal { display: -webkit-box; overflow: hidden; margin: 0 0 4px; color: #fff; font-size: 18px; font-weight: 800; line-height: 1.18; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.home-dashboard .peak-banner p.peak-card-project { display: flex; align-items: flex-start; gap: 4px; overflow: hidden; margin: 0; color: #c4d2e9; font-size: 10px; line-height: 1.25; overflow-wrap: anywhere; }
+.home-dashboard .peak-banner p.peak-card-project { display: -webkit-box; overflow: hidden; margin: 0; color: #c4d2e9; font-size: 10px; line-height: 1.25; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .peak-card-project > span { flex: none; color: #8fc3ff; font-size: 14px; line-height: 1; }
 .peak-card-photo { display: block; width: 100px; height: 80px; object-fit: cover; border: 1px solid #f4d27d92; border-radius: 10px; box-shadow: 0 5px 16px #0006; }
-.peak-card-stage { display: flex; align-items: center; flex-wrap: wrap; gap: 3px 6px; min-height: 32px; padding: 5px 8px; border: 1px solid #f1cc60; border-radius: 10px; background: #071a32; color: #f3f5f9; font-size: 10px; line-height: 1.2; }
+.peak-card-stage { display: flex; align-items: center; flex-wrap: nowrap; gap: 3px 6px; height: 34px; min-height: 34px; overflow: hidden; padding: 5px 8px; border: 1px solid #f1cc60; border-radius: 10px; background: #071a32; color: #f3f5f9; font-size: 10px; line-height: 1.2; }
 .peak-card-stage > span:first-child { color: #ffd45c; font-size: 13px; }
-.peak-card-stage strong { color: #ffda69; font-size: 11px; }
-.peak-card-date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; padding: 4px 0 6px; border-bottom: 1px solid #7b96b758; color: #edf2fa; font-size: 9px; line-height: 1.25; }
+.peak-card-stage strong { display: -webkit-box; min-width: 0; overflow: hidden; color: #ffda69; font-size: 11px; text-overflow: ellipsis; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
+.peak-card-date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; height: 36px; min-height: 36px; overflow: hidden; padding: 4px 0 6px; border-bottom: 1px solid #7b96b758; color: #edf2fa; font-size: 9px; line-height: 1.25; }
 .peak-card-date-row > div { display: flex; align-items: center; gap: 5px; min-width: 0; }
-.peak-card-date-row > div > span:last-child { min-width: 0; }
+.peak-card-date-row > div > span:last-child { display: -webkit-box; min-width: 0; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .peak-card-date-row b { color: #ffdc68; }
 .peak-mini-icon { flex: none; color: #f2d264; font-size: 15px; }
 .peak-clock { display: grid; place-items: center; width: 17px; height: 17px; border: 1px solid #eff4ff; border-radius: 50%; color: #eff4ff; font-size: 13px; }
@@ -66,7 +68,7 @@
 .peak-card-task-track { height: 11px; overflow: hidden; border: 1px solid #7b9bc0; border-radius: 99px; background: #142e51; }
 .peak-card-task-track > span { display: block; width: var(--peak-progress); height: 100%; border-radius: inherit; background: linear-gradient(180deg, #ffe58a, #f7b82c); }
 .peak-card-task-row > b { color: #f6f7fb; font-size: 11px; text-align: right; }
-.home-dashboard .peak-banner p.peak-card-hint { display: flex; align-items: center; gap: 7px; margin: 0; padding: 6px 8px; border: 1px solid #7796bd75; border-radius: 16px; background: linear-gradient(100deg, #233c60e8, #102849e8); color: #edf3ff; font-size: 10px; font-weight: 650; line-height: 1.25; }
+.home-dashboard .peak-banner p.peak-card-hint { display: flex; align-items: center; gap: 7px; height: 34px; min-height: 34px; overflow: hidden; margin: 0; padding: 5px 8px; border: 1px solid #7796bd75; border-radius: 16px; background: linear-gradient(100deg, #233c60e8, #102849e8); color: #edf3ff; font-size: 10px; font-weight: 650; line-height: 1.25; }
 .peak-card-hint > span { color: #ffdb70; }
 .home-dashboard .peak-card-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; align-self: center; min-height: 34px; padding: 5px 15px; border: 1px solid #ffe08a; border-radius: 13px; background: linear-gradient(180deg, #ffdf7a, #f5ad25); box-shadow: 0 5px 14px #e9a12b3c, inset 0 1px 0 #ffffffa0; color: #17151b; font: inherit; font-size: 12px; font-weight: 850; text-decoration: none; cursor: pointer; }
 .peak-card-button > span { font-size: 19px; line-height: .8; }
@@ -85,12 +87,12 @@
 .peak-demo { position: absolute; top: 14px; left: 18px; z-index: 2; border: 1px solid #ffffff60; border-radius: 12px; padding: 7px 11px; background: #091832d9; color: #ffe08a; font-size: 11px; font-weight: 700; cursor: pointer; }
 .peak-banner button:focus-visible, .peak-banner a:focus-visible { outline: 3px solid #ffe08a; outline-offset: 3px; }
 @media (max-width: 900px) and (min-width: 651px) {
-  .peak-stage { grid-template-columns: minmax(0, 1fr) minmax(340px, 42%); min-height: 560px; }
+  .peak-stage { grid-template-columns: minmax(0, 1fr) minmax(340px, 42%); height: 560px; min-height: 560px; }
   .peak-card { padding: 11px; }
   .home-dashboard .peak-banner p.peak-card-goal { font-size: 16px; }
 }
 @media (max-width: 650px) {
-  .peak-stage { grid-template-columns: minmax(0, 1fr); align-items: start; gap: 16px; min-height: 0; padding: 190px 16px 16px; }
+  .peak-stage { grid-template-columns: minmax(0, 1fr); align-items: start; gap: 16px; height: auto; min-height: 0; padding: 190px 16px 16px; }
   .peak-art img { object-position: center top; }
   .peak-stage::after { background: linear-gradient(180deg, #08142b00 0, #08142b00 100px, #08142bd9 175px, #08142bf5 250px); }
   .peak-main { max-width: none; }

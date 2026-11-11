@@ -642,6 +642,41 @@ try {
     await workspace
       .getByRole('img', { name: 'Общий прогресс проекта: 68%' })
       .waitFor();
+    await workspace
+      .getByRole('button', { name: 'Ⅱ Поставить на паузу', exact: true })
+      .click();
+    await workspace
+      .getByText('Проект на паузе — срок и серия активности не учитываются', { exact: true })
+      .waitFor();
+    assert.equal(
+      await page.evaluate(
+        (id) =>
+          JSON.parse(localStorage.getItem('play-your-life-v1')).goals.find(
+            (g) => g.id === id,
+          ).paused,
+        ids.manual,
+      ),
+      true,
+    );
+    await workspace
+      .getByRole('button', { name: '▶ Возобновить проект', exact: true })
+      .click();
+    assert.equal(
+      await workspace
+        .getByText('Проект на паузе — срок и серия активности не учитываются', { exact: true })
+        .count(),
+      0,
+    );
+    assert.equal(
+      await page.evaluate(
+        (id) =>
+          JSON.parse(localStorage.getItem('play-your-life-v1')).goals.find(
+            (g) => g.id === id,
+          ).paused,
+        ids.manual,
+      ),
+      false,
+    );
     await page.evaluate(() => {
       const state = JSON.parse(localStorage.getItem('play-your-life-v1'));
       state.xp = 1000000;

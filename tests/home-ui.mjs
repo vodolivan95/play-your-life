@@ -19,6 +19,7 @@ for (const id of ids.slice(0, 3)) {
   seed = saveStage(seed, id, { name: `Этап ${goalName}`, status: 'active', completionMode: 'tasks', startsAt: '2026-11-01T00:00:00.000Z', dueAt: '2026-11-25T00:00:00.000Z' });
   stageIds[id] = seed.goals.find(goal => goal.id === id).stages.at(-1).id;
 }
+seed.goals.find(goal => goal.id === ids[1]).image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/5U8AAAAASUVORK5CYII=';
 seed = saveTask(seed, { name: 'Шаг фокуса А', sphere: 'health', difficulty: 'Simple', goalId: ids[0], stageId: stageIds[ids[0]] });
 for (const id of ids.slice(0, 3)) seed = toggleMonthlyFocus(seed, id);
 const seedJson = JSON.stringify(seed);
@@ -56,28 +57,35 @@ try {
     assert.equal(await page.locator('.account-bar').count(), 0, 'Панели аккаунта нет на главной');
     assert.equal(await page.locator('.home-today, .home-streak').count(), 2);
     assert.equal(await page.locator('.hys-sphere-row').count(), 10);
-    assert.equal(await page.locator('.peak-projects button:not(.is-empty)').count(), 3);
-    assert.equal(await page.locator('.peak-project-cover img').count(), 1, 'Изображение выбранного проекта загружено');
-    assert.equal(await page.locator('.peak-panel').count(), 1, 'Полноразмерный баннер проекта показан');
-    assert.equal(await page.locator('.peak-time-section').count(), 1);
-    assert.equal(await page.locator('.peak-task-section').count(), 1);
-    assert.match(await page.locator('.peak-time-track').getAttribute('aria-valuenow'), /^\d+$/);
-    assert.match(await page.locator('.peak-task-track').getAttribute('aria-valuenow'), /^\d+$/);
-    const layout = await page.locator('.peak-panel').evaluate(stage => {
-      const hero = stage.querySelector('.peak-primary').getBoundingClientRect();
-      const photo = stage.querySelector('.peak-project-cover').getBoundingClientRect();
-      return { textRight: hero.right, photoLeft: photo.left, textWidth: hero.width, photoWidth: photo.width };
+    assert.equal(await page.locator('.peak-focus-switch button:not(.is-empty)').count(), 3);
+    assert.equal(await page.locator('.peak-card-photo').count(), 1, 'В карточке показана обложка проекта');
+    assert.ok(await page.locator('.peak-card-photo').evaluate(image => image.complete && image.naturalWidth > 0), 'Обложка проекта загружена');
+    assert.equal(await page.locator('.peak-card').count(), 1, 'Подробная карточка находится внутри hero');
+    assert.equal(await page.locator('.peak-card-time').count(), 1);
+    assert.equal(await page.locator('.peak-card-tasks').count(), 1);
+    assert.match(await page.locator('.peak-card-time-track').getAttribute('aria-valuenow'), /^\d+$/);
+    assert.match(await page.locator('.peak-card-task-track').getAttribute('aria-valuenow'), /^\d+$/);
+    const layout = await page.locator('.peak-stage').evaluate(stage => {
+      const bounds = stage.getBoundingClientRect();
+      const card = stage.querySelector('.peak-card').getBoundingClientRect();
+      return { stageLeft: bounds.left, stageRight: bounds.right, stageTop: bounds.top, stageBottom: bounds.bottom, stageWidth: bounds.width, stageHeight: bounds.height, cardLeft: card.left, cardRight: card.right, cardTop: card.top, cardBottom: card.bottom };
     });
-    if (width > 650) assert.ok(layout.photoLeft >= layout.textRight - 20 && layout.textWidth > 0 && layout.photoWidth > 0, 'Фото проекта находится справа от основного текста');
-    else assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, 'Полноразмерный баннер не создаёт горизонтальную прокрутку на телефоне');
-    const projectB = page.locator('.peak-projects button:not(.is-empty)').nth(1);
+    if (width > 650) {
+      assert.ok(layout.cardLeft > layout.stageLeft + layout.stageWidth * .5, 'Новый блок встроен справа от большого фонового hero');
+      assert.ok(layout.cardBottom > layout.stageTop + layout.stageHeight * .5 && layout.cardBottom <= layout.stageBottom + 1, 'Новый блок расположен внизу внутри hero');
+      assert.ok(layout.cardRight <= layout.stageRight + 1, 'Карточка не выходит за границы hero');
+    } else assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, 'Встроенная карточка не создаёт горизонтальную прокрутку на телефоне');
+    const projectB = page.locator('.peak-focus-switch button:not(.is-empty)').nth(1);
     await page.getByRole('button', { name: 'Следующий проект' }).click();
-    assert.equal(await page.locator('.peak-carousel > span').innerText(), '2 / 3');
+    assert.equal(await page.locator('.peak-card-count').innerText(), '2 / 3');
+    assert.match(await page.locator('.peak-card').innerText(), /Фокус Б/);
     await page.getByRole('button', { name: 'Предыдущий проект' }).click();
-    assert.equal(await page.locator('.peak-carousel > span').innerText(), '1 / 3');
+    assert.equal(await page.locator('.peak-card-count').innerText(), '1 / 3');
     await projectB.click();
-    assert.match(await page.locator('.peak-panel').innerText(), /Фокус Б/);
+    assert.match(await page.locator('.peak-card').innerText(), /Фокус Б/);
     assert.equal(await projectB.getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.locator('.peak-card-count').innerText(), '2 / 3');
+    assert.match(await page.locator('.peak-card-photo').getAttribute('src'), /^data:image\/png;base64/);
     await page.getByRole('link', { name: /Открыть этап/ }).click();
     await page.waitForURL(`**/#/goals/${ids[1]}/stages/${stageIds[ids[1]]}`);
     await page.locator('.ss-hero h2').filter({ hasText: 'Этап Фокус Б' }).waitFor();
@@ -103,7 +111,7 @@ try {
     assert.equal(await page.locator('.account-bar').count(), 0);
     await page.evaluate(() => { location.hash = ''; window.dispatchEvent(new HashChangeEvent('hashchange')); });
     await page.locator('.home-dashboard').waitFor();
-    await page.locator('.peak-projects button:not(.is-empty)').first().click();
+    await page.locator('.peak-focus-switch button:not(.is-empty)').first().click();
     await page.getByRole('link', { name: /Открыть этап/ }).click();
     await page.waitForURL(`**/#/goals/${ids[0]}/stages/${stageIds[ids[0]]}`);
     await page.locator('.ss-hero h2').filter({ hasText: 'Этап Фокус А' }).waitFor();
@@ -118,9 +126,9 @@ try {
     await page.locator('.home-dashboard').waitFor();
     await page.reload();
     await enter();
-    assert.match(await page.locator('.peak-projects').innerText(), /Запасная цель/);
-    assert.equal(await page.locator('.peak-projects button').filter({ hasText: 'Фокус Б' }).count(), 0);
-    if (process.env.PYL_SCREENSHOT_DIR) await page.screenshot({ path: `${process.env.PYL_SCREENSHOT_DIR}/next-peak-${width}.png`, fullPage: true });
+    assert.match(await page.locator('.peak-focus-switch').innerText(), /Запасная цель/);
+    assert.equal(await page.locator('.peak-focus-switch button').filter({ hasText: 'Фокус Б' }).count(), 0);
+    if (process.env.PYL_SCREENSHOT_DIR) await page.locator('.peak-stage').screenshot({ path: `${process.env.PYL_SCREENSHOT_DIR}/next-peak-${width}.png` });
     assert.deepEqual(errors, []);
     await context.close();
     console.log(`Главная ${width}px: блоки, переключение, переход, меню, лимит, профиль, сохранение — OK`);

@@ -21,11 +21,14 @@ type Props = {
   onQuests: () => void;
   onIntegration: () => void;
   onCreate: () => void;
+  onStart: () => void;
+  onNavigate: (page: string) => void;
   renderQuest: (quest: Quest) => ReactNode;
 };
 
 export default function HomeDashboard({
-  state, onSphere, onQuests, onIntegration, onCreate, renderQuest,
+  state, onSphere, onQuests, onIntegration, onCreate, onStart,
+  onNavigate, renderQuest,
 }: Props) {
   const tickTick = useContext(TickTickContext);
   const [theme] = useMenuTheme();
@@ -75,7 +78,11 @@ export default function HomeDashboard({
     <div className="home-dashboard" data-theme={theme}>
       <HomeBanner
         peaks={peaks}
+        demo={state.profile.mode === 'demo'}
+        onContinue={onQuests}
+        onNavigate={onNavigate}
         onChooseFocus={() => onSphere(null)}
+        onStart={onStart}
       />
       <section className="home-panel home-today">
         <div className="home-section-title">

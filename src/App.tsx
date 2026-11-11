@@ -398,7 +398,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 notify={notify}
               />
             )}
-            {page === 'home' && <HomeDashboard state={state} onSphere={(id) => { setSelected(id); setSphereTab('overview'); setPage('spheres'); }} onQuests={() => navigate('tasks')} onIntegration={() => navigate('profile')} onCreate={newQuest} renderQuest={q => <QuestRow key={q.id} quest={q} />} />}
+            {page === 'home' && <HomeDashboard state={state} onSphere={(id) => { setSelected(id); setSphereTab('overview'); setPage('spheres'); }} onQuests={() => navigate('tasks')} onIntegration={() => navigate('profile')} onCreate={newQuest} onStart={() => setModal('start')} onNavigate={navigate} renderQuest={q => <QuestRow key={q.id} quest={q} />} />}
             {page === 'spheres' && !sphere && <SpheresOverview state={state} onSelect={(id) => { setSelected(id); setSphereTab('overview'); window.scrollTo({ top: 0 }); }} onQuick={setQuickSphere} onQuest={(id) => { setQuestTemplate(null); setQuestSphere(id); setModal('quest'); }} onQuests={() => navigate('tasks')} renderQuest={(q) => <QuestRow key={q.id} quest={q} />} onAddRecommendation={(idea) => { setState(current => current.goals.some(g => g.sphere === idea.sphereId && g.name === idea.title && g.current < g.target) ? current : saveGoal(current, { name: idea.title, description: idea.description, sphere: idea.sphereId, target: 100, reward: 100, progressMode: 'tasks' })); notify('Проект добавлен в план. Открой его и добавь этапы и задачи.'); }} />}
             {sphere && (
               <>

@@ -61,3 +61,9 @@
 ## Сохранения и TickTick
 
 Отдельные проверки с имитацией сбоев — `tests/account-resilience.test.ts`, `tests/account-fuzz.test.ts` (сохранения), `tests/ticktick-safety.test.ts` (TickTick). Описание защиты: [FIREBASE.md](FIREBASE.md), [TICKTICK.md](TICKTICK.md).
+
+## Аудит 11 ноября 2026
+
+Границы, реестр ошибок и фактические результаты — [отчёт](audit/2026-11-11/REPORT.md). `node --experimental-strip-types --no-warnings tests/focus-ui.mjs` проверяет секундомер на ПК и телефоне: пауза, перезагрузка, продолжение и одна запись времени без начисления XP. Выполняется в `sections-ui`; снимки — `work/focus/`.
+
+`node tests/room-loading-ui.mjs` удерживает индикатор загрузки сцены и проверяет доступность настроек и выхода на ПК/телефоне; выполняется в `sections-ui`.

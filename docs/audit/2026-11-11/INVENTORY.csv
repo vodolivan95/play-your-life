@@ -1,0 +1,585 @@
+file,category,baseline_bytes,baseline_lines,baseline_sha256,verification_scope
+.devcontainer/devcontainer.json,configuration,508,22,69bafb4dbb82568b7fadcfa5e65886179120143044ea313692d0a20947fd2820,JSON parse
+.editorconfig,asset,188,12,a6b98ea7cb6d61ed8d430dd0dffa46c87012b5cf859d4ce7207898954951fdcd,inventory only; no exhaustive visual/content review
+.env.example,asset,504,11,d0f6d5d4f2a7616a5590a0aa353a373d90a98c8eb031a20ebf362d2fb72b002f,inventory only; no exhaustive visual/content review
+.firebaserc,asset,50,2,33aceea21755377b3e17afb6ba82ae5d1afd3835b5b5e723a8fcfdbf7474ee33,inventory only; no exhaustive visual/content review
+.github/ISSUE_TEMPLATE/task.md,documentation,550,25,30637d7d0c34fdac45db82661a15c5769f7878f8db13d12dd35862cf5791b2a6,inventory only; no exhaustive visual/content review
+.github/pull_request_template.md,documentation,452,25,253b7d8c9c0d3e96ad426852e0f433e4bd77c67eb47e8f29a4972e6dab78f753,inventory only; no exhaustive visual/content review
+.github/workflows/ci.yml,configuration,3841,118,afb014976b5e2b6232a1b1ed3846b1a87fafdf3f518f1f31845ba0c5a5f92590,inventory only; no exhaustive visual/content review
+.github/workflows/claude-preview-shots.yml,configuration,1537,32,fac3d575321bf25e2519a690e28d800f938e113db5abfaa2551992c6803cac31,inventory only; no exhaustive visual/content review
+.github/workflows/pages.yml,configuration,2808,71,5cbda150cd3481cc5036ece6739b92a45a5d41b6ad219578c3b7b29bb5764f18,inventory only; no exhaustive visual/content review
+.github/workflows/room-prototype.yml,configuration,2286,51,eda1ae48320fa4ade82790b5b2d8291e27c494059788746d066b44834cd11a8d,inventory only; no exhaustive visual/content review
+.github/workflows/ticktick.yml,configuration,2490,65,c94bfd2d016c474e019c40c2a60ec508bc8d799e841db84fbaaf98e741df5c72,inventory only; no exhaustive visual/content review
+.gitignore,asset,503,24,b2d8f7e4ea282d5fca0aadc782cc3da957d65db4ece6a7521d2c36d26f4fa9b5,inventory only; no exhaustive visual/content review
+.nvmrc,asset,3,1,68ca3fba3b7e864770cb61aeb306d4bd4354b68ab4dd38450860c5d823e42a53,inventory only; no exhaustive visual/content review
+AGENTS.md,documentation,37056,119,0b9ae2f236e977e5639c8eefd49dccad795f0e4edf182c27d8a7eac299f03bb7,inventory only; no exhaustive visual/content review
+CHANGELOG.md,documentation,356637,1594,6085076ac20f2b609cf119f3ac07d035b1a18d48d44281c0828e3c86dc15b2e9,inventory only; no exhaustive visual/content review
+CLAUDE.md,documentation,987,12,89218daebb2b427dcfeeed544eda5755132f98fc88070361640c68db94047618,inventory only; no exhaustive visual/content review
+README.md,documentation,8818,179,c0ffcf5eefb1055b14cd445af54ce5b38a3c9ca6f7b797ae67bf9da916e9e4be,inventory only; no exhaustive visual/content review
+TODO.md,documentation,12770,49,5a427643e4b342321daae62aae34e00d16a69b92a0daf0299da36e06520068c0,inventory only; no exhaustive visual/content review
+docs/ACHIEVEMENTS.md,documentation,4145,43,8fb52dae7cd163611002b4ed46ee7d551ed7a4f9a107aea79d3f8030104f69d3,inventory only; no exhaustive visual/content review
+docs/AI-WORKFLOW.md,documentation,2143,25,27c4f98cae8020818819bc37961e19335458f2cd7eb74eb7878706801e119dab,inventory only; no exhaustive visual/content review
+docs/AUDIT-2026-10-29.md,documentation,7200,47,f9a64cb94ea870bbfc65045906f4b70ba27733e4527b5d7b0139f1558bfb7ea2,inventory only; no exhaustive visual/content review
+docs/BRAND.md,documentation,8425,51,064bfd8a1a85eafdb0ab5c4357267ade07acca7dfcbae9e60fa8873e78d98d9c,inventory only; no exhaustive visual/content review
+docs/CITY.md,documentation,9298,39,aa82ed53a999efe531d1666abbbbc793d8df71ca68e33b36c7324c0b0b804457,inventory only; no exhaustive visual/content review
+docs/CITY_IMAGE_QUALITY.md,documentation,2618,15,e27ca95586ec3ac20e5b3fc375a21a0011051518fdc4df0075018d937a54d4d9,inventory only; no exhaustive visual/content review
+docs/CITY_TOUCH_QUEST_PHOTOS.md,documentation,7844,19,949c57b76580cff687688e5863e4b5e79409f59acdeda8e23a81547ade95995d,inventory only; no exhaustive visual/content review
+docs/FINANCE.md,documentation,11455,54,6de4b024f4fde44e0a1d2b0d27125f10e44a3d98d9956d08ec6f7598be1a8b71,inventory only; no exhaustive visual/content review
+docs/FIREBASE.md,documentation,18253,85,19f3198c1035b95c246899172e209e3fadc42479dd52f3251f04efcdaa2883ea,inventory only; no exhaustive visual/content review
+docs/GOAL-WORKSPACE.md,documentation,21376,104,90b551e9112b161d4f86f6a6e05bc0ef3a180a7ef5e81ea3e7381d2897e56667,inventory only; no exhaustive visual/content review
+docs/HABITS-DESIGN.md,documentation,4514,34,6757f9e18a46a1114e78d4c3d392d381edbfe28e6c8cfe4817a0121d8d9a94e5,inventory only; no exhaustive visual/content review
+docs/HOME.md,documentation,13384,56,619f68d9e6eddaabfe00d002c5835c3e34af943e47f41ac039b4da79a8c7dbf5,inventory only; no exhaustive visual/content review
+docs/KEY-RESULTS-REDESIGN-PLAN.md,documentation,5353,23,e476f6f4c675f614b4dd74e9b87e97b83df3d1875681ccb0796be38534e56d2d,inventory only; no exhaustive visual/content review
+docs/KEY-RESULTS.md,documentation,13985,59,70ef2c20fb2ca6616c788d5875939711583ceb1e638122c3c58c936dad81a748,inventory only; no exhaustive visual/content review
+docs/LIFE-PLAN-DESIGN.md,documentation,4055,29,6c617b49a1bb5320236d57aca8251441151779aca3cca7037cbf50ed5b01181e,inventory only; no exhaustive visual/content review
+docs/LIVE_CITY.md,documentation,36916,170,cb883048f65ff7a0fae217f898c1b9738336208f4eaab97ffeede42f98226b55,inventory only; no exhaustive visual/content review
+docs/MENU.md,documentation,5786,49,49d6a4c012c76fda402b2d01b2cc337c78671dcc75c388a39a6d95ed3345f25a,inventory only; no exhaustive visual/content review
+docs/PAGES.md,documentation,3317,26,a2ed2b598154bc7831b9e2412334cf865751885c6b96b95f0854bd9fc089cdd5,inventory only; no exhaustive visual/content review
+docs/PROFILE.md,documentation,4350,26,f36a9bcedefb4afd76633a50f2b18d094ea1d098d41e8d6012c9ecf9b96f4882,inventory only; no exhaustive visual/content review
+docs/QUALITY.md,documentation,6513,63,c1a9276e380e9b9b26736df78310875902a0da2422ca9735a321c2e0e44f4500,inventory only; no exhaustive visual/content review
+docs/QUESTS.md,documentation,9223,49,b4c7c1003c6acbdafd8510b535fbfb8c0af194b125d86e678bf1d794345c1258,inventory only; no exhaustive visual/content review
+docs/ROOM-3D.md,documentation,24496,181,f13bb7090865443276f52d3c9c1d47f5ff780c5827b4392045fa934fe2fa979f,inventory only; no exhaustive visual/content review
+docs/SETUP.md,documentation,1559,19,0103137285449b14d09567668bae88288a677114c8fb54f22f13f385b19d5a9f,inventory only; no exhaustive visual/content review
+docs/SHOP.md,documentation,9611,40,ee1ac89416dc0a02e4999838ea364830bceea4f8a4ff74036b323783a264d347,inventory only; no exhaustive visual/content review
+docs/SKILL-TREE.md,documentation,5288,29,c4cb3467e82ab5579ad0efbb1a474e9f6283f58ef4ebc70f9f2d5d6b2fed36c5,inventory only; no exhaustive visual/content review
+docs/SPELLCHECK.md,documentation,2965,22,fefcd52623af0603fd598806f334c2ef9b6e35986c9797f0506ce44bcbf019e9,inventory only; no exhaustive visual/content review
+docs/SPHERE-PROJECTS.md,documentation,5536,25,5213cc0690c51c79ca26fcdfc978fb9f2cba601cb7efc7796cfd3cd502373353,inventory only; no exhaustive visual/content review
+docs/SPHERES.md,documentation,9407,43,5409e334cd2e54a4863fb9ed5a6b393caf3e3e7f608c60cf79a31c70516070e9,inventory only; no exhaustive visual/content review
+docs/SPHERE_BUILDING_PHOTOS.md,documentation,4851,36,31aa400b79eb1c81540a757c749ce6f0a241f7fd8db493f9d44179152a907ee3,inventory only; no exhaustive visual/content review
+docs/SPHERE_LEVELS.md,documentation,2819,13,76dc77427ab34f7232a39569f109451e5426d7d9c3fe3aa1a617dcae2b1e0f12,inventory only; no exhaustive visual/content review
+docs/TASKS-DESIGN.md,documentation,16426,69,118424152b61b69b3ce7a7879c209051e5c80ec07e07660a31f17b827fe9ea3a,inventory only; no exhaustive visual/content review
+docs/THEME.md,documentation,4321,34,48ce73cc11bb27220eb8855c07c960e8ad96876862b96f65bca46df5e993998b,inventory only; no exhaustive visual/content review
+docs/TICKTICK-SETUP.md,documentation,18982,112,8d62b96b54f38b63323db5be7745eee20b829b393db005ccccc660801855738c,inventory only; no exhaustive visual/content review
+docs/TICKTICK.md,documentation,42865,166,3ea7012f2cc6637f0fd62b6cd78331e4bf2bca85b9ea8893b14a3bd82d592511,inventory only; no exhaustive visual/content review
+docs/VERSION-HISTORY.md,documentation,184523,171,88c83b42408d90d86ff35387800e0b477789c840131fe8600c15b2c058f5c320,inventory only; no exhaustive visual/content review
+docs/audit/01-PROJECT_INVENTORY.md,documentation,11085,78,3332634f8449a8c68250c874f7f76ca1cd2f577ca467362782e9c36252a06885,inventory only; no exhaustive visual/content review
+docs/audit/02-FUNCTIONAL_AUDIT.md,documentation,22208,118,3c9f5f0796640dd1917dbdf8bd3a2e4c0a44b8f1b15a43aab71af44556ac3b75,inventory only; no exhaustive visual/content review
+docs/audit/03-BUG_REPORT.md,documentation,11633,76,2f33d17173a9a22a2bfdabc4c62fd257894105302cdf7528f8df6aec88c85b19,inventory only; no exhaustive visual/content review
+docs/audit/04-PLANNING_GAP_ANALYSIS.md,documentation,10860,99,c1ac8c053b5a479acbcbea9137418e33e959d30b1e81cd47d5607ea3cca8fa2d,inventory only; no exhaustive visual/content review
+docs/audit/05-UX_UI_AUDIT.md,documentation,8651,38,cfa86200e7386cc2a3318c2b992ad7606133801f5fe0b5a30941c68e26d6f222,inventory only; no exhaustive visual/content review
+docs/audit/06-ARCHITECTURE_AUDIT.md,documentation,13917,72,349a663d8ef011322ad553fe77229aeab0259f69cd3441860ba51cacb785ab87,inventory only; no exhaustive visual/content review
+docs/audit/07-COMPETITOR_COMPARISON.md,documentation,10898,32,e04fd3fe34ccdeebd24667c73362c90fb69f74681cdf480c77ccab5eb09a399c,inventory only; no exhaustive visual/content review
+docs/audit/08-DEVELOPMENT_ROADMAP.md,documentation,9254,76,fee505d63e06d17d244f37b257ad01f40404e258c7bbfdca7523b2009f5db956,inventory only; no exhaustive visual/content review
+docs/audit/09-TEST_RESULTS.md,documentation,9638,52,909e1aa1761131b84ac432d59ff93b85cc9773b7878314debb920b930535415b,inventory only; no exhaustive visual/content review
+docs/audit/10-EXECUTIVE_SUMMARY.md,documentation,18163,137,83b13f861445695b5e8b42b43d6eb8915642dde254672f0381fd0aad13126e88,inventory only; no exhaustive visual/content review
+docs/focus-tracking/IMPLEMENTATION.md,documentation,23688,85,f83a7b81da54fc4cd5cf58bdfa97d6a3a32850a81e187aab251f2a8396704930,inventory only; no exhaustive visual/content review
+docs/focus-tracking/STAGE4_1_TOR.md,documentation,41613,1030,84beff5d0d32cdb353259130cad02670e7c99026d8639e9c0188fd5146cff4fc,inventory only; no exhaustive visual/content review
+docs/planning-system-2.0/AUDIT.md,documentation,19786,93,d40fe993db8d517d83f633b3854bf39440f669041830462ae4c7e176f66a8ff1,inventory only; no exhaustive visual/content review
+docs/planning-system-2.0/DEPENDENCIES.md,documentation,15652,79,09e59637f5ceb9fe0382d89a84780eca2a6912cec7b3a00d79ede0658c93c62a,inventory only; no exhaustive visual/content review
+docs/planning-system-2.0/IMPLEMENTATION.md,documentation,17114,78,d285c1306d8cbc3823de4510db1b7876f7ace6e2e420e4fafe665d806953028c,inventory only; no exhaustive visual/content review
+docs/planning-system-2.0/README.md,documentation,32796,129,86a976c5710e4acd942eb38e4829902b01c722bfa42ba29487588d5d03d5ecaf,inventory only; no exhaustive visual/content review
+docs/planning-system-2.0/SOURCE.md,documentation,69427,2016,b030ff1efd5293eded76e3ce000750a2e3df09a63c8dd5b76a61376c1b9f94f7,inventory only; no exhaustive visual/content review
+docs/planning-system-2.0/STAGE2_IMPLEMENTATION.md,documentation,74922,290,a215fa7a9d5abed21c65a8fe523e30527e5a2ad0bb03d8e2505a4e2af33137bc,inventory only; no exhaustive visual/content review
+eslint.config.js,configuration,879,25,1c356901519a36c604fb702b48eaa4d7e8f0b699ecdf0167aa91a601a29c8107,lint/typecheck/build (where included)
+firebase.json,configuration,169,8,3d042c42746b7ecfb4c14ceb16d70f074c4259c0f649478acc5c1da20500aab9,JSON parse
+firestore.rules,configuration,10922,165,63d7d89e348189c1d6694fa7df8d227592aef6dbb86d5fe7c14bd1a045c9323f,inventory only; no exhaustive visual/content review
+index.html,configuration,1500,24,adc0af23b6ed8e6524dea33f18156a5025d3b38db3b3bceb60e02236f3cb46b3,inventory only; no exhaustive visual/content review
+integrations/ticktick/firebaseIdentity.ts,source,2745,39,584e95bf726a7d6313448b227c0707aa5a479fc675136544aaf55957c0d58703,lint/typecheck/build (where included)
+integrations/ticktick/tsconfig.json,configuration,293,13,40cfc9fd7b360000dda8b6b5db90fd02f88a99d058767de57d65141d13818967,JSON parse
+integrations/ticktick/worker.ts,source,30111,571,c0ef5eb8b7cf74c06e28bd58256fae25ce0403c872c683979a43b13d486baa45,lint/typecheck/build (where included)
+integrations/ticktick/wrangler.toml,configuration,344,15,8502f008b83edcaf0372f37243095a793cd3aa711847789198c5e71c208f9bcb,inventory only; no exhaustive visual/content review
+package-lock.json,configuration,188479,5283,677a88546e4a5295d78e7ad3297c01da500d7d40ea6562b760f501ecdd1cc1d6,JSON parse
+package.json,configuration,2484,66,ef6c880d9bc212188685b41a0d0bf516cf478b80e05c9db64c2bcc0902ab4f70,JSON parse
+public/apple-touch-icon.png,asset,44977,binary,88b1a8e519bfb02c9be23cfbbaff9644de2201a5b020aee61600e98560b1687a,inventory only; no exhaustive visual/content review
+public/brand/emblem-69ef7f6b767c/apple-touch-icon.png,asset,44977,binary,88b1a8e519bfb02c9be23cfbbaff9644de2201a5b020aee61600e98560b1687a,inventory only; no exhaustive visual/content review
+public/brand/emblem-69ef7f6b767c/favicon-16x16.png,asset,780,binary,2e045d842deb357d38ab998c67f55b955ee654b22f1ed059c5d134d703268a2a,inventory only; no exhaustive visual/content review
+public/brand/emblem-69ef7f6b767c/favicon-32x32.png,asset,2482,binary,de6ec4ff4dfb58f449973b8bcdcd21e4e52c824ec84664efcae5939260757b80,inventory only; no exhaustive visual/content review
+public/brand/emblem-69ef7f6b767c/favicon-48x48.png,asset,5275,binary,8a743f7fc4f9dca9a1a36072304d152429a139491f71b4085dfaace053cda360,inventory only; no exhaustive visual/content review
+public/brand/emblem-69ef7f6b767c/favicon.ico,asset,8591,binary,5a3c9afc754dca62d955ff004d89f5de28b7043d08f9beafb2a79440dd9b4eb6,inventory only; no exhaustive visual/content review
+public/brand/emblem-69ef7f6b767c/icon-192.png,asset,57448,binary,b231b8610c7e0caa3246242c9db8a72ddb2cf9087d1ffd54116b2b358a2dd7eb,inventory only; no exhaustive visual/content review
+public/brand/emblem-69ef7f6b767c/icon-512.png,asset,302754,binary,e7f915f5e6377eae8961ecd302da75b245ba8c818a719283fb9b522eec05c268,inventory only; no exhaustive visual/content review
+public/brand/emblem-69ef7f6b767c/icon-maskable-512.png,asset,176066,binary,6c78352a8805362d8c32461525a27a66f199ebe4095144a0c14af4c30e0dca8f,inventory only; no exhaustive visual/content review
+public/brand/emblem-69ef7f6b767c/logo-256.png,asset,94179,binary,c8b434df7b43ef46e3d1f7fcd1a2055f9d9eb68006cb49d5469ef9c317fa0167,inventory only; no exhaustive visual/content review
+public/brand/emblem-69ef7f6b767c/logo-96.png,asset,17419,binary,24973b39901344d484017b2c2b18296b617f3ed3efe2d552a4b3b0e36ea29223,inventory only; no exhaustive visual/content review
+public/brand/emblem-master.png,asset,911636,binary,69ef7f6b767ce284b7bbf03508e8198e45a18e1020bb838f3c9573e02dc8a1f8,inventory only; no exhaustive visual/content review
+public/brand/your-life-source.jpg,asset,121313,binary,e00d2571783ffc51051fc20c63ed7e6d99c6f090bc2ee333db001e8a428671dc,inventory only; no exhaustive visual/content review
+public/environments/README.md,documentation,739,5,3afbe9275a277c3daf5ce8582531cb3e03220ecf28e98dede21fc158cee25277,inventory only; no exhaustive visual/content review
+public/environments/sport-stone.jpg,asset,275758,binary,322e273dc901bda2534ac5e1ea261d9a9468c5e511398e449ad7f7e3aebf5e81,inventory only; no exhaustive visual/content review
+public/favicon-16x16.png,asset,780,binary,2e045d842deb357d38ab998c67f55b955ee654b22f1ed059c5d134d703268a2a,inventory only; no exhaustive visual/content review
+public/favicon-32x32.png,asset,2482,binary,de6ec4ff4dfb58f449973b8bcdcd21e4e52c824ec84664efcae5939260757b80,inventory only; no exhaustive visual/content review
+public/favicon-48x48.png,asset,5275,binary,8a743f7fc4f9dca9a1a36072304d152429a139491f71b4085dfaace053cda360,inventory only; no exhaustive visual/content review
+public/favicon.ico,asset,8591,binary,5a3c9afc754dca62d955ff004d89f5de28b7043d08f9beafb2a79440dd9b4eb6,inventory only; no exhaustive visual/content review
+public/icon-192.png,asset,57448,binary,b231b8610c7e0caa3246242c9db8a72ddb2cf9087d1ffd54116b2b358a2dd7eb,inventory only; no exhaustive visual/content review
+public/icon-512.png,asset,302754,binary,e7f915f5e6377eae8961ecd302da75b245ba8c818a719283fb9b522eec05c268,inventory only; no exhaustive visual/content review
+public/icon-maskable-512.png,asset,176066,binary,6c78352a8805362d8c32461525a27a66f199ebe4095144a0c14af4c30e0dca8f,inventory only; no exhaustive visual/content review
+public/logo-256.png,asset,94179,binary,c8b434df7b43ef46e3d1f7fcd1a2055f9d9eb68006cb49d5469ef9c317fa0167,inventory only; no exhaustive visual/content review
+public/logo-96.png,asset,17419,binary,24973b39901344d484017b2c2b18296b617f3ed3efe2d552a4b3b0e36ea29223,inventory only; no exhaustive visual/content review
+public/manifest.webmanifest,asset,836,32,cbefd223b286f886b104f06159c01920d05f5891602b0708f1f1896ee28d11cc,inventory only; no exhaustive visual/content review
+public/models/shop/coffee.glb,asset,1138652,binary,e8d5774bbc34390073373d5f75903f04b65a679a65428b4fa036c04264b817be,inventory only; no exhaustive visual/content review
+public/models/shop/exercise-bike.glb,asset,47040,binary,986f8bdda03fcc4b1e7fe30a9bb45a764b259b0d503c1332bf0c40c4a9c3f5c4,inventory only; no exhaustive visual/content review
+public/models/shop/icecream.glb,asset,394300,binary,2c7ebbafe353bc41f62d48e38ecdce112d9534e44bb3c8388ff6c899dbbcc1c9,inventory only; no exhaustive visual/content review
+public/models/shop/plant.glb,asset,31080,binary,246ed48ea16efe9ad40493ce1e294e5c0f2201d312af48cd9c428ef6eba53ad8,inventory only; no exhaustive visual/content review
+public/models/shop/thermae.glb,asset,403972,binary,088938c4ee431474f0d976b6ee04e75ff45d181b9c2814bb7675222b61cb9271,inventory only; no exhaustive visual/content review
+public/models/shop/trophy.glb,asset,42836,binary,47c4001635cd1747013aba0fc6ad71de0c99dfe7ebbebb3f9f162b2fa41ad4a4,inventory only; no exhaustive visual/content review
+public/models/sport/ball.glb,asset,68076,binary,754227e5d4368b40e12d9be2d69ea92f215639400e02e48d7decd0e8a2d92eb5,inventory only; no exhaustive visual/content review
+public/models/sport/bench.glb,asset,12156,binary,b89105590e4f98364346472de57d28e4f4448803a3aafa15f39e098c9e0e3a45,inventory only; no exhaustive visual/content review
+public/models/sport/boxing-bag.glb,asset,95776,binary,7ac95aec710d9d767c9053aeb47d494bc374ce0084a139a63dc132f1a26da113,inventory only; no exhaustive visual/content review
+public/models/sport/dumbbell-rack.glb,asset,229496,binary,9c0678f59140290638df485ddb46baf3df4f2bdd2fd733479bd3856ee36cf628,inventory only; no exhaustive visual/content review
+public/models/sport/dumbbells.glb,asset,43696,binary,f9b119aca27983ed57b2ce0bd9721ea31e06399d9157b480faac857880a0ac1d,inventory only; no exhaustive visual/content review
+public/models/sport/exercise-bike.glb,asset,47040,binary,986f8bdda03fcc4b1e7fe30a9bb45a764b259b0d503c1332bf0c40c4a9c3f5c4,inventory only; no exhaustive visual/content review
+public/models/sport/kettlebells.glb,asset,154720,binary,2718f32d8786ef1e362c3585fe472dee9f43839856152b5890ad60780f17a6cf,inventory only; no exhaustive visual/content review
+public/models/sport/mat.glb,asset,28492,binary,f0effbe5ba750e9502205dd95abd98ce00fd2162469853ccc8b01382f06ad68c,inventory only; no exhaustive visual/content review
+public/models/sport/plant.glb,asset,31080,binary,246ed48ea16efe9ad40493ce1e294e5c0f2201d312af48cd9c428ef6eba53ad8,inventory only; no exhaustive visual/content review
+public/models/sport/power-rack.glb,asset,76712,binary,732979326390a6e8568ee4be769deeb1e33ee01d5803327ff3a2d4cdc6472738,inventory only; no exhaustive visual/content review
+public/models/sport/treadmill.glb,asset,47756,binary,b442e52a37b926f019cc9747d7d3eb867689a427eb180bd5bcab220e9590fd91,inventory only; no exhaustive visual/content review
+public/models/sport/trophy.glb,asset,42836,binary,47c4001635cd1747013aba0fc6ad71de0c99dfe7ebbebb3f9f162b2fa41ad4a4,inventory only; no exhaustive visual/content review
+scripts/blend2glb/blend2glb.py,script,8320,195,25b0f020748721cc2f8f935978f694b6617bb24d2b91aaf8c13c87aea2e75051,python AST
+scripts/blend2glb/blendread.py,script,4500,112,a7a53937b950b0922cee7011f9a02003f4d04919a73fd9384942f2cba33813bc,python AST
+scripts/blend2glb/coffee.json,script,287,4,5f6aef5caea089224c3d514a1654e43f23db635f1cb774993d2616a93858f066,JSON parse
+scripts/blend2glb/preview.py,script,3925,77,63dfa0d0aa22f3dec119a1ab708b5ac3d79015d447eaae39f1772bb76d774fc6,python AST
+scripts/blend2glb/procedural.py,script,15437,279,b1cf818340ab4b2022cfbd2bbad99a9b16f003d66b3712e3e6d859a9e86eaccd,python AST
+scripts/blend2glb/sport_models.py,script,10615,240,7d429d5c62a47c48459dd2561a77da442075f72a8ed63c7a57a10719b4c7b365,python AST
+scripts/build-app-icons.py,script,3333,64,62018155e002c501cff61021103af76c8348b0b3dbeeef4af52ed63839baaf0b,python AST
+scripts/build-city-assets.py,script,2906,58,5d552616c85d9d888b42f6248d639dd81b2620289d5b76f3cf63c288883e4eda,python AST
+scripts/build-city-models.mjs,script,19949,231,003b12b873e4f6297199ca2e1acd6acb0cf69c02f3d73e75a1436d7c284e2180,lint/typecheck/build (where included)
+scripts/build-city-people.py,script,12778,241,08e19f16852ff3108efb79cd6f86f2849de6955d7dba468195d86a922436ca4c,python AST
+scripts/build-dark-theme.mjs,script,11290,256,2ebf1da192d0d97c1a3446e0ad43bd6ff75c2b9940fb569ad45c10febe2cbdce,lint/typecheck/build (where included)
+scripts/build-menu-emblem.py,script,4349,80,b8e908a4854ff793682a8dc9394edbbb9a9eeb84d41cb9f196acf4171d0aa814,python AST
+scripts/build-spell-dictionaries.mjs,script,1277,26,5a15a70f3dc0a4d9b5c76baff6907d1a89facedcf7347e43042c735fb1dfcc55,lint/typecheck/build (where included)
+scripts/build-wide-life.py,script,11629,219,24b07656524dd57fa32825f7678007bf84d2468ae19ff10fbc1168a0a610d70b,python AST
+scripts/check-budgets.mjs,script,5173,67,e802afa6054b86473d3c644c88d193d62245e18a8c07ae3f9500140c1d0c2d23,lint/typecheck/build (where included)
+scripts/city-people-metrics.json,script,708,32,2430c34cbdbd80cda76f6048cdc699171b4d56061523936122ba8521119e9772,JSON parse
+scripts/city-routes-metrics.json,script,683,25,b1ec35f9a89e7399e093baeac3c0b911e53a4748f23de9fa4fb8f550a65e9017,JSON parse
+scripts/coastal-city-smoke.mjs,script,7718,103,90bc605d49a4447005b1ad05ea531f80b59ec68e63b7e679c439a0dc45fb39c2,lint/typecheck/build (where included)
+scripts/driving-room-smoke.mjs,script,6045,86,001e4eacd696a2c46b239e1d8cd150c902d408d29a5342f9924e3c9216197ba1,lint/typecheck/build (where included)
+scripts/english-room-smoke.mjs,script,6101,86,024b41ab82e3b5954b91d47edf1918258ee3a0e7757cb0093b17fa7d4423ebaf,lint/typecheck/build (where included)
+scripts/finance-room-smoke.mjs,script,6017,86,10a480422166ee3dfe2ef8ea34d16bcaf175c20daafd16457951533a72bcf978,lint/typecheck/build (where included)
+scripts/generate-brand-icons.mjs,script,5407,101,a045d1d7fffa7c16ebee2cba8cad1496801bc6bbb5b0c1be2139c600f471f113,lint/typecheck/build (where included)
+scripts/growth-room-smoke.mjs,script,6063,86,8a29a42b9c27cf39f42a26eaaf7f8a94968672eb23b0e349fc1e0ade91cc11b4,lint/typecheck/build (where included)
+scripts/health-room-smoke.mjs,script,6017,86,6e0e646d33d6ffd3918c83921687301d24fc6013d1c0c1e6d2b3a4ae52e1c22f,lint/typecheck/build (where included)
+scripts/hobby-room-smoke.mjs,script,6006,86,ccc1dba58c4a3b136196a9f8b35cd2f29e3e21b9176568126801a39b0d79ffad,lint/typecheck/build (where included)
+scripts/make-home-peak.py,script,14376,206,c376bf06409595147788e9d3918abe929bd0f6a705496f45876366f554b3d810,python AST
+scripts/measure-city-people.py,script,1521,32,0bf8abe2a1be0bbb7819d11338c9537afb87b8fccaf6c8b5647347237bcdc827,python AST
+scripts/room-smoke.mjs,script,12891,165,37bbec67e1d3dd7d7abb227522816b174911cf7c397f852a4cd968f465b21d2b,lint/typecheck/build (where included)
+scripts/sharpen-city-cars.py,script,2050,44,e5eec10d818ec540b46944996948047823ff6bf6e48ddf026a17b23fbd716d0d,python AST
+scripts/tasks-room-smoke.mjs,script,6063,86,4d42b6e071ee6204ebd1ee20438185ed29669fe0238881f55661be40d539c77f,lint/typecheck/build (where included)
+scripts/together-room-smoke.mjs,script,6094,86,285a03b81f8f64c3441011d5365ba86978907cb0e3a55dd5222a8e7767641345,lint/typecheck/build (where included)
+scripts/weather-smoke.mjs,script,5597,60,c0b76f66ad8ed536e86b69206ae3522e33213aea9fb9eb91db7dd3ff8536a1c8,lint/typecheck/build (where included)
+src/AccountRoot.tsx,source,18255,489,e7f35ad8789a68c905560360660af3fe3efd1487471f3fbaeed7bb1124652124,lint/typecheck/build (where included)
+src/App.tsx,source,45018,981,dc1da8b4a69be950a7c92cf1bf8630821864f5acc38ed9241ffb33aa0c3292dd,lint/typecheck/build (where included)
+src/account.css,source,2125,122,8010eef97a991fdb09068fc83e1b745db5189adfdf811d811aea496a0b3fdb07,inventory only; no exhaustive visual/content review
+src/accountGame.ts,source,860,34,0fd38d78b27f89551ec39c003a733c3a2c8ad0ea2a3a1369863dc7b4a33b1667,lint/typecheck/build (where included)
+src/accountPersistence.ts,source,24593,616,ea8e003202606648f131c989c4a6e61e4a4ab45ff218f04212f08257f26cc94c,lint/typecheck/build (where included)
+src/accountStorage.ts,source,690,33,16ff5764276c5a8ca5367c3bbadbf719389b8fe48ecf801236571f8fa2d9d5d9,lint/typecheck/build (where included)
+src/apple-switch.css,source,2246,44,482f09ddfa1f0dbafa3ba6649ac85570ed58ee7d8c2a7b4d4248c15e110609ce,inventory only; no exhaustive visual/content review
+src/assets/brand/emblem-128.png,asset,28541,binary,c26d6ef639795659e192b25d5a603c9c6aede0db0d52e866a4a87be38c08e75a,inventory only; no exhaustive visual/content review
+src/assets/brand/emblem-256.png,asset,93148,binary,3f3354359fe0d197bdacc0930aeac30b1f56665f51f41dc6cca40ff31e015867,inventory only; no exhaustive visual/content review
+src/assets/buildings/driving.webp,asset,109132,binary,4a8dceea510f37609659908da58560c273744eecf57146d5001a79f3e8dcffe1,inventory only; no exhaustive visual/content review
+src/assets/buildings/english.webp,asset,109846,binary,3ace58af8956c266b4e3ba5db325618e772f6514a9c1cae42af4a77f2ef070e3,inventory only; no exhaustive visual/content review
+src/assets/buildings/finance.webp,asset,96736,binary,6d982784016c998b9267d760c3cc37ed7ad683ddce431e4c7c256237b9cbcbb0,inventory only; no exhaustive visual/content review
+src/assets/buildings/health.webp,asset,91236,binary,dbac1f999c81c4e6f826f535786f5a0ceaab23c9ea23d8b1e5387684d04679f3,inventory only; no exhaustive visual/content review
+src/assets/buildings/joint-tasks.webp,asset,143242,binary,c2b47b6daa4503f65bb0f761f1edbc470bf262e05f6b4df997d7b2a75631ed1b,inventory only; no exhaustive visual/content review
+src/assets/buildings/leisure.webp,asset,114318,binary,7aba13f2224e19292e33096588e84cd9474490356c5d2d31649381ad35770a0a,inventory only; no exhaustive visual/content review
+src/assets/buildings/self-development.webp,asset,114288,binary,4a63030f7c3e65fb79d5d1fcb1730ce641748af5581e2dfc8f4d1bb1f7c05a5a,inventory only; no exhaustive visual/content review
+src/assets/buildings/sport.webp,asset,80298,binary,7e245521aa0404ed3e158ae55728349b1d483e3e2ca25b9b8dc42ed060eefcc2,inventory only; no exhaustive visual/content review
+src/assets/buildings/tasks.webp,asset,85644,binary,1c962c17bc32cefa165786d1ae5069d0d43f7fc46ff346cafaf709a6eb12e601,inventory only; no exhaustive visual/content review
+src/assets/city-boats.webp,asset,384704,binary,467ff48c365b09d4558b8a1a9b30daf2da6881bba53037841dec836915289cab,inventory only; no exhaustive visual/content review
+src/assets/city-cars.webp,asset,1642972,binary,7baad5da4badb043e1c5457e352cd99e482842e3b77107c0741e8eae87310677,inventory only; no exhaustive visual/content review
+src/assets/city-clean-surfaces.webp,asset,686414,binary,0ddaf6051602c515d8c922b890f0867e8bb6a07f3da9e02cf64871df003b5fb2,inventory only; no exhaustive visual/content review
+src/assets/city-globe.webp,asset,69732,binary,b10af4cffca0f07e66a2a00be0a4bdf3d531a0aa8f4c7ccb1bd71dc375f87df9,inventory only; no exhaustive visual/content review
+src/assets/city-islands.webp,asset,755532,binary,a4b32a199bb6f2d52ce223b3bee2dbe1d6281115755bae65f2d9916d61ef86b8,inventory only; no exhaustive visual/content review
+src/assets/city-people/kaykit-barbarian.webp,asset,352118,binary,94310fc96ec7694bec4c2aa34c6147fcbc7aad5086b42c608648286acf5cbab1,inventory only; no exhaustive visual/content review
+src/assets/city-people/kaykit-hooded.webp,asset,256530,binary,4b3e5b9304df9a04d5cc42c084b845be811dd74729d63f7e9b0bf838724319b3,inventory only; no exhaustive visual/content review
+src/assets/city-people/kaykit-knight.webp,asset,315590,binary,f01e065e2e09bc332e485ac6f4dacceda85edf5902744c73b9cfb867417dd168,inventory only; no exhaustive visual/content review
+src/assets/city-people/kaykit-mage.webp,asset,409404,binary,05ca433b97307a55f1ac53edaa8e25b9ffff1d7da3308b50f50d3fed8b573092,inventory only; no exhaustive visual/content review
+src/assets/city-people/kaykit-rogue.webp,asset,285774,binary,e88d0ed8cf00b1b7555ab69bef3e3f062a4d4049fd7bd0e0d9c55df27a530a00,inventory only; no exhaustive visual/content review
+src/assets/city-preview.webp,asset,2088088,binary,08e83e267bb0a165153a455f4fdc74491648266f6792159ce42e356041fd3cdb,inventory only; no exhaustive visual/content review
+src/assets/city-skyline.webp,asset,141104,binary,bc75aacd74dd2f477a2ac3583bc21f94358432b0b12a6a15dc4fcfb228f6dbb9,inventory only; no exhaustive visual/content review
+src/assets/city-wide.webp,asset,1032896,binary,a9b50406a801147335ade8f0644185ae0a761b3c875cd83cea9544753b079ea6,inventory only; no exhaustive visual/content review
+src/assets/coastal-city-enhanced.webp,asset,1635074,binary,cb17ce98970a0526c464a9b2f27dfe3b6dba8c0bfdd98acb585f92e60d9524c8,inventory only; no exhaustive visual/content review
+src/assets/coastal-city.jpg,asset,372989,binary,ea60030c9713d19aabd9fc0624a5a4c69d54c99b3a98cc25a12d502e4bbab530,inventory only; no exhaustive visual/content review
+src/assets/home-peak-dark.webp,asset,270022,binary,c34e38e2b81bb2f9bfc9fc6e7f6383b28416bbf2c165be4b757d18bb49023002,inventory only; no exhaustive visual/content review
+src/assets/home-peak.svg,asset,84180,307,d950e1518ad52e33f9d8a0584a10747797bc5e72c6c31a780b1961acaee9f988,inventory only; no exhaustive visual/content review
+src/assets/life-city.webp,asset,579394,binary,7f8954b55e3ec4bf231000fa52de0a8ecc67c69147dfca0ede4b4d8fddf23364,inventory only; no exhaustive visual/content review
+src/assets/mobile-footer-islands.webp,asset,322824,binary,73f176ca8beecc0233282cc6d2b0fd50ddf86dc2d4915092e84423f98153be0c,inventory only; no exhaustive visual/content review
+src/assets/mobile-footer-wide.webp,asset,249342,binary,9693bb8764e46fba908e6d41019d6ef73ae030f9f1c80277ad861cbad3cc2adc,inventory only; no exhaustive visual/content review
+src/assets/player.png,asset,1396462,binary,cd09ef74a821afdd2c41a38f73b045d977b3cfc75f50a5516bc002fd82e58fe0,inventory only; no exhaustive visual/content review
+src/assets/psychology-icon.png,asset,342351,binary,81a7f4d5c1e03f63fb77da7c0632778dc9f6dd26b3a267ccde7f7eff15d4c717,inventory only; no exhaustive visual/content review
+src/assets/quest-covers/driving.webp,asset,370378,binary,93e61631565b8c46a2e10831ef54179fc55ae80de22bb850125e2217ae8a2bd5,inventory only; no exhaustive visual/content review
+src/assets/quest-covers/english.webp,asset,382054,binary,77cdf737c8dbbe71963f4320ab16d371016127715ede178878d2022bab4fb6cc,inventory only; no exhaustive visual/content review
+src/assets/quest-covers/finance.webp,asset,336590,binary,8a66bc7139deef1708f66bfcb4893bf38800147e9de38fb62e09d6bc75ab0b0c,inventory only; no exhaustive visual/content review
+src/assets/quest-covers/health.webp,asset,309844,binary,a4fd2c9081c687cfb48535e4fc024d9cee8a4263a40a8a29bb3f564ab02317ea,inventory only; no exhaustive visual/content review
+src/assets/quest-covers/joint-tasks.webp,asset,373242,binary,49c9658308c6a6f92d1b45467df85d11700bdff6ca4faad1d412a81ad6e447f5,inventory only; no exhaustive visual/content review
+src/assets/quest-covers/leisure.webp,asset,345848,binary,2ca286d9c46be6b14fbadc3c3085726ff6da159d427369293329570f5ca7b3ff,inventory only; no exhaustive visual/content review
+src/assets/quest-covers/self-development.webp,asset,378194,binary,660a7e48605f2f6e49ae140b4fbdffcff20f7de18a2431495c52dd34cae411fe,inventory only; no exhaustive visual/content review
+src/assets/quest-covers/sport.webp,asset,264640,binary,090656903bf0835375f264c095e254758fd60431b508059d99b7ec6e87ed69b1,inventory only; no exhaustive visual/content review
+src/assets/quest-covers/tasks.webp,asset,337358,binary,265df3734625242b20059ac1bbcd0dd2a535456030c2f970110d05ddbc65bed6,inventory only; no exhaustive visual/content review
+src/assets/sphere-buildings/driving-building.jpg,asset,468073,binary,cf7814c50690264767b0965aa19cb3c4f1845539da0c22c87fff1ce44dc9eeff,inventory only; no exhaustive visual/content review
+src/assets/sphere-buildings/english-building.jpg,asset,321947,binary,54ba6f2c49087c943d0920e1bd477ec7e4895762d7a64a42eda53955f93dae86,inventory only; no exhaustive visual/content review
+src/assets/sphere-buildings/finance-building.jpg,asset,312528,binary,517612147cf9ed9346f17d1b6216b0e834941b28032626dc3539ad40f63f94c2,inventory only; no exhaustive visual/content review
+src/assets/sphere-buildings/health-building.jpg,asset,366451,binary,b51e8901b7a307b1ce092a94b0181b5b1d58e7ee626066263e8a480cf92bd608,inventory only; no exhaustive visual/content review
+src/assets/sphere-buildings/joint-tasks-building.jpg,asset,326338,binary,015954786ef7b4d81c1d24aaa4bead4efe3c92e58e090bd01025d67dccc60f82,inventory only; no exhaustive visual/content review
+src/assets/sphere-buildings/leisure-building.webp,asset,2633976,binary,b0cb3ddab4dc610b0debe76353eaf435d16cf7b8f355f2a123a56a2d51c36f17,inventory only; no exhaustive visual/content review
+src/assets/sphere-buildings/psychology-building.jpg,asset,468675,binary,4320c1fc250fbaebbdb91e39007c67db0a3041625d2bfbaedf0891cb96d5defd,inventory only; no exhaustive visual/content review
+src/assets/sphere-buildings/self-development-building.jpg,asset,317020,binary,dc0982b44096f0aee25c926eac7b3f8d18babf2da2043058e226dbfc65dd3fd1,inventory only; no exhaustive visual/content review
+src/assets/sphere-buildings/sport-building.jpg,asset,345143,binary,176c9d47486de4f7fd65ad625f41722b54fcadb7cf670c2158e82b9a9eee62af,inventory only; no exhaustive visual/content review
+src/assets/sphere-buildings/tasks-building.jpg,asset,294069,binary,79f066fe229692dd105fa4ee6132f243bd569f2af361ddb7df05fc38a1933e0b,inventory only; no exhaustive visual/content review
+src/assets/sphere-icons.png,asset,1395416,binary,a53e7fe30c6bdb00910bdaadea95efc6830d5b428ef3830ac3a3019c238a1b26,inventory only; no exhaustive visual/content review
+src/backup.ts,source,2124,53,dd65ffc557dd6d4555900cd34ae29ef579300f30e1b2cb2ee7171ac51ae47407,lint/typecheck/build (where included)
+src/brandAssets.ts,source,142,2,a4d191f991620318f8131c89a4ff809db6a5813eafef5f68098132d214a88bbe,lint/typecheck/build (where included)
+src/brandIcons.tsx,source,546,19,7125af0c94ff8ba214a36f34ef894c0f6ff552cf57b0f7cc4422707435f8e2ee,lint/typecheck/build (where included)
+src/brands.ts,source,23059,57,51d6e50ba7ef9e76bb07f59c7fd7edfbd7b77bcf8ab5071c9f0f0bc6f07cae89,lint/typecheck/build (where included)
+src/city.ts,source,8977,181,a778e6737a7c2ac16a1d60ef8376001b9ee19d8edc2a590b85eacabc5758490f,lint/typecheck/build (where included)
+src/cityAppearanceContext.ts,source,168,4,18258a0b46e686ecd29bb97f9c3ebe8e2ec6d05bb0ae264055f5742376113eea,lint/typecheck/build (where included)
+src/cityLandmarks.ts,source,1084,14,038e9b2c9ae103e1c83452fc26fa1c4f7f5c8311686e9da0bef7a2428c6ce6e0,lint/typecheck/build (where included)
+src/cityLive/cleanSurfaces.ts,source,273,3,cb93176b620a3d273b2a1ccfb7d2c700cc5ec9ee50211cfc841ffecfd2292acc,lint/typecheck/build (where included)
+src/cityLive/device.ts,source,749,8,27af8814ad55783051763d200932fdf5627c2ebfc603c93e3898158058a9c7e9,lint/typecheck/build (where included)
+src/cityLive/islandMap.ts,source,11882,166,4f3140acb2a171abdd1dd1c95721efc847eb9b50efa6a4144cd1e65552ed9668,lint/typecheck/build (where included)
+src/cityLive/paths.ts,source,20659,146,73f68c8ad5bca20ae9567bd86a1923aaa3057780e620241f8e55614b5579aaf4,lint/typecheck/build (where included)
+src/cityLive/preload.ts,source,1653,22,fbdc3379a8dd3ca10f99f074f3c23b7a4583a7de97cd63459c840d429ef1d6c7,lint/typecheck/build (where included)
+src/cityLive/render.ts,source,22782,360,a974a02a15fe70a23ddd127a580f22d6a371dd1dd5bb249cc303c604bae0cc93,lint/typecheck/build (where included)
+src/cityLive/simulation.ts,source,15843,261,1e1f4a5a0549796ee5a476f57b4c5350c83776360a8959924ef2c1420404e51b,lint/typecheck/build (where included)
+src/cityLive/useCityZoom.ts,source,3773,46,dba4b224ca48fac54510a6a7c5af9234f0d56e5b263a09ddab566e848cb835b8,lint/typecheck/build (where included)
+src/cityLive/vehicles.ts,source,2778,42,92bbdfb0d2404f774c2c934e1b2b52fe16d01e98beef7060bc0d97d61eb4dd46,lint/typecheck/build (where included)
+src/cityLive/wideLife.ts,source,12815,35,90bce9256b91e2e28715b98a35bbb9c07f651cf7f9097c6c46ce4473c5cfeec0,lint/typecheck/build (where included)
+src/cityLive/wideMap.ts,source,28683,112,26c90f0f6067a0907866dc5a39f15b22ca8e880dc756452c830db94d8ae943a7,lint/typecheck/build (where included)
+src/cloudSplit.ts,source,8334,184,10e84ab7d18c24fcb19e9620af8202ec173d4cb6ba98cfdb09b60776e912034d,lint/typecheck/build (where included)
+src/coastalCity.ts,source,2353,34,ac7857cce9c66c77502ceb243563b2bdd71e4fe268cc6d46bbe95414053125ab,lint/typecheck/build (where included)
+src/components/AdaptiveLayout.css,source,3426,23,285922706dd10bac334cd4ff78148f8d677ed2adb9426b93a816484ed93ffd10,inventory only; no exhaustive visual/content review
+src/components/AppMenu.css,source,14110,176,da381efb1c4a6bd7f3f5f6ff2e77d530651f06afe40f5c72ea41817ea18761b8,inventory only; no exhaustive visual/content review
+src/components/AppSidebar.tsx,source,2209,55,0d3b41e3728517768391d910c7d8c58e2e35d4d32066c9ef5b6d6d3287bf3154,lint/typecheck/build (where included)
+src/components/Avatar.css,source,1441,54,753d4bd15d9829b37ea8c18000a4862bd3c64153da4cef6fe9d4696011b26bfa,inventory only; no exhaustive visual/content review
+src/components/Avatar.tsx,source,526,24,3cde17635664843f476efed24c26f5c52f7f2b261f00b948cad2155f4cbc8124,lint/typecheck/build (where included)
+src/components/BrandLogo.tsx,source,675,15,77a482ee75a37c1c063b1264bd44330753e11bf4fedadbc36588db6d16ec15f4,lint/typecheck/build (where included)
+src/components/BuildingInterior.css,source,8235,441,efdc506daeec3e5e74e9a74b5e4fb772e2b53c50772ba86524143f18ffaa2d2b,inventory only; no exhaustive visual/content review
+src/components/BuildingInterior.tsx,source,1393,18,8e32ade70fa27fd72f4eb71f374910d9b1ef15ad7c465cf12334e53e1b43a789,lint/typecheck/build (where included)
+src/components/CityBuildingArt.css,source,1126,14,9eb84822340dfca0adc2e15207ba0bced82c7d1eee0182737decc2b7eb935ee9,inventory only; no exhaustive visual/content review
+src/components/CityBuildingArt.tsx,source,4991,60,32e9cfb013de91b4785475be70c0b4774e44d8e8b7dfe0b6a8acbd24719c0d51,lint/typecheck/build (where included)
+src/components/CityEnvironment.css,source,2260,27,ad2a2e64c02bd4c7791bcffd4ac6e371edad3844ff573942f3c71804fa9befa8,inventory only; no exhaustive visual/content review
+src/components/CityEnvironment.tsx,source,4708,57,3ceb358cc69cb887144d83266cf6f302b7889728c11028d883f76be39913679e,lint/typecheck/build (where included)
+src/components/CityMiniLive.css,source,2375,18,6fec6d6d24f98deabe9d0e7dd0d213ebd8ddd0c3903fa88803b1194a46682d96,inventory only; no exhaustive visual/content review
+src/components/CityMiniLive.tsx,source,1301,18,ade1179dd5288fa85676f4b3a517d11b93aaab2e37ae6aac39142f37c76b2b5f,lint/typecheck/build (where included)
+src/components/CoastalCity.css,source,11291,97,f7500747c6aaa30e22194f291fe8ba547892a358abdb642a7b27919a27bd9728,inventory only; no exhaustive visual/content review
+src/components/CoastalCity.tsx,source,15542,172,4deec50feddf7836c7688ae14ea1850b1b48ea8ddf51edc4d3e7cebc9d3c9803,lint/typecheck/build (where included)
+src/components/CustomRewardForm.tsx,source,5944,102,4f6156f314e81bcfe30f4c31de36f9c433f3c160e9dd69a5043eb0b0b6b375b6,lint/typecheck/build (where included)
+src/components/DashboardHeader.tsx,source,5619,108,23fd06de638ca6cd343c9ede03674e92dfe3e2bb7e43245119f971eb12613ec7,lint/typecheck/build (where included)
+src/components/DataBackup.css,source,758,47,33da1122b7033a41502ecacf74afec3088413b09481a4cf67f4f145609984094,inventory only; no exhaustive visual/content review
+src/components/DataBackup.tsx,source,6737,195,00314c16e216ecf6eaaec9d26c9c6dc027abde7d779a5054b8b47a073e93e00e,lint/typecheck/build (where included)
+src/components/ErrorBoundary.css,source,950,45,03e969ce4134a712700e8907b9c29574a24240e5c218c5de3afc049d7e93c6d8,inventory only; no exhaustive visual/content review
+src/components/ErrorBoundary.tsx,source,2537,58,d84e6338026478680d4da58b2ef0d551e298e199c90d2aba25a52a1f09bf3a08,lint/typecheck/build (where included)
+src/components/FinancePage.css,source,9504,108,2571092944942e0126646444f658c4d5cb132afac12de98b4e4b8168fdb42666,inventory only; no exhaustive visual/content review
+src/components/FinancePage.tsx,source,31806,655,82842e9894fd5ad27ef3036bf2ab654e15c7450b8e61954b4777a55ed8f491f7,lint/typecheck/build (where included)
+src/components/FocusBar.css,source,822,7,dd67e73f8460ba69868d2c795da1a4738b27bb4887489eb0097e34395dd26a95,inventory only; no exhaustive visual/content review
+src/components/FocusBar.tsx,source,2074,38,d5407125018aa5b7a921ff9ec8759b130a8fe724790c93666eb214bad218483d,lint/typecheck/build (where included)
+src/components/FocusMonth.css,source,7383,80,3162ad574fccc55bbea8abf733ec5d0c50eb34a4b110e379c13d67d4d4814bfc,inventory only; no exhaustive visual/content review
+src/components/FocusMonth.tsx,source,16259,286,ddaed5db72a331b8b0edfb4b326f8846477c6cfe88f7c100b0839f4fa67ae48e,lint/typecheck/build (where included)
+src/components/FocusSection.css,source,2815,28,9bd0fce86ce85aa01d40a3ddea892885ee43b97e64567f9e1905a8e183c70634,inventory only; no exhaustive visual/content review
+src/components/FocusSection.tsx,source,13564,219,a81fceecc40e91b86df519672a9f26007fa848effa15d1346348825c382ad47a,lint/typecheck/build (where included)
+src/components/FocusStats.css,source,2199,21,e9399af8f304d49e974e4ffaa724cdade9d96a96296e1525c6c6d8480aac50cc,inventory only; no exhaustive visual/content review
+src/components/FocusStats.tsx,source,6564,125,c418670ead50fbfa8b69c6faf2e4fe80fbd0c293b5b85729b4bfbf5ee7461b0d,lint/typecheck/build (where included)
+src/components/GameArt.tsx,source,9212,276,c1595917a541167cf0e2650763c240c3e58b8e505c47c6d894eb7fc2bc7ee863,lint/typecheck/build (where included)
+src/components/GoalTaskList.css,source,4257,46,40291630dd4a95ed0917b084c46608bc746c07fe8e1ef85d497d76cbd1680b27,inventory only; no exhaustive visual/content review
+src/components/GoalTaskList.tsx,source,4574,81,1e9e9ae1d561a645730c77955a173488af3052273e00656137e877a62bed68f1,lint/typecheck/build (where included)
+src/components/GoalWorkspace.css,source,31077,1657,ed2c42608287b179e3668abf673cea8243b433ee100030a6a5fbc7d0a71e3538,inventory only; no exhaustive visual/content review
+src/components/GoalWorkspace.tsx,source,101745,2554,fee2673646cd2c55d758b2c91b979258e9d5e9ec5ef36226a52affa81be8f5df,lint/typecheck/build (where included)
+src/components/GoalsBoard.tsx,source,28016,698,b3d221610020f3cb941555fee292d2076184ab48e6970ed0fd87f011b646d95f,lint/typecheck/build (where included)
+src/components/GoalsOverview.css,source,9539,497,dd7367faebde516ac7e53dbdddb44f882685efe472f2342026fb4041a6d9e21c,inventory only; no exhaustive visual/content review
+src/components/HabitsPage.css,source,20284,224,4dec77d368136bc2f21b002a03dd7a95896285fb07a4676ffd491178af59bbeb,inventory only; no exhaustive visual/content review
+src/components/HabitsPage.tsx,source,28676,360,63164153c0c066bedbde7f3a56fbdc728e07d76a05616c58fc901e81009de5fb,lint/typecheck/build (where included)
+src/components/HomeBanner.css,source,15285,146,a139ab79bec2d186178960eee029d7fead9586c2553fb72318cd7ac8beb137bc,inventory only; no exhaustive visual/content review
+src/components/HomeBanner.tsx,source,12394,191,ae9803f0f29ab4802430a32862ed4ad8facc03db7bd9b3e645c1c9df25779877,lint/typecheck/build (where included)
+src/components/HomeDashboard.css,source,33127,299,d42efd6015bd444e80ffc0a2771ae83b722644921f2ff348c6eeef8de949daba,inventory only; no exhaustive visual/content review
+src/components/HomeDashboard.tsx,source,6828,146,451bad228906259eb7dd82f96678b4099dd94600e5fdaaf372c465862b7120d0,lint/typecheck/build (where included)
+src/components/HomeYearSummary.css,source,9021,15,7e2a6969fd65b087464d81e917acfbb60dc4f84f7c6f698e2fc5ab16975f9dae,inventory only; no exhaustive visual/content review
+src/components/HomeYearSummary.tsx,source,7271,120,effa348416e0af175f5d390233d00c60c746c4f61898d1fffd12e76077cef27f,lint/typecheck/build (where included)
+src/components/Icon.tsx,source,5078,196,7803cea7f7b0fa781f3e305cbc335a69806d8107237fcdcf6e29538c40b14a21,lint/typecheck/build (where included)
+src/components/KeyResults.css,source,19725,243,5261f2d4aa4fda82bb232122fc74e8e764f6970ba27c040a66255b2db8632443,inventory only; no exhaustive visual/content review
+src/components/KeyResults.tsx,source,5234,94,2f292ae129811bfa981e887ebe6ac113fa8557a170121fdb57e51aa492dacb9f,lint/typecheck/build (where included)
+src/components/LifeCity.css,source,9152,460,d1875eabac8ed32bdef6699d32f1f15a20e6f8068b7645a439b9629cd3f48613,inventory only; no exhaustive visual/content review
+src/components/LifeCity.tsx,source,2168,51,91948ddcceccac3da76f5a5ef0fd3ae8bd3c24909374269790b715534d26e1ec,lint/typecheck/build (where included)
+src/components/LifePlanMap.css,source,7022,76,c61148d16810c16f4c0227dc5f2b8c2d54bffa960143fdaa3bc70cfbbc62ae89,inventory only; no exhaustive visual/content review
+src/components/LifePlanMap.tsx,source,12617,346,aab8f14ef3bea8a4381331e369c2c6c5f08e7541940ad39cc5f4c8df973fd8e0,lint/typecheck/build (where included)
+src/components/LifePlanner.tsx,source,14677,416,8fead715ab587a48978c41920b33208da502fba8eb36b68c708c0ea3918cce24,lint/typecheck/build (where included)
+src/components/LifeScoreChart.tsx,source,4092,108,1b8ee62e0ea39fc42154125c97f38979d03b3fdc6fa1e8a59dbbed630e36bb7a,lint/typecheck/build (where included)
+src/components/LiveCityCanvas.tsx,source,9203,113,a6988f354e2dfbe40a4e1414c609fe42cde79595aad8e8f90e1e8b85364ff713,lint/typecheck/build (where included)
+src/components/LivingBuilding.css,source,4463,1,9f0725226206ec89b76e3818785a980c00b3aab31278a9ca8db09e6af0eef74f,inventory only; no exhaustive visual/content review
+src/components/LivingBuilding.tsx,source,5232,60,18bc44c724cfe5f8811277aca838f7a285d3c8351fb450469da281ffa5ed6aa8,lint/typecheck/build (where included)
+src/components/LyubertsyWeather.tsx,source,3160,58,70779cd0b2c60d12bfbc0847c140c06b520c3ba39f0baa1a24441da9ada9a70e,lint/typecheck/build (where included)
+src/components/MobileCityFooter.css,source,1321,13,82c478fe3b5c04ebacf4191ffbefdd60ce1cae3c4a94f0662c71b537d84c4aef,inventory only; no exhaustive visual/content review
+src/components/MobileCityFooter.tsx,source,574,13,f357e8be51ba52ec9536d0edb7c3efbe6e3f3972e89c39a444e9cf979161638b,lint/typecheck/build (where included)
+src/components/MobileNav.tsx,source,4264,99,a76db41a81f243ba944291b435b83a09d8605002b4c748aa0dfb6433cf731a27,lint/typecheck/build (where included)
+src/components/MonthReport.css,source,15530,104,f3dd943742a4c72e0cb7365eb638285c6747e20528af5104adc5d400569ce569,inventory only; no exhaustive visual/content review
+src/components/MonthReport.tsx,source,23924,345,adfa1e521ecb679c2843c0acaa9320695a25d311d0250b31dbc976810cb861f7,lint/typecheck/build (where included)
+src/components/MyResults.css,source,1699,19,15350485fc2e23a535cfa439d0600c4223f1b6c942168489bdfedb1e56eb9b71,inventory only; no exhaustive visual/content review
+src/components/MyResults.tsx,source,19582,243,a6fb08059090e6f263a37d7a2a55c1816638f0f7c0bd3d8d22d31caff0ee27bf,lint/typecheck/build (where included)
+src/components/Onboarding.tsx,source,11793,348,96e880ed578f9f9cc3483585f81214e8d4aad69eb192dbadc7330e343261259f,lint/typecheck/build (where included)
+src/components/PersonalResultsViews.css,source,23241,1007,612ca22bdac14456a70dd4430ccf26d2efd185a37db9f952278bbd18550171bb,inventory only; no exhaustive visual/content review
+src/components/PersonalResultsViews.tsx,source,27700,587,34e9cf4327c758359feaa462ff3c02ee242eca7cf79b151967d8a952ed4612e5,lint/typecheck/build (where included)
+src/components/PlanningForms.tsx,source,24007,762,1ef9bc43023081d4f9a2234642f1ea8831f618cfbb1452863e25eb255c8db2e0,lint/typecheck/build (where included)
+src/components/PlanningTimeline.css,source,2275,1,91f5c7f0aaa5008387ff14f01ed0d2c19249f08e17f170db4a37c5da75ea5f89,inventory only; no exhaustive visual/content review
+src/components/PlanningTimeline.tsx,source,5463,59,a45da99ef3f5019b4d4962d5c2f716d966b4f8ac01915c6b038a48ad2a941c68,lint/typecheck/build (where included)
+src/components/PlanningWorkspace.css,source,3354,8,0d2376f01c2fb7f56e4d0b1e0e128ba526d6f3b34e9cec39a554ee59c7127d9c,inventory only; no exhaustive visual/content review
+src/components/PlanningWorkspace.tsx,source,26909,200,bcb497d2f55add50f3c755f691773cf4c4e43f77212a696aee8d09d271ba12b6,lint/typecheck/build (where included)
+src/components/PlayBrand.tsx,source,136,4,2fef2e37a74c2463440b9efb018cfa3bd9bab8887683b8473df2f5adaad088d8,lint/typecheck/build (where included)
+src/components/PlayWordmark.css,source,1067,11,16f1e84bd7cc1d75a33900540d4bbba4139a509f09357949ded4d8d3635ae96c,inventory only; no exhaustive visual/content review
+src/components/PlayWordmark.tsx,source,955,13,cf9a6df53b89c3a70532fb8e15e16b7aa103fe39697a7c8f3abe0f022e6c4c90,lint/typecheck/build (where included)
+src/components/PlayerAppearance.css,source,2195,95,f332e29144ea7a173ee06c9766770cbbfe31b811f2a358c7a16909096382fd4e,inventory only; no exhaustive visual/content review
+src/components/PlayerCard.tsx,source,1633,33,0d106bdf76c7caefd88003dd18b3c7c76970623838cdfb27d2df0ecefd21123f,lint/typecheck/build (where included)
+src/components/ProjectArt.tsx,source,4079,161,b0b1355f8ee5798d6e11931f13ee9c91500c3ca1e53c0085f9835e834182b05c,lint/typecheck/build (where included)
+src/components/ProjectCompletionDialog.css,source,2218,30,0ddf33293a3941957a924a5b929b5dc7d2858c3d8720021f5281699f481f1491,inventory only; no exhaustive visual/content review
+src/components/ProjectCompletionDialog.tsx,source,5437,119,3f5adae7c80df1162dc92093950d2879cec4d8c29d988b7bd549ce07596a1836,lint/typecheck/build (where included)
+src/components/ProjectImagePicker.css,source,1294,70,b8a46f20f2e41ac96ec5acf92f8cecb0cf3f4c96d50535aa31d6181bdc9ce584,inventory only; no exhaustive visual/content review
+src/components/ProjectImagePicker.tsx,source,3087,102,f41611abee9cbe24cb3ba2038c23ea3528380beaa479115ed34ea96c966605fe,lint/typecheck/build (where included)
+src/components/QuestBoard.css,source,16060,869,475feb36e728b8ab638ab5af7059e12d85e0e190ba4a8d04c9ef4783b23824e3,inventory only; no exhaustive visual/content review
+src/components/QuestBoard.tsx,source,12283,314,4ddde5eb5c586b8f5968b7c6e79f7cc013689deb87d54f81b658133ebe0360fb,lint/typecheck/build (where included)
+src/components/QuestWizard.tsx,source,19845,592,6165301472aaf479ea1227a4dabcf41997171838e5903375ed6461f2b43b8adf,lint/typecheck/build (where included)
+src/components/RewardShop.css,source,9608,498,47658f35dd17500b8012ca9e52f31da5f4b6df115d1b1c8f756a22afd942162c,inventory only; no exhaustive visual/content review
+src/components/RewardShop.tsx,source,14247,318,88d6f9ab7709048ea9fdd01b10b5c5cc7ede234e1118733e03089a9442115cf9,lint/typecheck/build (where included)
+src/components/RewardShopGlass.css,source,11051,130,641c7d5f980917d267c43a37f848dde5a8bd17641926efe43508f405b1746263,inventory only; no exhaustive visual/content review
+src/components/RoomScene.tsx,source,10090,297,1b6f5ef084752d2164639a984e23e3a7f9335a3283f11eccac24ec7fd31cfea5,lint/typecheck/build (where included)
+src/components/SidebarReference.tsx,source,355,6,3eac63041e0b5fa2b7835783a795dd929b98141a6099f8810e413db14faa7b37,lint/typecheck/build (where included)
+src/components/SkillTree.css,source,15457,777,36142ca09b3dd5cad0f5d04b02de4ad7fb154317837f6f60af05b44828e0d0ea,inventory only; no exhaustive visual/content review
+src/components/SkillTree.tsx,source,9904,170,1ec3cde093b542f3bfea17c52da58f0b75fb4190cca21c1f67393e82a6bc6164,lint/typecheck/build (where included)
+src/components/SphereCity.css,source,10904,594,ae096c0f6ca6e17dcdabd671f914217ddc1bcb925f7a18015409a8fd01f64265,inventory only; no exhaustive visual/content review
+src/components/SphereCity.tsx,source,9061,242,75c308bd713108f647bdba4e63449950915583c4dba944fb5ecc29d6322ed8ee,lint/typecheck/build (where included)
+src/components/SphereHub.css,source,39544,416,87569ea0beab9a8b57687f704643a8374f56d0fbe4aa4482830e8cb050c7b769,inventory only; no exhaustive visual/content review
+src/components/SphereHub.tsx,source,28968,446,f8f4bda64382630e5d88c6debf4125f0389d6685a6da9d6e8252e36bc13e3a5b,lint/typecheck/build (where included)
+src/components/SphereIcon.css,source,133,7,6493741f2b54245c2637382372c8d19068c2cc0af9c72bd98e24fe68a381e02a,inventory only; no exhaustive visual/content review
+src/components/SphereIcon.tsx,source,767,18,5d508ffe940e2b18f9fde1031e812d67181c0eadcfd8bd8d545053232e32bd1e,lint/typecheck/build (where included)
+src/components/SpheresOverview.css,source,17578,593,43066d5a33f5ecdcc2afbc33128b90e2e29e7482b42ac31b583053c75e1d45a2,inventory only; no exhaustive visual/content review
+src/components/SpheresOverview.tsx,source,11208,273,41a4832237b46d15152b75b290726e9d6933685d602a9ef41886da5ebc799a98,lint/typecheck/build (where included)
+src/components/StageScreen.css,source,23928,1211,95905857212e3773b3b44c4425acdb05e66113d09e97b1d1102f94842547bb95,inventory only; no exhaustive visual/content review
+src/components/StageScreen.tsx,source,37602,941,c2f8ab417d71c71ad4c839aa5f0e0fb95fef07cf797aa297ecb0071b9857e185,lint/typecheck/build (where included)
+src/components/Statistics.css,source,2608,141,778bbae2612b3f0fe378daf6b0f29167e29dcc9d80e5874329e4a5d7c77957a6,inventory only; no exhaustive visual/content review
+src/components/Statistics.tsx,source,7319,213,c316d2a52118935aaf17de5cbb17b98e16ac443f55845f6c7726320081c920f7,lint/typecheck/build (where included)
+src/components/TaskCreationForm.css,source,21293,195,5bd52bc3d53e1200243cc266095e3af48a71062e6be9bf33453375a6be27e627,inventory only; no exhaustive visual/content review
+src/components/TaskCreationForm.tsx,source,15524,317,faf3169d2ef2318695ca2233701e9a46917a0c9fdcbf7ff656a87f2483796874,lint/typecheck/build (where included)
+src/components/TaskDependencyFields.tsx,source,3461,43,fdfc615d1c29a8a98918a2a0d062a099989cc94158e62d6ec09f8d7c8d302b56,lint/typecheck/build (where included)
+src/components/TaskLabelBadge.css,source,391,1,4f3baa433a7790da04a3e51a94495e0a84d6f517d8ecb6ed9a37699e99d4bb4f,inventory only; no exhaustive visual/content review
+src/components/TaskLabelBadge.tsx,source,323,7,56ef0750b689aca3ab4fb75511bfbb638e04225e86edf9d5811f64e361e9123f,lint/typecheck/build (where included)
+src/components/TaskPlanningFields.tsx,source,16210,180,8ebe5ab25d405e466c85a41dd3c8adaebab86cdb04d522cf97e90e4085d20e82,lint/typecheck/build (where included)
+src/components/TaskWindow.css,source,6627,67,2208ca3d9bd222784008429954cd10cd7886f4842c9351d5ff65915d3d385be5,inventory only; no exhaustive visual/content review
+src/components/TaskWindow.tsx,source,24345,421,05c3f75b7e7b6203b5112525df5539d449a955fb2cc2ca427eca23c28e076ba2,lint/typecheck/build (where included)
+src/components/TasksAside.css,source,5262,72,725ea01d6549246d8c345a557b507fb0fb3ded8faf0eb75a83edd1ac25d546b6,inventory only; no exhaustive visual/content review
+src/components/TasksAside.tsx,source,10525,220,da470e547a5974dd7095192f2beca887d2e84ad08f06a2493d32a6965d67e382,lint/typecheck/build (where included)
+src/components/TasksCalendar.css,source,15589,200,9f062390a0aeed3b5b5fc8ccc868b687628e2f48f2463fbc07e636cbe0cee00b,inventory only; no exhaustive visual/content review
+src/components/TasksCalendar.tsx,source,21761,412,f4628288f25a3dfc73439368462e245726bb8d3d1cde6c610e9dc8c342f83144,lint/typecheck/build (where included)
+src/components/TasksSummary.css,source,883,9,7c101022d5e9e9dfc74954766082c1688f9bb4bbaf3ea42deb5db7ad09e7c358,inventory only; no exhaustive visual/content review
+src/components/TasksSummary.tsx,source,1775,30,8fee80cf8e9dc370a2767be8c08d25d41623847bdb55c5eee69623cbaace0c69,lint/typecheck/build (where included)
+src/components/ThemeSwitch.tsx,source,1562,20,829123b79ce861a06a02271bd74898373b67648658a92e5135173c342fbc4a55,lint/typecheck/build (where included)
+src/components/TickTickConnection.tsx,source,10395,75,d5ef603f860ef72fa74607827a3369a283edce9441bb3d5ad7df03c589b4b114,lint/typecheck/build (where included)
+src/components/TickTickHabits.css,source,3331,33,5509a61a3c044becb121b41bb22b6a60b6c3a24ad5541d3ca29c3c830014587a,inventory only; no exhaustive visual/content review
+src/components/TickTickHabits.tsx,source,12056,137,383fca3a8fa229ed4cad156bec09da74cf22ba5d617b741af78e2ab3344aeda4,lint/typecheck/build (where included)
+src/components/TickTickInbox.css,source,6332,97,63587a7a85f27e9fd4f0be0c4086ad3241fd6d4e6b7fc3e345b8d96fb0fa1839,inventory only; no exhaustive visual/content review
+src/components/TickTickInbox.tsx,source,15659,210,be9a5e8f78f603a7acd8ccee525abbeb3d4ee2e773e9998d174a2a95ce4073f5,lint/typecheck/build (where included)
+src/components/TickTickInboxDialog.css,source,865,37,2c9f0a45a27c1a03a833fcce6a2ca70d07fb280d338c542c00070866007a3eef,inventory only; no exhaustive visual/content review
+src/components/TickTickInboxDialog.tsx,source,3855,66,9f16775524739c3ea410eba9ffd5ec45127ad8a463e225f59a79b82560c242bb,lint/typecheck/build (where included)
+src/components/TickTickTransfer.tsx,source,7334,184,a79525616798870e15e20dcd653a5a2d03e90039fc1c7bb5ba4e83efa75f0569,lint/typecheck/build (where included)
+src/components/TodayTasks.tsx,source,2615,78,632662ad7ffd956c6f22308073fdf59fc8725e19a9d877f750891b75673fa4fb,lint/typecheck/build (where included)
+src/components/city3d/CityArchitecture.tsx,source,6076,70,e6fc985d9912a2c6b4ceb8eead54ed7062612912ac142e40a7b04936806ed54f,lint/typecheck/build (where included)
+src/components/city3d/CityLighting.tsx,source,2610,29,dbd6608daa01a4d4458eee0adf32fa2ffd8b3c82f7d3a28592cb4d84a97bef3f,lint/typecheck/build (where included)
+src/components/city3d/CityScene.css,source,1521,15,b468b99b80c95aead7137ac0fd78fc54887251499c4a52ec3a99c3c93c9f025b,inventory only; no exhaustive visual/content review
+src/components/city3d/CityScene.tsx,source,9324,68,2c6be549cb58153b7aab71eeed4a3703ecf05709a78d12c9d986d052a7e1fbff,lint/typecheck/build (where included)
+src/components/city3d/EnvironmentSystem.tsx,source,2674,34,86f633dd1931efdb6bc8bf79dc2c4f41593e2a131222a47c441479901c1f7400,lint/typecheck/build (where included)
+src/components/city3d/TrafficSystem.tsx,source,3535,40,106e7fdf1f2d6ad42b1b364c022764fd0994d5807756e20da97d963d52ddecee,lint/typecheck/build (where included)
+src/components/city3d/WeatherParticles.tsx,source,2455,26,d2c298a46eed9f48e3cb14f150161edef68eef23b82e48b1798d417b129c0936,lint/typecheck/build (where included)
+src/components/city3d/WeatherSystem.tsx,source,821,16,c2f0a836c0559856cbce30bafd8f18e2bb03216e204aa9847f506a6ce3cfe756,lint/typecheck/build (where included)
+src/components/city3d/cityConfig.ts,source,460,4,18312e591e2c3e352639b31fb5642f4b11d324a09eb3c5a9037f2386bb0061db,lint/typecheck/build (where included)
+src/components/projectStyle.ts,source,971,28,2387581cb04788989b51141312415ac38c5b5c573957f4f16ae0043f7c723cc3,lint/typecheck/build (where included)
+src/components/room3d/BuildSystem.tsx,source,1537,16,42d5b9edde32539ecfdd5a1bdbff21b1cd5b05218b7d18e085f654bebc8c8d5d,lint/typecheck/build (where included)
+src/components/room3d/DrivingDecor.tsx,source,7513,91,d10eaa66c75bfd882167d01e27106db642e0907b3509b3e21c5012288501dab0,lint/typecheck/build (where included)
+src/components/room3d/EnglishDecor.tsx,source,8374,125,010695a8d3b1a7356c92c904e3a20368fb77c489cf12c1e38e24f22548400331,lint/typecheck/build (where included)
+src/components/room3d/FinanceDecor.tsx,source,8241,116,1ba551cf53a6eb1d93d429fea71c0f893c93348d39fd27c6901a46516761c97f,lint/typecheck/build (where included)
+src/components/room3d/HealthDecor.tsx,source,7420,107,d62a874794caf3dc5f252508dcf03c275230cf5bc5eca6353a801c0d0642d3ee,lint/typecheck/build (where included)
+src/components/room3d/HobbyDecor.tsx,source,7279,99,0a07959777709f3c7622fbe5a047f885074516431d55c6f242f831611787794a,lint/typecheck/build (where included)
+src/components/room3d/Inventory.tsx,source,1001,10,c4c40eb7116599e01f8be3b26e33e1631dc7a3a0ddd1c96b10c60c96d0da48f3,lint/typecheck/build (where included)
+src/components/room3d/Models.tsx,source,48172,602,ad47f2f01e94615408a3848da398a929336eb820d2f4575d0626c3d874929d24,lint/typecheck/build (where included)
+src/components/room3d/PsychologyDecor.tsx,source,4058,60,3645e890b78c451c5326f4e9a4861b0f7d907e0de6092f21383c859c49a0bd51,lint/typecheck/build (where included)
+src/components/room3d/RoomCamera.tsx,source,1914,31,55e690dd20e71aaa650f3f8fbe91f27eea91eda0c47dc8fbd84ce09d05448a76,lint/typecheck/build (where included)
+src/components/room3d/RoomContactShadow.tsx,source,1032,15,2f851ba0d080434124f9793cb1a4285374b85700c9eaa9f6359e8ca9e05fd412,lint/typecheck/build (where included)
+src/components/room3d/RoomDecor.tsx,source,13179,192,611a29eac1490fc8f7c83b6acb3f34c2ddc1da9c8f082fd68ac94cee1b2b5836,lint/typecheck/build (where included)
+src/components/room3d/RoomEngine.css,source,8444,31,09bf60d86edd293c977d307cf9870fecf3f41b3ddb801c2eb6df2e0d83f84ce3,inventory only; no exhaustive visual/content review
+src/components/room3d/RoomEngine.tsx,source,13368,111,7d72a957b7158fc3ffe153358411b34b1f4efbc22fbd785f3032164bd5aaf584,lint/typecheck/build (where included)
+src/components/room3d/RoomEntry.tsx,source,684,11,af5f4b12b1bd89da6487cdd90b247a0a887bf48b1de5b6b210f717391b47a050,lint/typecheck/build (where included)
+src/components/room3d/RoomEnvironment.tsx,source,16125,163,32ff80f2fe3bce9da375d88458d32704b800164ec960b429f659c4d30624d225,lint/typecheck/build (where included)
+src/components/room3d/RoomHUD.tsx,source,1304,18,06fa9a9081d32797bd8037c7e5d0d269b3dc800897f30a9ba03db0d1fb5a820b,lint/typecheck/build (where included)
+src/components/room3d/RoomItemRenderer.tsx,source,2929,42,190afcc161b37e3481ceafa565ef61f53e33a2ae607b53981f522804b7ce17ea,lint/typecheck/build (where included)
+src/components/room3d/RoomLighting.tsx,source,985,12,b060c6498a7c8d493f91f68b396f78070430da36d41fc2f69b18d34427b5fc03,lint/typecheck/build (where included)
+src/components/room3d/RoomMapDemo.css,source,642,1,268bc3810dd1d969ea2affeba9ba1f22d3efa3e8720c612f477c2ca83d97ae0d,inventory only; no exhaustive visual/content review
+src/components/room3d/RoomScene3D.tsx,source,5610,73,d75559399bc6298e797fd79811c213256c353cd62e8ae8301f6ffff4fe5a7e1b,lint/typecheck/build (where included)
+src/components/room3d/Shop.tsx,source,774,9,bb450fe184fcdd55c73a93f36ed5cbfad4b0a7bed5807d6394457d7c4a00144a,lint/typecheck/build (where included)
+src/components/room3d/SportRoomDemo.tsx,source,1694,23,5991e3a7fe039d195c2dcc7e4c75222a78e66c6a5389214730f05b2054ef791f,lint/typecheck/build (where included)
+src/components/room3d/SportsDisplay.tsx,source,1687,20,6f4a7c4148685d3cee996fdf48f3bde90ea774658b493214370ad8033eccc2df,lint/typecheck/build (where included)
+src/components/room3d/StudyDecor.tsx,source,7922,107,cb0c56104281dfdd419e5e7c4f07b9b6b5339dfe51241133752d50d8142fc445,lint/typecheck/build (where included)
+src/components/room3d/TasksDecor.tsx,source,6855,102,d91431dd0a56d080163d87a47d930bd340cfef6a42bc5e3f2d4fab50f14bf329,lint/typecheck/build (where included)
+src/components/room3d/TogetherDecor.tsx,source,6544,88,fdd64727e00152fafc3fb39f06f7b7fdef7ba6c5e063753243ca96928c16b40b,lint/typecheck/build (where included)
+src/components/room3d/assetSlots.ts,source,1930,29,8b06af150c05a5d91eba881c553a85a9243c98978c6cd434526293c133070856,lint/typecheck/build (where included)
+src/components/room3d/lightingPresets.ts,source,287,5,68360ca732485bfa6203c4a8b76f22a39c14f49a3da937dad5e5d81832d54cee,lint/typecheck/build (where included)
+src/components/shop3d/ShopModelViewer.tsx,source,5733,115,d6efc14f9f65c00dcf0575620e708b3538f637229cdde1258209c24ddca89b6f,lint/typecheck/build (where included)
+src/finance.ts,source,21508,516,2353715fd78734288516827d649ad060566cb86bcccbb9c0db47e7ba9529506a,lint/typecheck/build (where included)
+src/firebaseClient.ts,source,1603,30,2e5a4d15f75ca29c9add0da33ca930a59f9ac9cc386c9ce5e0b927c71eed9265,lint/typecheck/build (where included)
+src/firebaseSave.ts,source,20291,447,d3f1141ffd28bf92c3c03e672a1e5d418e16c10e6c1aca0ccd64321fc5286523,lint/typecheck/build (where included)
+src/focusCore.ts,source,12923,229,786d7a21ad3e0b24347c7f3c7e7fa1cea8aaa6765c6d58ff5ac0fd6d7bfb07cf,lint/typecheck/build (where included)
+src/focusSessions.ts,source,33122,535,76476abb35b18b02ec692e7cde99a784d800289904a3b0c47876faa20b7ec88a,lint/typecheck/build (where included)
+src/game.ts,source,78357,2040,9774a500d089e0342f04a917e01585e9f84d4d9f75a134c00c6aea59f12e82a0,lint/typecheck/build (where included)
+src/globalSearch.ts,source,4390,129,5efabe17fb921452893bf1b2c24f61306b6ec74c89655d6289bf6445c6877896,lint/typecheck/build (where included)
+src/goalRoutes.ts,source,635,18,9bdb9d6b2863b627e29bc384607dfdd280f06835e5605ad36511c3b824ac24ea,lint/typecheck/build (where included)
+src/goalStatistics.ts,source,2676,83,16b85e4510d3bba52472ffd5c52259c0b9b038d01b85da6b75b835a6119f1200,lint/typecheck/build (where included)
+src/goalWorkspace.ts,source,14960,379,72ff008912e294a1b19342e9c1d7347f4c8f92b91497374dcc167b8750792e14,lint/typecheck/build (where included)
+src/goalsOverview.ts,source,6342,172,6774acd88dfa4f154c75a361877f36db9e7230b41692939965cc089448ad0c6a,lint/typecheck/build (where included)
+src/habitsView.ts,source,7090,156,b35bdc456285c663aeddfc8fba17eadc78d2ec00d6fc4f12749165b4aa14ed96,lint/typecheck/build (where included)
+src/interface.css,source,48660,2785,09f56a6be9251b8635bdb0ca8c67ff7f119ef55ffba5541e0b86a197b1dfef68,inventory only; no exhaustive visual/content review
+src/keyResults.ts,source,28505,594,49707d000f22437ff14ed5fc3ae99ec25f2ce08ee49de440be93953098824c68,lint/typecheck/build (where included)
+src/lifePlanMap.ts,source,10912,251,5d39ca350bd6b14131afc0edb4b9f03d0ff8717604f3d176c07588c3f6029ece,lint/typecheck/build (where included)
+src/liveWeather.ts,source,2669,50,ed73dd83578d1bd5f19b199b56d5bf0475aa8c5e0cee6930149960b5acad2104,lint/typecheck/build (where included)
+src/main.tsx,source,1238,30,bbb641dddbee46b0352b5710e0f3d5e8a27f490ca6394997946a76d494d6173c,lint/typecheck/build (where included)
+src/menuIcons.ts,source,12975,105,d682869494ab1d3e5340bef1780a66a944a2e6b7684082a7e23e823c2390779c,lint/typecheck/build (where included)
+src/menuIconsNew.ts,source,5466,7,e909a93f55adb5c8ef1f0ebd4e5f76343d9c3135e90dc8d067ac585f7800d6ff,lint/typecheck/build (where included)
+src/menuTheme.ts,source,1651,49,ea51331e7bff2907a56d08761ad1122bb32c329ed5299a08cea828a59107be8f,lint/typecheck/build (where included)
+src/monthReport.ts,source,9974,181,bd1e2ec2f4a3af70384b9b11c1f035b3a183cb3649a2d69854a7ee2a7dcf4db2,lint/typecheck/build (where included)
+src/monthly.ts,source,5941,173,ffb6fa0856b52da577ac1d26f5014c5bdaf32399fb48d477436d8d1e3c3bc8ee,lint/typecheck/build (where included)
+src/monthlyFocus.ts,source,2248,44,00fc06a4ecbb91bd5345b04a0ea637a927a6ac9f4768c37341b2aec1034c23c5,lint/typecheck/build (where included)
+src/navigation.ts,source,1703,17,51106c17b3d9d021be1992d2e1c5b5652a824a16a3068c0db8402aae4a400a84,lint/typecheck/build (where included)
+src/nextPeak.ts,source,4209,105,f4e6e4541e95b0115d8ba88647b918c560e1cecf40278c9c48303189471e4210,lint/typecheck/build (where included)
+src/personalQuests.ts,source,18769,544,55ed99fdd4222eef2200a3d7e75c8df28a282031848eb86f77925de3f98addf1,lint/typecheck/build (where included)
+src/personalResults.ts,source,4262,106,845f1f7d2b5476ca2a143e8fe738e34fb446c1ef3e1ea92ac107e90b9f661306,lint/typecheck/build (where included)
+src/planner.ts,source,14158,194,5a3869f3bbff0bf5ec18638ee7d75bf8094a9a59b1573030bf09095b562f4c09,lint/typecheck/build (where included)
+src/planning.ts,source,28690,798,df2770c1585051d551913e65a70993e4573ce8cfb36ef0a535c5a51af10786b3,lint/typecheck/build (where included)
+src/planningData.ts,source,38429,505,b899b2a1077ea1e8dcf44d6af110b969dfa567057fd0c70ec00821548dea77ff,lint/typecheck/build (where included)
+src/planningTimeline.ts,source,2449,44,339023189c6504176825f289d7c51d91dfe65f5b697c609f30347b66180825af,lint/typecheck/build (where included)
+src/projectImage.ts,source,2917,81,8dac5a181d8c1a9503fdd05e82dc80517e0a7f99defacff23f54cdecdf6648fd,lint/typecheck/build (where included)
+src/questEconomy.ts,source,7713,223,c149f66eed61b510009316973291d154ee9f470d4782bb014b1c3129fabd6016,lint/typecheck/build (where included)
+src/questPhoto.ts,source,2751,78,43efe6f0359aea89a55d954af091f90325f1b75a4e3a820178c7294d5dfab587,lint/typecheck/build (where included)
+src/questValidation.ts,source,6052,175,79944462794339cf8634ec505a0c156d17b426c6da19f788d709d63fc67dc8f6,lint/typecheck/build (where included)
+src/quoteOfDay.ts,source,1289,32,042fdfc9118df1a4096b75ab7a7811a26aef4f6db50f7ef9782a4cdfd6c883f0,lint/typecheck/build (where included)
+src/quotes.json,configuration,49397,320,7dd231bd41a259a27b065b56496f3e412ec3cbc805805cdc095b3c4e4bff39f4,JSON parse
+src/revisionConflict.ts,source,1020,20,fdfb3aba930020a89496d0d53c0d68638b41c490c3cb8347bbbc68d7329eb170,lint/typecheck/build (where included)
+src/roomEngine.ts,source,19104,203,44fbee27331e292896e5d4934dfe932126ec0970cc49aaf146c990d68cb1fc6f,lint/typecheck/build (where included)
+src/roomStats.ts,source,1670,29,dfc7117e2172aafcfbf02a2798a2b1f0af9d7d32a19499a600c8718d3f1a6812,lint/typecheck/build (where included)
+src/roomViews.ts,source,3037,49,6ffd7e8c7d506e611fd7248cf0d0eb501157c03d8721a27347d2b1ccda44b044,lint/typecheck/build (where included)
+src/saveError.ts,source,1009,15,b5f3b8d9091339127a19920c5514b8fc0fc53aa8b808f04da05db9c4228bd108,lint/typecheck/build (where included)
+src/selection.css,source,2875,53,fad22dfc4bf9bda778a7a1c2753a6ce390f18cadbaf9edc64f61449d0c8ee2f4,inventory only; no exhaustive visual/content review
+src/shop.ts,source,11297,341,a5b169ca5b21db6ecf1e6fbb4957ebf853836bebda2ac03db2f07e714bd79cd3,lint/typecheck/build (where included)
+src/shopModels.ts,source,1490,16,de27d3b357cbac7919c4c252acb27fdedd40ffa660e9e0f63e6beadcf4b82ae8,lint/typecheck/build (where included)
+src/skillPractice.ts,source,6038,157,eb906a58fb6f3f220af8f3266e5223b4085770d301803e8dde572a0fd8dd9996,lint/typecheck/build (where included)
+src/skillTree.ts,source,20957,587,ec3531e74e1f044f98fe647c42c17b93a5da2e68d07659a91b7819c8a9572473,lint/typecheck/build (where included)
+src/spellcheck.css,source,2005,99,15172efb9c2b195dff03de53cae50d3a94746bb68299c6bea64a2f312c4cead9,inventory only; no exhaustive visual/content review
+src/spellcheck.ts,source,17628,430,b5ca5498556ebd3bd07de12693e5fb219795aca61fb7e7edb7d5543960fb983b,lint/typecheck/build (where included)
+src/spellcheck.worker.ts,source,3381,87,ef759497969938554504308a20a1f37e79770895f4aca5676e8f4c27c19d8b92,lint/typecheck/build (where included)
+src/spellcheckText.ts,source,678,15,292021ac96ce43d49554db46b0222673be85c7660d637305ec597c418d58c2da,lint/typecheck/build (where included)
+src/sphereAnalytics.ts,source,3521,104,5dc407ad09151f465b42432ab2637833bbf361d29c9125473a6e7105e8096728,lint/typecheck/build (where included)
+src/sphereAssets.ts,source,3427,48,fbc8eca1786ac277b8cf228cc521bb3aaf3556bf850e00827e57d162a55707dd,lint/typecheck/build (where included)
+src/sphereDetails.ts,source,10808,211,ef5b4a2b8b6700860c786830c950fe0420636957031841a32e199c2aef1e3f71,lint/typecheck/build (where included)
+src/sphereProgress.ts,source,777,12,0bc1ba2bdaa675a16dd72824c15fb2e3f7984b55bfc8c5acd1d6545d58c68d19,lint/typecheck/build (where included)
+src/stateFingerprint.ts,source,1610,36,e402ef91aa84a2d91b2f44dabfee2d43ef158f38cd6efb7e2a346944f8b1f898,lint/typecheck/build (where included)
+src/stateMerge.ts,source,11069,213,ee1431f6ffcc4c8796b4084ad1d5a6d379829038dd936a721f7c661430edf18a,lint/typecheck/build (where included)
+src/stateValidation.ts,source,20738,507,f6e765376d2cebbfb5db67aeb22f46c5d67d9ea1205978a050a177b4251d6726,lint/typecheck/build (where included)
+src/styles.css,source,59913,3360,a1ab9aff5d34f66aa619425637b9d04584468160b6424753655d7d9e085a3e08,inventory only; no exhaustive visual/content review
+src/taskDependencies.ts,source,2522,47,697cf2cd866c4171c06ae35e9b1d776fd5d876a8631b4d22dff867ac49b8c924,lint/typecheck/build (where included)
+src/taskLabels.ts,source,1246,35,e57419f171c83c251782293a013fadaae343c1027b198656cc79b217f2c53177,lint/typecheck/build (where included)
+src/taskRoutes.ts,source,669,17,2da52b599d6ead958e326f6b8fadb53c894fbfcc636aeaf4d77c802c3cfb3ca9,lint/typecheck/build (where included)
+src/taskSettings.ts,source,10660,184,7bb49b0aadd75c3f10caa4ea646b955a2919272fbf9e54f083151176899a5076,lint/typecheck/build (where included)
+src/taskSummary.ts,source,1404,25,48618bfd1f8d2218dc98be15e9e7f7a2bdb090249bc9c1d5e1c99658d28d0914,lint/typecheck/build (where included)
+src/taskTimer.ts,source,13547,176,389efaa3790ea81383d4bdd196361d7c877badc7157cc09c6bb89c95c4d7647d,lint/typecheck/build (where included)
+src/tasksCalendar.ts,source,8569,213,21013703569126dedc022808244b711c83c2c7643e474ec69110e616adf18ef1,lint/typecheck/build (where included)
+src/theme-dark-glass.css,source,1973,32,ccecb2a7639dd27b8e053c0776992777d81d2c0c29c91de2256ee2722e452b54,inventory only; no exhaustive visual/content review
+src/theme-dark.css,source,4177,144,536384fffb1c018bd57639404f72e6e8fd17cd6ed9ad71187d6e3cf7e33f7dbc,inventory only; no exhaustive visual/content review
+src/theme-dark.generated.css,source,52130,726,e61fb194b476a34d08b6863aa9b5ea7ec14626899c309b7127e4b0891213fe6f,inventory only; no exhaustive visual/content review
+src/theme-light-glass.css,source,5544,100,2c5b0d550c38ef1d96970f9661820e5c4b40413fd5c93458d8631d2221de9c18,inventory only; no exhaustive visual/content review
+src/tickTickContext.ts,source,2188,39,506ccf488d3a6b97c6ef2d4bdcc8f27c1b8beb3031051dcf12d6457851e473d3,lint/typecheck/build (where included)
+src/ticktick.ts,source,38142,865,289420d996bb0c4ca86bbf349bc70462cab4fbba9de1aab188082bee7971498c,lint/typecheck/build (where included)
+src/ticktickHabits.ts,source,23007,377,10b218c4d3a8349edbe149e371c6f25bf086c1a100e520288a650ac42d37ee7b,lint/typecheck/build (where included)
+src/ticktickHabitsSync.ts,source,11047,174,c68c20d7188a5b169ddc2efd01ed23fce3ea8e9134b28ff45b118577c4ca5d89,lint/typecheck/build (where included)
+src/ticktickInbox.ts,source,16302,337,828e144a5d09a55f64267d2823fbc2fb13a290cb046c47d94fd7ce66c551445e,lint/typecheck/build (where included)
+src/ticktickScheduler.ts,source,366,6,ca8d2f5235e49101a93d46f93b583750eb3c80d92981302c0ccdba3b0081a73d,lint/typecheck/build (where included)
+src/ticktickSettings.ts,source,3441,54,83e5ba7ffd16d9d9c02f40084e3171cf9dd0138453dfc69eaccc6928dd01e624,lint/typecheck/build (where included)
+src/types/nspell.d.ts,source,309,13,37348360a153ddcd14da8d8ef80b2f69a9a7ef2b7fb771ff501a372fe5b59c5b,lint/typecheck/build (where included)
+src/useNow.ts,source,639,13,512722065bfe27a853f222347a7b4d833899f5c7a7269290a33c4841498e2bc6,lint/typecheck/build (where included)
+src/useTickTick.ts,source,24132,330,1d0390c30f282c30a61d3122eca6522472e5be4347b48ceebbf3329d6f634fee,lint/typecheck/build (where included)
+src/useTickTickHabits.ts,source,19536,297,f46db16e2906b64cd5b59f84bc4d1dc3f065ead2e45ff01c15a7aec5cf7a6e2e,lint/typecheck/build (where included)
+src/vite-env.d.ts,source,38,1,65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5,lint/typecheck/build (where included)
+src/weatherSystem.ts,source,3264,30,1c30336182aeb90860814684932efd5641ad69cbea6a4e8acc25934dbe92550b,lint/typecheck/build (where included)
+src/yearReport.ts,source,7990,192,9054e30112209adcf6a97330c751643f07bdd79f0c1f71fe03062a5237a4b4f3,lint/typecheck/build (where included)
+tests/account-fuzz.test.ts,test,13280,308,23f7470dc8d0a6b9f9f00de9c32e05df009b490f74b8d15b5b326241b9effc6e,lint/typecheck/build (where included)
+tests/account-resilience.test.ts,test,13366,338,34521fecee547dea404aedfbe6ce6e290de0abe84b9a436768f6da893f75a271,lint/typecheck/build (where included)
+tests/account.test.ts,test,9910,257,f04f90c7a31ac1e69d25f4222d50012e19fdde4aa8488cea4ff9917c9862b1e6,lint/typecheck/build (where included)
+tests/alive-city.test.ts,test,8139,131,644a0e145c71cc09494b435972bda08579aa9d61f78f91771751f2912ca46a5f,lint/typecheck/build (where included)
+tests/audit-fixes.test.ts,test,5761,122,7a31de6e8b57dda5f70221c2b223b7fff7372657aa3da75b91478bcbeb6b8132,lint/typecheck/build (where included)
+tests/avatar-photo.test.ts,test,1201,21,8afd334f8dc31997958123bd7dd0ae266e6ee5ed6b68dde3aca84c4b2b00a08c,lint/typecheck/build (where included)
+tests/brands.test.ts,test,1266,28,e83be997bb74a2d6ee9677fe67f811a1742ac6f95d1e3627ad6ce685cda8bd20,lint/typecheck/build (where included)
+tests/city.test.ts,test,3666,111,fd5d5b768511786d675e933b720960b40be83306e14528b8e30a19b366e8b0b2,lint/typecheck/build (where included)
+tests/cloud-split.test.ts,test,6244,138,261696ddbc40fd01a5e145348547060ca71ba59b42dfee7326b8d14f89b31f0c,lint/typecheck/build (where included)
+tests/document-size.test.ts,test,1645,30,66d06418ca2d3d3b1039eaada90f3c94cd53a00b07c8867ea346515ce6b38818,lint/typecheck/build (where included)
+tests/finance.test.ts,test,10036,188,7abd5e081abce49a21814cb0916b3624eac47c8c2d32a0705974d57dd15a1065,lint/typecheck/build (where included)
+tests/firebase-rules.test.mjs,test,26548,619,c734825c818daace0889cd1d1ddc3d1c865316c44a8b8937c8e2bdd1a8caecf0,lint/typecheck/build (where included)
+tests/fixtures/spellcheck-fixture.tsx,test,1012,26,70f98148fa7d75c392abddc5ede6ef8b82fa2668ec9c2a59b813e8df4e4e3424,lint/typecheck/build (where included)
+tests/fixtures/spellcheck.html,test,646,29,8ae24d69a724f97370cd1d02049c98a16ffe717c6b006f419dc307bc167d45ef,inventory only; no exhaustive visual/content review
+tests/focus-sessions.test.ts,test,29748,420,687cfcd54a2e618a525b35fa7606e21843b988fa496c0ae90993a81c644f31a6,lint/typecheck/build (where included)
+tests/font-family.test.ts,test,1676,32,95f2ed0788259b1e892427f6129153729c1ec8e0f3bd7497b0c4bb17a6e0b34d,lint/typecheck/build (where included)
+tests/game.test.ts,test,4091,81,e06b0f306d22e2579a725616e5917693a41fa6cc6073bf57431609cf307b6f7a,lint/typecheck/build (where included)
+tests/global-search.test.ts,test,3610,91,5bc8d9a41211e769b8285459905a9a1ecec0b76e13bcfaeeffdb9f5a4884d514,lint/typecheck/build (where included)
+tests/goal-workspace.test.ts,test,32688,839,3cead9aa1e10a3acaae39779f928e81921127532a0ae8edce00359f298ec30e9,lint/typecheck/build (where included)
+tests/goals-overview.test.ts,test,5979,182,39ab01913b461fca515fd29d7f1b89cf48423bb18ca230fbeb3b73a33edd0dee,lint/typecheck/build (where included)
+tests/goals-ui.mjs,test,28782,684,55d50096b37fa84bd63340d9bd21e07efd21eea3997d3bd7856fac36bb792a21,lint/typecheck/build (where included)
+tests/habits-view.test.ts,test,5448,99,24ba63a3ddde1ef22afd4aa74ffcfd8afcd29b7d8c5302b5f5d235b6be9eee86,lint/typecheck/build (where included)
+tests/home-stats.test.ts,test,4291,68,c349860834126173e54e1cf097cf3745453cb33c390f026270b97a2f608bc7a4,lint/typecheck/build (where included)
+tests/home-ui.mjs,test,7302,102,47f30cbbebab36c3ab31f88fa1a24095f08b8313ece5dcb637fd0994e7addd3b,lint/typecheck/build (where included)
+tests/island-city.test.ts,test,8538,150,a054e5facc6c80aa026f0a94472ba64b6cbb40a328eca4e805bf528ba77230d3,lint/typecheck/build (where included)
+tests/key-results-ui.mjs,test,24382,302,95434c14ec409df00489b74bb36c1c4039f0dc2813a9e07e0374fd87cfefbba3,lint/typecheck/build (where included)
+tests/key-results.test.ts,test,6372,129,6ee3929ae4f283064ce81d509fcc9f0edb5e57b08e11bcf0942c469f86a0ea12,lint/typecheck/build (where included)
+tests/level-fixes.test.ts,test,2638,49,6b133e658016350c09ee75d828cbda59a11725b89d0e1ae6f12dcf4ab21f261f,lint/typecheck/build (where included)
+tests/life-plan-map.test.ts,test,7127,147,5deeae34ac06c406a1f1bb04e3a5b1afd5a673932f01d9effbae77d0b346a214,lint/typecheck/build (where included)
+tests/live-city-ui.mjs,test,23895,228,543531b5b9150db6dffbad647ee22f91be19c8dfc5b38c6e7c8127039afee531,lint/typecheck/build (where included)
+tests/live-city.test.ts,test,9139,144,e53e3f5ddd1a8aa1f96ba293df53af134a1a1bc45d9331cc041a00d5e4e96550,lint/typecheck/build (where included)
+tests/live-sync.test.ts,test,3264,88,8f6ae81df942bf5c692f89ec6e73bbb2f5e1180c4432c3a42e2907fd24772ee8,lint/typecheck/build (where included)
+tests/live-weather.test.ts,test,1660,27,b94966e82a0450eafe68a52c2812483dbfe45040d142b9ae5398499f6bc2d23f,lint/typecheck/build (where included)
+tests/living-city.test.ts,test,1727,31,1d6d0517696faa6ca213d14beba1a2826411aec7e0df18706478e4a3f737cbf2,lint/typecheck/build (where included)
+tests/logo-ui.mjs,test,11328,174,f5b722d87eaa404b0805694e973d7980c3efc5db5b918d75908758f5fea58c92,lint/typecheck/build (where included)
+tests/month-report-ui.mjs,test,5796,86,fb7a4295add4cebf96ec4a8a43e5773aebfaa10db0094629dd773dda734e7ad1,lint/typecheck/build (where included)
+tests/month-report.test.ts,test,4311,80,0ea58b0f33e8dfb71714eb2b8a1e42dec78ff3133220dd3cb581e306bbb08560,lint/typecheck/build (where included)
+tests/monthly-focus.test.ts,test,2342,43,3b6c75f1ae9640647deb0f48e420c7234506520e0eba6ff69da97c1a85156132,lint/typecheck/build (where included)
+tests/monthly.test.ts,test,8096,229,c24c631b9695c1d9db478693ab8c46f6c3b1038ffa1bb22ae58f7310c9b7e46b,lint/typecheck/build (where included)
+tests/next-peak.test.ts,test,5328,130,1e32f2f749ed789bef199b7a116d1e7d482f98c41bf8518401c0b1796c16f608,lint/typecheck/build (where included)
+tests/park-zones.test.ts,test,3077,44,928e7021d314ba8946381461447402033803cdabb277f44c7690c6a02d2ad1b8,lint/typecheck/build (where included)
+tests/personal-quests.test.ts,test,8116,234,b2fecde9d4a5109af387337b232d601f6413293258649105f9903b0fce01b7c3,lint/typecheck/build (where included)
+tests/personal-results.test.ts,test,8316,158,4bfa9951b24ca8edf58a50fb4ef1625b5d9dcdc788009f1b89106aea4d0f91b4,lint/typecheck/build (where included)
+tests/planner-ui.mjs,test,16001,187,00cddc37e12af3a82653020ce8fcce893419b4dcda00c623ed67e3bcda1308ce,lint/typecheck/build (where included)
+tests/planner.test.ts,test,12547,200,4e171950310cf8c13f91e50c20d30157e4f132ce55ce34a813d6edc4b2a52192,lint/typecheck/build (where included)
+tests/planning-timeline.test.ts,test,1766,27,8799da860e2ee5bfe4da531597aedb6da6333e68dda43eef6a4fe600d754cd04,lint/typecheck/build (where included)
+tests/planning.test.ts,test,14772,349,73b47f5582a97321b0c6e83a95be7f782b826f27d1e2dd7219fa6fdd2d7fc79c,lint/typecheck/build (where included)
+tests/postponement-tracking.test.ts,test,21954,302,c2b0ffa56e04b5a77de39826d57a0e7424441af771d0b60762b35007a326cac5,lint/typecheck/build (where included)
+tests/profile.test.ts,test,5990,135,db61d0066175e9c47361f8c6ea8831d42c0cd08e08e02f97a434055a1561f4e7,lint/typecheck/build (where included)
+tests/project-image.test.ts,test,1687,35,692b5e2801780adefc34112e6d58a38249edc992b448d47ac9c88ec3688cdacb,lint/typecheck/build (where included)
+tests/qa-saves.test.ts,test,5886,132,61ced65832cc102627cd171146d216bd999b25d92777e3e4fccb90e0a76e4c78,lint/typecheck/build (where included)
+tests/quality-gates.test.ts,test,9010,149,c41383a907add779ebf52af7174eacca5d427fd649d181ef5100978fb79d2cc4,lint/typecheck/build (where included)
+tests/quest-photo.test.ts,test,1224,36,23fb913a9c16d50bb3ea5dbafb15686df306544a77d268cfdc715475f5022eb1,lint/typecheck/build (where included)
+tests/quests-ui.mjs,test,11298,209,a3eeadfe6dca69ac82a98aac507a6f75b8f0bac7abf5c470dc5076bdcc28ab97,lint/typecheck/build (where included)
+tests/reliability.test.ts,test,7889,206,233a7784dbbfdff461b74458185d2ce5801366afc6c8f2630ae863bb26b88c66,lint/typecheck/build (where included)
+tests/revision-conflict.test.ts,test,1861,25,26fe9d00e0c0dd0b0577c87374c84188823a2dc877024bbb1855e2ad01a1f867,lint/typecheck/build (where included)
+tests/room-engine.test.ts,test,14395,186,61efab4865441d71422f9af4726de292feea62686fc4a9fc016d143421e52aaa,lint/typecheck/build (where included)
+tests/room-stats.test.ts,test,2723,43,a54a615a8f4c5b2406ddbac61253d677c32917b2229a833a6a52948d6e8bc788,lint/typecheck/build (where included)
+tests/room-views.test.ts,test,4085,74,c8e5ab47c9db8d33cde64d21c7057aa300fb65cd30ee41bbd36864d640472bf3,lint/typecheck/build (where included)
+tests/shop-models.test.ts,test,2916,51,26248998fef656db05e167f0e2295f6dc11600e94321ead228b71eefb6e00c8b,lint/typecheck/build (where included)
+tests/shop.test.ts,test,9571,168,880e4d71dc5eb133d56f393d674d4750ab5938540e26af3cf97ee7f1b1b710df,lint/typecheck/build (where included)
+tests/skill-practice.test.ts,test,6011,130,1dc9e379077aaf4731ae9453a2e51cec6707dd8a4a5cdfb1b5413fcb5480fe29,lint/typecheck/build (where included)
+tests/skill-tree.test.ts,test,9662,210,ecebb8ffd05bed554110c201995e96104b135f028f5dcdc99943d6334b546ee6,lint/typecheck/build (where included)
+tests/smoke-ui.mjs,test,17683,281,0d7ff1b49d3200d736533a63606770a414d2a6bb21188d3fb1ea72e17412337f,lint/typecheck/build (where included)
+tests/spellcheck-ui.mjs,test,6887,90,cf90b799e738d7e1dafc355037787798bffa5463a02fbaf28e3cf446aa2ed9f6,lint/typecheck/build (where included)
+tests/spellcheck.test.ts,test,1419,34,e0a433bcba4a25ffbbb6b34e49d85b68f45d7c2c2b8965f154f8642dd8908bcf,lint/typecheck/build (where included)
+tests/sphere-analytics.test.ts,test,3041,12,d32f42cd2c0fd1f9fdddb27a024490d4547617d72f7abc95038a7949cd090b7a,lint/typecheck/build (where included)
+tests/sphere-details.test.ts,test,4910,94,845bf2b452da64c383549909ce710daf99a053000febb92aecad5655d3c3fc69,lint/typecheck/build (where included)
+tests/spheres-ui.mjs,test,10443,154,7da31e6811a782f15167657850e8fac04028ddfb9250ce1e794daeacbb9ba00f,lint/typecheck/build (where included)
+tests/state-merge.test.ts,test,4428,98,fbad1d6124b9bf33e75235ff357165a0405659e5f5eb0f9ec281afc4a0decf38,lint/typecheck/build (where included)
+tests/state-roundtrip.test.ts,test,8396,124,644ff4d034b7016a307d4f85edcfbb7cfeb94b37db39dd58492984b366af405f,lint/typecheck/build (where included)
+tests/task-dependencies.test.ts,test,4487,76,1023cc47b4360ad1878acc0c95262b64b6c6f27fc88d99facd658492e5073fc2,lint/typecheck/build (where included)
+tests/task-labels.test.ts,test,1721,37,e79b42b86ae804f86df9a14d7a8d56ca0cb875b791658060216d8818e58e6405,lint/typecheck/build (where included)
+tests/task-settings.test.ts,test,10481,151,e8576be6249f1b9b7eb9e42acfd26be33c2ac08997ee985ebe9445841a953454,lint/typecheck/build (where included)
+tests/task-summary.test.ts,test,2607,49,8fc6d5d47799feecfaeb9aa787b507b57290e49c0d41bd2e5fb451cdf8acfc41,lint/typecheck/build (where included)
+tests/task-timer.test.ts,test,7696,115,025b5828be4b9a7dded208930193cb3f0fc3efe209e2bd4891642708021484c7,lint/typecheck/build (where included)
+tests/tasks-calendar-ui.mjs,test,10392,156,86c61a9e8834eed0b7d81b2965c90746079b5551a256d8969e30f09985b9c890,lint/typecheck/build (where included)
+tests/tasks-calendar.test.ts,test,6062,128,b2bdb5c9300b9d43c4148025bb5670ff5027c3ef10c01adcc45d9384bebe1d7a,lint/typecheck/build (where included)
+tests/theme-ui.mjs,test,5462,93,fd025d360258b8127103fcd6cb3d9dd3b9d19375c1effedb0546eb8df1c176c5,lint/typecheck/build (where included)
+tests/ticktick-accounts.test.ts,test,8415,111,1fe69bd068f375761b160f981bb11bea5e61b0c31ebac7b9600a86591dcc8795,lint/typecheck/build (where included)
+tests/ticktick-flow-ui.mjs,test,28828,338,d896fb8bf17665e4fb67fd625a9d9df9f336f2496ea5f0e699a0ca966bbfff8d,lint/typecheck/build (where included)
+tests/ticktick-habits-sync.test.ts,test,13026,176,ecf7d6db4e794ca6ae9de25e465fff40a9c532f55f3be68019c3a8cae0ec3567,lint/typecheck/build (where included)
+tests/ticktick-habits-worker.test.ts,test,15361,250,175df7f17c78245cf68699b52082d62f88159c856ffd4ea5f5865ad685f82743,lint/typecheck/build (where included)
+tests/ticktick-habits.test.ts,test,11523,166,1c4580016eb150313b8c92b480c4d1a5d705d5b046292b260178604c6c19419b,lint/typecheck/build (where included)
+tests/ticktick-inbox.test.ts,test,23084,546,4080a30e28ae39120f18003e00d69970dae1f91b617e0ad81ee5becb0a3e7bad,lint/typecheck/build (where included)
+tests/ticktick-safety.test.ts,test,16334,323,427ca3c9c72cc6c99ebf35fd03609a9e187835094a470afe2b53dae929bceed4,lint/typecheck/build (where included)
+tests/ticktick-ui.mjs,test,18253,229,6445b1749d17853e45189496089815d0bcbf39985ab412b103947f479f443db4,lint/typecheck/build (where included)
+tests/ticktick-worker.test.ts,test,7277,229,469454e82e74bb933e386aafe75dc5b78c84a1797859455355ccd804cdf2188f,lint/typecheck/build (where included)
+tests/ticktick.test.ts,test,41881,971,9066b828d85d29aa9f1a87f5e03bc7bc9d39d80b26195a4618a539c32374afeb,lint/typecheck/build (where included)
+tests/weatherSystem.test.ts,test,2318,22,62c0643175720091f31978962271d509b357be8b20e0c10b6764b347211f3a2d,lint/typecheck/build (where included)
+tests/year-report.test.ts,test,5845,120,6ca1ca540dda67970089ffd94265705d0479131b9579de1250cb35b60b003672,lint/typecheck/build (where included)
+tsconfig.json,configuration,541,29,57f91252cfef56ffe4b15eaf177b222752c1cb030cfe244ca6ca57c9e08b1a2d,JSON parse
+vite.config.ts,asset,260,9,c9af3978f4cab2d05a7b83c4935b72c5d47494974d0f8829464f06d497686dae,lint/typecheck/build (where included)

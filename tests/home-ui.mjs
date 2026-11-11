@@ -56,13 +56,20 @@ try {
     assert.equal(await page.locator('.account-bar').count(), 0, 'Панели аккаунта нет на главной');
     assert.equal(await page.locator('.home-today, .home-streak').count(), 2);
     assert.equal(await page.locator('.hys-sphere-row').count(), 10);
-    assert.equal(await page.locator('.peak-projects .peak-project').count(), 3);
-    const projectB = page.locator('.peak-projects .peak-project').nth(1);
+    assert.equal(await page.locator('.peak-focus-switch button:not(.is-empty)').count(), 3);
+    assert.equal(await page.locator('.peak-art img').count(), 1, 'Hero-картинка загружена');
+    assert.equal(await page.locator('.peak-card').count(), 1, 'Компактная карточка вершины показана');
+    const layout = await page.locator('.peak-stage').evaluate(stage => {
+      const hero = stage.querySelector('.peak-main').getBoundingClientRect();
+      const card = stage.querySelector('.peak-card').getBoundingClientRect();
+      return { heroWidth: hero.width, cardX: card.x, heroRight: hero.right, cardWidth: card.width };
+    });
+    if (width > 650) assert.ok(layout.cardX > layout.heroRight - 10 && layout.heroWidth > layout.cardWidth, 'На широком экране карточка стоит справа от hero-текста');
+    else assert.ok(await page.locator('.peak-card').evaluate(card => card.getBoundingClientRect().top >= card.parentElement.querySelector('.peak-main').getBoundingClientRect().bottom - 1), 'На телефоне карточка расположена после hero-блока');
+    const projectB = page.locator('.peak-focus-switch button:not(.is-empty)').nth(1);
     await projectB.click();
-    assert.match(await page.locator('.peak-project-copy').innerText(), /Фокус Б/);
+    assert.match(await page.locator('.peak-card').innerText(), /Фокус Б/);
     assert.equal(await projectB.getAttribute('aria-pressed'), 'true');
-    assert.equal(await page.locator('.peak-time-track').count(), 1);
-    assert.equal(await page.locator('.peak-tasks').innerText().then(text => /Задачи этапа пока не добавлены/.test(text)), true);
     await page.getByRole('link', { name: 'Открыть этап', exact: true }).click();
     await page.waitForURL(`**/#/goals/${ids[1]}/stages/${stageIds[ids[1]]}`);
     await page.locator('.ss-hero h2').filter({ hasText: 'Этап Фокус Б' }).waitFor();
@@ -88,7 +95,7 @@ try {
     assert.equal(await page.locator('.account-bar').count(), 0);
     await page.evaluate(() => { location.hash = ''; window.dispatchEvent(new HashChangeEvent('hashchange')); });
     await page.locator('.home-dashboard').waitFor();
-    await page.locator('.peak-projects .peak-project').first().click();
+    await page.locator('.peak-focus-switch button:not(.is-empty)').first().click();
     await page.getByRole('link', { name: 'Открыть этап', exact: true }).click();
     await page.waitForURL(`**/#/goals/${ids[0]}/stages/${stageIds[ids[0]]}`);
     await page.locator('.ss-hero h2').filter({ hasText: 'Этап Фокус А' }).waitFor();
@@ -103,8 +110,8 @@ try {
     await page.locator('.home-dashboard').waitFor();
     await page.reload();
     await enter();
-    assert.match(await page.locator('.peak-projects').innerText(), /Запасная цель/);
-    assert.equal(await page.locator('.peak-projects .peak-project').filter({ hasText: 'Фокус Б' }).count(), 0);
+    assert.match(await page.locator('.peak-focus-switch').innerText(), /Запасная цель/);
+    assert.equal(await page.locator('.peak-focus-switch button').filter({ hasText: 'Фокус Б' }).count(), 0);
     if (process.env.PYL_SCREENSHOT_DIR) await page.screenshot({ path: `${process.env.PYL_SCREENSHOT_DIR}/next-peak-${width}.png`, fullPage: true });
     assert.deepEqual(errors, []);
     await context.close();

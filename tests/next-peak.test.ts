@@ -23,6 +23,29 @@ test('срок до начала, в день дедлайна и просроч
   assert.equal(late?.remainingDays, -3);
   assert.equal(late?.state, 'overdue');
 });
+
+test('разница прогресса задач и времени является отдельной информационной величиной', () => {
+  const goal = withGoal(empty(), 'Сверить темп');
+  const stage = addStage(goal.s, goal.id, 'Рабочий этап');
+  let state = stage.s;
+  for (let i = 0; i < 10; i++) {
+    const task = addTask(state, goal.id, stage.id, `Шаг ${i + 1}`);
+    state = task.s;
+    if (i < 7) state = completeQuest(state, task.id);
+  }
+  state = {
+    ...state,
+    goals: state.goals.map(g => g.id === goal.id ? {
+      ...g,
+      stages: g.stages?.map(s => s.id === stage.id ? { ...s, startsAt: '2026-11-10', dueAt: '2026-11-25' } : s),
+    } : g),
+  };
+  const peak = goalPeak(state, state.goals.find(g => g.id === goal.id)!, new Date(2026, 10, 16));
+  assert.equal(peak.taskPercent, 70);
+  assert.equal(peak.time?.percent, 40);
+  assert.equal(peak.progressDifference, 30);
+});
+
 function empty(): GameState {
   const s = initialState();
   return { ...s, goals: [], quests: [], monthlyFocus: undefined };

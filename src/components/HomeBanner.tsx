@@ -28,6 +28,8 @@ function motivation(peak: NextPeak) {
   if (peak.time?.state === 'before') return '🏔️ Следующая вершина уже близко!';
   if (peak.taskPercent === null) return 'Добавь задачи, чтобы видеть свой прогресс.';
   if (peak.taskPercent === 100) return '🎉 Все задачи этапа выполнены!';
+  if (peak.progressDifference !== null && peak.progressDifference >= 10) return '🚀 Выполнение идёт с опережением графика!';
+  if (peak.progressDifference !== null && peak.progressDifference <= -10) return '💡 Темп ниже линейного плана — проверь следующий шаг.';
   if (peak.taskPercent < 25) return '🚀 Первые шаги к вершине!';
   if (peak.taskPercent < 50) return '🏔️ Продолжай движение к цели!';
   if (peak.taskPercent < 75) return '💪 Ты уверенно движешься к цели!';

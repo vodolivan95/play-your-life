@@ -62,6 +62,8 @@ export type NextPeak = {
   percent: number;
   /** Banner percentage based on completed / total tasks. Null means no countable tasks. */
   taskPercent: number | null;
+  /** Approximate task-progress minus elapsed-time percentage points; informational only. */
+  progressDifference: number | null;
   counter: string;
   taskId?: string;
   time: TimeProgress | null;
@@ -90,7 +92,8 @@ export function goalPeak(state: GameState, goal: Goal, now: Date = new Date()): 
   const completed = stages.length > 0 && stages.every((s) => stageMetrics(state, goal, s).complete);
   if (activeStage) {
     const m = stageMetrics(state, goal, activeStage);
-    const taskPercent = m.total > 0 ? (m.done / m.total) * 100 : null;
+    const taskProgressExact = m.total > 0 ? (m.done / m.total) * 100 : null;
+    const taskPercent = taskProgressExact === null ? null : Math.round(taskProgressExact);
     const time = calculateTimeProgress(activeStage.startsAt, activeStage.dueAt, now);
     const left = remainingText(m.required);
     return {
@@ -100,7 +103,8 @@ export function goalPeak(state: GameState, goal: Goal, now: Date = new Date()): 
       headline: activeStage.completionCondition?.trim() || activeStage.name,
       detail: [`Проект: ${goal.name}`, left].filter(Boolean).join(' · '),
       done: m.done, total: m.total, percent: Math.round(m.progress),
-      taskPercent: taskPercent === null ? null : Math.round(taskPercent),
+      taskPercent,
+      progressDifference: taskProgressExact === null || !time || time.state === 'invalid' ? null : taskProgressExact - time.percent,
       counter: m.total > 0 ? `${m.done}/${m.total}` : '—',
       taskId: nextTask(state, goal, activeStage)?.id, time,
     };
@@ -108,12 +112,12 @@ export function goalPeak(state: GameState, goal: Goal, now: Date = new Date()): 
   if (completed) return {
     goalId: goal.id, goalName: goal.name, goalImage: goal.image,
     stageStatus: 'completed', headline: 'Все этапы проекта завершены', detail: `Проект: ${goal.name}`,
-    done: 0, total: 0, percent: 100, taskPercent: null, counter: `${stages.length} этапов`, time: null,
+    done: 0, total: 0, percent: 100, taskPercent: null, progressDifference: null, counter: `${stages.length} этапов`, time: null,
   };
   if (stages.length > 0) return {
     goalId: goal.id, goalName: goal.name, goalImage: goal.image,
     stageStatus: 'unavailable', headline: 'Нет доступного активного этапа', detail: `Открой проект «${goal.name}»`,
-    done: 0, total: 0, percent: 0, taskPercent: null, counter: '—', time: null,
+    done: 0, total: 0, percent: 0, taskPercent: null, progressDifference: null, counter: '—', time: null,
   };
   const tasks = state.quests.filter((q) => q.goalId === goal.id && !q.wontDo && !q.planning?.archivedAt);
   const done = tasks.filter((q) => q.done).length;
@@ -121,7 +125,7 @@ export function goalPeak(state: GameState, goal: Goal, now: Date = new Date()): 
   return {
     goalId: goal.id, goalName: goal.name, goalImage: goal.image, stageStatus: 'none',
     headline: 'Этапы пока не добавлены', detail: `Проект: ${goal.name}`,
-    done, total: tasks.length, percent, taskPercent: tasks.length ? Math.round(done / tasks.length * 100) : null,
+    done, total: tasks.length, percent, taskPercent: tasks.length ? Math.round(done / tasks.length * 100) : null, progressDifference: null,
     counter: tasks.length ? `${done}/${tasks.length}` : `${percent}%`, taskId: nextTask(state, goal)?.id, time: null,
   };
 }

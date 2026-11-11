@@ -7,6 +7,7 @@ import {
 } from '../focusSessions';
 import { FOCUS_FIRST_ACTION_MAX, FOCUS_RESULT_MAX } from '../planningData';
 import { useNow } from '../useNow';
+import Icon from './Icon';
 import './FocusSection.css';
 
 type Way = 'timer' | 'stopwatch';
@@ -80,10 +81,11 @@ export default function FocusSection({ state, task, onChange, notify, onOpenTask
     <section className="twin-field focus" aria-label="Фокус">
       <div className="focus-top">
         <button type="button" className="focus-total" aria-expanded={historyOpen} onClick={() => setHistoryOpen((v) => !v)}>
-          ⏱ Фокус: <b>{formatFocus(total)}</b> <i aria-hidden="true">{historyOpen ? '▴' : '▾'}</i>
+          <Icon name="timer" size={25}/> Фокус: <b>{formatFocus(total)}</b>{task.estimateMinutes && <span> / {formatFocus(task.estimateMinutes * 60)}</span>} <i aria-hidden="true">{historyOpen ? '▴' : '▾'}</i>
         </button>
+        <progress className="focus-meter" aria-label="Фактическое время относительно оценки" max={Math.max(1,(task.estimateMinutes ?? 0) * 60)} value={task.estimateMinutes ? Math.min(total, task.estimateMinutes * 60) : 0}/>
         {!session && !task.done && !launching && (
-          <button type="button" className="primary-button" onClick={() => setLaunching(true)}>Начать фокус</button>
+          <button type="button" className="primary-button focus-start" onClick={() => { setMinutes(estimate); setCustom(''); setLaunching(true); }}><Icon name="playFill" size={25}/>Начать фокус</button>
         )}
       </div>
 

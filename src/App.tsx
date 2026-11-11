@@ -1,3 +1,4 @@
+import { isTaskReviewMode } from './taskReviewMode';
 import { dependencyBlockMessage } from './taskDependencies';
 import { readGoalRoute, goalRoute } from './goalRoutes';
 import { readTaskRoute } from './taskRoutes';
@@ -124,7 +125,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   const [profileTipDismissed, setProfileTipDismissed] = useState(false);
   const [modal, setModal] = useState<
     'quest' | 'goal' | 'streak' | 'start' | 'profile' | null
-  >(() => (state.profile.onboardingComplete || (import.meta.env.DEV && new URLSearchParams(location.search).get('local-preview') === '1') ? null : 'start'));
+  >(() => (state.profile.onboardingComplete || (!userId && isTaskReviewMode()) ? null : 'start'));
   useEffect(() => {
     if (userId && state.profile.onboardingComplete)
       queueMicrotask(() => setModal(current => current === 'start' ? null : current));

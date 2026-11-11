@@ -46,7 +46,7 @@ try {
     await task.waitFor();
     await task.getByRole('button', { name: 'Подготовить план', exact: true }).click();
     const win = page.getByRole('dialog', { name: 'Подготовить план' });
-    await win.getByLabel('Оценка времени', { exact: true }).fill('30');
+    await win.getByLabel('Оценка времени', { exact: true }).selectOption('30');
     await win.getByRole('heading', { name: 'Параметры задачи', exact: true }).click();
     await win.getByRole('button', { name: 'Сохранить', exact: true }).click();
     await page.evaluate(async () => {

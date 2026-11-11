@@ -102,6 +102,7 @@ try {
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("play-your-life-v1")).quests.filter((q) => q.dueAt));
   assert.ok(saved.some((q) => q.dueAt === tomorrow));
   await win.getByLabel("Повтор", { exact: true }).selectOption("daily");
+  await win.getByRole("button", {name:"Добавить пункт",exact:true}).click();
   await win.getByLabel("Новый пункт", { exact: true }).fill("Первый шаг");
   await win.getByRole("button", { name: "Добавить", exact: true }).click();
   await win.getByRole("checkbox").check();

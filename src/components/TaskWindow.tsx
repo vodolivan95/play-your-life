@@ -21,6 +21,7 @@ import {
   taskGoalForecast,
   yandexRoute,
 } from "../taskDetails";
+import { isTaskReviewMode } from "../taskReviewMode";
 import type { TaskDetails } from "../taskDetails";
 import TaskDescription from "./TaskDescription";
 import Icon from "./Icon";
@@ -33,7 +34,7 @@ const tabs = [
   "Заметки",
   "История",
 ] as const;
-const tabIcons = ["calendar", "quests", "link", "quests", "repeat"];
+const tabIcons = ["calendar", "document", "attachment", "note", "history"];
 function localValue(value?: string) {
   if (!value) return "";
   if (value.length === 10) return value + "T00:00";
@@ -81,6 +82,9 @@ function TaskWindowContent({
   const [name, setName] = useState(task?.name ?? "");
   const [description, setDescription] = useState(task?.notes ?? "");
   const [sub, setSub] = useState("");
+  const [addingSub, setAddingSub] = useState(false);
+  const [addingTag, setAddingTag] = useState(false);
+  const [placeEditing, setPlaceEditing] = useState(false);
   const [tag, setTag] = useState("");
   const [note, setNote] = useState("");
   const [editingNote, setEditingNote] = useState<string>();
@@ -102,7 +106,8 @@ function TaskWindowContent({
       !!tag.trim());
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => {
-      if (dirty) event.preventDefault();
+      const unsavedField = Array.from(dialog.current?.querySelectorAll<HTMLInputElement>('input:not([type=checkbox]):not([type=file])') ?? []).some(field => field.value !== field.defaultValue);
+      if (dirty || unsavedField) event.preventDefault();
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
@@ -125,7 +130,31 @@ function TaskWindowContent({
     ? firstDescriptionImage(task.notes)
     : undefined;
   const cover =
-    task.coverImage ?? (!details.coverHidden ? tickTickImage ?? attachments.find(a => a.type === "photo")?.url : undefined);
+    task.coverImage ??
+    (!details.coverHidden
+      ? (tickTickImage ?? attachments.find((a) => a.type === "photo")?.url)
+      : undefined);
+  const coverChoices = [
+    ...new Set(
+      [
+        task.coverImage,
+        ...attachments.filter((a) => a.type === "photo").map((a) => a.url),
+      ].filter((value): value is string => !!value),
+    ),
+  ];
+  function stepCover(direction: number) {
+    const index = coverChoices.indexOf(cover ?? "");
+    const next =
+      index < 0
+        ? direction > 0
+          ? 0
+          : coverChoices.length - 1
+        : (index + direction + coverChoices.length) % coverChoices.length;
+    patch({
+      coverImage: coverChoices[next],
+      details: { ...details, coverHidden: false },
+    });
+  }
   const route = yandexRoute(details);
   const workflow =
     task.planning?.workflow === "ready"
@@ -221,7 +250,10 @@ function TaskWindowContent({
       setTag("");
       return;
     }
-    if (updateDetails({ tags: [...(details.tags ?? []), next] })) setTag("");
+    if (updateDetails({ tags: [...(details.tags ?? []), next] })) {
+      setTag("");
+      setAddingTag(false);
+    }
   }
   function addLink() {
     const url = window.prompt("HTTPS-ссылка на файл или страницу");
@@ -287,7 +319,10 @@ function TaskWindowContent({
         ? "Выполняется"
         : tickTick.lastSyncError
           ? "Ошибка"
-          : tickTick.dirty || !syncLink || syncLink.local !== localFingerprint(task, state) || !!syncLink.done !== task.done
+          : tickTick.dirty ||
+              !syncLink ||
+              syncLink.local !== localFingerprint(task, state) ||
+              !!syncLink.done !== task.done
             ? "Ожидает"
             : task.details || task.subtasks?.length || task.repeat
               ? "Частично синхронизировано"
@@ -306,7 +341,11 @@ function TaskWindowContent({
         aria-label={task.name}
         onKeyDown={(e) => {
           if (e.key === "Escape") {
+            // Commit existing blur-saved fields before the editor can unmount.
+            if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();
             if (preview) setPreview(undefined);
+            else if (menu) setMenu(false);
+            else if (coverMenu) setCoverMenu(false);
             else close();
           }
           if (e.key === "Tab") {
@@ -327,11 +366,16 @@ function TaskWindowContent({
           }
         }}
       >
+        {isTaskReviewMode() && (
+          <small className="twin-review-label">
+            Проверочный режим · локальная игра, без данных аккаунта
+          </small>
+        )}
         <h2 className="twin-sr-title">{task.name}</h2>
         <div className="twin-toolbar">
           <div>
             <button aria-label="Назад" onClick={close}>
-              ←
+              <Icon name="arrowLeft" size={24} />
             </button>
             <strong>Задача</strong>
           </div>
@@ -361,7 +405,7 @@ function TaskWindowContent({
                 aria-expanded={menu}
                 onClick={() => setMenu(!menu)}
               >
-                ⋯
+                <Icon name="more" size={24} />
               </button>
               {menu && (
                 <div className="twin-menu">
@@ -383,7 +427,7 @@ function TaskWindowContent({
               )}
             </div>
             <button aria-label="Закрыть" onClick={close}>
-              ×
+              <Icon name="close" size={24} />
             </button>
           </div>
         </div>
@@ -410,33 +454,33 @@ function TaskWindowContent({
             />
             <div className="twin-projects">
               <label>
-                ⌂{" "}
+                <Icon name="home" size={23} />
                 <select
                   aria-label="Проект"
                   disabled={locked}
                   value={task.goalId ?? ""}
                   onChange={(e) => patch({ goalId: e.target.value || null })}
                 >
-                  <option value="">Без проекта</option>
+                  <option value="">Проект: не выбран</option>
                   {state.goals.map((g) => (
                     <option key={g.id} value={g.id}>
-                      {g.name}
+                      Проект: {g.name}
                     </option>
                   ))}
                 </select>
               </label>
               <label>
-                ⚑{" "}
+                <Icon name="flag" size={22} />
                 <select
                   aria-label="Этап"
                   disabled={locked || !c.goal}
                   value={task.stageId ?? ""}
                   onChange={(e) => patch({ stageId: e.target.value || null })}
                 >
-                  <option value="">Без этапа</option>
+                  <option value="">Этап: не выбран</option>
                   {c.goal?.stages?.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.name}
+                      Этап: {s.name}
                     </option>
                   ))}
                 </select>
@@ -457,13 +501,33 @@ function TaskWindowContent({
                 <span>▧</span>Обложка задачи
               </div>
             )}
+            {cover && coverChoices.length > 1 && (
+              <>
+                <button
+                  className="twin-cover-prev"
+                  disabled={locked}
+                  aria-label="Предыдущая обложка"
+                  onClick={() => stepCover(-1)}
+                >
+                  <Icon name="back" size={24} />
+                </button>
+                <button
+                  className="twin-cover-next"
+                  disabled={locked}
+                  aria-label="Следующая обложка"
+                  onClick={() => stepCover(1)}
+                >
+                  <Icon name="arrow" size={24} />
+                </button>
+              </>
+            )}
             <button
               className="twin-cover-edit"
               aria-label="Изменить обложку"
               disabled={locked || busy}
               onClick={() => setCoverMenu(!coverMenu)}
             >
-              ✎
+              <Icon name="pencil" size={23} />
             </button>
             {coverMenu && (
               <div className="twin-menu">
@@ -570,7 +634,7 @@ function TaskWindowContent({
                         if (value !== null) patch({ weight: Number(value) });
                       }}
                     >
-                      ⓘ
+                      <Icon name="info" size={22} />
                     </button>
                   </span>
                   <strong>+{Math.round(forecast.share)}%</strong>
@@ -602,15 +666,25 @@ function TaskWindowContent({
                 onChange={(e) => {
                   if (e.target.value === "completed") onComplete?.(task);
                   else if (task.done) {
-                  const selectedWorkflow = e.target.value as 'planned' | 'doing' | 'waiting';
-                  onUndo?.(task);
-                  onChange(current => {
-                    if (current.quests.find(q => q.id === task.id)?.done) return current;
-                    try { return updateTaskSettings(current, task.id, { planning: { ...current.quests.find(q => q.id === task.id)?.planning, workflow: selectedWorkflow } }); }
-                    catch { return current; }
-                  });
-                }
-                  else
+                    const selectedWorkflow = e.target.value as
+                      "planned" | "doing" | "waiting";
+                    onUndo?.(task);
+                    onChange((current) => {
+                      if (current.quests.find((q) => q.id === task.id)?.done)
+                        return current;
+                      try {
+                        return updateTaskSettings(current, task.id, {
+                          planning: {
+                            ...current.quests.find((q) => q.id === task.id)
+                              ?.planning,
+                            workflow: selectedWorkflow,
+                          },
+                        });
+                      } catch {
+                        return current;
+                      }
+                    });
+                  } else
                     patch({
                       planning: {
                         ...task.planning,
@@ -642,8 +716,16 @@ function TaskWindowContent({
         <section className="twin-parameters twin-card">
           <h3>Параметры задачи</h3>
           <div>
-            <label>
-              <span>⚑ Приоритет</span>
+            <label
+              className="twin-priority"
+              data-priority={
+                task.priority === "high" && task.planning?.urgent
+                  ? "critical"
+                  : (task.priority ?? "normal")
+              }
+            >
+              <Icon name="flag" size={35} />
+              <span>Приоритет</span>
               <select
                 aria-label="Приоритет задачи"
                 disabled={locked}
@@ -672,7 +754,8 @@ function TaskWindowContent({
               </select>
             </label>
             <label>
-              <span>▥ Сложность</span>
+              <Icon name="statistics" size={35} />
+              <span>Сложность</span>
               <select
                 aria-label="Сложность"
                 disabled={!canChangeDifficulty(task) || locked}
@@ -687,7 +770,8 @@ function TaskWindowContent({
               </select>
             </label>
             <label>
-              <span>▣ Дедлайн (физический)</span>
+              <Icon name="calendar" size={35} />
+              <span>Дедлайн (физический)</span>
               <input
                 aria-label="Физический дедлайн"
                 type="datetime-local"
@@ -697,23 +781,55 @@ function TaskWindowContent({
               />
             </label>
             <label>
-              <span>▱ Оценка времени, мин</span>
-              <input
+              <Icon name="layers" size={35} />
+              <span>Оценка времени</span>
+              <select
                 aria-label="Оценка времени"
-                type="number"
                 disabled={locked}
-                min={1}
-                max={43200}
-                key={task.estimateMinutes ?? "empty"}
-                defaultValue={task.estimateMinutes ?? ""}
-                onBlur={(e) =>
-                  patch({
-                    estimateMinutes: e.target.value
-                      ? Number(e.target.value)
-                      : null,
-                  })
-                }
-              />
+                value={task.estimateMinutes ?? ""}
+                onChange={(e) => {
+                  if (e.target.value === "custom") {
+                    const value = window.prompt(
+                      "Оценка времени в минутах (1–43200)",
+                      String(task.estimateMinutes ?? 60),
+                    );
+                    if (value !== null)
+                      patch({ estimateMinutes: Number(value) });
+                  } else
+                    patch({
+                      estimateMinutes: e.target.value
+                        ? Number(e.target.value)
+                        : null,
+                    });
+                }}
+              >
+                <option value="">Не задана</option>
+                {[
+                  ...new Set([
+                    5,
+                    15,
+                    30,
+                    45,
+                    60,
+                    90,
+                    120,
+                    180,
+                    240,
+                    360,
+                    480,
+                    ...(task.estimateMinutes ? [task.estimateMinutes] : []),
+                  ]),
+                ]
+                  .sort((a, b) => a - b)
+                  .map((minutes) => (
+                    <option key={minutes} value={minutes}>
+                      {minutes % 60 === 0
+                        ? `${minutes / 60} ч`
+                        : `${minutes} мин`}
+                    </option>
+                  ))}
+                <option value="custom">Другое время…</option>
+              </select>
             </label>
           </div>
         </section>
@@ -745,7 +861,8 @@ function TaskWindowContent({
             <div className="twin-plan-grid">
               <section className="twin-card">
                 <h3>
-                  ☑ Чек-лист <small>(подзадачи)</small>
+                  <Icon name="quests" size={24} /> Чек-лист{" "}
+                  <small>(подзадачи)</small>
                   <i>
                     {task.subtasks?.filter((s) => s.done).length ?? 0}/
                     {task.subtasks?.length ?? 0}
@@ -814,7 +931,7 @@ function TaskWindowContent({
                           }
                         }}
                       >
-                        ⠿
+                        <Icon name="grip" size={19} />
                       </button>
                       <button
                         disabled={locked}
@@ -827,45 +944,69 @@ function TaskWindowContent({
                           })
                         }
                       >
-                        ×
+                        <Icon name="close" size={24} />
                       </button>
                     </li>
                   ))}
                 </ul>
-                {!locked && (
-                  <form
-                    className="twin-inline"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      if (
-                        sub.trim() &&
-                        patch({
-                          subtasks: [
-                            ...(task.subtasks ?? []),
-                            {
-                              id: crypto.randomUUID(),
-                              title: sub.trim(),
-                              done: false,
-                            },
-                          ],
-                        })
-                      )
-                        setSub("");
-                    }}
-                  >
-                    <input
-                      aria-label="Новый пункт"
-                      placeholder="＋ Добавить пункт"
-                      value={sub}
-                      maxLength={100}
-                      onChange={(e) => setSub(e.target.value)}
-                    />
-                    <button disabled={!sub.trim()}>Добавить</button>
-                  </form>
-                )}
+                {!locked &&
+                  (!addingSub ? (
+                    <button
+                      className="twin-add-sub"
+                      onClick={() => setAddingSub(true)}
+                    >
+                      <Icon name="plus" size={23} /> Добавить пункт
+                    </button>
+                  ) : (
+                    <form
+                      className="twin-inline"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (
+                          sub.trim() &&
+                          patch({
+                            subtasks: [
+                              ...(task.subtasks ?? []),
+                              {
+                                id: crypto.randomUUID(),
+                                title: sub.trim(),
+                                done: false,
+                              },
+                            ],
+                          })
+                        ) {
+                          setSub("");
+                          setAddingSub(false);
+                        }
+                      }}
+                    >
+                      <input
+                        aria-label="Новый пункт"
+                        placeholder="Новый пункт"
+                        autoFocus
+                        value={sub}
+                        maxLength={100}
+                        onChange={(e) => setSub(e.target.value)}
+                      />
+                      <button disabled={!sub.trim()}>Добавить</button>
+                      <button
+                        type="button"
+                        aria-label="Отменить добавление пункта"
+                        onClick={() => {
+                          setSub("");
+                          setAddingSub(false);
+                        }}
+                      >
+                        <Icon name="close" size={18} />
+                      </button>
+                    </form>
+                  ))}
               </section>
               <section className="twin-card">
-                <h3>▣ Сроки и повтор</h3>
+                <h3>
+                  <Icon name="calendar" size={24} />
+                  Сроки и повтор
+                </h3>
                 <div className="twin-dates">
                   <label>
                     Дата начала
@@ -946,7 +1087,10 @@ function TaskWindowContent({
                     />
                   </label>
                   <label>
-                    ⟳ Повтор
+                    <span className="twin-field-caption">
+                      <Icon name="repeat" size={20} />
+                      Повтор
+                    </span>
                     <select
                       aria-label="Повтор"
                       disabled={locked}
@@ -966,8 +1110,18 @@ function TaskWindowContent({
                     </select>
                   </label>
                   <label>
-                    ♧ Напоминание
-                    <span className="twin-empty">Настраивается в TickTick</span>
+                    <span className="twin-field-caption">
+                      <Icon name="bell" size={20} />
+                      Напоминание
+                    </span>
+                    <select
+                      aria-label="Напоминание"
+                      title="Напоминания настраиваются в TickTick; текущая интеграция не передаёт это поле"
+                      disabled
+                      value="external"
+                    >
+                      <option value="external">В TickTick</option>
+                    </select>
                   </label>
                 </div>
                 {task.tickTickRepeatFlag && (
@@ -975,44 +1129,150 @@ function TaskWindowContent({
                 )}
               </section>
               <section className="twin-card">
-                <h3>♧ Место выполнения</h3>
+                <h3>
+                  <Icon name="location" size={24} />
+                  Место выполнения
+                </h3>
                 <div className="twin-place">
-                  <input
-                    aria-label="Название места"
-                    placeholder="Название места"
-                    maxLength={200}
-                    disabled={locked}
-                    key={details.place ?? "place"}
-                    defaultValue={details.place ?? ""}
-                    onBlur={(e) => updateDetails({ place: e.target.value })}
-                  />
-                  <input
-                    aria-label="Адрес"
-                    placeholder="Введите реальный адрес"
-                    maxLength={500}
-                    disabled={locked}
-                    key={details.address ?? "address"}
-                    defaultValue={details.address ?? ""}
-                    onBlur={(e) => updateDetails({ address: e.target.value })}
-                  />
+                  <button
+                    className="twin-place-picker"
+                    aria-label="Настроить место выполнения"
+                    aria-expanded={placeEditing}
+                    aria-controls="task-place-editor"
+                    title={details.address || "Указать название и адрес"}
+                    onClick={() => setPlaceEditing(!placeEditing)}
+                  >
+                    <span>{details.place || details.address || (Number.isFinite(details.latitude) && Number.isFinite(details.longitude) ? `${details.latitude}, ${details.longitude}` : "Указать место")}</span>
+                    <Icon name="chevronDown" size={19} />
+                  </button>
                   {route ? (
                     <a
+                      className="twin-map-button"
+                      aria-label="Открыть место на карте"
+                      href={`https://yandex.ru/maps/?text=${encodeURIComponent(details.address || `${details.latitude},${details.longitude}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Icon name="map" size={25} />
+                    </a>
+                  ) : (
+                    <button
+                      className="twin-map-button"
+                      aria-label="Открыть место на карте"
+                      disabled
+                    >
+                      <Icon name="map" size={25} />
+                    </button>
+                  )}
+                  {route ? (
+                    <a
+                      aria-label="Маршрут в Яндекс Картах"
                       className="twin-route"
                       href={route}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      📍 Маршрут в Яндекс Картах ↗
+                      <Icon name="location" size={30} />
+                      <span>
+                        Маршрут<small>в Яндекс Картах</small>
+                      </span>
+                      <Icon name="external" size={18} />
                     </a>
                   ) : (
-                    <button className="twin-route" disabled>
-                      Маршрут в Яндекс Картах
+                    <button
+                      className="twin-route"
+                      aria-label="Маршрут в Яндекс Картах"
+                      disabled
+                    >
+                      <Icon name="location" size={30} />
+                      <span>
+                        Маршрут<small>в Яндекс Картах</small>
+                      </span>
+                      <Icon name="external" size={18} />
                     </button>
                   )}
                 </div>
+                {placeEditing && (
+                  <div id="task-place-editor" className="twin-place-editor">
+                    <label>
+                      Название места
+                      <input
+                        aria-label="Название места"
+                        disabled={locked}
+                        key={details.place ?? "place"}
+                        defaultValue={details.place ?? ""}
+                        maxLength={200}
+                        onBlur={(e) => updateDetails({ place: e.target.value })}
+                      />
+                    </label>
+                    <label>
+                      Адрес
+                      <input
+                        aria-label="Адрес"
+                        disabled={locked}
+                        key={details.address ?? "address"}
+                        defaultValue={details.address ?? ""}
+                        maxLength={500}
+                        onBlur={(e) =>
+                          updateDetails({
+                            address: e.target.value,
+                            latitude: undefined,
+                            longitude: undefined,
+                          })
+                        }
+                      />
+                    </label>
+                    <label>
+                      Широта
+                      <input
+                        aria-label="Широта"
+                        type="number"
+                        min={-90}
+                        max={90}
+                        step="any"
+                        disabled={locked}
+                        key={details.latitude ?? "latitude"}
+                        defaultValue={details.latitude ?? ""}
+                        onBlur={(e) =>
+                          updateDetails({
+                            latitude: e.target.value
+                              ? Number(e.target.value)
+                              : undefined,
+                          })
+                        }
+                      />
+                    </label>
+                    <label>
+                      Долгота
+                      <input
+                        aria-label="Долгота"
+                        type="number"
+                        min={-180}
+                        max={180}
+                        step="any"
+                        disabled={locked}
+                        key={details.longitude ?? "longitude"}
+                        defaultValue={details.longitude ?? ""}
+                        onBlur={(e) =>
+                          updateDetails({
+                            longitude: e.target.value
+                              ? Number(e.target.value)
+                              : undefined,
+                          })
+                        }
+                      />
+                    </label>
+                    <button onClick={() => setPlaceEditing(false)}>
+                      Готово
+                    </button>
+                  </div>
+                )}
               </section>
               <section className="twin-card">
-                <h3>♧ Теги</h3>
+                <h3>
+                  <Icon name="tag" size={24} />
+                  Теги
+                </h3>
                 <div className="twin-tags">
                   {(details.tags ?? []).map((t) => (
                     <span key={t}>
@@ -1026,12 +1286,24 @@ function TaskWindowContent({
                           })
                         }
                       >
-                        ×
+                        <Icon name="close" size={24} />
                       </button>
                     </span>
                   ))}
+                  {!locked && !addingTag && (
+                    <button
+                      className="twin-tag-add"
+                      aria-label="Добавить тег"
+                      onClick={() => setAddingTag(true)}
+                    >
+                      <Icon name="plus" size={27} />
+                    </button>
+                  )}
+                  {!(details.tags ?? []).length && !addingTag && (
+                    <small>Тегов пока нет</small>
+                  )}
                 </div>
-                {!locked && (
+                {!locked && addingTag && (
                   <form
                     className="twin-inline"
                     onSubmit={(e) => {
@@ -1043,6 +1315,7 @@ function TaskWindowContent({
                       aria-label="Новый тег"
                       list="task-existing-tags"
                       placeholder="Добавить тег"
+                      autoFocus
                       value={tag}
                       maxLength={50}
                       onChange={(e) => setTag(e.target.value)}
@@ -1056,7 +1329,19 @@ function TaskWindowContent({
                         <option key={t} value={t} />
                       ))}
                     </datalist>
-                    <button disabled={!tag.trim()}>＋</button>
+                    <button aria-label="Добавить тег" disabled={!tag.trim()}>
+                      <Icon name="check" size={20} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Отменить добавление тега"
+                      onClick={() => {
+                        setTag("");
+                        setAddingTag(false);
+                      }}
+                    >
+                      <Icon name="close" size={18} />
+                    </button>
                   </form>
                 )}
               </section>
@@ -1073,8 +1358,11 @@ function TaskWindowContent({
                 />
               </Suspense>
               <section className="twin-card twin-sync">
+                <span className="twin-sync-emblem">
+                  <Icon name="check" size={35} />
+                </span>
                 <div>
-                  <h3>✓ Синхронизация с TickTick</h3>
+                  <h3>Синхронизация с TickTick</h3>
                   <small>
                     {syncState}
                     {tickTick?.connection?.lastSync &&
@@ -1337,6 +1625,7 @@ function TaskWindowContent({
         <footer className="twin-foot">
           {onAdvanced && (
             <button
+              className="twin-settings"
               aria-label="Расширенные настройки"
               onClick={() => {
                 if (
@@ -1348,18 +1637,22 @@ function TaskWindowContent({
                 }
               }}
             >
-              <Icon name="settings" size={18} /> Расширенные настройки
+              <Icon name="settings" size={24} /> Расширенные настройки
             </button>
           )}
           {onDelete && (
             <button className="twin-delete" onClick={remove}>
-              ♜ Удалить
+              <Icon name="trash" size={24} /> Удалить
             </button>
           )}
           {onDuplicate && (
-            <button onClick={() => onDuplicate(task)}>⧉ Дублировать</button>
+            <button onClick={() => onDuplicate(task)}>
+              <Icon name="copy" size={23} /> Дублировать
+            </button>
           )}
-          <button onClick={template}>♧ Сохранить как шаблон</button>
+          <button onClick={template}>
+            <Icon name="bookmark" size={23} /> Сохранить как шаблон
+          </button>
           <button disabled={busy} onClick={save}>
             Сохранить
           </button>
@@ -1383,7 +1676,7 @@ function TaskWindowContent({
               }
               onClick={() => onComplete(task)}
             >
-              ✓ Выполнить
+              <Icon name="check" size={26} /> Выполнить
             </button>
           )}
         </footer>
@@ -1402,7 +1695,7 @@ function TaskWindowContent({
               aria-label="Закрыть изображение"
               onClick={() => setPreview(undefined)}
             >
-              ×
+              <Icon name="close" size={24} />
             </button>
             <img src={preview} alt="Изображение задачи" />
           </div>

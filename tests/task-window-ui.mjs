@@ -45,6 +45,16 @@ try {
     timezoneId: "Europe/Moscow",
     locale: "ru-RU",
   });
+  async function touchScreenshot(path, savedState) {
+    const touch = await browser.newContext({ viewport:{width:390,height:3200}, isMobile:true, hasTouch:true, deviceScaleFactor:1, locale:'ru-RU', timezoneId:'Europe/Moscow' });
+    if(savedState) await touch.addInitScript(state=>localStorage.setItem('play-your-life-v1',state),savedState);
+    const page = await touch.newPage(); page.on('pageerror',e=>errors.push(e.message));
+    await page.goto(`${origin}/?local-preview=1#/tasks/english-1`);
+    const window = page.locator('section.twin'); await window.waitFor();
+    await window.locator('.focus').waitFor();
+    assert.ok(await window.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'touch viewport overflow');
+    await window.screenshot({path}); await touch.close();
+  }
   const p = await context.newPage();
   p.on("pageerror", (e) => errors.push(e.message));
   await p.goto(`${origin}/?local-preview=1#/tasks/english-1`);
@@ -84,6 +94,7 @@ try {
       });
     }
   }
+  await touchScreenshot('work/task-window/mobile.png');
   await p.setViewportSize({ width: 1440, height: 1200 });
   await dialog
     .getByLabel("Название задачи", { exact: true })
@@ -96,11 +107,27 @@ try {
     await dialog.getByLabel("Название задачи", { exact: true }).inputValue(),
     "Проверка сохранения 🧭",
   );
+  const favorite = dialog.getByRole("button", {
+    name: "Избранное",
+    exact: true,
+  });
+  await favorite.click();
+  assert.equal(await favorite.getAttribute("aria-pressed"), "true");
+  await favorite.click();
+  assert.equal(await favorite.getAttribute("aria-pressed"), "false");
   await dialog.getByLabel("Проект", { exact: true }).selectOption("b2");
+  await dialog.getByLabel("Оценка времени", { exact: true }).selectOption("60");
+  assert.equal(
+    await dialog.getByLabel("Оценка времени", { exact: true }).inputValue(),
+    "60",
+  );
   await dialog.getByLabel("Статус", { exact: true }).selectOption("doing");
   await dialog
     .getByLabel("Приоритет задачи", { exact: true })
     .selectOption("critical");
+  await dialog
+    .getByRole("button", { name: "Добавить пункт", exact: true })
+    .click();
   await dialog
     .getByLabel("Новый пункт", { exact: true })
     .fill("Проверить маршрут");
@@ -109,20 +136,28 @@ try {
     .getByLabel("Выполнить: Проверить маршрут", { exact: true })
     .check();
   await dialog
+    .getByRole("button", { name: "Настроить место выполнения", exact: true })
+    .click();
+  await dialog
     .getByLabel("Адрес", { exact: true })
     .fill("Москва, Красная площадь");
   await dialog
-    .getByRole("heading", { name: "♧ Место выполнения", exact: true })
+    .getByRole("heading", { name: "Место выполнения", exact: true })
     .click();
   const href = await dialog
-    .getByRole("link", { name: "📍 Маршрут в Яндекс Картах ↗", exact: true })
+    .getByRole("link", { name: "Маршрут в Яндекс Картах", exact: true })
     .getAttribute("href");
   assert.equal(
     new URL(href).searchParams.get("rtext"),
     "~Москва, Красная площадь",
   );
+  await dialog
+    .getByRole("button", { name: "Добавить тег", exact: true })
+    .click();
   await dialog.getByLabel("Новый тег", { exact: true }).fill("Проверка");
-  await dialog.getByRole("button", { name: "＋", exact: true }).click();
+  await dialog
+    .getByRole("button", { name: "Добавить тег", exact: true })
+    .click();
   await dialog.getByRole("tab", { name: "Описание", exact: false }).click();
   await dialog
     .getByLabel("Описание задачи", { exact: true })
@@ -148,6 +183,44 @@ try {
       .count(),
     1,
   );
+  const firstCover = await dialog
+    .locator(".twin-cover-image img")
+    .getAttribute("src");
+  await dialog
+    .getByLabel("Добавить фото", { exact: true })
+    .setInputFiles("public/icon-192.png");
+  await dialog
+    .getByRole("button", { name: "Следующая обложка", exact: true })
+    .waitFor();
+  await dialog
+    .getByRole("button", { name: "Следующая обложка", exact: true })
+    .click();
+  assert.notEqual(
+    await dialog.locator(".twin-cover-image img").getAttribute("src"),
+    firstCover,
+  );
+  await dialog
+    .getByRole("button", { name: "Предыдущая обложка", exact: true })
+    .click();
+  assert.equal(
+    await dialog.locator(".twin-cover-image img").getAttribute("src"),
+    firstCover,
+  );
+  await dialog
+    .getByRole("button", { name: "Изменить обложку", exact: true })
+    .click();
+  assert.equal(
+    await dialog
+      .getByRole("button", {
+        name: "Использовать первое фото TickTick",
+        exact: true,
+      })
+      .isDisabled(),
+    true,
+  );
+  await dialog
+    .getByRole("button", { name: "Изменить обложку", exact: true })
+    .click();
   await dialog.getByRole("tab", { name: "История", exact: false }).click();
   await dialog.getByText("Изменено: проект", { exact: true }).waitFor();
   await dialog.getByRole("button", { name: "Сохранить", exact: true }).click();
@@ -162,6 +235,9 @@ try {
     await dialog.getByLabel("Приоритет задачи", { exact: true }).inputValue(),
     "critical",
   );
+  await dialog
+    .getByRole("button", { name: "Настроить место выполнения", exact: true })
+    .click();
   assert.equal(
     await dialog.getByLabel("Адрес", { exact: true }).inputValue(),
     "Москва, Красная площадь",
@@ -184,19 +260,101 @@ try {
     1,
   );
   await dialog.getByRole("tab", { name: "Планирование", exact: false }).click();
-  const xpBefore = await p.evaluate(() => JSON.parse(localStorage.getItem('play-your-life-v1')).spheres.english.xp);
-  await dialog.getByRole('button', {name:'✓ Выполнить',exact:true}).click();
+  if (await dialog.getByRole("button", { name: "Готово", exact: true }).count())
+    await dialog.getByRole("button", { name: "Готово", exact: true }).click();
+  for (const width of [1440, 390]) {
+    await p.setViewportSize({ width, height: width === 390 ? 3000 : 1600 });
+    assert.ok(
+      await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth + 1),
+    );
+    await dialog.screenshot({
+      path: `work/task-window/${width === 390 ? "mobile" : "desktop"}-populated.png`,
+    });
+  }
+  await p.setViewportSize({ width: 1440, height: 1200 });
+  await touchScreenshot('work/task-window/mobile-populated.png',await p.evaluate(()=>localStorage.getItem('play-your-life-v1')));
+  const countBeforeDuplicate = await p.evaluate(
+    () => JSON.parse(localStorage.getItem("play-your-life-v1")).quests.length,
+  );
+  await dialog
+    .locator(".twin-toolbar")
+    .getByRole("button", { name: "Дублировать", exact: true })
+    .click();
+  await p.waitForFunction(
+    (count) =>
+      JSON.parse(localStorage.getItem("play-your-life-v1")).quests.length ===
+      count + 1,
+    countBeforeDuplicate,
+  );
+  const [templateDownload] = await Promise.all([
+    p.waitForEvent("download"),
+    dialog
+      .locator(".twin-foot")
+      .getByRole("button", { name: "Сохранить как шаблон", exact: true })
+      .click(),
+  ]);
+  assert.equal(
+    templateDownload.suggestedFilename(),
+    "play-your-life-task-template.json",
+  );
+  const xpBefore = await p.evaluate(
+    () =>
+      JSON.parse(localStorage.getItem("play-your-life-v1")).spheres.english.xp,
+  );
+  await dialog.getByRole("button", { name: "Выполнить", exact: true }).click();
   await p.reload();
-  dialog = p.locator('section.twin');
+  dialog = p.locator("section.twin");
   await dialog.waitFor();
-  assert.equal(await dialog.getByLabel('Статус',{exact:true}).inputValue(), 'completed');
-  const xpAfter = await p.evaluate(() => JSON.parse(localStorage.getItem('play-your-life-v1')).spheres.english.xp);
+  assert.equal(
+    await dialog.getByLabel("Статус", { exact: true }).inputValue(),
+    "completed",
+  );
+  const xpAfter = await p.evaluate(
+    () =>
+      JSON.parse(localStorage.getItem("play-your-life-v1")).spheres.english.xp,
+  );
   assert.ok(xpAfter >= xpBefore);
-  await dialog.getByLabel('Статус',{exact:true}).selectOption('doing');
-  assert.equal(await dialog.getByLabel('Статус',{exact:true}).inputValue(), 'doing');
-  await dialog.getByRole('button', {name:'✓ Выполнить',exact:true}).click();
+  await dialog.getByLabel("Статус", { exact: true }).selectOption("doing");
+  assert.equal(
+    await dialog.getByLabel("Статус", { exact: true }).inputValue(),
+    "doing",
+  );
+  await dialog.getByRole("button", { name: "Выполнить", exact: true }).click();
   await p.reload();
-  assert.equal(await p.evaluate(() => JSON.parse(localStorage.getItem('play-your-life-v1')).spheres.english.xp), xpAfter, 'повторное выполнение не выдаёт XP дважды');
+  assert.equal(
+    await p.evaluate(
+      () =>
+        JSON.parse(localStorage.getItem("play-your-life-v1")).spheres.english
+          .xp,
+    ),
+    xpAfter,
+    "повторное выполнение не выдаёт XP дважды",
+  );
+  dialog = p.locator("section.twin");
+  await dialog.waitFor();
+  p.once("dialog", (d) => d.dismiss());
+  await dialog
+    .locator(".twin-foot")
+    .getByRole("button", { name: "Удалить", exact: true })
+    .click();
+  assert.ok(
+    await p.evaluate(() =>
+      JSON.parse(localStorage.getItem("play-your-life-v1")).quests.some(
+        (q) => q.id === "english-1",
+      ),
+    ),
+  );
+  p.once("dialog", (d) => d.accept());
+  await dialog
+    .locator(".twin-foot")
+    .getByRole("button", { name: "Удалить", exact: true })
+    .click();
+  await p.waitForFunction(
+    () =>
+      !JSON.parse(localStorage.getItem("play-your-life-v1")).quests.some(
+        (q) => q.id === "english-1",
+      ),
+  );
   assert.deepEqual(errors, []);
   console.log(
     "PASS: 6 widths, tabs, title/description save + reload, project, status, priority, checklist, tags, notes, real history, safe text, Yandex URL.",

@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { GameState, Quest } from '../game';
 import {
@@ -23,18 +23,42 @@ type Props = {
   onCreate: () => void;
   onStart: () => void;
   onNavigate: (page: string) => void;
-  onOpenTask: (id: string) => void;
-  onOpenGoal: (id: string) => void;
   renderQuest: (quest: Quest) => ReactNode;
 };
 
 export default function HomeDashboard({
   state, onSphere, onQuests, onIntegration, onCreate, onStart,
-  onNavigate, onOpenTask, onOpenGoal, renderQuest,
+  onNavigate, renderQuest,
 }: Props) {
   const tickTick = useContext(TickTickContext);
   const [theme] = useMenuTheme();
-  const now = new Date();
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    let timer = 0;
+    const scheduleMidnight = () => {
+      window.clearTimeout(timer);
+      const nextDay = new Date();
+      nextDay.setHours(24, 0, 2, 0);
+      timer = window.setTimeout(() => {
+        setNow(new Date());
+        scheduleMidnight();
+      }, Math.max(0, nextDay.getTime() - Date.now()));
+    };
+    const refreshWhenVisible = () => {
+      if (!document.hidden) {
+        setNow(new Date());
+        scheduleMidnight();
+      }
+    };
+    scheduleMidnight();
+    window.addEventListener('focus', refreshWhenVisible);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('focus', refreshWhenVisible);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, []);
   // Главная использует тот же точный день и порядок, что календарь и вкладка
   // «Задачи на сегодня»: задачи без даты, просроченные и будущие не попадают.
   const todayKey = localDate(now);
@@ -57,7 +81,6 @@ export default function HomeDashboard({
         demo={state.profile.mode === 'demo'}
         onContinue={onQuests}
         onNavigate={onNavigate}
-        onShowTask={peak => peak.taskId ? onOpenTask(peak.taskId) : onOpenGoal(peak.goalId)}
         onChooseFocus={() => onSphere(null)}
         onStart={onStart}
       />

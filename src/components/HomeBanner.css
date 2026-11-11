@@ -1,146 +1,81 @@
-/* Главный баннер «Ты творец своей истории» (0.41.0). Компоновка зависит от ширины самого баннера, а не экрана: слева меню занимает место. */
-.home-dashboard > .peak-banner { grid-column: 1 / -1; display: block; padding: 0; background: none; border: 0; box-shadow: none; }
-.peak-banner { container: peak / inline-size; position: relative; color: #14213d; }
-.peak-stage {
-  position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch;
-  gap: clamp(16px, 3cqi, 40px); min-height: clamp(340px, 26cqi, 460px); padding: clamp(22px, 2.6cqi, 40px) clamp(22px, 3cqi, 44px);
-  border-radius: 26px; border: 1.5px solid rgba(255, 255, 255, 0.95);
-  background: linear-gradient(115deg, #d4e6ff 0%, #e8eefc 38%, #fbe9e2 100%);
-  box-shadow: 0 18px 44px rgba(70, 100, 190, 0.26), inset 0 1px 0 #fff;
+/* Адаптивный баннер «Следующая вершина» — данные проектов и этапов остаются HTML. */
+.home-dashboard > .peak-banner { grid-column: 1 / -1; min-width: 0; }
+.peak-banner { --peak-bg: #06152b; --peak-panel: #0a2343; --peak-gold: #ffd36b; --peak-muted: #b8c9e4; container: peak / inline-size; color: #f5f7ff; }
+.next-peak-panel { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; gap: clamp(14px, 2cqi, 24px); min-width: 0; padding: clamp(18px, 3cqi, 38px); border: 2px solid var(--peak-gold); border-radius: clamp(20px, 3cqi, 40px); background: radial-gradient(ellipse at 90% 25%, #153969 0%, transparent 40%), linear-gradient(145deg, #0a2343 0%, #06152b 80%); box-shadow: 0 18px 46px #020a1680, inset 0 0 24px #ffd36b10; }
+.next-peak-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.next-peak-brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.peak-mark { width: clamp(48px, 7cqi, 78px); flex: none; }
+.next-peak-brand div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.next-peak-brand strong { color: var(--peak-gold); font-size: clamp(15px, 2.7cqi, 32px); letter-spacing: .09em; line-height: 1.1; }
+.next-peak-brand span { color: var(--peak-muted); font-size: clamp(13px, 1.8cqi, 22px); }
+.peak-controls { display: flex; align-items: center; gap: 10px; flex: none; }
+.peak-controls > span { min-width: 82px; padding: 9px 13px; border: 1px solid #829cc766; border-radius: 999px; background: #ffffff12; color: var(--peak-gold); text-align: center; font-weight: 800; }
+.peak-controls button { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid #829cc766; border-radius: 50%; background: #ffffff0d; color: #f5f7ff; cursor: pointer; }
+.peak-project-hero { position: relative; isolation: isolate; display: flex; align-items: end; min-height: clamp(180px, 25cqi, 310px); overflow: hidden; border-radius: 18px; background: linear-gradient(115deg, #071a32, #17395f); }
+.peak-project-cover { position: absolute; inset: 0 0 0 auto; z-index: -2; width: min(60%, 720px); height: 100%; object-fit: cover; }
+.peak-hero-shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, #06152b 0%, #06152be8 34%, #06152b63 68%, #06152b18 100%), linear-gradient(0deg, #06152b77, transparent 56%); }
+.peak-project-copy { width: min(100%, 800px); padding: clamp(16px, 3cqi, 34px); }
+.peak-project-copy h1 { margin: 0 0 10px; color: #f5f7ff; font-size: clamp(25px, 4cqi, 46px); font-weight: 800; line-height: 1.08; overflow-wrap: anywhere; }
+.peak-project-copy p { margin: 0 0 13px; color: var(--peak-muted); font-size: clamp(14px, 2cqi, 25px); overflow-wrap: anywhere; }
+.peak-stage-pill { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 7px; max-width: 100%; padding: 9px 14px; border: 1px solid var(--peak-gold); border-radius: 14px; background: #06152be8; color: #f5f7ff; font-size: clamp(13px, 1.7cqi, 20px); }
+.peak-stage-pill > span, .peak-stage-pill b { color: var(--peak-gold); }
+.peak-dates-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 18px; padding-bottom: 12px; border-bottom: 1px solid #7f99bc55; color: #f5f7ff; font-size: clamp(13px, 1.65cqi, 19px); }
+.peak-dates-row i { width: 1px; height: 25px; background: #91a8cb66; }
+.peak-label-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #f5f7ff; font-size: clamp(14px, 1.8cqi, 21px); }
+.peak-label-row strong { font-weight: 700; }
+.peak-label-row > span { color: var(--peak-gold); font-weight: 800; white-space: nowrap; }
+.peak-timeline, .peak-tasks { display: flex; flex-direction: column; gap: 12px; }
+.peak-time-track { position: relative; height: 16px; margin: 8px 7px 0; border: 1px solid #91a8cb88; border-radius: 999px; background: #19395d; }
+.peak-time-track > span, .peak-task-track > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ffc247, #ffe58a); transition: width .45s ease; }
+.peak-time-track > i { position: absolute; top: 50%; display: grid; place-items: center; width: 22px; height: 22px; border: 3px solid #ffc247; border-radius: 50%; background: #fff7df; transform: translate(-50%, -50%); }
+.peak-time-track > i b { position: absolute; bottom: calc(100% + 11px); left: 50%; padding: 5px 10px; border-radius: 9px; background: #ffc247; color: #17243a; font-size: 13px; white-space: nowrap; transform: translateX(-50%); }
+.peak-time-captions { display: flex; justify-content: space-between; gap: 12px; color: var(--peak-muted); font-size: 13px; }
+.peak-task-row { display: flex; align-items: center; gap: 14px; }
+.peak-task-track { flex: 1; height: 16px; overflow: hidden; border: 1px solid #91a8cb88; border-radius: 999px; background: #19395d; }
+.peak-task-row > b { min-width: 48px; color: #f5f7ff; font-size: 20px; text-align: right; }
+.peak-muted, .peak-stage-state { margin: 0; color: var(--peak-muted); }
+.peak-stage-state { padding: 18px; border-radius: 14px; background: #ffffff0b; text-align: center; }
+.peak-motivation { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 13px 18px; border: 1px solid #8ba4c655; border-radius: 999px; background: #ffffff0b; color: #f5f7ff; font-size: clamp(14px, 1.8cqi, 21px); text-align: center; }
+.peak-open-button { display: flex; align-items: center; justify-content: center; gap: 16px; align-self: center; min-width: min(360px, 100%); min-height: 58px; padding: 12px 30px; border: 1px solid #ffe9a6; border-radius: 18px; background: linear-gradient(180deg, #ffe08a, #f0ad25); box-shadow: 0 8px 22px #e8a42033; color: #17243a; font-size: clamp(17px, 2.1cqi, 24px); font-weight: 800; text-decoration: none; transition: transform .18s ease, box-shadow .18s ease; }
+.peak-open-button:hover { transform: translateY(-2px); box-shadow: 0 12px 26px #e8a42055; }
+.peak-projects-label { display: flex; justify-content: space-between; gap: 10px; color: var(--peak-muted); font-size: 14px; }
+.peak-projects-label small { color: var(--peak-gold); }
+.peak-projects { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 10px; }
+.peak-project { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 74px; padding: 10px 12px; border: 1px solid #829cc766; border-radius: 16px; background: #ffffff0a; color: #f5f7ff; text-align: left; cursor: pointer; transition: background .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.peak-project.is-active { border-color: var(--peak-gold); background: #ffd36b1b; box-shadow: 0 0 17px #ffd36b22; color: var(--peak-gold); }
+.peak-project > b { font-size: 19px; }
+.peak-project-icon { display: grid; place-items: center; width: 40px; height: 40px; flex: none; overflow: hidden; border-radius: 10px; background: #ffffff12; }
+.peak-project-icon img { width: 100%; height: 100%; object-fit: cover; }
+.peak-project-name { min-width: 0; display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; }
+.peak-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 26px 10px; text-align: center; }
+.peak-empty h2, .peak-empty p { margin: 0; }
+.peak-empty p { color: var(--peak-muted); }
+.peak-quick-links { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.peak-quick-links button, .peak-secondary-actions button { min-height: 48px; border: 1px solid #829cc766; border-radius: 14px; background: #0a2343; color: #dce7fa; cursor: pointer; }
+.peak-quick-links button { display: flex; align-items: center; justify-content: center; gap: 9px; font-weight: 700; }
+.peak-quick-links button span { color: var(--peak-gold); font-size: 21px; }
+.peak-secondary-actions { display: flex; justify-content: center; gap: 10px; }
+.peak-secondary-actions button { padding: 9px 18px; }
+.peak-banner button:focus-visible, .peak-banner a:focus-visible { outline: 3px solid #ffd36b; outline-offset: 3px; }
+@container peak (max-width: 650px) {
+  .next-peak-panel { gap: 16px; padding: 16px; border-radius: 22px; }
+  .next-peak-header { align-items: flex-start; }
+  .next-peak-brand { gap: 8px; }
+  .peak-mark { width: 42px; }
+  .next-peak-brand strong { font-size: 13px; letter-spacing: .06em; }
+  .next-peak-brand span { font-size: 11px; }
+  .peak-controls { gap: 5px; }
+  .peak-controls button { width: 34px; height: 34px; }
+  .peak-controls > span { min-width: 55px; padding: 7px 8px; font-size: 12px; }
+  .peak-project-hero { min-height: 190px; }
+  .peak-project-cover { width: 78%; }
+  .peak-hero-shade { background: linear-gradient(90deg, #06152bf2 0%, #06152bd9 38%, #06152b48 100%), linear-gradient(0deg, #06152b88, transparent 70%); }
+  .peak-project-copy { padding: 16px; }
+  .peak-project-copy h1 { font-size: clamp(23px, 7cqi, 34px); }
+  .peak-dates-row { font-size: 12px; gap: 8px; }
+  .peak-dates-row i { display: none; }
+  .peak-projects { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 2px 1px 8px; }
+  .peak-project { flex: 0 0 min(250px, 78vw); scroll-snap-align: center; }
+  .peak-quick-links { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-
-/* Фон: картинка гор, затухающая слева, живые звёзды и облака. У каждой темы свой кадр (светлая — рисунок, тёмная — ночная фотография). */
-.peak-art { position: absolute; inset: 0; z-index: -2; pointer-events: none; }
-/* Рисунок/фото гор: высота баннера, прижат вправо; слева плавно уходит в небо. */
-.peak-art-frame { position: absolute; right: 0; bottom: 0; height: 100%; -webkit-mask-image: linear-gradient(90deg, transparent 4%, #000 44%); mask-image: linear-gradient(90deg, transparent 4%, #000 44%); }
-.peak-art-frame > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.peak-art-frame-light { aspect-ratio: 2000 / 888; }
-.peak-art-frame-dark { aspect-ratio: 2400 / 889; display: none; }
-:root[data-theme="dark"] .peak-art-frame-light { display: none; }
-:root[data-theme="dark"] .peak-art-frame-dark { display: block; }
-.peak-glow { position: absolute; inset: 0; width: 100%; height: 100%; }
-.peak-star { animation: peak-pulse 4.2s ease-in-out infinite; opacity: 0.35; transform-box: fill-box; }
-.peak-spark { filter: drop-shadow(0 0 16px #ffe08a); }
-.peak-cloud { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0)); filter: blur(10px); will-change: transform; }
-.peak-cloud-a { left: 4%; top: 6%; width: 38%; height: 26%; animation: peak-drift 80s ease-in-out infinite alternate; }
-.peak-cloud-b { right: 2%; top: 30%; width: 32%; height: 22%; opacity: 0.75; animation: peak-drift 105s ease-in-out -30s infinite alternate-reverse; }
-/* Светлая вуаль слева: под текстом чистое небо, как на эталоне. */
-.peak-veil { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg, rgba(244, 248, 255, 0.97) 0%, rgba(240, 246, 255, 0.9) 26%, rgba(236, 244, 255, 0.5) 44%, rgba(236, 244, 255, 0) 62%); }
-
-/* Тёмная тема: ночная фотография вместо рисунка гор, тёмная вуаль и золотые акценты вместо синих. */
-:root[data-theme="dark"] .peak-stage { border-color: rgba(140, 175, 255, 0.22); background: linear-gradient(165deg, #141d42 0%, #0e1530 45%, #080b1a 100%); box-shadow: 0 22px 54px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06); }
-:root[data-theme="dark"] .peak-banner { color: #f3f6ff; }
-:root[data-theme="dark"] .peak-veil { background: linear-gradient(90deg, rgba(8, 11, 26, 0.82) 0%, rgba(8, 11, 26, 0.58) 28%, rgba(8, 11, 26, 0.18) 48%, rgba(8, 11, 26, 0) 66%); }
-:root[data-theme="dark"] .peak-brand { color: rgba(201, 214, 242, 0.75); }
-:root[data-theme="dark"] .home-dashboard .peak-banner #peak-title { color: #f3f6ff; }
-:root[data-theme="dark"] .peak-banner h1 span:last-child { background: linear-gradient(90deg, #f5c451 0%, #ffe9a6 100%); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
-:root[data-theme="dark"] .home-dashboard .peak-banner p.peak-sub { color: rgba(201, 214, 242, 0.88); }
-:root[data-theme="dark"] .home-dashboard .peak-cta { color: #241705; background: linear-gradient(180deg, #ffe08a, #f0a81c); box-shadow: 0 14px 30px rgba(240, 168, 28, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4); }
-:root[data-theme="dark"] .peak-cta-play { background: #fff6e0; color: #f0a81c; }
-:root[data-theme="dark"] .home-dashboard .peak-cta:hover { box-shadow: 0 18px 34px rgba(240, 168, 28, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4); }
-:root[data-theme="dark"] .home-dashboard .peak-features button { color: rgba(230, 236, 252, 0.92); }
-:root[data-theme="dark"] .peak-feature-icon { background: rgba(255, 255, 255, 0.07); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08); border: 1px solid rgba(150, 175, 230, 0.22); }
-:root[data-theme="dark"] .peak-features button:hover .peak-feature-icon { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14); }
-:root[data-theme="dark"] .peak-demo { background: rgba(10, 22, 54, 0.78); color: #ffe08a; }
-
-/* Левая колонка. */
-.peak-main { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: clamp(8px, 1.4cqi, 14px); min-width: 0; max-width: 560px; }
-.peak-brand { font-size: clamp(11px, 1.5cqi, 15px); font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: rgba(40, 62, 112, 0.75); }
-.home-dashboard .peak-banner #peak-title { margin: 0; font-size: clamp(32px, 5.2cqi, 64px); line-height: 1.02; letter-spacing: -0.02em; font-weight: 800; color: #14214d; max-width: none; }
-.peak-banner h1 span { display: block; }
-.peak-banner h1 span:last-child { background: linear-gradient(90deg, #1b3f9e 0%, #2f6bf0 100%); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; padding-bottom: 0.06em; }
-.home-dashboard .peak-banner p.peak-sub { margin: 0; font-size: clamp(14px, 1.9cqi, 20px); color: rgba(61, 77, 104, 0.9); }
-.home-dashboard .peak-cta {
-  display: inline-flex; align-items: center; gap: 14px; margin-top: clamp(4px, 1cqi, 12px); padding: 8px 22px 8px 8px; border: 0; border-radius: 999px; text-align: left; color: #fff;
-  background: linear-gradient(180deg, #4f9eff, #1d5fe0); box-shadow: 0 12px 28px rgba(31, 111, 235, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-}
-.peak-cta-play { display: grid; place-items: center; width: clamp(40px, 5.2cqi, 56px); aspect-ratio: 1; border-radius: 50%; background: #fff; color: #1d5fe0; padding-left: 3px; flex: none; }
-.peak-cta-text { display: flex; flex-direction: column; gap: 2px; }
-.peak-cta-text strong { font-size: clamp(14px, 2cqi, 20px); font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; }
-.peak-cta-text small { font-size: clamp(11px, 1.4cqi, 14px); opacity: 0.88; }
-.peak-cta-arrow { margin-left: 6px; opacity: 0.9; transition: transform 0.18s ease; flex: none; }
-.home-dashboard .peak-cta:hover { transform: translateY(-2px); box-shadow: 0 18px 34px rgba(31, 111, 235, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
-.peak-cta:hover .peak-cta-arrow { transform: translateX(4px); }
-.home-dashboard .peak-cta:active { transform: translateY(0) scale(0.97); }
-.home-dashboard .peak-banner button:focus-visible { outline: 3px solid #f5c451; outline-offset: 3px; }
-
-/* Четыре возможности игры. */
-.peak-features { list-style: none; margin: auto 0 0; padding: clamp(10px, 1.6cqi, 18px) 0 0; display: flex; flex-wrap: nowrap; width: max-content; gap: clamp(10px, 1.6cqi, 22px); }
-.home-dashboard .peak-features button { display: flex; align-items: center; gap: 10px; padding: 0; border: 0; background: none; color: rgba(40, 56, 92, 0.92); text-align: left; border-radius: 16px; }
-.peak-feature-icon { display: grid; place-items: center; flex: none; width: clamp(40px, 4.6cqi, 56px); aspect-ratio: 1; padding: clamp(7px, 0.9cqi, 10px); border-radius: 18px; background: rgba(255, 255, 255, 0.72); box-shadow: 0 6px 16px rgba(80, 110, 190, 0.18), inset 0 1px 0 #fff; transition: transform 0.18s ease, box-shadow 0.18s ease; }
-.peak-feature-icon svg { width: 100%; height: 100%; }
-.peak-features button:hover .peak-feature-icon { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(80, 110, 190, 0.26), inset 0 1px 0 #fff; }
-.peak-feature-text { font-size: clamp(11px, 1.25cqi, 14px); line-height: 1.25; max-width: 9em; }
-
-/* Карточка «Следующая вершина». */
-.peak-card {
-  align-self: end; width: clamp(290px, 30cqi, 410px); display: flex; flex-direction: column; gap: 10px; padding: clamp(14px, 1.8cqi, 22px); border-radius: 24px; color: #fff;
-  background: rgba(10, 22, 54, 0.78); border: 1.5px solid rgba(245, 196, 81, 0.6); box-shadow: 0 18px 40px rgba(8, 18, 48, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%);
-  animation: peak-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .peak-card { background: rgba(10, 22, 54, 0.94); } }
-.peak-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.home-dashboard .peak-banner .peak-card h2 { margin: 0; font-size: clamp(12px, 1.5cqi, 16px); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #f5c451; }
-.peak-card-count { padding: 5px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.14); color: #ffe08a; font-size: 14px; font-weight: 800; white-space: nowrap; }
-.home-dashboard .peak-banner p.peak-card-goal { margin: 0; font-size: clamp(16px, 2cqi, 22px); line-height: 1.25; font-weight: 800; color: #fff; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.home-dashboard .peak-banner p.peak-card-detail { margin: -4px 0 0; font-size: 13px; color: #b9c8e8; overflow-wrap: anywhere; }
-.peak-card-bar { height: 6px; border-radius: 99px; background: rgba(255, 255, 255, 0.18); overflow: hidden; }
-.peak-card-bar > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #f5c451, #ffe9a6); transition: width 0.6s ease; }
-.peak-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px 14px; flex-wrap: wrap; margin-top: 4px; }
-.peak-card-hint { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #c9d6f2; }
-.peak-card-hint svg { color: #9fb6e6; flex: none; }
-.home-dashboard .peak-card-button { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 14px; border: 1.5px solid rgba(245, 196, 81, 0.85); background: rgba(10, 22, 54, 0.3); color: #ffe08a; font-size: 14px; font-weight: 800; transition: box-shadow 0.18s ease, background 0.18s ease; }
-.home-dashboard .peak-card-button:hover { background: rgba(245, 196, 81, 0.14); box-shadow: 0 0 18px rgba(245, 196, 81, 0.35); }
-.peak-demo { position: absolute; top: 14px; right: 14px; z-index: 2; border: 0; border-radius: 12px; padding: 7px 11px; background: rgba(255, 255, 255, 0.92); color: #245686; font-size: 11px; font-weight: 700; }
-
-@keyframes peak-pulse { 0%, 100% { opacity: 0.3; transform: scale(0.92); } 50% { opacity: 0.95; transform: scale(1.12); } }
-@keyframes peak-drift { from { transform: translateX(-3%); } to { transform: translateX(5%); } }
-@keyframes peak-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-
-/* Средняя ширина (планшет): карточка уходит под основной текст. */
-@container peak (max-width: 879px) {
-  .peak-stage { grid-template-columns: minmax(0, 1fr); min-height: 0; }
-  .peak-art-frame { right: -52cqi; -webkit-mask-image: linear-gradient(90deg, transparent 38%, #000 62%); mask-image: linear-gradient(90deg, transparent 38%, #000 62%); }
-  .peak-veil { background: linear-gradient(90deg, rgba(244, 248, 255, 0.97) 0%, rgba(240, 246, 255, 0.88) 34%, rgba(236, 244, 255, 0.4) 58%, rgba(236, 244, 255, 0) 78%); }
-  .peak-main { max-width: 62%; }
-  .peak-features { margin-top: 8px; flex-wrap: wrap; width: auto; }
-  .peak-card { align-self: start; width: min(100%, 460px); }
-  .peak-features { order: 3; }
-}
-/* Телефон: картина сверху, текст на чистом небе под ней, карточка и возможности по ширине. */
-@container peak (max-width: 599px) {
-  .peak-stage { padding: 196px 16px 18px; border-radius: 22px; gap: 14px; }
-  .peak-art { inset: 0 0 auto 0; height: 250px; -webkit-mask-image: linear-gradient(180deg, #000 58%, transparent 100%); mask-image: linear-gradient(180deg, #000 58%, transparent 100%); }
-  .peak-art-frame { right: -8%; -webkit-mask-image: none; mask-image: none; }
-  
-  .peak-glow { display: none; }
-  .peak-veil { background: linear-gradient(180deg, rgba(244, 248, 255, 0) 0, rgba(244, 248, 255, 0) 150px, rgba(244, 248, 255, 0.92) 250px, rgba(244, 248, 255, 0.97) 100%); }
-  .peak-main { max-width: none; width: 100%; gap: 8px; }
-  .home-dashboard .peak-banner #peak-title { font-size: clamp(30px, 10.5cqi, 44px); }
-  .home-dashboard .peak-cta { width: 100%; justify-content: flex-start; }
-  .peak-cta-arrow { margin-left: auto; }
-  .peak-card { width: 100%; }
-  .peak-features { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin-top: 4px; padding-top: 10px; }
-  .peak-feature-text { max-width: none; }
-  .peak-demo { top: 12px; right: 12px; }
-}
-@container peak (min-width: 1500px) { .peak-stage { min-height: 480px; } }
-
-@media (prefers-reduced-motion: reduce) {
-  .peak-banner *, .peak-banner *::before { animation: none !important; transition: none !important; }
-  .peak-star { opacity: 0.7; transform: none; }
-  .peak-spark { display: none; }
-}
-
-/* Цели месяца внутри баннера: три постоянных места, выбор — из меню проекта. */
-.peak-focus-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 5px; color: #c9d6f2; font-size: 11px; }
-.peak-focus-head small { color: #ffe08a; white-space: nowrap; }
-.peak-focus-switch { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-.home-dashboard .peak-focus-switch button { display: flex; align-items: center; gap: 5px; min-height: 44px; min-width: 0; padding: 8px; border: 1px solid #96b9ff40; border-radius: 10px; background: #ffffff0c; color: #d5e1fa; text-align: left; transition: background .18s, border-color .18s; }
-.peak-focus-switch b { flex: none; font-size: 12px; }
-.peak-focus-switch span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
-.home-dashboard .peak-focus-switch button[aria-pressed='true'] { color: #ffe08a; border-color: #f5c451; background: #f5c45125; box-shadow: inset 0 1px 0 #ffe08a20; }
-.home-dashboard .peak-focus-switch button:hover { background: #ffffff1a; }
-.home-dashboard .peak-focus-switch .is-empty { border-style: dashed; color: #b9c8e8; }
+@media (prefers-reduced-motion: reduce) { .peak-banner *, .peak-banner *::before { animation: none !important; scroll-behavior: auto !important; transition: none !important; } }

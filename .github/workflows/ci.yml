@@ -43,7 +43,9 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # The hosted Ubuntu image already provides Chromium shared libraries.
+      # Install the pinned browser; apt font mirrors must not block UI tests.
+      - run: npx playwright install chromium
       - name: Verify local Russian and English spelling suggestions
         run: npm run test:spellcheck-ui
       - name: Verify homepage month focus and yearly summary (local fixture only)
@@ -87,7 +89,9 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # The hosted Ubuntu image already provides Chromium shared libraries.
+      # Install the pinned browser; apt font mirrors must not block UI tests.
+      - run: npx playwright install chromium
       - run: npm run test:live-city
       - name: Save live city mobile and desktop previews
         if: always()
@@ -105,7 +109,9 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # The hosted Ubuntu image already provides Chromium shared libraries.
+      # Install the pinned browser; apt font mirrors must not block UI tests.
+      - run: npx playwright install chromium
       - name: Walk through every section on desktop and phone (no errors, no blank screens)
         run: npm run test:smoke-ui
       - name: Verify room exit remains available while loading

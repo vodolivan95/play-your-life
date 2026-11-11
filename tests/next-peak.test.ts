@@ -3,10 +3,49 @@ import assert from 'node:assert/strict';
 import { initialState, completeQuest } from '../src/game.ts';
 import { saveGoal, saveStage, saveTask } from '../src/planning.ts';
 import { toggleMonthlyFocus } from '../src/monthlyFocus.ts';
-import { nextPeak, goalPeak } from '../src/nextPeak.ts';
+import { calculateTimeProgress, nextPeak, goalPeak } from '../src/nextPeak.ts';
 import type { GameState } from '../src/game.ts';
 
 const NOW = new Date('2026-10-19T12:00:00+03:00');
+
+test('календарный прогресс срока не зависит от прогресса задач', () => {
+  const time = calculateTimeProgress('2026-11-10', '2026-11-25', new Date(2026, 10, 16));
+  assert.deepEqual(time, { percent: 40, elapsedDays: 6, remainingDays: 9, totalDays: 15, state: 'active' });
+  assert.equal(calculateTimeProgress(undefined, '2026-11-25'), null);
+  assert.equal(calculateTimeProgress('2026-11-25', '2026-11-10', new Date(2026, 10, 16))?.state, 'invalid');
+});
+
+test('срок до начала, в день дедлайна и просрочка получают отдельные состояния', () => {
+  assert.equal(calculateTimeProgress('2026-11-20', '2026-11-25', new Date(2026, 10, 15))?.state, 'before');
+  assert.equal(calculateTimeProgress('2026-11-10', '2026-11-20', new Date(2026, 10, 20))?.state, 'due-today');
+  const late = calculateTimeProgress('2026-11-01', '2026-11-10', new Date(2026, 10, 13));
+  assert.equal(late?.percent, 100);
+  assert.equal(late?.remainingDays, -3);
+  assert.equal(late?.state, 'overdue');
+});
+
+test('разница прогресса задач и времени является отдельной информационной величиной', () => {
+  const goal = withGoal(empty(), 'Сверить темп');
+  const stage = addStage(goal.s, goal.id, 'Рабочий этап');
+  let state = stage.s;
+  for (let i = 0; i < 10; i++) {
+    const task = addTask(state, goal.id, stage.id, `Шаг ${i + 1}`);
+    state = task.s;
+    if (i < 7) state = completeQuest(state, task.id);
+  }
+  state = {
+    ...state,
+    goals: state.goals.map(g => g.id === goal.id ? {
+      ...g,
+      stages: g.stages?.map(s => s.id === stage.id ? { ...s, startsAt: '2026-11-10', dueAt: '2026-11-25' } : s),
+    } : g),
+  };
+  const peak = goalPeak(state, state.goals.find(g => g.id === goal.id)!, new Date(2026, 10, 16));
+  assert.equal(peak.taskPercent, 70);
+  assert.equal(peak.time?.percent, 40);
+  assert.equal(peak.progressDifference, 30);
+});
+
 function empty(): GameState {
   const s = initialState();
   return { ...s, goals: [], quests: [], monthlyFocus: undefined };

@@ -1,191 +1,90 @@
-import { useId, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import heroPeak from '../assets/home-peak.svg';
-import heroPeakDark from '../assets/home-peak-dark.webp';
-import { useMenuTheme } from '../menuTheme';
+import { goalRoute } from '../goalRoutes';
 import type { NextPeak } from '../nextPeak';
 import { MAX_MONTHLY_FOCUS } from '../monthlyFocus';
 import './HomeBanner.css';
 
-/** Размер рисунка гор (вектор, светлая тема): слой с живыми звёздами использует те же координаты. */
-const ART_W = 2000;
-const ART_H = 888;
-/** Размер ночной фотографии (тёмная тема). */
-const ART_DARK_W = 2400;
-const ART_DARK_H = 889;
-/** Золотые звёзды маршрута на рисунке (координаты рисунка). */
-const STARS = [
-  { x: 1350, y: 320, delay: 0 },
-  { x: 1265, y: 440, delay: 1.1 },
-  { x: 1125, y: 590, delay: 2.2 },
-  { x: 1085, y: 700, delay: 3.3 },
-];
-/** Тропа к вершине, по которой плывёт световая частица (та же, что нарисована на рисунке). */
-const TRAIL =
-  'M830 792 C858 787,957 777,1000 762 C1042 747,1064 729,1085 700 C1106 671,1108 622,1125 590 C1142 557,1170 525,1185 505 C1200 485,1202 479,1215 468 C1228 457,1249 455,1265 440 C1281 425,1296 400,1310 380 C1324 360,1337 342,1350 320 C1362 297,1376 269,1385 245 C1394 221,1399 189,1402 178';
-
-/**
- * Фон: картинка гор (своя для каждой темы) и отдельный слой звёзд и облаков. Это только оформление, текста здесь нет.
- * Грузим только картинку текущей темы — иначе браузер тянет обе (рисунок и фото) сразу при каждом открытии
- * главной, и большое ночное фото задерживает прорисовку баннера, даже пока оно не видно (0.49.4).
- */
-function BannerArt() {
-  const glow = useId().replace(/:/g, '');
-  const [theme] = useMenuTheme();
-  return (
-    <div className="peak-art" aria-hidden="true">
-      {theme !== 'dark' && (
-        <div className="peak-art-frame peak-art-frame-light">
-        <img src={heroPeak} alt="" width={ART_W} height={ART_H} decoding="async" fetchPriority="high" />
-        <i className="peak-cloud peak-cloud-a" />
-        <i className="peak-cloud peak-cloud-b" />
-        <svg className="peak-glow" viewBox={`170 0 ${ART_W} ${ART_H}`} preserveAspectRatio="none" focusable="false">
-          <defs>
-            <radialGradient id={glow}>
-              <stop offset="0" stopColor="#fff6c8" stopOpacity="0.95" />
-              <stop offset="0.35" stopColor="#ffd75e" stopOpacity="0.55" />
-              <stop offset="1" stopColor="#ffd75e" stopOpacity="0" />
-            </radialGradient>
-          </defs>
-          {STARS.map((s) => (
-            <circle key={s.y} className="peak-star" cx={s.x} cy={s.y} r={56} fill={`url(#${glow})`} style={{ animationDelay: `${s.delay}s`, transformOrigin: `${s.x}px ${s.y}px` }} />
-          ))}
-          <circle className="peak-spark" r="20" fill="#fffbe6">
-            <animateMotion dur="9s" repeatCount="indefinite" path={TRAIL} />
-            <animate attributeName="opacity" values="0;0.95;0.95;0" keyTimes="0;0.12;0.88;1" dur="9s" repeatCount="indefinite" />
-          </circle>
-        </svg>
-        </div>
-      )}
-      {theme === 'dark' && (
-        <div className="peak-art-frame peak-art-frame-dark">
-          <img src={heroPeakDark} alt="" width={ART_DARK_W} height={ART_DARK_H} decoding="async" fetchPriority="high" />
-        </div>
-      )}
-    </div>
-  );
+function MountainMark() {
+  return <svg className="peak-mark" viewBox="0 0 76 56" aria-hidden="true"><path d="M2 49 22 20l12 16 12-25 28 38H2Z" fill="#ffd05b"/><path d="m18 49 16-21 19 21H18Z" fill="#ffe38a"/><path d="M53 5v28" stroke="#f5f7ff" strokeWidth="2"/><path d="M54 6h14l-6 6 6 6H54Z" fill="#ffd05b"/></svg>;
+}
+function Arrow({ direction = 'right' }: { direction?: 'left' | 'right' }) {
+  return <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d={direction === 'right' ? 'm9 5 7 7-7 7' : 'm15 5-7 7 7 7'} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+}
+function shortDate(value?: string) {
+  if (!value) return '—';
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T00:00:00`) : new Date(value);
+  return Number.isNaN(date.getTime()) ? '—' : new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' }).format(date).replace('.', '');
+}
+function plural(n: number, one: string, few: string, many: string) {
+  const m10 = n % 10, m100 = n % 100;
+  return m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many;
+}
+function motivation(peak: NextPeak) {
+  if (peak.stageStatus === 'completed') return '🏆 Все этапы проекта завершены!';
+  if (peak.stageStatus === 'unavailable') return '🏔️ Открой проект, чтобы продолжить путь.';
+  if (peak.stageStatus === 'none') return '🏔️ Добавь первый этап и выбери следующую вершину.';
+  if (peak.time?.state === 'overdue') return `⏳ Срок этапа прошёл. Проверь оставшиеся задачи.`;
+  if (peak.time?.state === 'before') return '🏔️ Следующая вершина уже близко!';
+  if (peak.taskPercent === null) return 'Добавь задачи, чтобы видеть свой прогресс.';
+  if (peak.taskPercent === 100) return '🎉 Все задачи этапа выполнены!';
+  if (peak.progressDifference !== null && peak.progressDifference >= 10) return '🚀 Выполнение идёт с опережением графика!';
+  if (peak.progressDifference !== null && peak.progressDifference <= -10) return '💡 Темп ниже линейного плана — проверь следующий шаг.';
+  if (peak.taskPercent < 25) return '🚀 Первые шаги к вершине!';
+  if (peak.taskPercent < 50) return '🏔️ Продолжай движение к цели!';
+  if (peak.taskPercent < 75) return '💪 Ты уверенно движешься к цели!';
+  return '🏆 До вершины осталось немного!';
+}
+function timeText(peak: NextPeak) {
+  const t = peak.time;
+  if (!t) return 'Сроки этапа не указаны';
+  if (t.state === 'invalid') return 'Проверь даты этапа';
+  if (t.state === 'before') return `До начала: ${t.elapsedDays < 0 ? -t.elapsedDays : Math.max(0, t.remainingDays - t.totalDays)} ${plural(Math.max(0, t.remainingDays - t.totalDays), 'день', 'дня', 'дней')}`;
+  if (t.state === 'overdue') return `Просрочено на ${-t.remainingDays} ${plural(-t.remainingDays, 'день', 'дня', 'дней')}`;
+  if (t.state === 'due-today') return 'Срок завершения — сегодня';
+  return `Осталось: ${t.remainingDays} ${plural(t.remainingDays, 'день', 'дня', 'дней')}`;
 }
 
-function Play() {
-  return <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M8.5 5.8v12.4c0 .8.9 1.3 1.6.8l9-6.2a1 1 0 0 0 0-1.6l-9-6.2c-.7-.5-1.6 0-1.6.8Z" fill="currentColor" /></svg>;
-}
-function Arrow({ className }: { className?: string }) {
-  return <svg className={className} viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
-}
-
-/** Цветные иконки четырёх возможностей игры. */
-function FeatureIcon({ kind }: { kind: 'skills' | 'goals' | 'trophy' | 'heart' }) {
-  const id = useId().replace(/:/g, '');
-  const g = (a: string, b: string) => <linearGradient id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={a} /><stop offset="1" stopColor={b} /></linearGradient>;
-  if (kind === 'skills')
-    return <svg viewBox="0 0 48 48" aria-hidden="true"><defs>{g('#6fb4ff', '#1f6feb')}</defs><rect x="6" y="28" width="9" height="14" rx="3" fill={`url(#${id})`} /><rect x="19.5" y="19" width="9" height="23" rx="3" fill={`url(#${id})`} /><rect x="33" y="9" width="9" height="33" rx="3" fill={`url(#${id})`} /><path d="m8 22 11-8 8 4 13-11" fill="none" stroke="#9fd0ff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
-  if (kind === 'goals')
-    return <svg viewBox="0 0 48 48" aria-hidden="true"><defs>{g('#5fd7a3', '#16a06a')}</defs><circle cx="22" cy="26" r="17" fill={`url(#${id})`} /><circle cx="22" cy="26" r="11.5" fill="#e8fff4" /><circle cx="22" cy="26" r="6.5" fill="#1db57a" /><circle cx="22" cy="26" r="2.4" fill="#fff" /><path d="m23 25 15-15m0 0h-6m6 0v6" stroke="#2a4a7a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" /></svg>;
-  if (kind === 'trophy')
-    return <svg viewBox="0 0 48 48" aria-hidden="true"><defs>{g('#ffe27a', '#f0a81c')}</defs><path d="M14 8h20v12a10 10 0 0 1-20 0V8Z" fill={`url(#${id})`} /><path d="M14 11H7c0 7 3 11 8 12M34 11h7c0 7-3 11-8 12" fill="none" stroke="#f0a81c" strokeWidth="3" strokeLinecap="round" /><rect x="21" y="29" width="6" height="7" fill="#e69a14" /><rect x="14" y="36" width="20" height="5" rx="2.5" fill={`url(#${id})`} /><path d="M19 13v6" stroke="#fff6c8" strokeWidth="2.6" strokeLinecap="round" /></svg>;
-  return <svg viewBox="0 0 48 48" aria-hidden="true"><defs>{g('#ff7a8a', '#e5243b')}</defs><path d="M24 41C10 31 6 24 6 17.5 6 12 10 8 15 8c4 0 7 2.4 9 5.5C26 10.4 29 8 33 8c5 0 9 4 9 9.5C42 24 38 31 24 41Z" fill={`url(#${id})`} /><path d="M13 15c1-3 3.5-4.500 6-4" fill="none" stroke="#ffc4cb" strokeWidth="2.8" strokeLinecap="round" /></svg>;
-}
-
-const FEATURES: { kind: 'skills' | 'goals' | 'trophy' | 'heart'; page: string; lines: [string, string] }[] = [
-  { kind: 'skills', page: 'tree', lines: ['Развивай', 'навыки'] },
-  { kind: 'goals', page: 'goals', lines: ['Выполняй', 'проекты'] },
-  { kind: 'trophy', page: 'achievements', lines: ['Получай', 'достижения'] },
-  { kind: 'heart', page: 'profile', lines: ['Создавай', 'лучшую версию себя'] },
-];
-
-/** Следующая вершина: карточка поверх гор. Все значения приходят из реальных целей и задач. */
-function NextPeakCard({ peaks, onShowTask, onChooseFocus }: { peaks: NextPeak[]; onShowTask: (peak: NextPeak) => void; onChooseFocus: () => void }) {
-  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
-  const peak = peaks.find(item => item.goalId === selectedGoalId) ?? peaks[0] ?? null;
-  return (
-    <aside className="peak-card" aria-label="Главные проекты месяца">
-      <div className="peak-card-head">
-        <h2>Следующая вершина</h2>
-        {peak && <span className="peak-card-count" aria-label={peak.total > 0 ? `Выполнено ${peak.done} из ${peak.total}` : `Прогресс ${peak.percent}%`}>{peak.counter}</span>}
+function NextPeakCard({ peaks, onChooseFocus }: { peaks: NextPeak[]; onChooseFocus: () => void }) {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedRef = useRef<HTMLButtonElement | null>(null);
+  const peak = peaks.find((item) => item.goalId === selectedId) ?? peaks[0] ?? null;
+  const selectedGoalId = peak?.goalId;
+  useEffect(() => { if (selectedGoalId) selectedRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' }); }, [selectedGoalId]);
+  const items = peak?.stageStatus === 'active' ? peak.time : null;
+  const timePercent = items?.state === 'invalid' ? null : items?.percent ?? null;
+  const progress = peak?.taskPercent;
+  return <section className="next-peak-panel" aria-label="Следующая вершина">
+    <header className="next-peak-header"><div className="next-peak-brand"><MountainMark/><div><strong>СЛЕДУЮЩАЯ ВЕРШИНА</strong><span>Главные проекты месяца</span></div></div>
+      {peak && <div className="peak-controls">{peaks.length > 1 && <button type="button" aria-label="Предыдущий проект" onClick={() => { const i = peaks.findIndex(p => p.goalId === peak.goalId); setSelectedId(peaks[(i - 1 + peaks.length) % peaks.length].goalId); }}><Arrow direction="left"/></button>}<span>{peaks.findIndex(p => p.goalId === peak.goalId) + 1} / {peaks.length}</span>{peaks.length > 1 && <button type="button" aria-label="Следующий проект" onClick={() => { const i = peaks.findIndex(p => p.goalId === peak.goalId); setSelectedId(peaks[(i + 1) % peaks.length].goalId); }}><Arrow/></button>}</div>}
+    </header>
+    {!peak ? <div className="peak-empty"><h2>На этот месяц пока нет главных проектов</h2><p>Выбери проект в списке, чтобы добавить его в фокус месяца.</p><button type="button" className="peak-open-button" onClick={onChooseFocus}>Выбрать проекты <Arrow/></button></div> : <>
+      <div className="peak-project-hero">
+        {peak.goalImage && <img className="peak-project-cover" src={peak.goalImage} alt=""/>}<div className="peak-hero-shade"/>
+        <div className="peak-project-copy"><h1>{peak.headline}</h1><p>⌂ <span>Проект: {peak.goalName}</span></p><div className="peak-stage-pill"><span aria-hidden="true">▱</span>Текущий этап: <b>{peak.stageName ?? peak.headline}</b></div></div>
       </div>
-      {peak ? (
-        <>
-          <p className="peak-card-goal">{peak.headline}</p>
-          <p className="peak-card-detail">{peak.detail}</p>
-          <div className="peak-card-bar" role="progressbar" aria-label="Прогресс до вершины" aria-valuemin={0} aria-valuemax={100} aria-valuenow={peak.percent}><span style={{ width: `${peak.percent}%` }} /></div>
-        </>
-      ) : (
-        <>
-          <p className="peak-card-goal">Три главных проекта месяца</p>
-          <p className="peak-card-detail">Открой проект в своей сфере и назначь его главным проектом месяца. Здесь появится следующий шаг.</p>
-        </>
-      )}
-      <div className="peak-card-foot">
-        <span className="peak-card-hint">
-          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="m2 19 6.5-10 4 6 2.5-3.5L22 19Z" fill="currentColor" opacity=".85" /><path d="m8.500 9 1.8 2.8-1.8-.6-1.6.9Z" fill="#fff" opacity=".9" /></svg>
-          {peak ? peak.percent >= 100 ? 'Вершина достигнута!' : 'Ты ближе к своему проекту!' : 'Выбери свой фокус'}
-        </span>
-        <button type="button" className="peak-card-button" onClick={() => peak ? onShowTask(peak) : onChooseFocus()}>
-          {peak ? peak.taskId ? 'Показать задачу' : 'Открыть проект' : 'Выбрать проекты'}
-          <Arrow />
-        </button>
-      </div>
-      <div className="peak-focus-head"><span>Главные проекты месяца</span><small>{peaks.length} из {MAX_MONTHLY_FOCUS}</small></div>
-      <div className="peak-focus-switch" role="group" aria-label="Переключить главный проект месяца">
-        {Array.from({ length: MAX_MONTHLY_FOCUS }, (_, index) => {
-          const item = peaks[index];
-          return item ? (
-            <button key={item.goalId} type="button" aria-pressed={peak?.goalId === item.goalId}
-              title={item.goalName} aria-label={`Главный проект ${index + 1}: ${item.goalName}`}
-              onClick={() => setSelectedGoalId(item.goalId)}>
-              <b>{index + 1}</b><span>{item.goalName}</span>
-            </button>
-          ) : (
-            <button key={`empty-${index}`} type="button" className="is-empty"
-              aria-label={`Назначить главный проект ${index + 1} в меню проекта`} onClick={onChooseFocus}>
-              <b>＋</b><span>Проект {index + 1}</span>
-            </button>
-          );
-        })}
-      </div>
-    </aside>
-  );
+      {peak.stageStatus === 'active' ? <>
+        <div className="peak-dates-row"><span>▦ {shortDate(peak.startsAt)} – {shortDate(peak.dueAt)}</span><i/><span>◷ {timeText(peak)}</span></div>
+        <section className="peak-timeline" aria-label="Прогресс по срокам этапа"><div className="peak-label-row"><strong>Прогресс по срокам этапа</strong>{timePercent !== null && <span>{Math.round(timePercent)}%</span>}</div>
+          {timePercent === null ? <p className="peak-muted">{peak.time?.state === 'invalid' ? 'Даты этапа некорректны' : 'Сроки этапа не указаны'}</p> : <><div className="peak-time-track" role="progressbar" aria-label="Прогресс по срокам" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(timePercent)}><span style={{ width: `${timePercent}%` }}/><i style={{ left: `${Math.max(2, Math.min(98, timePercent))}%` }}><b>{Math.round(timePercent)}%</b></i></div><div className="peak-time-captions"><span>{items?.elapsedDays ?? 0} дн. прошло</span><span>{items?.totalDays ?? 0} дн. всего</span></div></>}
+        </section>
+        <section className="peak-tasks"><div className="peak-label-row"><strong>☑ Выполнение задач этапа</strong>{progress !== null && <span>{peak.done} из {peak.total} задач</span>}</div>
+          {progress === null ? <p className="peak-muted">Задачи этапа пока не добавлены</p> : <div className="peak-task-row"><div className="peak-task-track" role="progressbar" aria-label="Выполнение задач этапа" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><span style={{ width: `${progress}%` }}/></div><b>{progress}%</b></div>}
+        </section>
+      </> : <div className="peak-stage-state">{peak.stageStatus === 'completed' ? 'Все этапы проекта завершены' : peak.stageStatus === 'none' ? 'Этапы пока не добавлены' : 'Сейчас нет доступного этапа. Открой проект, чтобы продолжить.'}</div>}
+      <div className="peak-motivation">🏔️ <span>{motivation(peak)}</span></div>
+      <a className="peak-open-button" href={`#${goalRoute(peak.goalId, peak.stageId)}`}>{peak.stageStatus === 'active' ? 'Открыть этап' : 'Открыть проект'} <Arrow/></a>
+      <div className="peak-projects-label"><span>Главные проекты месяца</span><small>{peaks.length} из {MAX_MONTHLY_FOCUS}</small></div>
+      <div className="peak-projects" role="group" aria-label="Переключить главный проект месяца">{peaks.map((item, index) => <button ref={item.goalId === peak.goalId ? selectedRef : null} key={item.goalId} type="button" aria-pressed={item.goalId === peak.goalId} className={`peak-project ${item.goalId === peak.goalId ? 'is-active' : ''}`} onClick={() => setSelectedId(item.goalId)}><b>{index + 1}</b><span className="peak-project-icon">{item.goalImage ? <img src={item.goalImage} alt="" loading="lazy"/> : '◆'}</span><span className="peak-project-name">{item.goalName}</span></button>)}</div>
+    </>}
+  </section>;
 }
 
-export default function HomeBanner({ peaks, demo, onContinue, onNavigate, onShowTask, onChooseFocus, onStart, extra }: {
-  peaks: NextPeak[];
-  demo: boolean;
-  onContinue: () => void;
-  onNavigate: (page: string) => void;
-  onShowTask: (peak: NextPeak) => void;
-  onChooseFocus: () => void;
-  onStart: () => void;
-  extra?: ReactNode;
+export default function HomeBanner({ peaks, demo, onContinue, onNavigate, onChooseFocus, onStart, extra }: {
+  peaks: NextPeak[]; demo: boolean; onContinue: () => void; onNavigate: (page: string) => void; onChooseFocus: () => void; onStart: () => void; extra?: ReactNode;
 }) {
-  return (
-    <section className="peak-banner" aria-labelledby="peak-title">
-      <div className="peak-stage">
-        <BannerArt />
-        <div className="peak-veil" aria-hidden="true" />
-        <div className="peak-main">
-          <small className="peak-brand">PLAY YOUR LIFE</small>
-          <h1 id="peak-title"><span>Ты творец</span>{' '}<span>своей истории</span></h1>
-          <p className="peak-sub">Маленькие шаги — большие результаты</p>
-          <button type="button" className="peak-cta" onClick={onContinue}>
-            <span className="peak-cta-play"><Play /></span>
-            <span className="peak-cta-text"><strong>Продолжить путь</strong><small>К своим проектам</small></span>
-            <Arrow className="peak-cta-arrow" />
-          </button>
-          <ul className="peak-features">
-            {FEATURES.map((f) => (
-              <li key={f.kind}>
-                <button type="button" onClick={() => onNavigate(f.page)}>
-                  <span className="peak-feature-icon"><FeatureIcon kind={f.kind} /></span>
-                  <span className="peak-feature-text">{f.lines[0]}<br />{f.lines[1]}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <NextPeakCard peaks={peaks} onShowTask={onShowTask} onChooseFocus={onChooseFocus} />
-        {demo && <button type="button" className="peak-demo" onClick={onStart}>Демо · Начать свою игру →</button>}
-      </div>
-      {extra}
-    </section>
-  );
+  return <section className="peak-banner"><NextPeakCard peaks={peaks} onChooseFocus={onChooseFocus}/>
+    <nav className="peak-quick-links" aria-label="Разделы приложения">{[['goals','⌂','Проекты'],['tree','◈','Навыки'],['achievements','♜','Достижения'],['profile','♥','Профиль']].map(([page, icon, label])=><button key={page} type="button" onClick={()=>onNavigate(page)}><span>{icon}</span>{label}</button>)}</nav>
+    <div className="peak-secondary-actions"><button type="button" onClick={onContinue}>К задачам</button>{demo && <button type="button" onClick={onStart}>Начать свою игру</button>}</div>{extra}
+  </section>;
 }

@@ -105,7 +105,7 @@ function recordOf(e: Event): FocusRecord | undefined {
   const s = change.session;
   if (!s) {
     if (!(change.minutes > 0)) return undefined;
-    return { ...base, seconds: change.minutes * 60, pausedSeconds: 0, startedAt: e.date, endedAt: e.date, mode: 'manual', status: 'completed', intervals: [] };
+    return { ...base, seconds: change.minutes * 60, pausedSeconds: 0, startedAt: e.date, endedAt: e.date, mode: 'manual', status: 'completed', intervals: [], ...(change.comment ? { result: change.comment } : {}) };
   }
   if (!(s.focusedSeconds > 0)) return undefined;
   return {

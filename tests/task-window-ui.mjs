@@ -85,7 +85,7 @@ try {
       .click();
   let dialog = p.locator("section.twin");
   await dialog.waitFor();
-  await dialog.getByText("Фокус:", { exact: false }).first().waitFor();
+  await dialog.locator(".focus").getByRole("heading", { name: "Фокус", exact: true }).waitFor();
   // The direct review URL uses a legacy starter task without sourceType.
   for (const level of ["Micro", "Simple", "Medium", "Hard", "Very Hard"]) {
     await dialog.getByLabel("Сложность", { exact: true }).selectOption(level);

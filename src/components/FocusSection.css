@@ -26,3 +26,18 @@
 .focus-history li span:nth-child(2){color:var(--tw-mute)}
 .focus-history li small{grid-column:1/-1}
 @media(max-width:520px){.focus-minutes{grid-template-columns:repeat(4,minmax(0,1fr))}.focus-context{grid-template-columns:1fr}.focus-clock{font-size:34px}}
+/* Единственный блок фокуса: сводка + текущая сессия + ручные записи. */
+.twin .focus{background:linear-gradient(125deg,#113552e8,#122340e8 65%,#35205d99);border-color:#8177b3;box-shadow:inset 0 0 20px #5237af1a;display:grid;gap:12px;min-width:0}
+.focus-summary h3{margin:0 0 6px;display:flex;gap:9px;align-items:center;font-size:16px}
+.focus-plan-fact{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:13px}.focus-plan-fact strong{font-size:17px;color:var(--tw-ink)}.focus-divider{color:#6f819f;padding:0 4px}.focus-breakdown{display:block;margin-top:3px}
+.twin .focus .focus-top{display:flex;gap:9px;flex-wrap:wrap;align-items:center;border-top:1px solid #52719480;padding-top:12px}
+.twin .focus .focus-start{min-height:40px;border-radius:13px;font-size:12px;padding:8px 12px;display:flex;gap:6px;flex:1}
+.twin .focus .focus-manual-button{display:flex;justify-content:center;align-items:center;gap:8px;border-color:#af8dff;background:linear-gradient(125deg,#175890,#5930a9);box-shadow:0 0 13px #8942ff3d;font-size:12px;padding:9px 12px;flex:1}
+.twin .focus .focus-idle{font-size:29px;flex-basis:100%;color:#d8eaff;font-variant-numeric:tabular-nums}
+.focus-history-toggle{font-size:12px!important}.focus-record-actions{grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end}.twin .focus-record-actions button{padding:5px 7px;background:none;border-color:#52688b66;display:inline-flex}
+.focus-history li{overflow-wrap:anywhere}.focus-history li b{white-space:nowrap}
+.twin .focus-manual-dialog{position:fixed;inset:0;margin:auto;width:min(620px,calc(100vw - 30px));max-width:calc(100vw - 30px);max-height:90dvh;overflow:auto;border:1px solid #a38aff;border-radius:20px;padding:22px;color:#f5f8ff;background:linear-gradient(125deg,#102f4a,#10213f 65%,#30204f);box-shadow:0 0 40px #4d45a84d}
+.focus-manual-dialog::backdrop{background:#020b1bd9;backdrop-filter:blur(5px)}.focus-manual-dialog form{display:block!important;margin:0;padding:0;background:none!important;border:0!important}.focus-manual-dialog h3{margin:0 0 18px;font-size:19px}.focus-manual-dialog p{font-size:12px;color:#a8bad3;margin:16px 0}.focus-manual-fields{display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:13px}.focus-comment{grid-column:1/-1}.focus-manual-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}.twin .focus-manual-footer .primary-button{background:linear-gradient(110deg,#00cde8,#146eff,#8134ea);color:white}
+body:has(.twin-overlay) .focus-bar{display:none}
+@media(max-width:600px){.focus-manual-fields{grid-template-columns:1fr 1fr}.focus-manual-fields>label:nth-child(3){grid-column:1/-1}.twin .focus-manual-dialog{padding:18px}.focus-manual-footer{flex-wrap:wrap}.twin .focus .focus-idle{text-align:center}.twin .focus .focus-manual-button{flex-basis:100%}.twin .focus .focus-live .twin-inline{display:flex;flex-wrap:wrap}.focus-history li{grid-template-columns:1fr auto}.focus-history li>b{grid-column:2;grid-row:1}.focus-history li>span:nth-child(2){grid-column:1}.focus-plan-fact{font-size:12px}.focus-plan-fact strong{font-size:16px}}
+.twin .focus .focus-top[hidden]{display:none}

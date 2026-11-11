@@ -61,6 +61,8 @@ export type PlanningChange =
       type: 'time';
       /** Целые минуты — для прежней аналитики план/факт. У сессии таймера = округлённые `session.focusedSeconds` (может быть 0 у сессии короче 30 секунд). */
       minutes: number;
+      /** Необязательный комментарий ручной записи, до 300 символов. */
+      comment?: string;
       /** Рабочая сессия таймера фокуса (ТЗ «Этап 4.1», раздел 4). Отсутствует у времени, внесённого вручную, и у записей таймера до 0.78.0. */
       session?: FocusSessionData;
     };
@@ -187,7 +189,7 @@ export function validPlanningEvent(e: Record<string, unknown>): boolean {
   if (v === undefined) return true;
   if (!obj(v) || e.kind !== 'planning' || e.xp !== 0 || typeof e.sourceId !== 'string' || !e.sourceId) return false;
   if (v.type === 'time') {
-    if (v.session === undefined) return Object.keys(v).length === 2 && integer(v.minutes, 1, 43200);
+    if (v.session === undefined) return Object.keys(v).every(k => ['type', 'minutes', 'comment'].includes(k)) && integer(v.minutes, 1, 43200) && (v.comment === undefined || (typeof v.comment === 'string' && v.comment.length <= 300));
     return Object.keys(v).length === 3 && integer(v.minutes, 0, 43200) && validFocusSessionData(v.session);
   }
   return ['schedule', 'reschedule', 'retime'].includes(String(v.type))

@@ -179,7 +179,7 @@ try {
     // С 0.80.0 отдельной кнопки «Продолжить» в строке нет: задача выполняется из своего окна.
     assert.equal(await card.getByRole("button", { name: "Продолжить", exact: true }).count(), 0);
     await card.locator(".gtl-row").click();
-    await page.getByRole("dialog", { name: /Пробежать 10 км/ }).getByRole("button", { name: "✓ Выполнить", exact: true }).click();
+    await page.getByRole("dialog", { name: /Пробежать 10 км/ }).getByRole("button", { name: "Выполнить", exact: true }).click();
     await page.locator(".pyl-celebration button").click();
     await page.reload();
     await page

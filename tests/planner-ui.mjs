@@ -46,13 +46,22 @@ try {
     await task.waitFor();
     await task.getByRole('button', { name: 'Подготовить план', exact: true }).click();
     const win = page.getByRole('dialog', { name: 'Подготовить план' });
-    await win.locator('summary').filter({ hasText: 'Планирование и время' }).click();
-    await win.getByRole('button', { name: '30 мин', exact: true }).click();
-    await win.getByLabel('Добавить фактическое время, мин').fill('20');
-    await win.getByRole('button', { name: 'Учесть время', exact: true }).click();
-    // План уже установлен в 30 мин (строка выше) — текст включает отклонение от плана (0.76.0, Этап 2).
-    await win.getByText('Учтено фактически: 20 мин (план 30 мин, отклонение -10 мин)', { exact: true }).waitFor();
+    await win.getByLabel('Оценка времени', { exact: true }).selectOption('30');
+    await win.getByRole('heading', { name: 'Параметры задачи', exact: true }).click();
     await win.getByRole('button', { name: 'Сохранить', exact: true }).click();
+    await page.evaluate(async () => {
+      const { startFocus, finishFocus } = await import('/src/focusSessions.ts');
+      let s = JSON.parse(localStorage.getItem('play-your-life-v1'));
+      const task = s.quests.find(q => q.name === 'Подготовить план');
+      const end = new Date(); const start = new Date(end.getTime() - 20 * 60000);
+      s = startFocus(s, { taskId: task.id, minutes: 30 }, start, 'planner-ui-focus');
+      s = finishFocus(s, { result: 'Сессия проверки плана' }, end);
+      localStorage.setItem('play-your-life-v1', JSON.stringify(s));
+    });
+    await page.reload();
+    await page.getByRole('button', { name: 'Продолжить игру на этом устройстве' }).click();
+    await openPlan();
+    await plan.getByRole('button', { name: /^Входящие/ }).click();
     await plan.getByRole('button', { name: 'Настройки плана', exact: true }).click();
     const settings = plan.getByRole('form', { name: 'Настройки плана' });
     await settings.getByLabel('Доступно минут в день').fill('120');
@@ -125,19 +134,18 @@ try {
       const s = JSON.parse(localStorage.getItem('play-your-life-v1'));
       return { prior: s.quests.find((q) => q.name === 'Согласовать план').id, target: s.quests.find((q) => q.name === 'Подготовить план').id };
     });
-    await task.getByRole('button', { name: 'Подготовить план', exact: true }).click();
-    await win.locator('summary').filter({ hasText: 'Планирование и время' }).click();
-    await win.getByLabel('Добавить предшественника', { exact: true }).selectOption(ids.prior);
-    await win.getByRole('button', { name: 'Добавить зависимость', exact: true }).click();
-    await win.getByText('Выполнение заблокировано: незавершённых предшественников — 1.', { exact: true }).waitFor();
-    await win.getByRole('button', { name: 'Согласовать план', exact: true }).click();
-    const priorWin = page.getByRole('dialog', { name: 'Согласовать план', exact: true });
-    assert.equal(await priorWin.getByLabel('Название', { exact: true }).inputValue(), 'Согласовать план', 'редактор переинициализируется при переходе к связанной задаче');
-    await priorWin.locator('summary').filter({ hasText: 'Планирование и время' }).click();
-    await priorWin.getByLabel('Добавить предшественника', { exact: true }).selectOption(ids.target);
-    await priorWin.getByRole('button', { name: 'Добавить зависимость', exact: true }).click();
-    await page.getByText('Связь создаёт цикл зависимостей.', { exact: true }).waitFor();
-    await priorWin.getByRole('button', { name: 'Сохранить', exact: true }).click();
+    // Зависимости удалены из окна по ТЗ. Существующие связи продолжают
+    // защищать планировщик: создаём прежнюю связь через его проверяемый сервис.
+    await page.evaluate(async ({prior,target}) => {
+      const { updateTaskSettings } = await import('/src/taskSettings.ts');
+      let s = JSON.parse(localStorage.getItem('play-your-life-v1'));
+      s = updateTaskSettings(s, target, { planning: { ...s.quests.find(q => q.id === target).planning, dependencyIds: [prior] } });
+      localStorage.setItem('play-your-life-v1', JSON.stringify(s));
+    }, ids);
+    await page.reload();
+    await page.getByRole('button', { name: 'Продолжить игру на этом устройстве' }).click();
+    await openPlan();
+    await plan.getByRole('button', { name: 'Все задачи', exact: true }).click();
     await task.getByLabel('Статус: Подготовить план', { exact: true }).selectOption('done');
     stored = await page.evaluate(() => JSON.parse(localStorage.getItem('play-your-life-v1')));
     assert.equal(stored.quests.find((q) => q.id === ids.target).done, false);

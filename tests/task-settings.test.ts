@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { dueFor, duePreset, taskContribution, updateTaskSettings } from '../src/taskSettings.ts';
 import type { GameState, Quest } from '../src/game.ts';
+import { initialState } from '../src/game.ts';
 
 const quest = (over: Partial<Quest>): Quest => ({
   id: 'q1', name: 'Пробежка', sphere: 'sport', xp: 20, done: false, difficulty: 'Medium',
@@ -148,4 +149,22 @@ test('очки сложности: новые значения и переход
   assert.equal(migrateState(s).quests[0].xp, 40);
   s.quests[0].xp = 41;
   assert.throws(() => validateState(JSON.parse(JSON.stringify(s))));
+});
+
+test('сложность старой задачи без sourceType выбирается без начисления XP', () => {
+  const before = { ...initialState(), ...state([quest({ sourceType: undefined })]) };
+  const next = updateTaskSettings(before, 'q1', { difficulty: 'Very Hard' });
+  assert.equal(next.quests[0].difficulty, 'Very Hard');
+  assert.equal(next.quests[0].xp, 80);
+  assert.equal(next.quests[0].sourceType, undefined);
+  assert.deepEqual(next.spheres, before.spheres);
+  assert.ok(next.events.every(event => event.xp === 0));
+  assert.equal(before.quests[0].difficulty, 'Medium');
+});
+test('сложность остаётся зафиксированной после прогресса, награды и выполнения', () => {
+  for (const over of [{ rewardLocked: true }, { currentValue: 1 }, { done: true }, { sourceType: 'SYSTEM' as const }]) {
+    const before = state([quest({ sourceType: undefined, ...over })]);
+    assert.throws(() => updateTaskSettings(before, 'q1', { difficulty: 'Hard' }));
+    assert.equal(before.quests[0].difficulty, 'Medium');
+  }
 });

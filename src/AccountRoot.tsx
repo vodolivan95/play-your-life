@@ -11,6 +11,7 @@ import {
 import type { User } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import App from './App';
+import { isTaskReviewMode } from './taskReviewMode';
 import BrandLogo from './components/BrandLogo';
 import { auth, database } from './firebaseClient';
 import { firebaseSave } from './firebaseSave';
@@ -463,22 +464,27 @@ function CloudGame({ user }: { user: User }) {
 }
 export default function AccountRoot() {
   const [user, setUser] = useState<User | null | undefined>(undefined),
-    [guest, setGuest] = useState(false);
+    [guest, setGuest] = useState(isTaskReviewMode);
   useEffect(() => onAuthStateChanged(auth, setUser), []);
-  if (user === undefined)
+  if (!guest && user === undefined)
     return (
       <div className="account-screen">
         <div className="account-startup" role="status"><BrandLogo /><p>Подключаем аккаунт…</p></div>
       </div>
     );
-  if (user) return <CloudGame key={user.uid} user={user} />;
+  if (!guest && user) return <CloudGame key={user.uid} user={user} />;
   if (guest)
     return (
       <App
         accountTools={
           <div className="account-bar">
-            <span>Игра сохраняется на этом устройстве</span>
-            <button onClick={() => setGuest(false)}>
+            <span>{isTaskReviewMode() ? "Проверочный режим · данные только в этом браузере, без аккаунта" : "Игра сохраняется на этом устройстве"}</span>
+            <button onClick={() => {
+              const url = new URL(location.href);
+              url.searchParams.delete('local-preview');
+              history.replaceState(null, '', url);
+              setGuest(false);
+            }}>
               Войти / Зарегистрироваться
             </button>
           </div>

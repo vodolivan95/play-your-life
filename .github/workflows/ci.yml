@@ -43,11 +43,15 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # The hosted Ubuntu image already provides Chromium shared libraries.
+      # Install the pinned browser; apt font mirrors must not block UI tests.
+      - run: npx playwright install chromium
       - name: Verify local Russian and English spelling suggestions
         run: npm run test:spellcheck-ui
       - name: Verify homepage month focus and yearly summary (local fixture only)
         run: node --experimental-strip-types --no-warnings tests/home-ui.mjs
+      - name: Verify redesigned task window and six responsive widths
+        run: node tests/task-window-ui.mjs
       - run: npm run test:quests-ui
       - run: npm run test:planner-ui
       - run: npm run test:tasks-calendar
@@ -66,6 +70,7 @@ jobs:
         with:
           name: quests-previews
           path: |
+            work/task-window/
             work/planner/
             work/quests-*.png
             work/logo-*.png
@@ -84,7 +89,9 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # The hosted Ubuntu image already provides Chromium shared libraries.
+      # Install the pinned browser; apt font mirrors must not block UI tests.
+      - run: npx playwright install chromium
       - run: npm run test:live-city
       - name: Save live city mobile and desktop previews
         if: always()
@@ -102,7 +109,9 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # The hosted Ubuntu image already provides Chromium shared libraries.
+      # Install the pinned browser; apt font mirrors must not block UI tests.
+      - run: npx playwright install chromium
       - name: Walk through every section on desktop and phone (no errors, no blank screens)
         run: npm run test:smoke-ui
       - name: Verify room exit remains available while loading

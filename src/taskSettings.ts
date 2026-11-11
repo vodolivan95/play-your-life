@@ -1,12 +1,20 @@
+import { validProjectImage } from './projectImage.ts';
+import { validTaskDetails } from './taskDetails.ts';
+import { saveTask } from './planning.ts';
 import { recordTaskSchedule, validTaskPlanning } from './planningData.ts';
 import type { PostponeReasonCode } from './planningData.ts';
 import { validDependencyGraph } from './taskDependencies.ts';
-import { difficulties } from './game.ts';
+import { difficulties, syncGoalTasks } from './game.ts';
 import type { GameState, Quest } from './game.ts';
 import { questCoins } from './personalQuests.ts';
 import { addDays, mondayOf } from './tasksCalendar.ts';
 
 export type TaskPatch = {
+  goalId?: string | null;
+  sphere?: string;
+  weight?: number;
+  coverImage?: string | null;
+  details?: Quest['details'];
   planning?: Quest['planning'];
   estimateMinutes?: number | null;
   priority?: Quest['priority'];
@@ -67,8 +75,16 @@ function shiftDate(value: string, days: number): string {
   date.setDate(date.getDate() + days);
   return date.toISOString();
 }
+export function difficultyLockReason(q: Quest): string | undefined {
+  if (q.done) return 'Задача выполнена: сложность зафиксирована.';
+  if (q.rewardLocked || (q.currentValue ?? 0) > 0)
+    return 'Прогресс уже начат: сложность и награда зафиксированы.';
+  if (q.sourceType === 'SYSTEM') return 'Сложность системной задачи задана приложением.';
+  return undefined;
+}
 export function canChangeDifficulty(q: Quest) {
-  return q.sourceType === 'USER_CREATED' && !q.rewardLocked && !(q.currentValue ?? 0);
+  // Legacy and starter tasks can lack sourceType; absence is not an explicit SYSTEM lock.
+  return difficultyLockReason(q) === undefined;
 }
 export function taskContribution(state: GameState, q: Quest) {
   const xp = q.sourceType === 'USER_CREATED' ? difficulties[q.difficulty as keyof typeof difficulties] ?? q.xp : q.xp;
@@ -86,6 +102,26 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
   if (!old) throw new Error('Задача не найдена.');
   if (old.done) throw new Error('Выполненную задачу нельзя менять.');
   const q: Quest = { ...old };
+  if (patch.details !== undefined) {
+    if (!validTaskDetails(patch.details)) throw new Error('Проверь дополнительные поля задачи.');
+    q.details = patch.details;
+  }
+  if (patch.coverImage !== undefined) {
+    if (!validProjectImage(patch.coverImage ?? undefined)) throw new Error('Некорректная обложка.');
+    q.coverImage = patch.coverImage ?? undefined;
+  }
+  if (patch.weight !== undefined) {
+    if (!Number.isFinite(patch.weight) || patch.weight <= 0 || patch.weight > 1000) throw new Error('Вес: больше 0 и не более 1000.');
+    q.weight = patch.weight;
+  }
+  if (patch.goalId !== undefined || patch.sphere !== undefined) {
+    q.goalId = patch.goalId === null ? undefined : patch.goalId ?? old.goalId;
+    q.stageId = q.goalId === old.goalId ? old.stageId : undefined;
+    q.sphere = patch.sphere ?? old.sphere;
+    // Existing service enforces project/sphere/reward locks and parent ranges.
+    saveTask(state, q);
+    q.sphere = state.goals.find(g => g.id === q.goalId)?.sphere ?? q.sphere;
+  }
   if (patch.planning !== undefined) {
     if (!validTaskPlanning(patch.planning)) throw new Error('Проверь настройки задачи.');
     q.planning = patch.planning;
@@ -108,7 +144,7 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
     q.notes = patch.notes.trim() || undefined;
   }
   if (patch.difficulty !== undefined && patch.difficulty !== old.difficulty) {
-    if (!canChangeDifficulty(old)) throw new Error('Сложность этой задачи изменить нельзя.');
+    if (!canChangeDifficulty(old)) throw new Error(difficultyLockReason(old));
     if (!Object.hasOwn(difficulties, patch.difficulty)) throw new Error('Выбери сложность.');
     q.difficulty = patch.difficulty;
     q.xp = difficulties[patch.difficulty as keyof typeof difficulties];
@@ -161,7 +197,7 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
   if (patch.stageId !== undefined) {
     if (patch.stageId === null) q.stageId = undefined;
     else {
-      const goal = state.goals.find((g) => g.id === old.goalId);
+      const goal = state.goals.find((g) => g.id === q.goalId);
       if (!goal?.stages?.some((s) => s.id === patch.stageId)) throw new Error('Этап не найден в проекте задачи.');
       q.stageId = patch.stageId;
     }
@@ -178,7 +214,15 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
   if (patch.pinned !== undefined) q.pinned = patch.pinned || undefined;
   if (patch.wontDo !== undefined) q.wontDo = patch.wontDo || undefined;
   const clean = Object.fromEntries(Object.entries(q).filter(([, v]) => v !== undefined)) as Quest;
-  const next = { ...state, quests: state.quests.map((item) => (item.id === id ? clean : item)) };
+  let next = { ...state, quests: state.quests.map((item) => (item.id === id ? clean : item)) };
+  if (patch.goalId !== undefined || patch.weight !== undefined) {
+    if (old.goalId) next = syncGoalTasks(next, old.goalId);
+    if (q.goalId && q.goalId !== old.goalId) next = syncGoalTasks(next, q.goalId);
+  }
   if (patch.planning !== undefined && !validDependencyGraph(next.quests)) throw new Error('Связь создаёт цикл зависимостей.');
-  return recordTaskSchedule(next, old, clean, patch.moveReason, patch.actionId, patch.moveReasonCode);
+  const recorded = recordTaskSchedule(next, old, clean, patch.moveReason, patch.actionId, patch.moveReasonCode);
+  if (JSON.stringify(old) === JSON.stringify(clean)) return state;
+  const labels: Record<string, string> = { name: 'название', notes: 'описание', priority: 'приоритет', difficulty: 'сложность', goalId: 'проект', stageId: 'этап', sphere: 'сфера', weight: 'вес', planning: 'статус и планирование', subtasks: 'чек-лист', coverImage: 'обложка', details: 'дополнительные данные', repeat: 'повтор', estimateMinutes: 'оценка времени', pinned: 'избранное', sync: 'синхронизация' };
+  const changed = Object.keys(patch).filter(k => labels[k]).map(k => labels[k]);
+  return changed.length ? { ...recorded, events: [...recorded.events, { id: patch.actionId && !recorded.events.some(e => e.id === patch.actionId) ? patch.actionId : crypto.randomUUID(), sourceId: id, sphere: q.sphere, title: `Изменено: ${changed.join(', ')}`, xp: 0, kind: 'planning', date: new Date().toISOString() }] } : recorded;
 }

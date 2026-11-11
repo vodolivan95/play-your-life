@@ -1,3 +1,4 @@
+import { isTaskReviewMode } from './taskReviewMode';
 import { dependencyBlockMessage } from './taskDependencies';
 import { readGoalRoute, goalRoute } from './goalRoutes';
 import { readTaskRoute } from './taskRoutes';
@@ -66,7 +67,7 @@ import type { SearchResult } from './globalSearch';
 import TaskWindow from './components/TaskWindow';
 import ErrorBoundary from './components/ErrorBoundary';
 import QuestWizard from './components/QuestWizard';
-import { saveCustomQuest, saveHabit } from './personalQuests';
+import { saveCustomQuest, duplicateQuest, saveHabit } from './personalQuests';
 import TaskLabelBadge from './components/TaskLabelBadge';
 
 function Progress({
@@ -124,7 +125,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   const [profileTipDismissed, setProfileTipDismissed] = useState(false);
   const [modal, setModal] = useState<
     'quest' | 'goal' | 'streak' | 'start' | 'profile' | null
-  >(() => (state.profile.onboardingComplete ? null : 'start'));
+  >(() => (state.profile.onboardingComplete || (!userId && isTaskReviewMode()) ? null : 'start'));
   useEffect(() => {
     if (userId && state.profile.onboardingComplete)
       queueMicrotask(() => setModal(current => current === 'start' ? null : current));
@@ -853,6 +854,27 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
               setModal('quest');
             }}
             onUndo={undoFinish}
+            onComplete={finish}
+            onDuplicate={(q) => {
+              try {
+                duplicateQuest(state, q.id, userId ?? "local");
+              } catch (error) {
+                notify(
+                  error instanceof Error
+                    ? error.message
+                    : "Не удалось дублировать задачу.",
+                );
+                return;
+              }
+              setState((current) => {
+                try {
+                  return duplicateQuest(current, q.id, userId ?? "local");
+                } catch {
+                  return current;
+                }
+              });
+              notify("Задача продублирована.");
+            }}
             onDelete={(q) => {
               if (window.confirm('Удалить задачу? Уже заработанные награды и история сохранятся.')) {
                 setState((current) => removeQuest(current, q.id));

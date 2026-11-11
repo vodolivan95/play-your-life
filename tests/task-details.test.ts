@@ -110,3 +110,14 @@ test("project change clears stage, details survive state validation, history has
   assert.equal(copied.rewardClaimed, false);
   assert.equal(copied.tickTickSharedAt, undefined);
 });
+
+test("duplicate keeps a maximum-length title valid and does not split emoji", () => {
+  const s = initialState();
+  s.quests[0].name = "Я".repeat(90) + "🧭".repeat(5);
+  const next = duplicateQuest(s, s.quests[0].id, "local");
+  const copy = next.quests.at(-1)!;
+  assert.equal(copy.name, "Я".repeat(90) + "🧭 (копия)");
+  assert.equal(copy.name.length, 100);
+  assert.equal(s.quests[0].name.length, 100);
+  validateState(JSON.parse(JSON.stringify(next)));
+});

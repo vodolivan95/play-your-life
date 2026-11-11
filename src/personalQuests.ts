@@ -208,11 +208,20 @@ export function duplicateQuest(
   if (!q) throw new Error("Задача не найдена.");
   if (q.ownerId && q.ownerId !== ownerId)
     throw new Error("Это задача другого пользователя.");
+  const suffix = " (копия)";
+  const nameParts =
+    typeof Intl.Segmenter === "function"
+      ? Array.from(
+          new Intl.Segmenter("ru", { granularity: "grapheme" }).segment(q.name),
+          (part) => part.segment,
+        )
+      : Array.from(q.name);
+  while (nameParts.join("").length + suffix.length > 100) nameParts.pop();
   const copy: Quest = {
     ...q,
     id: crypto.randomUUID(),
     ownerId,
-    name: `${q.name} (копия)`,
+    name: `${nameParts.join("").trimEnd()}${suffix}`,
     createdAt: new Date().toISOString(),
     done: false,
     currentValue: 0,

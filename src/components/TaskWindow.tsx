@@ -78,6 +78,7 @@ function TaskWindowContent({
 }) {
   const tickTick = useContext(TickTickContext);
   const task = state.quests.find((q) => q.id === taskId);
+  const taskExists = !!task;
   const [tab, setTab] = useState<(typeof tabs)[number]>("Планирование");
   const [name, setName] = useState(task?.name ?? "");
   const [description, setDescription] = useState(task?.notes ?? "");
@@ -97,6 +98,8 @@ function TaskWindowContent({
   const photoInput = useRef<HTMLInputElement>(null);
   const dragId = useRef<string | undefined>(undefined);
   const dialog = useRef<HTMLElement>(null);
+  const duplicateGuard = useRef(false);
+  const duplicateReset = useRef<number | undefined>(undefined);
   const dirty =
     !!task &&
     (name !== task.name ||
@@ -106,20 +109,29 @@ function TaskWindowContent({
       !!tag.trim());
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => {
-      const unsavedField = Array.from(dialog.current?.querySelectorAll<HTMLInputElement>('input:not([type=checkbox]):not([type=file])') ?? []).some(field => field.value !== field.defaultValue);
+      const unsavedField = Array.from(
+        dialog.current?.querySelectorAll<HTMLInputElement>(
+          "input:not([type=checkbox]):not([type=file])",
+        ) ?? [],
+      ).some((field) => field.value !== field.defaultValue);
       if (dirty || unsavedField) event.preventDefault();
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
   }, [dirty]);
   useEffect(() => {
+    if (!taskExists) return;
     dialog.current?.focus();
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previous;
+      if (duplicateReset.current !== undefined)
+        window.clearTimeout(duplicateReset.current);
+      duplicateReset.current = undefined;
+      duplicateGuard.current = false;
     };
-  }, []);
+  }, [taskExists]);
   if (!task) return null;
   const c = taskContribution(state, task);
   const forecast = taskGoalForecast(state, task);
@@ -164,16 +176,25 @@ function TaskWindowContent({
     .filter((e) => e.sourceId === task.id)
     .slice()
     .sort((a, b) => b.date.localeCompare(a.date));
-  function patch(p: TaskPatch) {
+  function patch(p: TaskPatch | ((current: Quest) => TaskPatch)) {
+    const apply = (current: GameState) => {
+      const currentTask = current.quests.find((q) => q.id === taskId);
+      if (!currentTask) throw new Error("Задача не найдена.");
+      return updateTaskSettings(
+        current,
+        taskId,
+        typeof p === "function" ? p(currentTask) : p,
+      );
+    };
     try {
-      updateTaskSettings(state, task!.id, p);
+      apply(state);
     } catch (e) {
       notify((e as Error).message);
       return false;
     }
     onChange((current) => {
       try {
-        return updateTaskSettings(current, task!.id, p);
+        return apply(current);
       } catch (e) {
         queueMicrotask(() => notify((e as Error).message));
         return current;
@@ -181,8 +202,15 @@ function TaskWindowContent({
     });
     return true;
   }
-  function updateDetails(p: Partial<TaskDetails>) {
-    return patch({ details: { ...details, ...p } });
+  function updateDetails(
+    p: Partial<TaskDetails> | ((current: TaskDetails) => Partial<TaskDetails>),
+  ) {
+    return patch((current) => {
+      const latest = current.details ?? {};
+      return {
+        details: { ...latest, ...(typeof p === "function" ? p(latest) : p) },
+      };
+    });
   }
   function close() {
     if (
@@ -216,6 +244,24 @@ function TaskWindowContent({
       notify("Ссылка скопирована");
     } catch {
       notify("Ссылка: " + link);
+    }
+  }
+  function duplicate() {
+    if (!onDuplicate || duplicateGuard.current) return;
+    duplicateGuard.current = true;
+    try {
+      onDuplicate(task!);
+    } catch (error) {
+      notify(
+        error instanceof Error
+          ? error.message
+          : "Не удалось дублировать задачу.",
+      );
+    } finally {
+      duplicateReset.current = window.setTimeout(() => {
+        duplicateGuard.current = false;
+        duplicateReset.current = undefined;
+      }, 400);
     }
   }
   function remove() {
@@ -280,29 +326,30 @@ function TaskWindowContent({
     try {
       await inspectQuestPhoto(file);
       const url = await readProjectImage(file, true);
-      if (
-        !cover &&
-        attachments.reduce((sum, a) => sum + a.url.length, url.length) > 350000
-      ) {
-        throw new Error(
-          "Превышен общий размер фотографий задачи. Удалите одно из фото и повторите загрузку.",
-        );
-      }
       if (cover)
-        patch({ coverImage: url, details: { ...details, coverHidden: false } });
-      else
-        updateDetails({
-          attachments: [
-            ...attachments,
-            {
-              id: crypto.randomUUID(),
-              name: file.name,
-              url,
-              type: "photo",
-              size: Math.floor(url.length * 0.75),
-            },
-          ],
+        patch((current) => ({
+          coverImage: url,
+          details: { ...current.details, coverHidden: false },
+        }));
+      else {
+        const attachment = {
+          id: crypto.randomUUID(),
+          name: file.name,
+          url,
+          type: "photo" as const,
+          size: Math.floor(url.length * 0.75),
+        };
+        updateDetails((current) => {
+          const latest = current.attachments ?? [];
+          if (
+            latest.reduce((sum, a) => sum + a.url.length, url.length) > 350000
+          )
+            throw new Error(
+              "Превышен общий размер фотографий задачи. Удалите одно из фото и повторите загрузку.",
+            );
+          return { attachments: [...latest, attachment] };
         });
+      }
     } catch (e) {
       notify((e as Error).message);
     } finally {
@@ -342,7 +389,8 @@ function TaskWindowContent({
         onKeyDown={(e) => {
           if (e.key === "Escape") {
             // Commit existing blur-saved fields before the editor can unmount.
-            if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();
+            if (document.activeElement instanceof HTMLInputElement)
+              document.activeElement.blur();
             if (preview) setPreview(undefined);
             else if (menu) setMenu(false);
             else if (coverMenu) setCoverMenu(false);
@@ -389,10 +437,7 @@ function TaskWindowContent({
               <Icon name="star" size={23} />
             </button>
             {onDuplicate && (
-              <button
-                aria-label="Дублировать"
-                onClick={() => onDuplicate(task)}
-              >
+              <button aria-label="Дублировать" onClick={duplicate}>
                 <Icon name="copy" size={21} />
               </button>
             )}
@@ -1142,7 +1187,14 @@ function TaskWindowContent({
                     title={details.address || "Указать название и адрес"}
                     onClick={() => setPlaceEditing(!placeEditing)}
                   >
-                    <span>{details.place || details.address || (Number.isFinite(details.latitude) && Number.isFinite(details.longitude) ? `${details.latitude}, ${details.longitude}` : "Указать место")}</span>
+                    <span>
+                      {details.place ||
+                        details.address ||
+                        (Number.isFinite(details.latitude) &&
+                        Number.isFinite(details.longitude)
+                          ? `${details.latitude}, ${details.longitude}`
+                          : "Указать место")}
+                    </span>
                     <Icon name="chevronDown" size={19} />
                   </button>
                   {route ? (
@@ -1646,7 +1698,7 @@ function TaskWindowContent({
             </button>
           )}
           {onDuplicate && (
-            <button onClick={() => onDuplicate(task)}>
+            <button onClick={duplicate}>
               <Icon name="copy" size={23} /> Дублировать
             </button>
           )}

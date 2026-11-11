@@ -67,7 +67,7 @@ import type { SearchResult } from './globalSearch';
 import TaskWindow from './components/TaskWindow';
 import ErrorBoundary from './components/ErrorBoundary';
 import QuestWizard from './components/QuestWizard';
-import { saveCustomQuest, saveHabit } from './personalQuests';
+import { saveCustomQuest, duplicateQuest, saveHabit } from './personalQuests';
 import TaskLabelBadge from './components/TaskLabelBadge';
 
 function Progress({
@@ -854,6 +854,27 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
               setModal('quest');
             }}
             onUndo={undoFinish}
+            onComplete={finish}
+            onDuplicate={(q) => {
+              try {
+                duplicateQuest(state, q.id, userId ?? "local");
+              } catch (error) {
+                notify(
+                  error instanceof Error
+                    ? error.message
+                    : "Не удалось дублировать задачу.",
+                );
+                return;
+              }
+              setState((current) => {
+                try {
+                  return duplicateQuest(current, q.id, userId ?? "local");
+                } catch {
+                  return current;
+                }
+              });
+              notify("Задача продублирована.");
+            }}
             onDelete={(q) => {
               if (window.confirm('Удалить задачу? Уже заработанные награды и история сохранятся.')) {
                 setState((current) => removeQuest(current, q.id));

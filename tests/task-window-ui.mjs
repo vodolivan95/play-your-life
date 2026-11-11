@@ -1,7 +1,7 @@
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdir } from "node:fs/promises";
+import { mkdir, writeFile, rm } from "node:fs/promises";
 await mkdir("work/task-window", { recursive: true });
 const origin = process.env.TASK_TEST_ORIGIN || "http://127.0.0.1:5196";
 const server = process.env.TASK_TEST_ORIGIN
@@ -46,14 +46,31 @@ try {
     locale: "ru-RU",
   });
   async function touchScreenshot(path, savedState) {
-    const touch = await browser.newContext({ viewport:{width:390,height:3200}, isMobile:true, hasTouch:true, deviceScaleFactor:1, locale:'ru-RU', timezoneId:'Europe/Moscow' });
-    if(savedState) await touch.addInitScript(state=>localStorage.setItem('play-your-life-v1',state),savedState);
-    const page = await touch.newPage(); page.on('pageerror',e=>errors.push(e.message));
+    const touch = await browser.newContext({
+      viewport: { width: 390, height: 3200 },
+      isMobile: true,
+      hasTouch: true,
+      deviceScaleFactor: 1,
+      locale: "ru-RU",
+      timezoneId: "Europe/Moscow",
+    });
+    if (savedState)
+      await touch.addInitScript(
+        (state) => localStorage.setItem("play-your-life-v1", state),
+        savedState,
+      );
+    const page = await touch.newPage();
+    page.on("pageerror", (e) => errors.push(e.message));
     await page.goto(`${origin}/?local-preview=1#/tasks/english-1`);
-    const window = page.locator('section.twin'); await window.waitFor();
-    await window.locator('.focus').waitFor();
-    assert.ok(await window.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'touch viewport overflow');
-    await window.screenshot({path}); await touch.close();
+    const window = page.locator("section.twin");
+    await window.waitFor();
+    await window.locator(".focus").waitFor();
+    assert.ok(
+      await window.evaluate((el) => el.scrollWidth <= el.clientWidth + 1),
+      "touch viewport overflow",
+    );
+    await window.screenshot({ path });
+    await touch.close();
   }
   const p = await context.newPage();
   p.on("pageerror", (e) => errors.push(e.message));
@@ -94,7 +111,7 @@ try {
       });
     }
   }
-  await touchScreenshot('work/task-window/mobile.png');
+  await touchScreenshot("work/task-window/mobile.png");
   await p.setViewportSize({ width: 1440, height: 1200 });
   await dialog
     .getByLabel("Название задачи", { exact: true })
@@ -171,9 +188,40 @@ try {
     .getByRole("button", { name: "Добавить заметку", exact: true })
     .click();
   await dialog.getByRole("tab", { name: "Вложения", exact: false }).click();
+  // Hold image decoding while another metadata edit is saved.
+  await p.evaluate(() => {
+    const nativeDecode = Image.prototype.decode;
+    Image.prototype.decode = async function () {
+      if (this.src.startsWith("blob:")) {
+        await new Promise((resolve) => {
+          window.releaseTaskPhoto = resolve;
+        });
+      }
+      return nativeDecode.call(this);
+    };
+    window.restoreTaskDecode = () => {
+      Image.prototype.decode = nativeDecode;
+    };
+  });
   await dialog
     .getByLabel("Добавить фото", { exact: true })
     .setInputFiles("public/logo-256.png");
+  await p.waitForFunction(
+    () => typeof window.releaseTaskPhoto === "function",
+  );
+  await dialog.getByRole("tab", { name: "Заметки", exact: false }).click();
+  await dialog
+    .getByLabel("Текст заметки", { exact: true })
+    .fill("Заметка во время загрузки");
+  await dialog
+    .getByRole("button", { name: "Добавить заметку", exact: true })
+    .click();
+  await p.evaluate(() => {
+    window.releaseTaskPhoto();
+    window.restoreTaskDecode();
+  });
+  await dialog.getByRole("tab", { name: "Вложения", exact: false }).click();
+
   await dialog
     .getByRole("button", { name: "Сделать обложкой", exact: true })
     .click();
@@ -183,6 +231,11 @@ try {
       .count(),
     1,
   );
+  await dialog.getByRole("tab", { name: "Заметки", exact: false }).click();
+  await dialog
+    .getByText("Заметка во время загрузки", { exact: true })
+    .waitFor();
+  await dialog.getByRole("tab", { name: "Вложения", exact: false }).click();
   const firstCover = await dialog
     .locator(".twin-cover-image img")
     .getAttribute("src");
@@ -272,14 +325,17 @@ try {
     });
   }
   await p.setViewportSize({ width: 1440, height: 1200 });
-  await touchScreenshot('work/task-window/mobile-populated.png',await p.evaluate(()=>localStorage.getItem('play-your-life-v1')));
+  await touchScreenshot(
+    "work/task-window/mobile-populated.png",
+    await p.evaluate(() => localStorage.getItem("play-your-life-v1")),
+  );
   const countBeforeDuplicate = await p.evaluate(
     () => JSON.parse(localStorage.getItem("play-your-life-v1")).quests.length,
   );
   await dialog
     .locator(".twin-toolbar")
     .getByRole("button", { name: "Дублировать", exact: true })
-    .click();
+    .dblclick();
   await p.waitForFunction(
     (count) =>
       JSON.parse(localStorage.getItem("play-your-life-v1")).quests.length ===
@@ -360,6 +416,50 @@ try {
     "PASS: 6 widths, tabs, title/description save + reload, project, status, priority, checklist, tags, notes, real history, safe text, Yandex URL.",
   );
   await context.close();
+  // A remote deletion can remove the task without unmounting the parent editor.
+  // The page must remain scrollable after that state change.
+  const fixtureBase = "work/task-window/remote-delete";
+  await writeFile(
+    fixtureBase + ".html",
+    '<!doctype html><meta charset="utf-8"><style>body{margin:0;height:2000px}.pyl-overlay{position:fixed;inset:0}</style><div id="root"></div><script type="module" src="/work/task-window/remote-delete.tsx"></script>',
+  );
+  await writeFile(
+    fixtureBase + ".tsx",
+    `
+import React, {useState,useEffect} from 'react';
+import {createRoot} from 'react-dom/client';
+import TaskWindow from '../../src/components/TaskWindow';
+import {initialState} from '../../src/game';
+function Case(){const [s,set]=useState(initialState);useEffect(()=>{const timer=setTimeout(()=>set(v=>({...v,quests:[]})),1000);return()=>clearTimeout(timer)},[]);return <TaskWindow state={s} taskId="english-1" today="2026-11-11" onChange={set} onClose={()=>{}} notify={()=>{}}/>}
+createRoot(document.getElementById('root')!).render(<Case/>);
+`,
+  );
+  const remoteContext = await browser.newContext({
+    viewport: { width: 1440, height: 800 },
+  });
+  const remote = await remoteContext.newPage();
+  await remote.clock.install();
+  await remote.goto(`${origin}/${fixtureBase}.html`);
+  await remote.locator(".twin").waitFor();
+  assert.equal(
+    await remote.evaluate(() => document.body.style.overflow),
+    "hidden",
+  );
+  await remote.clock.fastForward(1200);
+  await remote.locator(".twin").waitFor({ state: "detached" });
+  await remote.waitForFunction(() => document.body.style.overflow !== "hidden");
+  assert.notEqual(
+    await remote.evaluate(() => document.body.style.overflow),
+    "hidden",
+  );
+  assert.ok(
+    await remote.evaluate(() => {
+      scrollTo(0, 500);
+      return scrollY > 0;
+    }),
+  );
+  await remoteContext.close();
+  await Promise.all([rm(fixtureBase + ".html"), rm(fixtureBase + ".tsx")]);
 } finally {
   await browser.close();
   server?.kill();

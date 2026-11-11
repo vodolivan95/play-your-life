@@ -90,7 +90,10 @@ try {
   const win = page.locator(".twin");
   await win.waitFor();
   assert.match(await win.locator(".twin-ring").innerText(), /\+20/);
-  assert.equal(await win.getByLabel("Сложность", { exact: true }).isDisabled(), true);
+  assert.equal(await win.getByLabel("Сложность", { exact: true }).isDisabled(), false);
+  await win.getByLabel("Сложность", { exact: true }).selectOption("Hard");
+  assert.match(await win.locator(".twin-ring").innerText(), /\+40/);
+  await win.getByLabel("Сложность", { exact: true }).selectOption("Medium");
   const tomorrow = await page.evaluate(async () => {
     const { dateKey } = await import("/src/game.ts");
     const d = new Date(); d.setDate(d.getDate() + 1); return dateKey(d);

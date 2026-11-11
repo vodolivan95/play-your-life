@@ -183,7 +183,7 @@
 }
 /* Переключатель «Список / Календарь» на странице «Мои задачи» */
 .pyl-quest-board [hidden] { display: none !important; }
-.pyl-quest-modes { display: inline-flex; justify-self: start; gap: 2px; padding: 3px; border-radius: 13px; background: rgba(118, 118, 128, 0.12); box-shadow: inset 0 0 0 0.5px rgba(128, 128, 128, 0.12); }
+.pyl-quest-modes { max-width:100%; min-width:0; overflow-x:auto; display: inline-flex; justify-self: start; gap: 2px; padding: 3px; border-radius: 13px; background: rgba(118, 118, 128, 0.12); box-shadow: inset 0 0 0 0.5px rgba(128, 128, 128, 0.12); }
 .pyl-quest-modes button { min-height: 44px; padding: 0 20px; border: 0; border-radius: 10px; background: transparent; color: #2a3b60; font: inherit; font-size: 14px; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: background-color 0.28s, box-shadow 0.28s; }
 .pyl-quest-modes button[aria-pressed='true'] { background: #fff; color: #14213d; font-weight: 600; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 3px 1px rgba(0, 0, 0, 0.04); }
 .pyl-quest-modes button:focus-visible { outline: 3px solid #8ab4ff; outline-offset: 2px; }

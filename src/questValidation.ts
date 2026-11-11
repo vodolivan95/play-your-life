@@ -1,3 +1,4 @@
+import { validTaskDetails } from './taskDetails.ts';
 import { difficulties, legacyDifficultyXp } from "./game.ts";
 import { habitIcons, virtualRewards } from "./personalQuests.ts";
 import { validProjectImage } from "./projectImage.ts";
@@ -42,6 +43,7 @@ export function validQuestExtension(q: Record<string, unknown>) {
     (q.ownerId === undefined || text(q.ownerId)) &&
     (q.createdAt === undefined || date(q.createdAt)) &&
     validProjectImage(q.coverImage) &&
+    validTaskDetails(q.details) &&
     (q.labelId === undefined || (text(q.labelId) && q.labelId.length <= 64)) &&
     (q.targetValue === undefined ||
       (number(q.targetValue) &&

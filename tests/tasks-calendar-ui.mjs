@@ -90,25 +90,25 @@ try {
   const win = page.locator(".twin");
   await win.waitFor();
   assert.match(await win.locator(".twin-ring").innerText(), /\+20/);
-  assert.equal(await win.getByRole("button", { name: /^Сложная/ }).isDisabled(), true);
+  assert.equal(await win.getByLabel("Сложность", { exact: true }).isDisabled(), true);
   const tomorrow = await page.evaluate(async () => {
     const { dateKey } = await import("/src/game.ts");
     const d = new Date(); d.setDate(d.getDate() + 1); return dateKey(d);
   });
-  await win.getByRole("button", { name: "Завтра", exact: true }).click();
+  await win.getByLabel("Дата окончания", { exact: true }).fill(tomorrow);
   await win.getByLabel("Дата окончания").waitFor();
   assert.equal(await win.getByLabel("Дата окончания").inputValue(), tomorrow);
   assert.equal(await win.getByRole("switch").isDisabled(), false);
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("play-your-life-v1")).quests.filter((q) => q.dueAt));
   assert.ok(saved.some((q) => q.dueAt === tomorrow));
-  await win.getByRole("button", { name: "Каждый день" }).click();
-  await win.getByLabel("Новая подзадача").fill("Первый шаг");
-  await win.getByRole("button", { name: "＋ Добавить" }).click();
+  await win.getByLabel("Повтор", { exact: true }).selectOption("daily");
+  await win.getByLabel("Новый пункт", { exact: true }).fill("Первый шаг");
+  await win.getByRole("button", { name: "Добавить", exact: true }).click();
   await win.getByRole("checkbox").check();
   const rep = await page.evaluate(() => JSON.parse(localStorage.getItem("play-your-life-v1")).quests.filter((q) => q.repeat === "daily"));
   assert.equal(rep.length, 1);
   assert.deepEqual(rep[0].subtasks.map((t) => [t.title, t.done]), [["Первый шаг", true]]);
-  await win.getByRole("button", { name: "Сохранить" }).click();
+  await win.getByRole("button", { name: "Сохранить", exact: true }).click();
   await win.waitFor({ state: "detached" });
   const rangeDays = await page.evaluate(async () => {
     const { dateKey } = await import("/src/game.ts");
@@ -161,12 +161,12 @@ try {
   const allDay = calendar.locator(".tcal-allday .tcal-chip").filter({ hasText: "Задача TickTick на весь день" });
   await allDay.click();
   await win.waitFor();
-  await win.getByRole("button", { name: "Сохранить" }).click();
+  await win.getByRole("button", { name: "Сохранить", exact: true }).click();
   await win.waitFor({ state: "detached" });
   const timed = calendar.locator(".tcal-event").filter({ hasText: "Задача TickTick с временем" });
   await timed.click();
   await win.waitFor();
-  await win.getByRole("button", { name: "Сохранить" }).click();
+  await win.getByRole("button", { name: "Сохранить", exact: true }).click();
   await win.waitFor({ state: "detached" });
   await calendar.getByRole("button", { name: "Месяц", exact: true }).click();
   await calendar.getByRole("button", { name: "Сегодня", exact: true }).click();

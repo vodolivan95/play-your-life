@@ -463,7 +463,7 @@ function CloudGame({ user }: { user: User }) {
 }
 export default function AccountRoot() {
   const [user, setUser] = useState<User | null | undefined>(undefined),
-    [guest, setGuest] = useState(false);
+    [guest, setGuest] = useState(() => import.meta.env.DEV && new URLSearchParams(location.search).get('local-preview') === '1');
   useEffect(() => onAuthStateChanged(auth, setUser), []);
   if (user === undefined)
     return (

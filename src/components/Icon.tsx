@@ -6,6 +6,10 @@ export default function Icon({
   size?: number;
 }) {
   const paths: Record<string, React.ReactNode> = {
+    copy: <><rect x="8" y="7" width="12" height="14" rx="2"/><path d="M16 7V3H4v14h4"/></>,
+    link: <><path d="m10 14 4-4M8 16l-1 1a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m2 2 1-1a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0" transform="translate(1 -1)"/></>,
+    layers: <><path d="m12 2 10 6-10 6L2 8zM2 13l10 6 10-6M2 18l10 6 10-6"/></>,
+    play: <><circle cx="12" cy="12" r="10"/><path d="m9 7 8 5-8 5z"/></>,
     city: (
       <>
         <path d="M3 21V10h5v11M8 21V3h8v18M16 21V8h5v13M2 21h20M10 7h4M10 11h4M10 15h4M5 13v2M18 11v2" />

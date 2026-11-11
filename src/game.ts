@@ -119,6 +119,7 @@ export type Quest = {
   ownerId?: string;
   createdAt?: string;
   coverImage?: string;
+  details?: import('./taskDetails.ts').TaskDetails;
   targetValue?: number;
   currentValue?: number;
   unit?: string;

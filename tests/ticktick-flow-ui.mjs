@@ -187,7 +187,7 @@ try {
   await movedTask.click();
   const taskWindow = page.locator('.twin');
   await taskWindow.waitFor();
-  await taskWindow.getByRole('button',{name:'Сохранить'}).click();
+  await taskWindow.getByRole('button',{name:'Сохранить',exact:true}).click();
   await taskWindow.waitFor({state:'detached'});
   await page.getByRole('button',{name:/^Входящие/}).first().click();
   // 5. Удаление в TickTick убирает задачу в игре, цели остаются.

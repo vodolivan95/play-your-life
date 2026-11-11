@@ -6,6 +6,26 @@ export default function Icon({
   size?: number;
 }) {
   const paths: Record<string, React.ReactNode> = {
+    chevronDown: <path d="m5 9 7 7 7-7"/>,
+    document: <><path d="M14 2H4v20h16V8zM14 2v6h6M8 12h8M8 16h8"/></>,
+    attachment: <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l10.6-10.6a4 4 0 0 1 5.66 5.66L9.41 17.41a2 2 0 0 1-2.83-2.83l9.19-9.19"/>,
+    info: <><circle cx="12" cy="12" r="10"/><path d="M12 11v6"/><circle cx="12" cy="7" r=".8" fill="currentColor"/></>,
+    arrowLeft: <path d="M20 12H4m7-7-7 7 7 7" />,
+    bookmark: <path d="M5 3h14v18l-7-5-7 5z" />,
+    history: <><path d="M3 10a9 9 0 1 1 2 9M3 4v6h6M12 7v5l4 2" /></>,
+    note: <><path d="M5 3h14v18H5zM8 7h8M8 11h8M8 15h4"/><path d="M15 15v6l2-2 2 2v-6z"/></>,
+    external: <><path d="M14 3h7v7M21 3l-9 9M10 5H3v16h16v-7"/></>,
+    map: <><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2zM9 3v16M15 5v16"/></>,
+    location: <><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></>,
+    tag: <><path d="M3 3h8l10 10-8 8L3 11z"/><circle cx="7" cy="7" r="1"/></>,
+    timer: <><circle cx="12" cy="14" r="8"/><path d="M12 6V2M9 2h6M18 7l2-2M12 10v5"/></>,
+    playFill: <path d="m7 3 15 9-15 9z" fill="currentColor" stroke="none"/>,
+    grip: <><circle cx="9" cy="5" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="19" r="1"/></>,
+
+    copy: <><rect x="8" y="7" width="12" height="14" rx="2"/><path d="M16 7V3H4v14h4"/></>,
+    link: <><path d="m10 14 4-4M8 16l-1 1a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m2 2 1-1a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0" transform="translate(1 -1)"/></>,
+    layers: <><path d="m12 2 10 6-10 6L2 8zM2 13l10 6 10-6M2 18l10 6 10-6"/></>,
+    play: <><circle cx="12" cy="12" r="10"/><path d="m9 7 8 5-8 5z"/></>,
     city: (
       <>
         <path d="M3 21V10h5v11M8 21V3h8v18M16 21V8h5v13M2 21h20M10 7h4M10 11h4M10 15h4M5 13v2M18 11v2" />

@@ -145,6 +145,7 @@ export function stuckTasks(state: GameState, quests: Quest[], today: string, set
     if (categories.length) result.push({ id: q.id, categories, moves, blockedBy: blockedBy.map((b) => ({ id: b.id, name: b.name })), daysSinceActivity });
   }
   return result;
+}
 export type ExecutionOverview = {
   totalActive: number; plannedToday: number; doneToday: number; overdue: number;
   oftenPostponed: number; blocked: number; noDate: number; inActiveProjects: number;

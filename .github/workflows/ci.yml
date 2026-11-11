@@ -105,6 +105,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Walk through every section on desktop and phone (no errors, no blank screens)
         run: npm run test:smoke-ui
+      - run: npm run test:weekly-review-ui
       - run: npm run test:key-results-ui
       - run: npm run test:month-report-ui
       - name: Save section previews

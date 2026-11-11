@@ -14,6 +14,7 @@ import {
 } from '../weeklyReview';
 import { addDays, mondayOf } from '../tasksCalendar';
 import { isGoalDone } from '../goalsOverview';
+import './Overlay.css';
 import './WeeklyReviewWizard.css';
 
 const STEPS = ['Итоги недели', 'Проблемные задачи', 'Продвижение проектов', 'Фокус недели', 'Подтверждение'] as const;
@@ -34,14 +35,22 @@ export default function WeeklyReviewWizard({
 }) {
   const [weekFrom, setWeekFrom] = useState(weekAnchor());
   const [step, setStep] = useState(0);
-  const [focusGoalIds, setFocusGoalIds] = useState<string[]>([]);
-  const [focusNote, setFocusNote] = useState('');
+  const [focusGoalIds, setFocusGoalIds] = useState<string[]>(() => weeklyReviewOf(state, weekFrom)?.focusGoalIds ?? []);
+  const [focusNote, setFocusNote] = useState(() => weeklyReviewOf(state, weekFrom)?.focusNote ?? '');
   const [history, setHistory] = useState(false);
+  const [viewSaved, setViewSaved] = useState(false);
   const existing = weeklyReviewOf(state, weekFrom);
-  const totals = weeklyReviewTotals(state, weekFrom);
+  const totals = viewSaved && existing ? existing.totals : weeklyReviewTotals(state, weekFrom);
   const problems = weeklyReviewProblemTasks(state);
-  const projects = weeklyReviewProjects(state, weekFrom);
+  const projects = viewSaved && existing ? existing.projects : weeklyReviewProjects(state, weekFrom);
   const activeGoals = state.goals.filter((g) => !isGoalDone(g) && !g.paused);
+  function selectWeek(week: string, saved = false) {
+    const review = weeklyReviewOf(state, week);
+    setWeekFrom(week);
+    setFocusGoalIds(review?.focusGoalIds ?? []);
+    setFocusNote(review?.focusNote ?? '');
+    setViewSaved(saved && !!review);
+  }
   const toggleFocus = (id: string) =>
     setFocusGoalIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : ids.length >= MAX_WEEKLY_FOCUS ? ids : [...ids, id]));
   function confirm() {
@@ -57,7 +66,7 @@ export default function WeeklyReviewWizard({
         <header className="wrw-head">
           <div>
             <h2 id="wrw-title">Недельный обзор</h2>
-            <p>{fmtWeek(weekFrom)}{existing && ' · уже подведён, сохранение обновит его'}</p>
+            <p>{fmtWeek(weekFrom)}{viewSaved ? ' · сохранённый обзор' : existing && ' · уже подведён, сохранение обновит его'}</p>
           </div>
           <button type="button" className="wrw-close" aria-label="Закрыть" onClick={onClose}>✕</button>
         </header>
@@ -79,13 +88,21 @@ export default function WeeklyReviewWizard({
             </div>
             <label>
               Неделя обзора
-              <input type="date" value={weekFrom} onChange={(e) => e.target.value && setWeekFrom(mondayOf(e.target.value))} />
+              <input type="date" value={weekFrom} onChange={(e) => e.target.value && selectWeek(mondayOf(e.target.value))} />
             </label>
           </div>
         )}
         {step === 1 && (
           <div className="wrw-panel" aria-label="Проблемные задачи">
-            {problems.length === 0 ? (
+            {viewSaved && existing ? (
+              <ul className="wrw-list">
+                {existing.problemTaskIds.length === 0 && <li>Проблемных задач в обзоре нет.</li>}
+                {existing.problemTaskIds.map((id) => {
+                  const task = state.quests.find((q) => q.id === id);
+                  return <li key={id}><button type="button" disabled={!task} onClick={() => onOpenTask(id)}>{task?.name ?? 'Задача больше недоступна'}</button></li>;
+                })}
+              </ul>
+            ) : problems.length === 0 ? (
               <p>Часто переносимых или просроченных задач нет.</p>
             ) : (
               <ul className="wrw-list">
@@ -125,7 +142,7 @@ export default function WeeklyReviewWizard({
                     <input
                       type="checkbox"
                       checked={focusGoalIds.includes(g.id)}
-                      disabled={!focusGoalIds.includes(g.id) && focusGoalIds.length >= MAX_WEEKLY_FOCUS}
+                      disabled={viewSaved || (!focusGoalIds.includes(g.id) && focusGoalIds.length >= MAX_WEEKLY_FOCUS)}
                       onChange={() => toggleFocus(g.id)}
                     />
                     {g.name}
@@ -135,7 +152,7 @@ export default function WeeklyReviewWizard({
             </ul>
             <label>
               Направление (свободный текст, необязательно)
-              <textarea value={focusNote} maxLength={MAX_WEEKLY_REVIEW_NOTE} onChange={(e) => setFocusNote(e.target.value)} rows={3} />
+              <textarea value={focusNote} readOnly={viewSaved} maxLength={MAX_WEEKLY_REVIEW_NOTE} onChange={(e) => setFocusNote(e.target.value)} rows={3} />
             </label>
           </div>
         )}
@@ -146,14 +163,18 @@ export default function WeeklyReviewWizard({
                 ? 'Фокус на неделю не выбран.'
                 : `Фокус: ${[...focusGoalIds.map((id) => state.goals.find((g) => g.id === id)?.name).filter(Boolean), focusNote.trim()].filter(Boolean).join(', ')}`}
             </p>
-            <button type="button" onClick={confirm}>{existing ? 'Обновить обзор' : 'Подтвердить итоги недели'}</button>
+            {viewSaved ? (
+              <button type="button" onClick={() => setViewSaved(false)}>Перейти к обновлению обзора</button>
+            ) : (
+              <button type="button" onClick={confirm}>{existing ? 'Обновить обзор' : 'Подтвердить итоги недели'}</button>
+            )}
             <button type="button" onClick={() => setHistory((v) => !v)}>{history ? 'Скрыть предыдущие обзоры' : 'Открыть предыдущие обзоры'}</button>
             {history && (
               <ul className="wrw-list">
                 {weeklyReviews(state).length === 0 && <li><small>Пока нет сохранённых обзоров.</small></li>}
                 {weeklyReviews(state).map((r) => (
                   <li key={r.weekStart}>
-                    <button type="button" onClick={() => { setWeekFrom(r.weekStart); setFocusGoalIds(r.focusGoalIds); setFocusNote(r.focusNote ?? ''); setStep(0); setHistory(false); }}>
+                    <button type="button" onClick={() => { selectWeek(r.weekStart, true); setStep(0); setHistory(false); }}>
                       {fmtWeek(r.weekStart)}
                     </button>
                     <small>выполнено {r.totals.done} · переносов {r.totals.moves}</small>

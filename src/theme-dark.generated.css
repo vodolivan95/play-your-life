@@ -505,6 +505,7 @@
 :root[data-theme="dark"] .gl-pace-ahead { color: #84ecb8; }
 :root[data-theme="dark"] .gl-pace-behind { color: #ef9797; }
 :root[data-theme="dark"] .gl-pace-on-track { background: #1a2b3f; color: #97c6f6; }
+:root[data-theme="dark"] .goal-control-blocked { color: #ef9797; }
 :root[data-theme="dark"] .gl-monthly-focus-limit { color: #9db0da; }
 :root[data-theme="dark"] .gl-plan { background: #1b3242; color: #95c8e4; }
 :root[data-theme="dark"] .gl-pause-toggle { background: #141b30; color: #9db0da; }
@@ -520,16 +521,6 @@
 :root[data-theme="dark"] .gl-featured-head h3 { color: #e0e6f3; }
 :root[data-theme="dark"] .gl-featured-count { background: #3d3419; color: #ffd066; }
 :root[data-theme="dark"] .gl-add-slot { border: 2px dashed #3b495e; }
-:root[data-theme="dark"] .gl-side { background: #151d33; }
-:root[data-theme="dark"] .gl-side-kicker { color: #9db0da; }
-:root[data-theme="dark"] .gl-side-meta { color: #9db0da; }
-:root[data-theme="dark"] .gl-side-empty { color: #9db0da; }
-:root[data-theme="dark"] .gl-stage-list li,
-:root[data-theme="dark"] .gl-task-list li { background: #141b31; }
-:root[data-theme="dark"] .gl-stage-name,
-:root[data-theme="dark"] .gl-task-list li span { color: #e0e6f3; }
-:root[data-theme="dark"] .gl-stage-list b { color: #b2c0e2; }
-:root[data-theme="dark"] .gl-task-list small { color: #9db0da; }
 
 /* components/LifeCity.css */
 :root[data-theme="dark"] .city-summary b { color: #a5b6f1; }
@@ -570,6 +561,11 @@
 :root[data-theme="dark"] .project-image-picker legend { color: #9aadd9; }
 :root[data-theme="dark"] .project-image-picker-row small { color: #8fa4d4; }
 
+/* components/Overlay.css */
+:root[data-theme="dark"] .pyl-overlay label { color: #a5bfd6; }
+:root[data-theme="dark"] .pyl-overlay input { border: 1px solid #2f506a; background: #151d33; color: #86b3e1; }
+:root[data-theme="dark"] .pyl-overlay form { background: #151d33; }
+
 /* components/QuestBoard.css */
 :root[data-theme="dark"] .pyl-quest-board { color: #85b1e0; }
 :root[data-theme="dark"] .pyl-section-title button,
@@ -601,12 +597,10 @@
 :root[data-theme="dark"] .pyl-recommendations small { color: #95d6fc; }
 :root[data-theme="dark"] .pyl-quest-dialog { border: 1px solid #2f546a; color: #87b3e0; }
 :root[data-theme="dark"] .pyl-dialog-top button { background: #141b30; color: #91c2ea; }
-:root[data-theme="dark"] .pyl-quest-dialog label,
-:root[data-theme="dark"] .pyl-overlay label { color: #a5bfd6; }
+:root[data-theme="dark"] .pyl-quest-dialog label { color: #a5bfd6; }
 :root[data-theme="dark"] .pyl-quest-dialog input:not([type="file"]),
 :root[data-theme="dark"] .pyl-quest-dialog textarea,
-:root[data-theme="dark"] .pyl-quest-dialog select,
-:root[data-theme="dark"] .pyl-overlay input { border: 1px solid #2f506a; background: #151d33; color: #86b3e1; }
+:root[data-theme="dark"] .pyl-quest-dialog select { border: 1px solid #2f506a; background: #151d33; color: #86b3e1; }
 :root[data-theme="dark"] .pyl-quest-dialog input:disabled,
 :root[data-theme="dark"] .pyl-quest-dialog select:disabled { background: #131b2f; }
 :root[data-theme="dark"] .pyl-sphere-picker button { border: 2px solid #325067; background: #151d33; color: #a6bed6; }
@@ -616,7 +610,6 @@
 :root[data-theme="dark"] .pyl-reward-preview { background: #41381b; }
 :root[data-theme="dark"] .pyl-wizard-review { background: #141c31; }
 :root[data-theme="dark"] .pyl-error { background: #141c31; color: #e4a5b3; }
-:root[data-theme="dark"] .pyl-overlay form { background: #151d33; }
 :root[data-theme="dark"] .pyl-celebration { background: #141c32; border: 1px solid #6a5a2f; }
 
 /* components/RewardShop.css */

@@ -12,6 +12,7 @@ import { CityAppearanceContext } from './cityAppearanceContext';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction, ReactNode } from 'react';
 import Icon from './components/Icon';
+import './components/Overlay.css';
 const LifeCity = lazy(() => import('./components/LifeCity'));
 const FocusBar = lazy(() => import('./components/FocusBar'));
 // Страницы разделов грузятся по требованию: при первом открытии сайта виден

@@ -29,3 +29,7 @@
 .room3d-screen li button:hover { background: #4a90ff; }
 .room3d-screen p { margin: 0; font-size: 20px; color: #9cc3e8; }
 .room3d-shelf-empty { margin: 0; width: 300px; font: 600 18px var(--font); color: #ffe2b8; text-align: center; text-shadow: 0 1px 4px #0008; }
+
+/* Возврат остаётся доступен, пока сцена загружается; открытая панель выше HUD. */
+.room3d-hud{z-index:2}
+.room3d-scrim{z-index:3}

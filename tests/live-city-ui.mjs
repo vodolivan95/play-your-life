@@ -137,7 +137,9 @@ try {
  const canvasBounds=await page.locator('.live-city-canvas').boundingBox();const mapBounds=await page.locator('.coastal-map').boundingBox();
  assert.ok(Math.abs(canvasBounds.width-mapBounds.width)<1);assert.ok(Math.abs(canvasBounds.height-mapBounds.height)<1);
  const mobileStats=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));
-  assert.equal(mobileStats.quality,'medium');
+  // AUTO начинает с medium на телефоне, но обязан перейти в low при падении FPS.
+  // Проверяем мобильный потолок, не запрещая рабочую адаптацию на медленном GPU.
+  assert.ok(['medium','low'].includes(mobileStats.quality), 'mobile AUTO quality '+width);
   assert.equal(mobileStats.paused,false);
   const pixelRatio=await page.evaluate(()=>Math.min(2,devicePixelRatio));
   assert.ok(await page.locator('.live-city-canvas').evaluate((node,ratio)=>node.width>=Math.min(1400,node.getBoundingClientRect().width*ratio)-1,pixelRatio),'sharp canvas '+width);

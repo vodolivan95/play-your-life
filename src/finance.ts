@@ -116,6 +116,7 @@ function validInput(state: GameState, input: TransactionInput) {
     (input.type === 'expense' || input.type === 'income') &&
     Number.isFinite(input.amount) &&
     input.amount > 0 &&
+    Math.round(input.amount * 100) > 0 &&
     input.amount <= MAX_FINANCE_AMOUNT &&
     /^\d{4}-\d{2}-\d{2}$/.test(input.date) &&
     !!category &&

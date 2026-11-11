@@ -1,0 +1,106 @@
+{
+  "auditedBaseline": "89d9f507f3cd0d5fde8294fc7dc72810fe45fb9a",
+  "integratedMain": "7bf8edb45024b7dc960e30eb06f9056aaf0f2198",
+  "testedCodeCommit": "1f39bd71c6ae5f2cfe5bcb1864d3608ac6d19bc7",
+  "version": "0.80.2",
+  "inventoriedFiles": {
+    "initial": 584,
+    "integratedMain": 593
+  },
+  "local": {
+    "checkExit": 0,
+    "unit": {
+      "tests": 609,
+      "pass": 609,
+      "fail": 0,
+      "skipped": 0
+    },
+    "budgetsExit": 0,
+    "smokeDevelopmentExit": 0,
+    "smokeProductionExit": 0,
+    "postMergeAdditionalUiPassed": [
+      "quests",
+      "planner",
+      "tasks-calendar",
+      "goals",
+      "theme"
+    ],
+    "postMergeAdditionalUiStopped": "Redundant repeats stopped after all CI jobs passed for identical code.",
+    "dependencyAudit": {
+      "all": {
+        "moderate": 13,
+        "high": 0,
+        "critical": 0
+      },
+      "production": {
+        "total": 0
+      }
+    },
+    "rulesEmulator": "Local download blocked by network policy; verified in CI."
+  },
+  "ci": {
+    "runId": 42976404832,
+    "url": "https://github.com/vodolivan95/play-your-life/actions/runs/42976404832",
+    "jobs": [
+      {
+        "id": 130376406537,
+        "name": "check",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130376406836,
+        "name": "quests-ui",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130376406968,
+        "name": "firestore-rules",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130376406979,
+        "name": "sections-ui",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130376407059,
+        "name": "live-city-ui",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "uiCommandsPassed": 18,
+    "rulesTestsPassed": 15
+  },
+  "bundleKiB": {
+    "entryJsGzip": 388.2,
+    "entryCssGzip": 53.8,
+    "allCodeGzip": 988.2,
+    "totalSite": 36316.1
+  },
+  "extended3d": {
+    "initialFailed": [
+      "coastal-city: loading overlay blocked exit",
+      "room: screenshot timeout",
+      "growth-room: readiness timeout",
+      "health-room: readiness timeout"
+    ],
+    "financeIsolatedExit": 124,
+    "financeInitial": "Interrupted after more than 6 minutes without completion",
+    "english": "Interrupted for main integration",
+    "notCompleted": [
+      "driving-room",
+      "together-room",
+      "hobby-room",
+      "tasks-room",
+      "weather"
+    ],
+    "limitation": "Software WebGL extended scenarios are not considered successful; core room logic and primary UI are verified separately."
+  },
+  "coverage": "Not measured",
+  "realAuthAndOAuth": "Not exercised"
+}

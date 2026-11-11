@@ -186,3 +186,14 @@ test('validFinancePayments принимает валидный реестр и �
   assert.equal(validFinancePayments([{ ...valid[0], group: 'unknown-group' }]), false);
   assert.equal(validFinancePayments([{ ...valid[0], interval: 0 }]), false);
 });
+
+test('аудит: сумма, округляющаяся до нуля копеек, отклоняется до изменения игры', () => {
+  const input = { type: 'expense' as const, amount: 0.001, categoryId: 'groceries', date: '2026-11-11' };
+  const state = initialState();
+  assert.throws(() => addTransaction(state, input));
+  const withTransaction = addTransaction(state, { ...input, amount: 1 });
+  assert.throws(() => updateTransaction(withTransaction, transactions(withTransaction)[0].id, input));
+  const minimum = addTransaction(state, { ...input, amount: 0.01 });
+  assert.equal(transactions(minimum)[0].amount, 0.01);
+  assert.equal(validFinanceTransactions(transactions(minimum), new Set(defaultFinanceCategories.map((c) => c.id))), true);
+});

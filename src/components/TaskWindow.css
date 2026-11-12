@@ -1907,7 +1907,7 @@
   .twin .twin-info .twin-goal { grid-column: 1 / -1; grid-row: 1; }
   .twin .twin-info .twin-sphere, .twin .twin-info .twin-status { display: grid; grid-template-columns: 1fr; gap: 4px; }
   .twin .twin-info .twin-symbol { display: none; }
-  .twin .twin-info select { font-size: 12px; }
+  .twin .twin-info select { font-size: 12px !important; }
 }
 @media (max-width: 600px) {
   .twin .twin-toolbar > div:last-child > button:not([aria-label="Закрыть"]) { display: none; }

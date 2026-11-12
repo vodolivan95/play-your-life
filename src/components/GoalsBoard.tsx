@@ -655,12 +655,13 @@ export default function GoalsBoard({
           )}
           {goal && editor?.kind === 'task' && (
             <TaskForm
+              onClose={() => setEditor(null)}
               state={state}
               goalId={goal.id}
               stageId={editor.stageId}
               initial={editor.task}
-              onSave={(input) => {
-                onChange(saveTask(state, input));
+              onSave={(input, labels) => {
+                onChange(current => saveTask({ ...current, taskLabels: labels }, input));
                 setEditor(null);
                 onNotify('Задача добавлена в план');
               }}
@@ -678,7 +679,7 @@ export default function GoalsBoard({
         </div>
       </dialog>
       {taskDraft && (
-        <QuestWizard
+        <QuestWizard state={state}
           initial={taskDraft}
           taskLabels={state.taskLabels ?? []}
           onClose={() => setTaskDraft(null)}

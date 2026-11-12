@@ -134,7 +134,8 @@ try {
     await inbox.locator('li',{hasText:'Купить билеты'}).getByRole('button',{name:'Разобрать'}).click();
     await page.waitForTimeout(300);
     await inbox.screenshot({path:'/tmp/inbox-open.png'});
-    await inbox.locator('li',{hasText:'Купить билеты'}).getByRole('button',{name:'Свернуть'}).click();
+    page.once('dialog', dialog => dialog.accept());
+    await page.locator('.task-editor-draft .twin').getByRole('button',{name:'Отмена',exact:true}).click();
   }
   // Внутренний календарь показывает входящую датированную задачу до принятия в игру;
   // бездатная входящая задача остаётся только во входящих.
@@ -149,12 +150,12 @@ try {
   await inbox.locator('li',{hasText:'Купить билеты'}).getByRole('button',{name:'Принять в игру'}).waitFor();
   // 1. Одиночная задача без цели.
   const row = t => inbox.locator('li',{hasText:t});
-  await row('Купить билеты').getByRole('button',{name:'Без проекта'}).click();
+  await row('Купить билеты').getByLabel('Проект', {exact:true}).selectOption('');
   await row('Купить билеты').getByRole('button',{name:'Принять в игру'}).click();
   // 2. Задача в новую цель и новый этап.
   await row('Записаться к врачу').getByRole('button',{name:'Разобрать'}).click();
-  await row('Записаться к врачу').getByRole('button',{name:'Вылечить зубы'}).click();
-  await row('Записаться к врачу').getByRole('button',{name:'Первый визит'}).click();
+  await row('Записаться к врачу').getByLabel('Проект', {exact:true}).selectOption('goal-1');
+  await row('Записаться к врачу').getByLabel('Этап', {exact:true}).selectOption('stage-1');
   await row('Записаться к врачу').getByRole('button',{name:'Принять в игру'}).click();
   await page.waitForFunction(uid=>JSON.parse(localStorage.getItem('ticktick-fixture-game:'+uid)).quests.length===2,uid);
   await page.getByRole('button',{name:'Календарь',exact:true}).click();
@@ -233,10 +234,13 @@ try {
   const scopeRow = sphereInbox.locator('li',{hasText:'Разобрать из сферы'});
   await scopeRow.waitFor();
   await scopeRow.getByRole('button',{name:'Разобрать',exact:true}).click();
-  const sphereChoices = scopeRow.getByRole('group',{name:'Сфера'});
-  await sphereChoices.getByRole('button',{name:/Английский/}).waitFor();
-  assert.equal(await sphereChoices.getByRole('button').count(),1,'в scope остаётся ровно одна сфера');
-  assert.equal(await sphereChoices.getByRole('button',{name:/Английский/}).getAttribute('aria-pressed'),'true');
+  const sphereChoices = scopeRow.getByRole('region',{name:'Выбор сферы задачи'});
+  await sphereChoices.getByRole('button',{name:'Английский', exact:true}).waitFor();
+  assert.equal(await sphereChoices.getByRole('button',{name:'Английский', exact:true}).getAttribute('aria-pressed'),'true');
+  assert.equal(await scopeRow.getByLabel('Сфера жизни',{exact:true}).isDisabled(),true);
+  page.once('dialog', dialog => dialog.accept());
+  await page.keyboard.press('Escape');
+  await page.locator('.task-editor-draft').waitFor({state:'detached'});
   await page.keyboard.press('Escape');
   await sphereInboxDialog.waitFor({state:'detached'});
 
@@ -254,24 +258,19 @@ try {
   const goalRow = goalInbox.locator('li',{hasText:'Разобрать из сферы'});
   await goalRow.waitFor();
   await goalRow.getByRole('button',{name:'Разобрать',exact:true}).click();
-  const goalChoices = goalRow.getByRole('group',{name:'Проект'});
-  const stageChoices = goalRow.getByRole('group',{name:'Этап'});
-  assert.equal(await goalChoices.getByRole('button',{name:'Вылечить зубы',exact:true}).getAttribute('aria-pressed'),'true');
-  assert.equal(await stageChoices.getByRole('button',{name:'Первый визит',exact:true}).getAttribute('aria-pressed'),'true');
-  await goalChoices.getByRole('button',{name:'Бросить курить',exact:true}).click();
-  assert.equal(await goalChoices.getByRole('button',{name:'Бросить курить',exact:true}).getAttribute('aria-pressed'),'true');
-  await goalChoices.getByRole('button',{name:'Без проекта',exact:true}).click();
-  assert.equal(await goalChoices.getByRole('button',{name:'Без проекта',exact:true}).getAttribute('aria-pressed'),'true');
-  await goalChoices.getByRole('button',{name:'＋ Новый проект',exact:true}).click();
-  await goalRow.getByLabel('Название нового проекта').fill('Проект из входящих');
-  await goalRow.getByRole('button',{name:'Создать проект',exact:true}).click();
-  await goalChoices.getByRole('button',{name:'Проект из входящих',exact:true}).waitFor();
-  assert.equal(await goalChoices.getByRole('button',{name:'Проект из входящих',exact:true}).getAttribute('aria-pressed'),'true');
-  const newStageChoices = goalRow.getByRole('group',{name:'Этап'});
-  await newStageChoices.getByRole('button',{name:'＋ Новый этап',exact:true}).click();
-  await goalRow.getByLabel('Название нового этапа').fill('Этап из входящих');
-  await goalRow.getByRole('button',{name:'Создать этап',exact:true}).click();
-  assert.equal(await newStageChoices.getByRole('button',{name:'Этап из входящих',exact:true}).getAttribute('aria-pressed'),'true');
+  const goalChoices = goalRow.getByLabel('Проект', {exact:true});
+  const stageChoices = goalRow.getByLabel('Этап', {exact:true});
+  assert.equal(await goalChoices.inputValue(),'goal-1');
+  assert.equal(await stageChoices.inputValue(),'stage-1');
+  await goalChoices.selectOption('goal-2');
+  assert.equal(await stageChoices.inputValue(),'');
+  await goalChoices.selectOption('');
+  page.once('dialog', dialog => dialog.accept('Проект из входящих'));
+  await goalRow.getByRole('button',{name:'＋ Новый проект',exact:true}).click();
+  await page.waitForFunction(() => document.querySelector('.task-editor-draft select[aria-label="Проект"]')?.selectedOptions[0].textContent.includes('Проект из входящих'));
+  page.once('dialog', dialog => dialog.accept('Этап из входящих'));
+  await goalRow.getByRole('button',{name:'＋ Новый этап',exact:true}).click();
+  await page.waitForFunction(() => document.querySelector('.task-editor-draft select[aria-label="Этап"]')?.selectedOptions[0].textContent.includes('Этап из входящих'));
   await goalRow.getByRole('button',{name:'Принять в игру',exact:true}).click();
   await page.waitForFunction(uid=>{
     const s=JSON.parse(localStorage.getItem('ticktick-fixture-game:'+uid));

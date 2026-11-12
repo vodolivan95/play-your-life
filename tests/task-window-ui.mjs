@@ -106,6 +106,11 @@ try {
       overflow.scroll <= overflow.client + 1,
       `overflow at ${width}: ${JSON.stringify(overflow)}`,
     );
+    assert.ok(await dialog.locator('.twin-parameters label').evaluateAll(labels => labels.every(label => {
+      const icon = label.querySelector('svg')?.getBoundingClientRect();
+      const field = label.querySelector('select, input')?.getBoundingClientRect();
+      return !icon || !field || icon.right <= field.left + 1 || icon.left >= field.right - 1 || icon.bottom <= field.top + 1 || icon.top >= field.bottom - 1;
+    })), `parameter icons overlap controls at ${width}`);
     const doc = await p.evaluate(() => ({
       scroll: document.documentElement.scrollWidth,
       client: document.documentElement.clientWidth,
@@ -148,6 +153,38 @@ try {
     await dialog.getByLabel("Оценка времени", { exact: true }).inputValue(),
     "60",
   );
+  // New shared controls: persisted motivation, manual/contact-picker people, deadline and calendar.
+  await dialog.getByRole('button', { name: 'Изменить причину задачи', exact: true }).click();
+  await dialog.getByLabel('Зачем мне эта задача', { exact: true }).fill('Освободить время для семьи');
+  await dialog.getByRole('heading', { name: 'Зачем мне эта задача', exact: true }).click();
+  await dialog.getByRole('button', { name: '＋ Новый контакт', exact: true }).click();
+  await dialog.getByLabel('Имя', { exact: true }).fill('Анна');
+  await dialog.getByLabel('Телефон', { exact: true }).fill('+79991234567');
+  await dialog.getByRole('button', { name: 'Добавить участника', exact: true }).click();
+  await dialog.getByLabel('Роль: Анна', { exact: true }).selectOption('assignee');
+  await p.evaluate(() => Object.defineProperty(navigator, 'contacts', { configurable: true,
+    value: { select: async () => [{ name: ['Иван'], tel: ['+79997654321'] }] } }));
+  await dialog.getByRole('button', { name: '＋ Из телефонной книги', exact: true }).click();
+  await dialog.getByLabel('Роль: Иван', { exact: true }).waitFor();
+  await dialog.getByLabel('Роль: Иван', { exact: true }).selectOption('assignee');
+  assert.equal(await dialog.getByLabel('Роль: Анна', { exact: true }).inputValue(), 'participant', 'только один исполнитель');
+  await dialog.getByRole('button', { name: 'За 1 час', exact: true }).click();
+  await dialog.getByLabel('Физический дедлайн', { exact: true }).fill('2099-11-16T18:00');
+  await dialog.getByLabel('Дата окончания', { exact: true }).fill('2099-11-15');
+  await dialog.getByLabel('Дата начала', { exact: true }).fill('2099-11-14');
+  // Reopen: calendar starts on scheduled month, exact values survive reload.
+  await p.reload(); await dialog.waitFor();
+  assert.equal(await dialog.getByLabel('Физический дедлайн', { exact: true }).inputValue(), '2099-11-16T18:00');
+  assert.equal(await dialog.locator('.twin-calendar-grid [data-start="true"]').textContent(), '14');
+  assert.equal(await dialog.locator('.twin-calendar-grid [data-end="true"]').textContent(), '15');
+  assert.equal(await dialog.locator('.twin-calendar-grid [data-deadline="true"]').textContent(), '16');
+  await dialog.locator('.twin-calendar').screenshot({ path: 'work/task-window/calendar-glass.png' });
+  await dialog.getByText('Освободить время для семьи', { exact: true }).waitFor();
+  assert.equal(await dialog.getByLabel('Роль: Иван', { exact: true }).inputValue(), 'assignee');
+  assert.equal(await dialog.getByRole('button', { name: 'За 1 час', exact: true }).getAttribute('aria-pressed'), 'true');
+  await dialog.getByLabel('Дата начала', { exact: true }).fill('');
+  await dialog.getByLabel('Дата окончания', { exact: true }).fill('');
+  await dialog.getByLabel('Физический дедлайн', { exact: true }).fill('');
   await dialog.getByLabel("Статус", { exact: true }).selectOption("doing");
   await dialog
     .getByLabel("Приоритет задачи", { exact: true })
@@ -159,6 +196,9 @@ try {
     .getByLabel("Новый пункт", { exact: true })
     .fill("Проверить маршрут");
   await dialog.getByRole("button", { name: "Добавить", exact: true }).click();
+  await dialog.getByRole('button', { name: 'Добавить пункт', exact: true }).click();
+  await dialog.getByLabel('Новый пункт', { exact: true }).fill('Завершающий пункт');
+  await dialog.getByRole('button', { name: 'Добавить', exact: true }).click();
   await dialog
     .getByLabel("Выполнить: Проверить маршрут", { exact: true })
     .check();
@@ -178,6 +218,10 @@ try {
     new URL(href).searchParams.get("rtext"),
     "~Москва, Красная площадь",
   );
+  await dialog.getByRole('button', { name: 'Показать карту', exact: true }).click();
+  const mapSrc = await dialog.locator('iframe[title="Место выполнения на Яндекс Картах"]').getAttribute('src');
+  assert.equal(new URL(mapSrc).searchParams.get('text'), 'Москва, Красная площадь');
+  await dialog.getByRole('button', { name: 'Скрыть карту', exact: true }).click();
   await dialog
     .getByRole("button", { name: "Добавить тег", exact: true })
     .click();
@@ -241,6 +285,9 @@ try {
       .count(),
     1,
   );
+  await dialog.getByLabel('Прикрепить файл', { exact: true }).setInputFiles({ name: 'plan.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\n%%EOF') });
+  await dialog.getByText('plan.pdf', { exact: true }).waitFor();
+  assert.ok((await dialog.locator('a[download="plan.pdf"]').getAttribute('href')).startsWith('data:application/pdf;base64,'));
   await dialog.getByRole("tab", { name: "Заметки", exact: false }).click();
   await dialog
     .getByText("Заметка во время загрузки", { exact: true })
@@ -367,7 +414,7 @@ try {
     () =>
       JSON.parse(localStorage.getItem("play-your-life-v1")).spheres.english.xp,
   );
-  await dialog.getByRole("button", { name: "Выполнить", exact: true }).click();
+  await dialog.getByLabel("Выполнить: Завершающий пункт", { exact: true }).check();
   await p.reload();
   dialog = p.locator("section.twin");
   await dialog.waitFor();

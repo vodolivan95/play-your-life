@@ -376,11 +376,12 @@ export default function LifePlanner({
           </button>
           {editor?.kind === 'task' && (
             <TaskForm
+              onClose={() => setEditor(null)}
               state={state}
               initial={editor.task}
               anchor={anchor}
-              onSave={(input) => {
-                onChange(saveTask(state, input));
+              onSave={(input, labels) => {
+                onChange(current => saveTask({ ...current, taskLabels: labels }, input));
                 setEditor(null);
                 onNotify('Задача запланирована');
               }}
@@ -396,7 +397,7 @@ export default function LifePlanner({
         </div>
       </dialog>
       {taskDraft && (
-        <QuestWizard
+        <QuestWizard state={state}
           initial={taskDraft}
           taskLabels={state.taskLabels ?? []}
           onClose={() => setTaskDraft(null)}

@@ -1,7 +1,8 @@
+import { validTaskLabels } from './taskLabels.ts';
 // Входящие задачи TickTick: новые задачи из сопоставленных списков не попадают в игру сами.
 // Игрок выбирает сферу, цель и этап, и только после этого создаётся задача цели и её связь.
 import { dateKey, spheres } from './game.ts';
-import type { GameState, Goal, GoalStage, Quest } from './game.ts';
+import type { GameState, Goal, GoalStage, Quest, TaskLabel } from './game.ts';
 import { saveTask } from './planning.ts';
 import {
   localFingerprint,
@@ -32,6 +33,8 @@ export function incomingForScope(incoming: IncomingTask[], connection: TickTickC
 }
 
 export type IncomingChoice = {
+  labels?: TaskLabel[];
+  editor?: Partial<Pick<Quest, 'name' | 'notes' | 'startsAt' | 'dueAt' | 'deadlineAt' | 'priority' | 'difficulty' | 'estimateMinutes' | 'details' | 'coverImage' | 'subtasks' | 'repeat' | 'planning' | 'rewardCoins' | 'virtualRewardId' | 'labelId' | 'tickTickSync' | 'weight' | 'required'>>;
   sphere: string;
   /** Пустая строка — одиночная задача без цели (синхронизируется так же). */
   goalId: string;
@@ -207,6 +210,14 @@ export function openStages(goal: Goal | undefined): GoalStage[] {
   return (goal?.stages ?? []).filter((stage) => stage.status !== 'completed');
 }
 
+/** Whitelist draft fields: remote identity, completion and reward state cannot be supplied by the editor. */
+function editorFields(choice: IncomingChoice) {
+  const draft = choice.editor;
+  if (!draft) return {};
+  return Object.fromEntries((['name', 'notes', 'startsAt', 'dueAt', 'deadlineAt', 'priority', 'difficulty', 'estimateMinutes', 'details', 'coverImage', 'subtasks', 'repeat', 'planning', 'rewardCoins', 'virtualRewardId', 'labelId', 'tickTickSync', 'weight', 'required'] as const)
+    .filter(key => Object.hasOwn(draft, key)).map(key => [key, draft[key]])) as IncomingChoice['editor'];
+}
+
 /** Применяет время (если задано при разборе) к полям задачи из TickTick; день остаётся как в TickTick. */
 function withChoiceTime(fields: ReturnType<typeof remoteFields>, choice: IncomingChoice): ReturnType<typeof remoteFields> {
   if (choice.dueAt === undefined && choice.startsAt === undefined) return fields;
@@ -225,6 +236,11 @@ export function acceptIncomingTask(
   taskId: string = crypto.randomUUID(),
   ownerId = 'local',
 ): IncomingAccepted {
+  if (choice.editor?.repeat && incoming.remote.repeatFlag) throw new Error('Повтор уже настроен в TickTick. Второй повтор создаст дубликаты.');
+  if (choice.labels) {
+    if (!validTaskLabels(choice.labels)) throw new Error('Проверь метки задач.');
+    state = { ...state, taskLabels: choice.labels };
+  }
   if (!choice.goalId) return acceptSingleTask(state, connection, incoming, choice, taskId, ownerId);
   const goal = state.goals.find((g) => g.id === choice.goalId);
   if (!goal) throw new Error('Выбери проект или «Без проекта».');
@@ -236,7 +252,7 @@ export function acceptIncomingTask(
   if (choice.stageId && !stage) throw new Error('Этап не найден в выбранном проекте.');
   if (state.quests.some((q) => q.id === taskId))
     throw new Error('Задача уже добавлена.');
-  const fields = withChoiceTime(remoteFields(incoming.remote), choice);
+  const fields = { ...withChoiceTime(remoteFields(incoming.remote), choice), ...editorFields(choice) };
   const name = fields.name.trim().slice(0, maxTaskName);
   if (!name) throw new Error('У задачи TickTick нет названия.');
   // saveTask проверяет сроки цели и этапа и сообщает понятную ошибку.
@@ -245,9 +261,10 @@ export function acceptIncomingTask(
     id: taskId,
     name,
     sphere: goal.sphere,
-    difficulty: 'Medium',
+    difficulty: choice.editor?.difficulty ?? 'Medium',
     goalId: goal.id,
     stageId: stage?.id,
+    ...(choice.editor ? { sourceType: 'USER_CREATED' as const, ownerId, rewardCoins: choice.editor.rewardCoins ?? 0 } : {}),
     tickTickSharedAt: new Date().toISOString(),
   });
   const task = next.quests.find((q) => q.id === taskId);
@@ -262,9 +279,10 @@ export function acceptIncomingTask(
     remoteUpdate: {
       id: incoming.remote.id,
       projectId: incoming.projectId,
-      title: incoming.remote.title,
+      title: choice.editor ? task.name : incoming.remote.title,
+      ...(choice.editor ? { priority: payload.priority } : {}),
       content: payload.content,
-      ...(choice.dueAt !== undefined || choice.startsAt !== undefined
+      ...(choice.editor || choice.dueAt !== undefined || choice.startsAt !== undefined
         ? { startDate: payload.startDate, dueDate: payload.dueDate, isAllDay: payload.isAllDay, timeZone: payload.timeZone }
         : {}),
     },
@@ -295,10 +313,10 @@ function acceptSingleTask(
 ): IncomingAccepted {
   if (!state.spheres[choice.sphere]) throw new Error('Выбери сферу.');
   if (state.quests.some((q) => q.id === taskId)) throw new Error('Задача уже добавлена.');
-  const fields = withChoiceTime(remoteFields(incoming.remote), choice);
+  const fields = { ...withChoiceTime(remoteFields(incoming.remote), choice), ...editorFields(choice) };
   const name = fields.name.trim().slice(0, maxTaskName);
   if (!name) throw new Error('У задачи TickTick нет названия.');
-  const next = saveTask(state, { ...fields, id: taskId, name, sphere: choice.sphere, difficulty: 'Medium', sourceType: 'USER_CREATED', ownerId, rewardCoins: 0, tickTickSharedAt: new Date().toISOString() });
+  const next = saveTask(state, { ...fields, id: taskId, name, sphere: choice.sphere, difficulty: choice.editor?.difficulty ?? 'Medium', sourceType: 'USER_CREATED', ownerId, rewardCoins: choice.editor?.rewardCoins ?? 0, tickTickSharedAt: new Date().toISOString() });
   const task = next.quests.find((q) => q.id === taskId);
   if (!task) throw new Error('Не удалось добавить задачу.');
   const scoped = { ...connection, projectId: incoming.projectId };
@@ -309,9 +327,10 @@ function acceptSingleTask(
     remoteUpdate: {
       id: incoming.remote.id,
       projectId: incoming.projectId,
-      title: incoming.remote.title,
+      title: choice.editor ? task.name : incoming.remote.title,
+      ...(choice.editor ? { priority: payload.priority } : {}),
       content: payload.content,
-      ...(choice.dueAt !== undefined || choice.startsAt !== undefined
+      ...(choice.editor || choice.dueAt !== undefined || choice.startsAt !== undefined
         ? { startDate: payload.startDate, dueDate: payload.dueDate, isAllDay: payload.isAllDay, timeZone: payload.timeZone }
         : {}),
     },

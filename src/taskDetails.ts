@@ -10,6 +10,10 @@ export type TaskAttachment = {
   size?: number;
 };
 export type TaskDetails = {
+  motivation?: string;
+  participants?: { id: string; name: string; phone?: string; role: "participant" | "assignee" }[];
+  /** Minutes before start (or end when no start); delivered while the application is open. */
+  reminders?: number[];
   coverHidden?: boolean;
   place?: string;
   address?: string;
@@ -30,6 +34,10 @@ export function safeWebUrl(value: string) {
   } catch {
     return null;
   }
+}
+/** Small embedded documents only; executable HTML/SVG and arbitrary data URLs are rejected. */
+export function safeEmbeddedFile(value: string) {
+  return value.length <= 350000 && /^data:(?:application\/pdf|text\/plain|video\/mp4|application\/vnd\.openxmlformats-officedocument\.(?:wordprocessingml\.document|spreadsheetml\.sheet));base64,[A-Za-z0-9+/]+={0,2}$/.test(value);
 }
 export function yandexRoute(details?: TaskDetails) {
   if (!details) return null;
@@ -53,6 +61,16 @@ export function validTaskDetails(
   const text = (v: unknown, max: number) =>
     v === undefined || (typeof v === "string" && v.length <= max);
   return (
+    text(d.motivation, 2000) &&
+    (d.reminders === undefined || (Array.isArray(d.reminders) && d.reminders.length <= 5 &&
+      new Set(d.reminders).size === d.reminders.length &&
+      d.reminders.every(n => Number.isInteger(n) && n >= 0 && n <= 43200))) &&
+    (d.participants === undefined || (Array.isArray(d.participants) && d.participants.length <= 30 &&
+      new Set(d.participants.map(p => p?.id)).size === d.participants.length &&
+      d.participants.filter(p => p?.role === "assignee").length <= 1 &&
+      d.participants.every(p => p && typeof p.id === "string" && !!p.id && p.id.length <= 100 &&
+        typeof p.name === "string" && !!p.name.trim() && p.name.length <= 100 &&
+        text(p.phone, 50) && ["participant", "assignee"].includes(p.role)))) &&
     (d.coverHidden === undefined || typeof d.coverHidden === "boolean") &&
     text(d.place, 200) &&
     text(d.address, 500) &&
@@ -103,7 +121,7 @@ export function validTaskDetails(
             ["photo", "file", "link"].includes(a.type) &&
             (a.type === "photo"
               ? validProjectImage(a.url) && !!a.url
-              : !!safeWebUrl(a.url)) &&
+              : !!safeWebUrl(a.url) || (a.type === "file" && safeEmbeddedFile(a.url))) &&
             (a.size === undefined || (Number.isFinite(a.size) && a.size >= 0)),
         )))
   );

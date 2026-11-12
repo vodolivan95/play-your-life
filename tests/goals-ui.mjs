@@ -355,6 +355,8 @@ try {
     await page.getByRole('button', { name: 'Продолжить игру на этом устройстве' }).click();
     await workspace.waitFor();
     await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.a}`);
+    // StageScreen is lazy-loaded: the workspace shell can precede its task list.
+    await workspace.locator('.ss-task-list .ss-task-main strong').first().waitFor();
     assert.deepEqual(
       await workspace.locator('.ss-task-list .ss-task-main strong').allTextContents(),
       ['Повторить слова', 'Выучить слова'],

@@ -324,9 +324,25 @@ try {
     assert.equal(await tabs.getByRole('button').count(), 5);
     const taskRows = workspace.locator('.ss-task-list .ss-task');
     assert.deepEqual(await taskRows.locator('.ss-task-main strong').allTextContents(), ['Выучить слова', 'Повторить слова']);
-    await taskRows.filter({ hasText: 'Повторить слова' }).locator('.ss-drag-handle').dragTo(
-      taskRows.filter({ hasText: 'Выучить слова' }),
-    );
+    const sourceHandle = taskRows.filter({ hasText: 'Повторить слова' }).locator('.ss-drag-handle');
+    const targetRow = taskRows.filter({ hasText: 'Выучить слова' });
+    await sourceHandle.evaluate((el, mobile) => el.scrollIntoView({ block: mobile ? 'center' : 'nearest' }), width < 600);
+    const sourceBox = await sourceHandle.boundingBox();
+    const targetBox = await targetRow.boundingBox();
+    const sourcePoint = { x: sourceBox.x + sourceBox.width / 2, y: sourceBox.y + sourceBox.height / 2 };
+    const targetPoint = { x: targetBox.x + targetBox.width / 2, y: targetBox.y + targetBox.height / 2 };
+    if (width < 600) {
+      const touch = await context.newCDPSession(page);
+      await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ id: 1, ...sourcePoint }] });
+      await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ id: 1, ...targetPoint }] });
+      await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await touch.detach();
+    } else {
+      await page.mouse.move(sourcePoint.x, sourcePoint.y);
+      await page.mouse.down();
+      await page.mouse.move(targetPoint.x, targetPoint.y, { steps: 5 });
+      await page.mouse.up();
+    }
     assert.deepEqual(await taskRows.locator('.ss-task-main strong').allTextContents(), ['Повторить слова', 'Выучить слова']);
     await page.waitForFunction(({ goalId, stageId }) => {
       const state = JSON.parse(localStorage.getItem('play-your-life-v1'));
@@ -335,6 +351,15 @@ try {
         .map((task) => task.name);
       return JSON.stringify(order) === JSON.stringify(['Повторить слова', 'Выучить слова']);
     }, { goalId: ids.id, stageId: ids.a });
+    await page.reload();
+    await page.getByRole('button', { name: 'Продолжить игру на этом устройстве' }).click();
+    await workspace.waitFor();
+    await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.a}`);
+    assert.deepEqual(
+      await workspace.locator('.ss-task-list .ss-task-main strong').allTextContents(),
+      ['Повторить слова', 'Выучить слова'],
+      'Порядок этапа должен восстановиться из LocalStorage после перезагрузки',
+    );
     await workspace.locator('.ss-reward').click();
     await workspace
       .locator('dialog[open]')

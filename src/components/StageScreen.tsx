@@ -125,6 +125,13 @@ type Session = {
   endsAt: number | null;
   minutes: number;
 };
+type TouchDrag = {
+  taskId: string;
+  pointerId: number;
+  startX: number;
+  startY: number;
+  moved: boolean;
+};
 
 export default function StageScreen(p: Props) {
   const { goal, stage, tasks, slots } = p;
@@ -133,6 +140,8 @@ export default function StageScreen(p: Props) {
   const [sort, setSort] = useState<'order' | 'priority' | 'due' | 'name'>('order');
   const [query, setQuery] = useState('');
   const [draggedTaskId, setDraggedTaskId] = useState('');
+  const [dropTargetTaskId, setDropTargetTaskId] = useState('');
+  const touchDrag = useRef<TouchDrag | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [left, setLeft] = useState(0);
   const [avail, setAvail] = useState<number | null>(null);
@@ -212,39 +221,63 @@ export default function StageScreen(p: Props) {
   const finished = !!session?.endsAt && left === 0;
 
   const reorderEnabled = sort === 'order' && filter === 'all' && !query.trim();
+  function taskAtPoint(x: number, y: number) {
+    return document.elementFromPoint(x, y)?.closest<HTMLElement>('.ss-task[data-task]')?.dataset.task ?? '';
+  }
   function taskRow(task: Quest) {
     const steps = task.subtasks ?? [];
     const stepsDone = steps.filter((s) => s.done).length;
     const locked = p.taskLocked(task);
     return (
       <article
-        className={`ss-task ${task.done ? 'is-done' : ''}${draggedTaskId === task.id ? ' is-dragging' : ''}`}
+        className={`ss-task ${task.done ? 'is-done' : ''}${draggedTaskId === task.id ? ' is-dragging' : ''}${dropTargetTaskId === task.id ? ' is-drop-target' : ''}`}
         key={task.id}
         data-task={task.id}
-        onDragOver={(event) => {
-          if (reorderEnabled && draggedTaskId && draggedTaskId !== task.id) event.preventDefault();
-        }}
-        onDrop={(event) => {
-          event.preventDefault();
-          const sourceId = event.dataTransfer.getData('text/plain') || draggedTaskId;
-          if (reorderEnabled && sourceId && sourceId !== task.id) p.onReorderTask(sourceId, task.id);
-          setDraggedTaskId('');
-        }}
       >
         <div className="ss-task-row">
           {reorderEnabled && (
             <button
               type="button"
               className="ss-drag-handle"
-              draggable
               aria-label={`Переместить задачу: ${task.name}`}
               title="Перетащите, чтобы изменить порядок"
-              onDragStart={(event) => {
-                setDraggedTaskId(task.id);
-                event.dataTransfer.effectAllowed = 'move';
-                event.dataTransfer.setData('text/plain', task.id);
+              onPointerDown={(event) => {
+                if (!reorderEnabled || (event.pointerType === 'mouse' && event.button !== 0)) return;
+                touchDrag.current = {
+                  taskId: task.id,
+                  pointerId: event.pointerId,
+                  startX: event.clientX,
+                  startY: event.clientY,
+                  moved: false,
+                };
+                event.currentTarget.setPointerCapture(event.pointerId);
               }}
-              onDragEnd={() => setDraggedTaskId('')}
+              onPointerMove={(event) => {
+                const drag = touchDrag.current;
+                if (!drag || drag.pointerId !== event.pointerId) return;
+                if (!drag.moved && Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 8) return;
+                drag.moved = true;
+                event.preventDefault();
+                setDraggedTaskId(drag.taskId);
+                const targetId = taskAtPoint(event.clientX, event.clientY);
+                setDropTargetTaskId(targetId === drag.taskId ? '' : targetId);
+              }}
+              onPointerUp={(event) => {
+                const drag = touchDrag.current;
+                if (!drag || drag.pointerId !== event.pointerId) return;
+                const targetId = taskAtPoint(event.clientX, event.clientY);
+                if (drag.moved && targetId && targetId !== drag.taskId && reorderEnabled)
+                  p.onReorderTask(drag.taskId, targetId);
+                touchDrag.current = null;
+                setDraggedTaskId('');
+                setDropTargetTaskId('');
+              }}
+              onPointerCancel={(event) => {
+                if (touchDrag.current?.pointerId !== event.pointerId) return;
+                touchDrag.current = null;
+                setDraggedTaskId('');
+                setDropTargetTaskId('');
+              }}
             >
               ⋮⋮
             </button>

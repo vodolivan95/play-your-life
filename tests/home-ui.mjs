@@ -20,11 +20,15 @@ for (const id of ids.slice(0, 3)) {
   stageIds[id] = seed.goals.find(goal => goal.id === id).stages.at(-1).id;
 }
 seed.goals.find(goal => goal.id === ids[1]).image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/5U8AAAAASUVORK5CYII=';
+const longStage = seed.goals.find(goal => goal.id === ids[1]).stages.find(stage => stage.id === stageIds[ids[1]]);
+longStage.name = 'Этап с очень длинным названием, которое раньше переносило содержимое и увеличивало высоту карточки';
+longStage.completionCondition = 'Завершить сложный и подробный результат проекта без скачков интерфейса при переключении между проектами';
 seed = saveTask(seed, { name: 'Шаг фокуса А', sphere: 'health', difficulty: 'Simple', goalId: ids[0], stageId: stageIds[ids[0]] });
 for (const id of ids.slice(0, 3)) seed = toggleMonthlyFocus(seed, id);
 const seedJson = JSON.stringify(seed);
 const port = 5194;
 const url = `http://127.0.0.1:${port}/`;
+const viewportWidths = process.env.PYL_VIEWPORTS ? process.env.PYL_VIEWPORTS.split(',').map(Number) : [1920, 1440, 900, 761, 760, 700, 651, 650, 390, 320];
 if (process.env.PYL_SCREENSHOT_DIR) mkdirSync(process.env.PYL_SCREENSHOT_DIR, { recursive: true });
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { stdio: ['ignore', 'pipe', 'pipe'] });
 server.stdout.on('data', () => {});
@@ -38,7 +42,7 @@ try {
   }
   assert.ok(ready, 'Vite не запустился');
   browser = await chromium.launch({ executablePath: process.env.LIFEGAME_CHROMIUM_PATH || undefined, headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
-  for (const width of [1440, 390, 320]) {
+  for (const width of viewportWidths) {
     const context = await browser.newContext({ viewport: { width, height: 900 }, timezoneId: 'Europe/Moscow', reducedMotion: 'reduce' });
     await context.route('**/*', route => new URL(route.request().url()).origin === new URL(url).origin ? route.continue() : route.abort());
     await context.addInitScript(json => {
@@ -68,13 +72,38 @@ try {
     const layout = await page.locator('.peak-stage').evaluate(stage => {
       const bounds = stage.getBoundingClientRect();
       const card = stage.querySelector('.peak-card').getBoundingClientRect();
-      return { stageLeft: bounds.left, stageRight: bounds.right, stageTop: bounds.top, stageBottom: bounds.bottom, stageWidth: bounds.width, stageHeight: bounds.height, cardLeft: card.left, cardRight: card.right, cardTop: card.top, cardBottom: card.bottom };
+      const main = document.querySelector('main.screen-home').getBoundingClientRect();
+      const mainWrap = document.querySelector('.main-wrap').getBoundingClientRect();
+      const peakCard = stage.querySelector('.peak-card');
+      return { stageLeft: bounds.left, stageRight: bounds.right, stageTop: bounds.top, stageBottom: bounds.bottom, stageWidth: bounds.width, stageHeight: bounds.height, cardLeft: card.left, cardRight: card.right, cardTop: card.top, cardBottom: card.bottom, cardHeight: card.height, cardContentHeight: peakCard.scrollHeight, cardClientHeight: peakCard.clientHeight, bannerWidth: stage.parentElement.getBoundingClientRect().width, mainWidth: main.width, mainWrapWidth: mainWrap.width };
     });
-    if (width > 650) {
+    assert.ok(layout.cardContentHeight <= layout.cardClientHeight, `Содержимое карточки не обрезается (${width}px; ${layout.cardContentHeight}/${layout.cardClientHeight}px)`);
+    if (layout.bannerWidth > 700) {
       assert.ok(layout.cardLeft > layout.stageLeft + layout.stageWidth * .5, 'Новый блок встроен справа от большого фонового hero');
       assert.ok(layout.cardBottom > layout.stageTop + layout.stageHeight * .5 && layout.cardBottom <= layout.stageBottom + 1, 'Новый блок расположен внизу внутри hero');
       assert.ok(layout.cardRight <= layout.stageRight + 1, 'Карточка не выходит за границы hero');
-    } else assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, 'Встроенная карточка не создаёт горизонтальную прокрутку на телефоне');
+      assert.ok(Math.abs(layout.mainWidth - layout.mainWrapWidth) <= 1, 'Главная использует всю доступную ширину веб-контента');
+    } else {
+      assert.ok(layout.cardTop > layout.stageTop + layout.stageHeight * .3, 'При узкой фактической области карточка расположена ниже заголовка hero');
+      assert.ok(layout.cardRight <= layout.stageRight + 1, 'Карточка не выходит за границы мобильного hero');
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, 'Встроенная карточка не создаёт горизонтальную прокрутку');
+    }
+    if (width <= 760) {
+      const projectSwitch = page.locator('.peak-focus-switch');
+      await projectSwitch.scrollIntoViewIfNeeded();
+      const reachable = await page.evaluate(() => {
+        const selector = document.querySelector('.peak-focus-switch').getBoundingClientRect();
+        const nav = document.querySelector('.pyl-tabbar').getBoundingClientRect();
+        if (selector.bottom > nav.top) window.scrollBy(0, selector.bottom - nav.top + 12);
+        const finalSelector = document.querySelector('.peak-focus-switch').getBoundingClientRect();
+        return { selectorBottom: finalSelector.bottom, navTop: nav.top };
+      });
+      assert.ok(reachable.selectorBottom <= reachable.navTop, `Нижний переключатель проектов доступен над mobile nav (${width}px)`);
+    }
+    const geometryBeforeSwitch = await page.locator('.peak-stage, .peak-card').evaluateAll(([stage, card]) => {
+      const a = stage.getBoundingClientRect(), b = card.getBoundingClientRect();
+      return [a.top + window.scrollY, a.height, b.top + window.scrollY, b.height];
+    });
     const projectB = page.locator('.peak-focus-switch button:not(.is-empty)').nth(1);
     await page.getByRole('button', { name: 'Следующий проект' }).click();
     assert.equal(await page.locator('.peak-card-count').innerText(), '2 / 3');
@@ -86,9 +115,14 @@ try {
     assert.equal(await projectB.getAttribute('aria-pressed'), 'true');
     assert.equal(await page.locator('.peak-card-count').innerText(), '2 / 3');
     assert.match(await page.locator('.peak-card-photo').getAttribute('src'), /^data:image\/png;base64/);
+    const geometryAfterSwitch = await page.locator('.peak-stage, .peak-card').evaluateAll(([stage, card]) => {
+      const a = stage.getBoundingClientRect(), b = card.getBoundingClientRect();
+      return [a.top + window.scrollY, a.height, b.top + window.scrollY, b.height];
+    });
+    assert.deepEqual(geometryAfterSwitch, geometryBeforeSwitch, `Hero и карточка не меняют положение/высоту при выборе проекта (${width}px)`);
     await page.getByRole('link', { name: /Открыть этап/ }).click();
     await page.waitForURL(`**/#/goals/${ids[1]}/stages/${stageIds[ids[1]]}`);
-    await page.locator('.ss-hero h2').filter({ hasText: 'Этап Фокус Б' }).waitFor();
+    await page.locator('.ss-hero h2').filter({ hasText: 'Этап с очень длинным названием' }).waitFor();
     await page.locator('.gw-banner-tools summary').click();
     await page.getByRole('button', { name: 'Убрать из главных проектов месяца', exact: true }).click();
     await page.waitForFunction(id => !JSON.parse(localStorage.getItem('play-your-life-v1')).monthlyFocus.goalIds.includes(id), ids[1]);

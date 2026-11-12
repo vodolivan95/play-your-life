@@ -92,9 +92,10 @@
   .home-dashboard .peak-banner p.peak-card-goal { font-size: 16px; }
 }
 @container peak (max-width: 700px) {
-  .peak-stage { grid-template-columns: minmax(0, 1fr); align-items: start; gap: 16px; height: auto; min-height: 0; padding: 190px 16px 16px; }
-  .peak-art img { object-position: center top; }
-  .peak-stage::after { background: linear-gradient(180deg, #08142b00 0, #08142b00 100px, #08142bd9 175px, #08142bf5 250px); }
+  .peak-stage { grid-template-columns: minmax(0, 1fr); align-items: start; gap: 16px; height: auto; min-height: 0; padding: 235px 16px 16px; }
+  .peak-art { inset: 0 0 auto; height: 235px; }
+  .peak-art img { object-fit: cover; object-position: center 54%; }
+  .peak-stage::after { background: linear-gradient(180deg, #08142b00 0, #08142b00 135px, #08142b75 190px, #08142bf5 245px); }
   .peak-main { max-width: none; }
   .home-dashboard .peak-banner h1 { font-size: clamp(30px, 9cqi, 44px); }
   .peak-features { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }

@@ -19,6 +19,7 @@ import {
   planCalendar,
   planTransferText,
   preserveDateInput,
+  reorderStageTask,
   removeStage,
   saveGoal,
   saveStage,
@@ -346,4 +347,25 @@ test('старые сохранения и новые связи пережив�
   assert.deepEqual(restored.quests, s.quests);
   assert.deepEqual(restored.goals, s.goals);
   assert.equal(restored.xp, s.xp);
+});
+test('перетаскивание меняет порядок только задач выбранного этапа', () => {
+  let s = plan();
+  s = saveStage(s, goal(s).id, { name: 'Основы' });
+  const stageId = goal(s).stages![0].id;
+  s = add(s, 'Первая', { stageId });
+  s = add(s, 'Вторая', { stageId });
+  s = add(s, 'Третья', { stageId });
+  s = add(s, 'Вне этапа');
+  const [first, , third] = s.quests.filter((task) => task.stageId === stageId);
+
+  const reordered = reorderStageTask(s, goal(s).id, stageId, third.id, first.id);
+  assert.deepEqual(
+    reordered.quests.filter((task) => task.stageId === stageId).map((task) => task.name),
+    ['Третья', 'Первая', 'Вторая'],
+  );
+  assert.ok(reordered.quests.some((task) => task.name === 'Вне этапа' && !task.stageId));
+  assert.deepEqual(
+    reorderStageTask(reordered, goal(s).id, stageId, third.id, 'unknown'),
+    reordered,
+  );
 });

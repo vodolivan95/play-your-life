@@ -116,6 +116,14 @@ try {
         unit: 'слова',
       });
       s = saveTask(s, {
+        name: 'Повторить слова',
+        sphere: 'english',
+        difficulty: 'Micro',
+        goalId: id,
+        stageId: a,
+        required: false,
+      });
+      s = saveTask(s, {
         name: 'Посмотреть фильм',
         sphere: 'english',
         difficulty: 'Simple',
@@ -314,6 +322,19 @@ try {
       .click();
     await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.a}`);
     assert.equal(await tabs.getByRole('button').count(), 5);
+    const taskRows = workspace.locator('.ss-task-list .ss-task');
+    assert.deepEqual(await taskRows.locator('.ss-task-main strong').allTextContents(), ['Выучить слова', 'Повторить слова']);
+    await taskRows.filter({ hasText: 'Повторить слова' }).locator('.ss-drag-handle').dragTo(
+      taskRows.filter({ hasText: 'Выучить слова' }),
+    );
+    assert.deepEqual(await taskRows.locator('.ss-task-main strong').allTextContents(), ['Повторить слова', 'Выучить слова']);
+    await page.waitForFunction(({ goalId, stageId }) => {
+      const state = JSON.parse(localStorage.getItem('play-your-life-v1'));
+      const order = state.quests
+        .filter((task) => task.goalId === goalId && task.stageId === stageId)
+        .map((task) => task.name);
+      return JSON.stringify(order) === JSON.stringify(['Повторить слова', 'Выучить слова']);
+    }, { goalId: ids.id, stageId: ids.a });
     await workspace.locator('.ss-reward').click();
     await workspace
       .locator('dialog[open]')

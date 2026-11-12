@@ -568,12 +568,32 @@
 .ss-task:hover {
   border-color: var(--ss-line);
 }
+.ss-task.is-dragging {
+  opacity: 0.42;
+  border-color: var(--ss-cyan);
+}
 .ss-task-row {
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 14px 16px;
 }
+.ss .ss-drag-handle {
+  flex: 0 0 26px;
+  width: 26px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ss-muted);
+  cursor: grab;
+  font-size: 18px;
+  letter-spacing: -4px;
+  touch-action: none;
+}
+.ss .ss-drag-handle:active { cursor: grabbing; }
+.ss .ss-drag-handle:focus-visible { outline: 2px solid var(--ss-cyan); }
 .ss .ss-check {
   display: grid;
   place-items: center;

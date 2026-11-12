@@ -18,6 +18,28 @@ import {
 import type { GameState, Goal, GoalStage, Quest } from './game.ts';
 export type DurationUnit = 'hours' | 'days' | 'weeks' | 'months';
 export type PlanScope = 'day' | 'week' | 'month' | 'year' | 'all';
+export function reorderStageTask(
+  state: GameState,
+  goalId: string,
+  stageId: string,
+  sourceId: string,
+  targetId: string,
+): GameState {
+  const matches = (task: Quest) => task.goalId === goalId && task.stageId === stageId;
+  const source = state.quests.find((task) => task.id === sourceId && matches(task));
+  const target = state.quests.find((task) => task.id === targetId && matches(task));
+  if (!source || !target || sourceId === targetId) return state;
+
+  const stageTasks = state.quests.filter(matches);
+  const reordered = [...stageTasks];
+  const from = reordered.findIndex((task) => task.id === sourceId);
+  const to = reordered.findIndex((task) => task.id === targetId);
+  reordered.splice(to, 0, ...reordered.splice(from, 1));
+
+  let index = 0;
+  const quests = state.quests.map((task) => matches(task) ? reordered[index++] : task);
+  return { ...state, quests };
+}
 export function localDateTime(date = new Date()) {
   return `${dateKey(date)}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }

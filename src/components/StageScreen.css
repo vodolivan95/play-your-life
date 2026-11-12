@@ -572,6 +572,10 @@
   opacity: 0.42;
   border-color: var(--ss-cyan);
 }
+.ss-task.is-drop-target {
+  border-color: var(--ss-cyan);
+  box-shadow: var(--ss-glow);
+}
 .ss-task-row {
   display: flex;
   align-items: center;

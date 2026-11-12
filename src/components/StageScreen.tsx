@@ -47,6 +47,7 @@ type Props = {
   taskDateLine: (task: Quest) => ReactNode;
   onToggleTask: (task: Quest) => void;
   onOpenTask: (task: Quest) => void;
+  onReorderTask: (sourceId: string, targetId: string) => void;
   onAddTask: () => void;
   onEditStage: () => void;
   onDetail: (kind: StageDetailKind) => void;
@@ -131,6 +132,7 @@ export default function StageScreen(p: Props) {
   const [filter, setFilter] = useState<'all' | 'active' | 'done'>('all');
   const [sort, setSort] = useState<'order' | 'priority' | 'due' | 'name'>('order');
   const [query, setQuery] = useState('');
+  const [draggedTaskId, setDraggedTaskId] = useState('');
   const [session, setSession] = useState<Session | null>(null);
   const [left, setLeft] = useState(0);
   const [avail, setAvail] = useState<number | null>(null);
@@ -209,17 +211,44 @@ export default function StageScreen(p: Props) {
   const sessionTask = session ? tasks.find((q) => q.id === session.taskId) : undefined;
   const finished = !!session?.endsAt && left === 0;
 
+  const reorderEnabled = sort === 'order' && filter === 'all' && !query.trim();
   function taskRow(task: Quest) {
     const steps = task.subtasks ?? [];
     const stepsDone = steps.filter((s) => s.done).length;
     const locked = p.taskLocked(task);
     return (
       <article
-        className={`ss-task ${task.done ? 'is-done' : ''}`}
+        className={`ss-task ${task.done ? 'is-done' : ''}${draggedTaskId === task.id ? ' is-dragging' : ''}`}
         key={task.id}
         data-task={task.id}
+        onDragOver={(event) => {
+          if (reorderEnabled && draggedTaskId && draggedTaskId !== task.id) event.preventDefault();
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          const sourceId = event.dataTransfer.getData('text/plain') || draggedTaskId;
+          if (reorderEnabled && sourceId && sourceId !== task.id) p.onReorderTask(sourceId, task.id);
+          setDraggedTaskId('');
+        }}
       >
         <div className="ss-task-row">
+          {reorderEnabled && (
+            <button
+              type="button"
+              className="ss-drag-handle"
+              draggable
+              aria-label={`Переместить задачу: ${task.name}`}
+              title="Перетащите, чтобы изменить порядок"
+              onDragStart={(event) => {
+                setDraggedTaskId(task.id);
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', task.id);
+              }}
+              onDragEnd={() => setDraggedTaskId('')}
+            >
+              ⋮⋮
+            </button>
+          )}
           <button
             className="ss-check"
             disabled={!task.done && locked}

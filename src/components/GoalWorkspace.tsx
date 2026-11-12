@@ -33,6 +33,7 @@ import {
   saveStage,
   removeStage,
   moveStage,
+  reorderStageTask,
   duplicateStage,
   finishStage,
   deleteGoal,
@@ -1635,6 +1636,9 @@ export default function GoalWorkspace(p: Props) {
             taskDateLine={taskDateLine}
             onToggleTask={(task) => (task.done ? undoFinish(task) : finish(task))}
             onOpenTask={(task) => setDetail({ kind: 'task', task })}
+            onReorderTask={(sourceId, targetId) => {
+              mutate((s) => reorderStageTask(s, goal.id, stage.id, sourceId, targetId));
+            }}
             onAddTask={() => p.onAddTask(stage.id)}
             onEditStage={() => p.onEditStage(stage)}
             onDetail={(kind) => setDetail({ kind })}

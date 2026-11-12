@@ -1,3 +1,4 @@
+import { validateTaskEditorFields } from './taskEditor.ts';
 import { validProjectImage } from './projectImage.ts';
 import { validTaskDetails } from './taskDetails.ts';
 import { saveTask } from './planning.ts';
@@ -101,6 +102,7 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
   const old = state.quests.find((q) => q.id === id);
   if (!old) throw new Error('Задача не найдена.');
   if (old.done) throw new Error('Выполненную задачу нельзя менять.');
+  validateTaskEditorFields({ startsAt: patch.startsAt ?? undefined, dueAt: patch.dueAt ?? undefined, deadlineAt: patch.deadlineAt ?? undefined }, false);
   const q: Quest = { ...old };
   if (patch.details !== undefined) {
     if (!validTaskDetails(patch.details)) throw new Error('Проверь дополнительные поля задачи.');
@@ -190,8 +192,8 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
   if (patch.deadlineAt !== undefined) {
     if (patch.deadlineAt === null) q.deadlineAt = undefined;
     else {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(patch.deadlineAt) || !Number.isFinite(Date.parse(patch.deadlineAt))) throw new Error('Проверь дату дедлайна.');
-      q.deadlineAt = patch.deadlineAt;
+      if (!Number.isFinite(Date.parse(patch.deadlineAt))) throw new Error('Проверь дату дедлайна.');
+      q.deadlineAt = patch.deadlineAt.includes('T') ? new Date(patch.deadlineAt).toISOString() : patch.deadlineAt;
     }
   }
   if (patch.stageId !== undefined) {
@@ -205,6 +207,7 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
   if (patch.sync !== undefined) {
     q.tickTickSync = patch.sync ? undefined : false;
   }
+  if (patch.repeat && old.tickTickRepeatFlag) throw new Error('Повтор уже настроен в TickTick. Измените его там, чтобы не создавать дубликаты.');
   if (patch.repeat !== undefined) q.repeat = patch.repeat ?? undefined;
   if (patch.subtasks !== undefined) {
     if (patch.subtasks.length > 30 || patch.subtasks.some((t) => !t.title.trim() || t.title.length > 100))
@@ -213,6 +216,7 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
   }
   if (patch.pinned !== undefined) q.pinned = patch.pinned || undefined;
   if (patch.wontDo !== undefined) q.wontDo = patch.wontDo || undefined;
+  validateTaskEditorFields(q, [patch.startsAt, patch.dueAt, patch.deadlineAt, patch.shiftDays].some(v => v !== undefined));
   const clean = Object.fromEntries(Object.entries(q).filter(([, v]) => v !== undefined)) as Quest;
   let next = { ...state, quests: state.quests.map((item) => (item.id === id ? clean : item)) };
   if (patch.goalId !== undefined || patch.weight !== undefined) {

@@ -225,7 +225,7 @@ export default function QuestBoard({
       </div>
       </>}
       {form && (
-        <QuestWizard
+        <QuestWizard state={state}
           {...form}
           taskLabels={state.taskLabels ?? []}
           onClose={() => setForm(null)}

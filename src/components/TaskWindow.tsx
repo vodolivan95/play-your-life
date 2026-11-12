@@ -1,7 +1,13 @@
+import { TASK_LABEL_LIMIT, TASK_LABEL_NAME_LIMIT, validTaskLabels } from '../taskLabels';
+import TaskCalendar from './TaskCalendar';
+import TaskPeople from './TaskPeople';
+import GameArt from './GameArt';
+import { toggleTaskChecklist } from '../taskEditor';
+import { virtualRewards } from '../personalQuests';
 import { lazy, Suspense, useContext, useEffect, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { difficulties, spheres } from "../game";
-import type { GameState, Quest } from "../game";
+import type { GameState, Quest, TaskLabel } from "../game";
 import { localFingerprint } from "../ticktick";
 import { TickTickContext } from "../tickTickContext";
 import { taskRoute } from "../taskRoutes";
@@ -19,6 +25,7 @@ import { readProjectImage } from "../projectImage";
 import {
   firstDescriptionImage,
   safeWebUrl,
+  safeEmbeddedFile,
   taskGoalForecast,
   yandexRoute,
 } from "../taskDetails";
@@ -59,8 +66,26 @@ function TaskWindowContent({
   onPractice,
   onOpenRelated,
   notify,
+  draftMode = false,
+  onSaveDraft,
+  submitLabel,
+  notice,
+  scopeSphere,
+  draftLabels,
+  onDraftLabels,
+  onNewProject,
+  onNewStage,
 }: {
   taskId: string;
+  onNewProject?: (title: string) => void;
+  onNewStage?: (title: string) => void;
+  draftMode?: boolean;
+  onSaveDraft?: (q: Quest) => void | Promise<void>;
+  submitLabel?: string;
+  notice?: string;
+  scopeSphere?: string;
+  draftLabels?: TaskLabel[];
+  onDraftLabels?: (labels: TaskLabel[]) => void;
   ownerId?: string;
   today: string;
   state: GameState;
@@ -95,8 +120,12 @@ function TaskWindowContent({
   const [preview, setPreview] = useState<string>();
   const [filter, setFilter] = useState("Все");
   const [busy, setBusy] = useState(false);
+  const [spherePicker, setSpherePicker] = useState(draftMode);
+  const [showMap, setShowMap] = useState(false);
+  const [motivationEditing, setMotivationEditing] = useState(false);
   const coverInput = useRef<HTMLInputElement>(null);
   const photoInput = useRef<HTMLInputElement>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
   const dragId = useRef<string | undefined>(undefined);
   const dialog = useRef<HTMLElement>(null);
   const duplicateGuard = useRef(false);
@@ -134,7 +163,7 @@ function TaskWindowContent({
     };
   }, [taskExists]);
   if (!task) return null;
-  const c = taskContribution(state, task);
+  const c = taskContribution(state, draftMode ? { ...task, rewardCoins: Number.isSafeInteger(task.rewardCoins) && (task.rewardCoins ?? 0) >= 0 && (task.rewardCoins ?? 0) <= 100 ? task.rewardCoins : 0 } : task);
   const forecast = taskGoalForecast(state, task);
   const locked = task.done;
   const details = task.details ?? {};
@@ -181,11 +210,12 @@ function TaskWindowContent({
     const apply = (current: GameState) => {
       const currentTask = current.quests.find((q) => q.id === taskId);
       if (!currentTask) throw new Error("Задача не найдена.");
-      return updateTaskSettings(
-        current,
-        taskId,
-        typeof p === "function" ? p(currentTask) : p,
-      );
+      const patchValue = typeof p === "function" ? p(currentTask) : p;
+      const working = draftMode && !currentTask.name.trim()
+        ? { ...current, quests: current.quests.map(q => q.id === taskId ? { ...q, name: 'Новая задача' } : q) } : current;
+      const next = updateTaskSettings(working, taskId, patchValue);
+      return working !== current && patchValue.name === undefined
+        ? { ...next, quests: next.quests.map(q => q.id === taskId ? { ...q, name: currentTask.name } : q) } : next;
     };
     try {
       apply(state);
@@ -214,15 +244,17 @@ function TaskWindowContent({
     });
   }
   function close() {
+    if (busy) return;
     if (
-      !dirty ||
+      (!dirty && !draftMode) ||
       window.confirm(
         "Есть несохранённый текст. Закрыть без сохранения этого текста?",
       )
     )
       onClose();
   }
-  function save() {
+  async function save() {
+    if (busy) return;
     if (sub.trim() || tag.trim() || note.trim()) {
       notify(
         "Сначала добавьте или очистите черновик пункта, тега или заметки.",
@@ -233,10 +265,23 @@ function TaskWindowContent({
       onClose();
       return;
     }
+    if (onSaveDraft) {
+      setBusy(true);
+      try {
+        const next = updateTaskSettings(state, taskId, { name, notes: description });
+        await onSaveDraft(next.quests.find(q => q.id === taskId)!);
+      } catch (e) { notify(e instanceof Error ? e.message : 'Не удалось сохранить задачу.'); }
+      finally { setBusy(false); }
+      return;
+    }
     if (patch({ name, notes: description })) {
       notify("Изменения переданы в сохранение");
       onClose();
     }
+  }
+  function advanced() {
+    if (!onAdvanced || busy) return;
+    if (!dirty || window.confirm('Перейти без сохранения текста?')) { onClose(); onAdvanced(task!); }
   }
   async function copyLink() {
     const link = `${location.origin}${location.pathname}${location.search}#${taskRoute(task!.id)}`;
@@ -357,6 +402,20 @@ function TaskWindowContent({
       setBusy(false);
     }
   }
+  async function uploadFile(file?: File) {
+    if (!file || busy) return;
+    if (file.size > 250000) { notify('Для файла больше 250 КБ добавьте ссылку на него.'); return; }
+    setBusy(true);
+    try {
+      const url = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader(); reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error('Не удалось прочитать файл.')); reader.readAsDataURL(file);
+      });
+      if (!safeEmbeddedFile(url)) throw new Error('Поддерживаются PDF, TXT, DOCX, XLSX и MP4 до 250 КБ; для других файлов добавьте ссылку.');
+      updateDetails(current => ({ attachments: [...(current.attachments ?? []), { id: crypto.randomUUID(), name: file.name, url, size: file.size, type: 'file' }] }));
+    } catch (e) { notify((e as Error).message); }
+    finally { setBusy(false); }
+  }
   const syncEnabled = task.tickTickSync !== false;
   const syncLink = tickTick?.connection?.links[task.id];
   const syncState = !syncEnabled
@@ -384,13 +443,15 @@ function TaskWindowContent({
         ref={dialog}
         tabIndex={-1}
         className="twin"
-        role="dialog"
-        aria-modal="true"
-        aria-label={task.name}
+        role={draftMode ? undefined : "dialog"}
+        aria-modal={draftMode ? undefined : true}
+        aria-label={draftMode ? (submitLabel ?? "Создать задачу") : task.name}
         onKeyDown={(e) => {
           if (e.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
             // Commit existing blur-saved fields before the editor can unmount.
-            if (document.activeElement instanceof HTMLInputElement)
+            if (document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement)
               document.activeElement.blur();
             if (preview) setPreview(undefined);
             else if (menu) setMenu(false);
@@ -420,13 +481,13 @@ function TaskWindowContent({
             Проверочный режим · локальная игра, без данных аккаунта
           </small>
         )}
-        <h2 className="twin-sr-title">{task.name}</h2>
+        <h2 className="twin-sr-title">{draftMode ? (submitLabel === "Сохранить задачу" ? "Изменить задачу" : submitLabel ?? "Создать задачу") : task.name}</h2>
         <div className="twin-toolbar">
           <div>
             <button aria-label="Назад" onClick={close}>
               <Icon name="arrowLeft" size={24} />
             </button>
-            <strong>Задача</strong>
+            <strong>{draftMode ? (submitLabel === "Принять в игру" ? "Разобрать задачу" : "Новая задача") : "Задача"}</strong>
           </div>
           <div>
             <button
@@ -442,7 +503,7 @@ function TaskWindowContent({
                 <Icon name="copy" size={21} />
               </button>
             )}
-            <button aria-label="Копировать ссылку" onClick={copyLink}>
+            <button disabled={draftMode} title={draftMode ? "Ссылка появится после сохранения" : undefined} aria-label="Копировать ссылку" onClick={copyLink}>
               <Icon name="link" size={21} />
             </button>
             <div className="twin-menu-wrap">
@@ -468,7 +529,12 @@ function TaskWindowContent({
                       Передать в TickTick
                     </button>
                   )}
-                  <button onClick={template}>Экспорт шаблона</button>
+                  {!draftMode && <button onClick={template}>Экспорт шаблона</button>}
+                  <button className="twin-mobile-action" disabled={locked} onClick={() => patch({ pinned: !task.pinned })}>{task.pinned ? 'Убрать из избранного' : 'В избранное'}</button>
+                  <button className="twin-mobile-action" disabled={draftMode} onClick={copyLink}>Копировать ссылку</button>
+                  {onAdvanced && <button className="twin-mobile-action" onClick={advanced}>Расширенные настройки</button>}
+                  {onDelete && <button className="twin-mobile-action" onClick={remove}>Удалить</button>}
+                  {onDuplicate && <button className="twin-mobile-action" onClick={duplicate}>Дублировать</button>}
                 </div>
               )}
             </div>
@@ -491,6 +557,7 @@ function TaskWindowContent({
               {task.goalId ? "✦ Задача проекта" : "✦ Личная задача"}
             </span>
             <textarea
+              placeholder="Название задачи"
               aria-label="Название задачи"
               rows={2}
               maxLength={100}
@@ -498,6 +565,10 @@ function TaskWindowContent({
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
+            {(onNewProject || onNewStage) && <div className="twin-inline">
+              {onNewProject && <button type="button" onClick={() => { const title = window.prompt('Название нового проекта'); if (title) { try { onNewProject(title); } catch (e) { notify((e as Error).message); } } }}>＋ Новый проект</button>}
+              {onNewStage && <button type="button" onClick={() => { const title = window.prompt('Название нового этапа'); if (title) { try { onNewStage(title); } catch (e) { notify((e as Error).message); } } }}>＋ Новый этап</button>}
+            </div>}
             <div className="twin-projects">
               <label>
                 <Icon name="home" size={23} />
@@ -508,7 +579,7 @@ function TaskWindowContent({
                   onChange={(e) => patch({ goalId: e.target.value || null })}
                 >
                   <option value="">Проект: не выбран</option>
-                  {state.goals.map((g) => (
+                  {state.goals.filter(g => !scopeSphere || g.sphere === scopeSphere).map((g) => (
                     <option key={g.id} value={g.id}>
                       Проект: {g.name}
                     </option>
@@ -633,7 +704,7 @@ function TaskWindowContent({
           </div>
         </header>
         <div className="twin-info">
-          <label className="twin-card twin-sphere">
+          <div className="twin-card twin-sphere">
             <span className="twin-symbol">
               <Icon name="layers" size={40} />
             </span>
@@ -641,7 +712,7 @@ function TaskWindowContent({
               Сфера
               <select
                 aria-label="Сфера жизни"
-                disabled={locked || !!task.goalId}
+                disabled={locked || !!task.goalId || !!scopeSphere}
                 value={task.sphere}
                 onChange={(e) => patch({ sphere: e.target.value })}
               >
@@ -651,8 +722,9 @@ function TaskWindowContent({
                   </option>
                 ))}
               </select>
+              <button type="button" className="twin-sphere-toggle" aria-expanded={spherePicker} onClick={() => setSpherePicker(!spherePicker)}>Выбрать по иконке</button>
             </span>
-          </label>
+          </div>
           <div className="twin-card twin-goal">
             {forecast ? (
               <>
@@ -759,6 +831,14 @@ function TaskWindowContent({
             </span>
           </label>
         </div>
+        {spherePicker && <section className="twin-card twin-sphere-picker" aria-label="Выбор сферы задачи">
+          <h3>Выберите сферу задачи</h3>
+          <div className="twin-sphere-grid">{spheres.map(s => <button type="button" key={s.id}
+            aria-label={s.name} aria-pressed={task.sphere === s.id}
+            disabled={locked || (!!task.goalId && s.id !== task.sphere) || (!!scopeSphere && s.id !== scopeSphere)}
+            onClick={() => patch({ sphere: s.id })}><GameArt kind={s.id} /><span>{s.name}</span></button>)}</div>
+          {!!task.goalId && <small>Сфера определяется выбранным проектом.</small>}
+        </section>}
         <section className="twin-parameters twin-card">
           <h3>Параметры задачи</h3>
           <div>
@@ -824,8 +904,8 @@ function TaskWindowContent({
                 aria-label="Физический дедлайн"
                 type="datetime-local"
                 disabled={locked}
-                value={localValue(task.dueAt)}
-                onChange={(e) => patch({ dueAt: e.target.value || null })}
+                value={localValue(task.deadlineAt)}
+                onChange={(e) => patch({ deadlineAt: e.target.value || null })}
               />
             </label>
             <label>
@@ -910,7 +990,7 @@ function TaskWindowContent({
               <section className="twin-card">
                 <h3>
                   <Icon name="quests" size={24} /> Чек-лист{" "}
-                  <small>(подзадачи)</small>
+
                   <i>
                     {task.subtasks?.filter((s) => s.done).length ?? 0}/
                     {task.subtasks?.length ?? 0}
@@ -940,15 +1020,20 @@ function TaskWindowContent({
                       <input
                         aria-label={`Выполнить: ${item.title}`}
                         type="checkbox"
-                        disabled={locked}
+                        disabled={locked || draftMode}
                         checked={item.done}
-                        onChange={() =>
-                          patch({
-                            subtasks: task.subtasks!.map((s) =>
-                              s.id === item.id ? { ...s, done: !s.done } : s,
-                            ),
-                          })
-                        }
+                        onChange={() => {
+                          if (draftMode) { patch({ subtasks: task.subtasks!.map(s => s.id === item.id ? { ...s, done: !s.done } : s) }); return; }
+                          if (!item.done && task.subtasks!.every(s => s.id === item.id || s.done) && dirty) {
+                            notify('Сначала сохраните название, описание и черновики. Затем отметьте последний пункт.'); return;
+                          }
+                          try { toggleTaskChecklist(state, task.id, item.id, !item.done); }
+                          catch (e) { notify((e as Error).message); return; }
+                          onChange(current => {
+                            try { return toggleTaskChecklist(current, task.id, item.id, !item.done); }
+                            catch (e) { queueMicrotask(() => notify((e as Error).message)); return current; }
+                          });
+                        }}
                       />
                       <input
                         aria-label="Текст пункта"
@@ -1049,6 +1134,7 @@ function TaskWindowContent({
                       </button>
                     </form>
                   ))}
+                <small className="twin-checklist-hint">Все пункты выполнены — задача завершена. Пункты не создают отдельных задач.{draftMode && " Отмечать пункты можно после сохранения."}</small>
               </section>
               <section className="twin-card">
                 <h3>
@@ -1141,7 +1227,7 @@ function TaskWindowContent({
                     </span>
                     <select
                       aria-label="Повтор"
-                      disabled={locked}
+                      disabled={locked || !!task.tickTickRepeatFlag}
                       value={task.repeat ?? ""}
                       onChange={(e) =>
                         patch({
@@ -1157,23 +1243,18 @@ function TaskWindowContent({
                       ))}
                     </select>
                   </label>
-                  <label>
-                    <span className="twin-field-caption">
-                      <Icon name="bell" size={20} />
-                      Напоминание
-                    </span>
-                    <select
-                      aria-label="Напоминание"
-                      title="Напоминания настраиваются в TickTick; текущая интеграция не передаёт это поле"
-                      disabled
-                      value="external"
-                    >
-                      <option value="external">В TickTick</option>
-                    </select>
-                  </label>
                 </div>
+                <TaskCalendar task={task} disabled={locked} onDate={(field, value) => patch({ [field]: value })} />
+                <fieldset className="twin-reminders"><legend>Напоминания</legend>
+                  {[0, 15, 60, 1440].map(minutes => <button type="button" key={minutes} disabled={locked}
+                    aria-pressed={details.reminders?.includes(minutes) ?? false}
+                    onClick={() => updateDetails({ reminders: details.reminders?.includes(minutes)
+                      ? details.reminders.filter(n => n !== minutes) : [...(details.reminders ?? []), minutes] })}>
+                    {minutes === 0 ? 'В момент начала' : minutes === 15 ? 'За 15 минут' : minutes === 60 ? 'За 1 час' : 'За 1 день'}</button>)}
+                  <small>Напомним в открытом приложении до начала (или окончания, если начало не задано). Настройки TickTick не меняются.</small>
+                </fieldset>
                 {task.tickTickRepeatFlag && (
-                  <small>Правило TickTick: {task.tickTickRepeatFlag}</small>
+                  <small>Повтором управляет TickTick: {task.tickTickRepeatFlag}. Второй повтор в игре не создаётся.</small>
                 )}
               </section>
               <section className="twin-card">
@@ -1247,6 +1328,13 @@ function TaskWindowContent({
                     </button>
                   )}
                 </div>
+                {route && <div className="twin-map-preview">
+                  <button type="button" aria-expanded={showMap} onClick={() => setShowMap(!showMap)}>{showMap ? 'Скрыть карту' : 'Показать карту'}</button>
+                  {showMap && <iframe title="Место выполнения на Яндекс Картах" loading="lazy" referrerPolicy="no-referrer"
+                    src={Number.isFinite(details.latitude) && Number.isFinite(details.longitude)
+                      ? `https://yandex.ru/map-widget/v1/?ll=${details.longitude}%2C${details.latitude}&z=16&pt=${details.longitude}%2C${details.latitude}%2Cpm2blm`
+                      : `https://yandex.ru/map-widget/v1/?mode=search&text=${encodeURIComponent(details.address ?? '')}`} />}
+                </div>}
                 {placeEditing && (
                   <div id="task-place-editor" className="twin-place-editor">
                     <label>
@@ -1400,7 +1488,47 @@ function TaskWindowContent({
                   </form>
                 )}
               </section>
-              <Suspense fallback={<p>Загрузка фокуса…</p>}>
+              <section className="twin-card twin-motivation">
+                <span className="twin-heart" aria-hidden="true">♡</span>
+                <div><h3>Зачем мне эта задача</h3>
+                  {motivationEditing ? <textarea autoFocus aria-label="Зачем мне эта задача" disabled={locked}
+                    defaultValue={details.motivation ?? ''} maxLength={2000} rows={3}
+                    onBlur={e => { if (updateDetails({ motivation: e.target.value.trim() })) setMotivationEditing(false); }} />
+                    : <p>{details.motivation || 'Добавьте свою причину — она поможет двигаться.'}</p>}
+                </div><button type="button" disabled={locked} aria-label="Изменить причину задачи" onClick={() => setMotivationEditing(true)}><Icon name="pencil" size={22} /></button>
+              </section>
+              <TaskPeople details={details} locked={locked || busy} onUpdate={updateDetails} notify={notify} />
+              <section className="twin-card"><h3>Ссылки и материалы</h3>
+                {attachments.filter(a => a.type !== 'photo').map(a => <p key={a.id}><a href={a.url} download={a.url.startsWith("data:") ? a.name : undefined} target="_blank" rel="noopener noreferrer">{a.name}{a.url.startsWith("data:") ? " · Скачать" : " ↗"}</a></p>)}
+                <button type="button" disabled={locked} onClick={addLink}>＋ Добавить ссылку</button>
+              </section>
+              {draftMode && <section className="twin-card"><h3>Награда и метка</h3>
+                {task.goalId && <label className="twin-required"><input type="checkbox" checked={task.required !== false}
+                  onChange={e => { const required = e.target.checked; onChange(current => ({ ...current, quests: current.quests.map(q => q.id === taskId ? { ...q, required } : q) })); }} />Обязательная задача проекта</label>}
+                <label>Лайфкоины<input aria-label="Лайфкоины за задачу" type="number" min={0} max={100} step={1} value={task.rewardCoins ?? 0}
+                  disabled={!!task.rewardLocked || (task.currentValue ?? 0) > 0} onChange={e => {
+                    const value = e.target.valueAsNumber;
+                    onChange(current => ({ ...current, quests: current.quests.map(q => q.id === taskId ? { ...q, rewardCoins: value } : q) }));
+                  }} /></label>
+                <label>Дополнительная награда<select aria-label="Виртуальная награда" value={task.virtualRewardId ?? ''} disabled={!!task.rewardLocked || (task.currentValue ?? 0) > 0}
+                  onChange={e => { const value = e.target.value; onChange(current => ({ ...current, quests: current.quests.map(q => q.id === taskId ? { ...q, virtualRewardId: value || undefined } : q) })); }}>
+                  <option value="">Без предмета</option>{virtualRewards.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                </select></label>
+                <label>Метка<select aria-label="Метка задачи" value={task.labelId ?? ''} onChange={e => {
+                  const value = e.target.value; onChange(current => ({ ...current, quests: current.quests.map(q => q.id === taskId ? { ...q, labelId: value || undefined } : q) }));
+                }}><option value="">Без метки</option>{draftLabels?.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select></label>
+                <button type="button" onClick={() => {
+                  const name = window.prompt('Название новой метки')?.trim();
+                  if (!name) return;
+                  if (name.length > TASK_LABEL_NAME_LIMIT || (draftLabels?.length ?? 0) >= TASK_LABEL_LIMIT) { notify('Метка — до 40 символов, не более 50 меток.'); return; }
+                  const existing = draftLabels?.find(l => l.name.toLocaleLowerCase() === name.toLocaleLowerCase());
+                  const label = existing ?? { id: crypto.randomUUID(), name };
+                  if (!validTaskLabels([...(draftLabels ?? []), ...(existing ? [] : [label])])) { notify('Проверь название метки.'); return; }
+                  if (!existing) onDraftLabels?.([...(draftLabels ?? []), label]);
+                  onChange(current => ({ ...current, quests: current.quests.map(q => q.id === taskId ? { ...q, labelId: label.id } : q) }));
+                }}>＋ Создать метку</button>
+              </section>}
+              {!draftMode && <Suspense fallback={<p>Загрузка фокуса…</p>}>
                 <FocusSection
                   state={state}
                   task={task}
@@ -1411,7 +1539,8 @@ function TaskWindowContent({
                     else location.hash = taskRoute(id);
                   }}
                 />
-              </Suspense>
+              </Suspense>}
+              {draftMode && <section className="twin-card"><h3>Фокус</h3><p>Таймер доступен после сохранения задачи.</p></section>}
               <section className="twin-card twin-sync">
                 <span className="twin-sync-emblem">
                   <Icon name="check" size={35} />
@@ -1501,7 +1630,7 @@ function TaskWindowContent({
                       <small>
                         {a.type === "photo"
                           ? "Фото · сохранённая копия"
-                          : "Ссылка"}
+                          : a.type === "file" ? "Файл" : "Ссылка"}
                         {a.size !== undefined
                           ? ` · ${Math.ceil(a.size / 1024)} КБ`
                           : ""}
@@ -1509,10 +1638,11 @@ function TaskWindowContent({
                       {a.type !== "photo" && (
                         <a
                           href={a.url}
+                          download={a.url.startsWith("data:") ? a.name : undefined}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          Открыть ↗
+                          {a.url.startsWith("data:") ? "Скачать" : "Открыть ↗"}
                         </a>
                       )}
                       {a.type === "photo" && (
@@ -1559,6 +1689,8 @@ function TaskWindowContent({
                 >
                   {busy ? "Подготовка…" : "＋ Добавить фото"}
                 </button>
+                <button disabled={locked || busy || attachments.length >= 10} onClick={() => fileInput.current?.click()}>＋ Добавить файл</button>
+                <input hidden ref={fileInput} type="file" aria-label="Прикрепить файл" accept="application/pdf,text/plain,video/mp4,.docx,.xlsx" onChange={e => { void uploadFile(e.target.files?.[0]); e.target.value = ''; }} />
                 <button
                   disabled={locked || attachments.length >= 10}
                   onClick={addLink}
@@ -1677,20 +1809,13 @@ function TaskWindowContent({
             </section>
           )}
         </div>
+        {notice && <p className="twin-notice" role="status">{notice}</p>}
         <footer className="twin-foot">
           {onAdvanced && (
             <button
               className="twin-settings"
               aria-label="Расширенные настройки"
-              onClick={() => {
-                if (
-                  !dirty ||
-                  window.confirm("Перейти без сохранения текста?")
-                ) {
-                  onClose();
-                  onAdvanced(task);
-                }
-              }}
+              onClick={advanced}
             >
               <Icon name="settings" size={24} /> Расширенные настройки
             </button>
@@ -1705,20 +1830,21 @@ function TaskWindowContent({
               <Icon name="copy" size={23} /> Дублировать
             </button>
           )}
-          <button onClick={template}>
+          {!draftMode && <button onClick={template}>
             <Icon name="bookmark" size={23} /> Сохранить как шаблон
-          </button>
-          <button disabled={busy} onClick={save}>
-            Сохранить
+          </button>}
+          {draftMode && <button className="twin-cancel" disabled={busy} onClick={close}>Отмена</button>}
+          <button className={draftMode ? 'twin-save twin-complete' : 'twin-save'} disabled={busy} onClick={() => void save()}>
+            {busy ? 'Сохранение…' : (submitLabel ?? 'Сохранить')}
           </button>
           {task.done && onUndo && (
-            <button onClick={() => onUndo(task)}>Вернуть в работу</button>
+            <button className="twin-secondary-action" onClick={() => onUndo(task)}>Вернуть в работу</button>
           )}
           {task.done && onPractice && (
-            <button onClick={() => onPractice(task)}>Практиковать снова</button>
+            <button className="twin-secondary-action" onClick={() => onPractice(task)}>Практиковать снова</button>
           )}
           {!task.done && onProgress && (task.targetValue ?? 1) > 1 && (
-            <button onClick={() => onProgress(task)}>Продолжить</button>
+            <button className="twin-secondary-action" onClick={() => onProgress(task)}>Продолжить</button>
           )}
           {!task.done && onComplete && (
             <button
@@ -1736,8 +1862,7 @@ function TaskWindowContent({
           )}
         </footer>
         <small className="twin-save-hint">
-          Параметры сохраняются сразу. Название и описание — кнопкой
-          «Сохранить».
+          {draftMode ? 'Задача будет добавлена только после подтверждения.' : 'Параметры сохраняются сразу. Название и описание — кнопкой «Сохранить».'}
         </small>
         {preview && (
           <div

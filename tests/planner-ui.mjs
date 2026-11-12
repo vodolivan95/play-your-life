@@ -42,6 +42,7 @@ try {
     await plan.getByRole('button', { name: /^Входящие/ }).click();
     await plan.getByLabel('Быстрая задача', { exact: true }).fill('Подготовить план');
     await plan.getByRole('button', { name: 'Добавить задачу', exact: true }).click();
+    await page.getByRole('dialog', { name: 'Создать задачу', exact: true }).getByRole('button', { name: 'Создать задачу', exact: true }).click();
     const task = plan.locator('.pplan-task').filter({ hasText: 'Подготовить план' });
     await task.waitFor();
     await task.getByRole('button', { name: 'Подготовить план', exact: true }).click();
@@ -128,6 +129,7 @@ try {
     // Предшественник блокирует выполнение; циклы отклоняются; перенос не каскадный.
     await plan.getByLabel('Быстрая задача', { exact: true }).fill('Согласовать план');
     await plan.getByRole('button', { name: 'Добавить задачу', exact: true }).click();
+    await page.getByRole('dialog', { name: 'Создать задачу', exact: true }).getByRole('button', { name: 'Создать задачу', exact: true }).click();
     const prior = plan.locator('.pplan-task').filter({ hasText: 'Согласовать план' });
     await prior.waitFor();
     const ids = await page.evaluate(() => {

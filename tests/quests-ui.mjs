@@ -131,16 +131,16 @@ try {
       .getByRole("button", { name: "＋ Новая задача" })
       .first()
       .click();
-    let d = page.locator(".pyl-quest-dialog");
+    let d = page.locator(".task-editor-draft section.twin");
     await d.getByLabel("Название задачи").fill("Пробежать 10 км");
     await d.getByRole("button", { name: /Спорт/ }).click();
-    await d.getByRole("button", { name: /Очень сложная.*80 XP/ }).click();
-    assert.equal(await d.getByRole("img", { name: "Награда 80 XP" }).count(), 1);
+    await d.getByLabel("Сложность", { exact: true }).selectOption("Very Hard");
+    assert.equal(await d.getByLabel("Награда: 80 XP", { exact: true }).count(), 1);
     assert.equal(await d.getByText("+80", { exact: true }).count(), 1);
-    await d.locator(".task-create-scroll").evaluate((element) => { element.scrollTop = 0; });
+    await d.evaluate((element) => { element.scrollTop = 0; });
     await d.screenshot({ path: `work/task-form-${mobile ? "mobile" : "web"}.png` });
     if (mobile) {
-      await d.locator(".task-create-scroll").evaluate((element) => { element.scrollTop = element.scrollHeight; });
+      await d.evaluate((element) => { element.scrollTop = element.scrollHeight; });
       await d.screenshot({ path: "work/task-form-mobile-reward.png" });
     }
     const uploaded=await page.evaluate(()=>{
@@ -148,18 +148,17 @@ try {
       const ctx=canvas.getContext('2d');const gradient=ctx.createLinearGradient(0,0,1920,1200);gradient.addColorStop(0,'#129de5');gradient.addColorStop(1,'#f7bf48');ctx.fillStyle=gradient;ctx.fillRect(0,0,1920,1200);
       return canvas.toDataURL('image/png').split(',')[1];
     });
-    await d.locator(".task-create-photo-area input[type=file]").setInputFiles({
+    await d.getByLabel("Загрузить обложку", { exact: true }).setInputFiles({
       name: "cover.png",
       mimeType: "image/png",
       buffer: Buffer.from(uploaded,"base64"),
     });
-    await d.locator(".task-create-photo-preview img").waitFor();
-    await page.waitForFunction(()=>document.querySelector('.task-create-photo-preview img')?.src.startsWith('blob:'));
-    assert.deepEqual(await d.locator('.task-create-photo-preview img').evaluate(async image=>{await image.decode();return [image.naturalWidth,image.naturalHeight];}),[1920,1200]);
-    assert.equal(await d.locator('.task-create-photo-preview img').evaluate(async image=>{const bytes=new Uint8Array(await (await fetch(image.src)).arrayBuffer());return btoa(Array.from(bytes,b=>String.fromCharCode(b)).join(''));}),uploaded,'Фото не перекодируется');
-    await d.getByRole("button", { name: "＋ Создать метку" }).click();
-    await d.getByLabel("Название новой метки").fill("Тренировка");
-    await d.getByRole("button", { name: "Добавить", exact: true }).click();
+    await d.locator('.twin-cover-image img').waitFor();
+    await page.waitForFunction(() => document.querySelector('.twin-cover-image img')?.src.startsWith('data:image/'));
+    const dimensions = await d.locator('.twin-cover-image img').evaluate(async image => { await image.decode(); return [image.naturalWidth, image.naturalHeight]; });
+    assert.ok(dimensions[0] > 0 && dimensions[1] > 0, 'сохраняемая обложка декодируется');
+    page.once('dialog', dialog => dialog.accept('Тренировка'));
+    await d.getByRole('button', { name: '＋ Создать метку' }).click();
     await d.getByLabel("Лайфкоины за задачу").fill("101");
     await d.getByRole("button", { name: /Создать задачу/ }).click();
     assert.equal(await d.getByLabel("Лайфкоины за задачу").evaluate((input) => input.validity.rangeOverflow), true);
@@ -172,9 +171,11 @@ try {
       .filter({ hasText: "Пробежать 10 км" });
     assert.equal(await card.getByText("Тренировка", { exact: true }).count(), 1);
     await card.locator(".gtl-row").click();
+    if (mobile) await page.getByRole("dialog", { name: /Пробежать 10 км/ }).getByRole("button", { name: "Дополнительное меню" }).click();
     await page.getByRole("dialog", { name: /Пробежать 10 км/ }).getByRole("button", { name: "Расширенные настройки" }).click();
-    d = page.locator(".pyl-quest-dialog");
+    d = page.locator(".task-editor-draft section.twin");
     assert.equal(await d.getByLabel("Лайфкоины за задачу").isDisabled(), false);
+    page.once("dialog", dialog => dialog.accept());
     await d.getByRole("button", { name: "Закрыть", exact: true }).click();
     // С 0.80.0 отдельной кнопки «Продолжить» в строке нет: задача выполняется из своего окна.
     assert.equal(await card.getByRole("button", { name: "Продолжить", exact: true }).count(), 0);

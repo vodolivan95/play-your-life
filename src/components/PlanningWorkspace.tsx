@@ -4,11 +4,13 @@ import { dateKey, spheres } from '../game';
 import type { GameState, Quest } from '../game';
 import { addDays, mondayOf } from '../tasksCalendar';
 import { planningDay, planningMetrics, planningSettings } from '../planningData';
-import { applyWeekProposal, availableMinutes, changeTaskPlanning, inboxTask, moveTaskToDay, planningSummary, planningConflicts, proposeWeek, quickPlanningTask, savePlanningSettings, setTaskProject, setTaskWorkflow, stuckCategoryLabels, stuckTasks, taskDay, visiblePlanningTask, executionOverview } from '../planner';
+import { applyWeekProposal, availableMinutes, changeTaskPlanning, inboxTask, moveTaskToDay, planningSummary, planningConflicts, proposeWeek, savePlanningSettings, setTaskProject, setTaskWorkflow, stuckCategoryLabels, stuckTasks, taskDay, visiblePlanningTask, executionOverview } from '../planner';
 import type { WeekProposal } from '../planner';
 import { updateTaskSettings } from '../taskSettings';
 import { dependentTasks, dependencyBlockers } from '../taskDependencies';
 import './PlanningWorkspace.css';
+import { saveCustomQuest } from '../personalQuests';
+const TaskCreationForm = lazy(() => import('./TaskCreationForm'));
 const PlanningTimeline = lazy(() => import('./PlanningTimeline'));
 const WeeklyReviewWizard = lazy(() => import('./WeeklyReviewWizard'));
 
@@ -40,6 +42,7 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
   const [doneFilter, setDoneFilter] = useState('all');
   const [selected, setSelected] = useState<string[]>([]);
   const [title, setTitle] = useState('');
+  const [taskDraft, setTaskDraft] = useState<Partial<Quest> | null>(null);
   const [batchPriority, setBatchPriority] = useState<NonNullable<Quest['priority']>>('normal');
   const [batchDay, setBatchDay] = useState(today);
   const [reason, setReason] = useState('');
@@ -196,9 +199,18 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
       const load = planningSummary(state, tasks, metrics); const capacity = availableMinutes(state, d);
       return <article key={d} className={`pplan-panel${load.remaining > capacity ? ' pplan-warning' : ''}`}><b>{labelDay(d)}</b><p>{tasks.filter((q) => !q.done).length} задач · {fmt(load.remaining)} / {fmt(capacity)}</p>{load.remaining > capacity && <p>План превышает доступное время на {fmt(load.remaining - capacity)}.</p>}</article>;
     })}</div>}
-    <form className="pplan-row" onSubmit={(e) => { e.preventDefault(); apply((s) => quickPlanningTask(s, title, ownerId, ['today', 'tomorrow'].includes(scope) ? day : undefined), 'Задача создана'); setTitle(''); }}>
+    <form className="pplan-row" onSubmit={(e) => { e.preventDefault(); setTaskDraft({ name: title, sphere: 'tasks', difficulty: 'Simple', dueAt: ['today', 'tomorrow'].includes(scope) ? day : undefined }); }}>
       <input aria-label="Быстрая задача" maxLength={100} required value={title} placeholder="Что нужно сделать?" onChange={(e) => setTitle(e.target.value)} /><button type="submit">Добавить задачу</button>
     </form>
+    {taskDraft && <Suspense fallback={<p>Загрузка задачи…</p>}><TaskCreationForm state={state} initial={taskDraft}
+      onClose={() => setTaskDraft(null)} onSave={(task, labels) => {
+        onChange(current => {
+          const next = saveCustomQuest({ ...current, taskLabels: labels }, task, ownerId);
+          const created = next.quests.at(-1)!;
+          return changeTaskPlanning(next, created.id, { inbox: !task.dueAt && !task.startsAt, workflow: task.dueAt || task.startsAt ? 'ready' : 'planned' }, ownerId);
+        });
+        setTitle(''); notify('Задача создана');
+      }} /></Suspense>}
     <div className="pplan-row" aria-label="Фильтры плана"><input type="search" aria-label="Поиск в плане" value={query} placeholder="Поиск задач" onChange={(e) => setQuery(e.target.value)} />
       <select aria-label="Сфера плана" value={sphere} onChange={(e) => setSphere(e.target.value)}><option value="">Все сферы</option>{spheres.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>
       <select aria-label="Проект плана" value={project} onChange={(e) => setProject(e.target.value)}><option value="">Все проекты</option>{state.goals.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select>

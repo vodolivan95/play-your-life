@@ -338,8 +338,9 @@ try {
         () =>
           JSON.parse(localStorage.getItem("play-your-life-v1")).quests.length,
       );
+      if (mobile) await taskDialog.getByRole("button", { name: "Дополнительное меню", exact: true }).click();
       await taskDialog
-        .locator(".twin-toolbar")
+        .locator(mobile ? ".twin-menu" : ".twin-toolbar")
         .getByRole("button", { name: "Дублировать", exact: true })
         .dblclick();
       await page.waitForFunction(

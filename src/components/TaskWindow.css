@@ -1839,3 +1839,92 @@
 @media(max-width:600px){.twin .twin-parameters>div{grid-template-columns:minmax(0,1fr)}.twin .twin-parameters label,.twin .twin-parameters label:has(input[type=datetime-local]),.twin .twin-parameters label:last-child{grid-column:1;grid-row:auto}:root .pyl-overlay .twin .twin-parameters select{padding-left:10px!important;padding-right:32px!important}}
 
 .twin-field-hint { grid-column: 1 / -1; font-size: 10px; line-height: 1.4; color: #a8bad3; }
+
+/* Shared additions to the existing task window; original surfaces and typography remain authoritative. */
+.task-editor-draft { padding: 0; border: 0; max-width: none; max-height: none; width: 100vw; height: 100dvh; background: transparent; color: #f5f8ff; }
+.task-editor-draft::backdrop { background: #020b18b8; }
+.task-editor-draft .twin-overlay { position: fixed; inset: 0; }
+.twin-sphere-grid { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 8px; }
+.twin .twin-sphere-grid button { display: grid; justify-items: center; gap: 8px; padding: 10px 4px; font-size: 11px; line-height: 1.3; }
+.twin-sphere-grid .game-art { width: 48px; height: 48px; }
+.twin .twin-sphere-grid button[aria-pressed="true"] { border-color: #14ddff; box-shadow: 0 0 15px #00cfff35, inset 0 0 15px #00cfff15; }
+.twin .twin-sphere-toggle { font-size: 11px; margin-top: 6px; padding: 4px 7px; }
+.twin-calendar { padding: 14px; margin-top: 16px; border: 1px solid var(--tw-line); border-radius: 18px; background: linear-gradient(140deg, #19415d50, #071c35a0); }
+.twin-calendar-head { display: flex; justify-content: space-between; align-items: center; text-transform: capitalize; gap: 8px; }
+.twin-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; margin: 12px 0; text-align: center; }
+.twin .twin-calendar-grid button { padding: 7px 0; min-height: 34px; border: 1px solid transparent; background: transparent; border-radius: 10px; }
+.twin .twin-calendar-grid button[data-start="true"], .twin .twin-calendar-grid button[data-end="true"] { background: linear-gradient(145deg, #b9f6ff38, #00cfff12); border-color: #73eaff; box-shadow: inset 0 1px 1px #e2ffff75, 0 0 12px #00cfff30; backdrop-filter: blur(12px); }
+.twin .twin-calendar-grid button[data-deadline="true"] { color: #ffe8a2; background: linear-gradient(145deg, #ffe6a43d, #ffc32b18); border-color: #ffd35b; box-shadow: inset 0 1px 1px #fff6cc80, 0 0 12px #ffbf2935; }
+.twin .twin-calendar-grid button[data-deadline="true"][data-start="true"], .twin .twin-calendar-grid button[data-deadline="true"][data-end="true"] { box-shadow: inset 0 -3px #52dfff, inset 0 1px 1px #fff6cc80, 0 0 12px #ffbf2935; }
+.twin-calendar-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.twin .twin-calendar-legend button { padding: 6px 8px; font-size: 11px; color: #77e5ff; }
+.twin .twin-calendar-legend button[data-deadline="true"] { color: #ffd35b; }
+.twin .twin-calendar-legend button[aria-pressed="true"] { border-color: currentColor; }
+.twin-reminders { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; border: 0; padding: 0; }
+.twin-reminders legend { margin-bottom: 8px; }
+.twin-reminders small { flex-basis: 100%; }
+.twin .twin-reminders button[aria-pressed="true"] { border-color: #17d9ff; background: #12617b88; }
+.twin-checklist-hint { display: block; margin-top: 14px; }
+.twin-motivation { display: flex; gap: 16px; align-items: center; }
+.twin-motivation > div { flex: 1; }
+.twin-motivation p { color: var(--tw-mute); white-space: pre-wrap; overflow-wrap: anywhere; }
+.twin-heart { width: 48px; height: 48px; display: grid; place-items: center; flex: none; font-size: 30px; color: white; border-radius: 16px; background: linear-gradient(140deg, #ff98b8, #f33069); box-shadow: inset 0 1px 2px #ffffff77; }
+.twin-person { display: flex; gap: 10px; align-items: center; border-bottom: 1px solid var(--tw-line); padding: 10px 0; }
+.twin-person > span:nth-child(2) { flex: 1; overflow-wrap: anywhere; }
+.twin-person small { display: block; }
+.twin-person-avatar { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 50%; background: linear-gradient(140deg, #315fd4, #943bd2); }
+.twin .twin-person select { width: 130px; padding: 7px; font-size: 12px; }
+.twin-people > .twin-inline { margin: 14px 0; }
+.twin-contact-form { display: grid; gap: 10px; margin: 14px 0; }
+.twin-map-preview { display: grid; gap: 12px; margin-top: 12px; }
+.twin-map-preview iframe { width: 100%; height: 210px; border: 1px solid var(--tw-line); border-radius: 16px; }
+.twin-notice { position: sticky; bottom: 78px; z-index: 3; padding: 14px; border: 1px solid #6adfff; background: #0c2644; border-radius: 12px; }
+@media (max-width: 760px) {
+  .twin-sphere-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .twin .twin-sphere-grid button { font-size: 10px; }
+  .twin-sphere-grid .game-art { width: 40px; height: 40px; }
+  .twin-person { flex-wrap: wrap; }
+  .twin .twin-person select { width: 110px; }
+  .twin-motivation { gap: 10px; }
+  .twin-calendar-grid { gap: 3px; }
+  .twin-foot { position: sticky; bottom: -18px; z-index: 2; background: #061b37f5; }
+}
+.task-reminder-alerts { position: fixed; z-index: 1500; top: 16px; right: 16px; max-width: min(360px, calc(100vw - 32px)); display: grid; gap: 8px; }
+.task-reminder-alerts > div { display: flex; gap: 8px; padding: 12px; border-radius: 16px; border: 1px solid #37ccf1; background: #102642; color: white; box-shadow: 0 8px 30px #0008; }
+.task-reminder-alerts button { color: inherit; border: 0; background: transparent; cursor: pointer; }
+.twin .twin-mobile-action { display: none; }
+@media (max-width: 600px) {
+  .twin .twin-mobile-action { display: block; }
+  :root .pyl-overlay .twin .twin-foot { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px 0 max(12px, env(safe-area-inset-bottom)); }
+  :root .pyl-overlay .twin .twin-foot > button { display: none; }
+  :root .pyl-overlay .twin .twin-foot > .twin-save,
+  :root .pyl-overlay .twin .twin-foot > .twin-cancel,
+  :root .pyl-overlay .twin .twin-foot > .twin-complete,
+  :root .pyl-overlay .twin .twin-foot > .twin-secondary-action { display: flex; grid-column: auto; min-width: 0; min-height: 46px; justify-content: center; font-size: 14px; padding: 10px; }
+  .twin .twin-dates { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .twin .twin-dates input { min-width: 0; padding: 10px 6px; font-size: 13px; }
+  .twin .twin-info { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .twin .twin-info .twin-goal { grid-column: 1 / -1; grid-row: 1; }
+  .twin .twin-info .twin-sphere, .twin .twin-info .twin-status { display: grid; grid-template-columns: 1fr; gap: 4px; }
+  .twin .twin-info .twin-symbol { display: none; }
+  .twin .twin-info select { font-size: 12px !important; }
+}
+@media (max-width: 600px) {
+  .twin .twin-toolbar > div:last-child > button:not([aria-label="Закрыть"]) { display: none; }
+}
+
+@media (max-width: 600px) {
+  .twin .twin-parameters > div { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .twin .twin-parameters label { grid-column: auto; grid-row: 1; display: flex; flex-direction: column; gap: 5px; padding: 7px 4px; min-width: 0; }
+  .twin .twin-parameters label:last-child { grid-column: 3; grid-row: 1; }
+  .twin .twin-parameters label > svg { position: static; width: 24px; height: 24px; align-self: center; margin: 0 auto; }
+  .twin .twin-parameters label > span { font-size: 10px; text-align: center; }
+  :root .pyl-overlay .twin .twin-parameters select { font-size: 12px !important; padding-left: 6px !important; padding-right: 18px !important; background-position: right 3px center; }
+  .twin .twin-parameters label:has(input[type="datetime-local"]) { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: 28px 1fr; text-align: left; }
+  .twin .twin-parameters label:has(input[type="datetime-local"]) > svg { grid-row: 1 / 3; }
+  .twin .twin-parameters label:has(input[type="datetime-local"]) > input { grid-column: 2; grid-row: 2; }
+  .twin .twin-parameters label:has(input[type="datetime-local"]) > span { grid-column: 2; grid-row: 1; text-align: left; }
+}
+
+.twin .twin-required { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+.twin .twin-required input { width: 20px; height: 20px; flex: none; }

@@ -1,3 +1,4 @@
+import TaskReminders from './components/TaskReminders';
 import { isTaskReviewMode } from './taskReviewMode';
 import { dependencyBlockMessage } from './taskDependencies';
 import { readGoalRoute, goalRoute } from './goalRoutes';
@@ -840,6 +841,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
           </main>
         </div>
         <MobileNav page={page} state={state} onNavigate={navigate} />
+        <TaskReminders key={userId ?? 'local'} tasks={state.quests} onOpen={setPendingTask} />
         {inboxSphereId && <TickTickInboxDialog state={state} onChange={setState} scope={{ sphereId: inboxSphereId }} onClose={() => setInboxSphereId(null)} />}
         {sphereTaskId && (
           <TaskWindow
@@ -983,7 +985,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
             ) : null}
           </div>
         </dialog>
-        {modal === 'quest' && <QuestWizard initial={{ sphere: questSphere, ...questTemplate }} taskLabels={state.taskLabels ?? []} onClose={closeModal} onQuest={(q, labels) => { setState(current => saveCustomQuest({ ...current, taskLabels: labels ?? current.taskLabels }, q, userId ?? 'local')); notify('Новая задача готова. Вперёд!'); }} onHabit={h => setState(saveHabit(state, h, userId ?? 'local'))} />}
+        {modal === 'quest' && <QuestWizard state={state} initial={{ sphere: questSphere, ...questTemplate }} taskLabels={state.taskLabels ?? []} onClose={closeModal} onQuest={(q, labels) => { setState(current => saveCustomQuest({ ...current, taskLabels: labels ?? current.taskLabels }, q, userId ?? 'local')); notify('Новая задача готова. Вперёд!'); }} onHabit={h => setState(saveHabit(state, h, userId ?? 'local'))} />}
         {quickSphere && (
           <SphereQuickView
             state={state}

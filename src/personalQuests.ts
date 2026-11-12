@@ -1,4 +1,5 @@
-import { recordTaskSchedule } from './planningData.ts';
+import { saveTask } from './planning.ts';
+import { validateTaskEditorFields } from './taskEditor.ts';
 import { dependencyBlockMessage } from './taskDependencies.ts';
 import {
   award,
@@ -105,6 +106,7 @@ export function saveCustomQuest(
   input: Partial<Quest> & Pick<Quest, "name" | "sphere" | "difficulty">,
   ownerId: string,
 ): GameState {
+  validateTaskEditorFields(input);
   const old = input.id
     ? state.quests.find((q) => q.id === input.id)
     : undefined;
@@ -163,6 +165,18 @@ export function saveCustomQuest(
     id: old?.id ?? crypto.randomUUID(),
     ownerId,
     sourceType: "USER_CREATED",
+    details: input.details ?? old?.details,
+    goalId: Object.hasOwn(input, 'goalId') ? input.goalId : old?.goalId,
+    stageId: Object.hasOwn(input, 'stageId') ? input.stageId : old?.stageId,
+    deadlineAt: Object.hasOwn(input, 'deadlineAt') ? input.deadlineAt : old?.deadlineAt,
+    weight: Object.hasOwn(input, 'weight') ? input.weight : old?.weight,
+    required: Object.hasOwn(input, 'required') ? input.required : old?.required,
+    estimateMinutes: Object.hasOwn(input, 'estimateMinutes') ? input.estimateMinutes : old?.estimateMinutes,
+    repeat: Object.hasOwn(input, 'repeat') ? input.repeat : old?.repeat,
+    subtasks: Object.hasOwn(input, 'subtasks') ? input.subtasks : old?.subtasks,
+    tickTickSync: Object.hasOwn(input, 'tickTickSync') ? input.tickTickSync : old?.tickTickSync,
+    planning: input.planning ?? old?.planning,
+    pinned: input.pinned ?? old?.pinned,
     name,
     sphere: input.sphere,
     difficulty: input.difficulty,
@@ -186,12 +200,7 @@ export function saveCustomQuest(
   const clean = Object.fromEntries(
     Object.entries(q).filter(([, v]) => v !== undefined),
   ) as Quest;
-  return recordTaskSchedule({
-    ...state,
-    quests: old
-      ? state.quests.map((item) => (item.id === old.id ? clean : item))
-      : [...state.quests, clean],
-  }, old, clean);
+  return saveTask(state, clean);
 }
 /**
  * Дублирует задачу (пункт «Дублировать» в меню «⋯» задачи, по образцу `duplicateStage()`

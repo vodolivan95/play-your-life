@@ -110,8 +110,9 @@ try {
   await win.getByRole("button", { name: "Добавить", exact: true }).click();
   await win.getByRole("checkbox").check();
   const rep = await page.evaluate(() => JSON.parse(localStorage.getItem("play-your-life-v1")).quests.filter((q) => q.repeat === "daily"));
-  assert.equal(rep.length, 1);
-  assert.deepEqual(rep[0].subtasks.map((t) => [t.title, t.done]), [["Первый шаг", true]]);
+  assert.equal(rep.length, 2, 'последний пункт завершает задачу, существующий повтор создаёт следующий экземпляр');
+  assert.deepEqual(rep.find(q => q.done).subtasks.map((t) => [t.title, t.done]), [["Первый шаг", true]]);
+  assert.deepEqual(rep.find(q => !q.done).subtasks.map((t) => [t.title, t.done]), [["Первый шаг", false]]);
   await win.getByRole("button", { name: "Сохранить", exact: true }).click();
   await win.waitFor({ state: "detached" });
   const rangeDays = await page.evaluate(async () => {

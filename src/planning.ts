@@ -1,3 +1,4 @@
+import { validateTaskEditorFields } from './taskEditor.ts';
 import { recordTaskSchedule, validTaskPlanning } from './planningData.ts';
 import { validDependencyGraph } from './taskDependencies.ts';
 import { validProjectImage } from './projectImage.ts';
@@ -563,6 +564,7 @@ export function saveTask(
     xp: difficulties[input.difficulty as keyof typeof difficulties],
     difficulty: input.difficulty,
   };
+  validateTaskEditorFields(task, !options.allowOutsidePlanRange);
   if (!validTaskPlanning(task.planning)) throw new Error('Проверь настройки планирования задачи.');
   let next: GameState = {
     ...state,

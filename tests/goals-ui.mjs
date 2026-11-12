@@ -355,6 +355,8 @@ try {
     await page.getByRole('button', { name: 'Продолжить игру на этом устройстве' }).click();
     await workspace.waitFor();
     await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.a}`);
+    // StageScreen is lazy-loaded: the workspace shell can precede its task list.
+    await workspace.locator('.ss-task-list .ss-task-main strong').first().waitFor();
     assert.deepEqual(
       await workspace.locator('.ss-task-list .ss-task-main strong').allTextContents(),
       ['Повторить слова', 'Выучить слова'],
@@ -402,6 +404,7 @@ try {
     await taskWindow.getByLabel('Время окончания').fill('10:30');
     await taskWindow.getByLabel('Дата начала').fill('2020-01-02');
     await taskWindow.getByLabel('Время начала').fill('09:00');
+    if (width < 600) await workspace.getByRole('dialog').getByRole('button', { name: 'Дополнительное меню' }).click();
     await workspace
       .getByRole('dialog')
       .getByRole('button', { name: 'Расширенные настройки', exact: true })
@@ -610,28 +613,30 @@ try {
     await workspace
       .getByRole('button', { name: '＋ Добавить задачу', exact: true })
       .click();
-    const taskEditor = page.locator('dialog[open]').filter({
-      has: page.getByRole('heading', { name: 'Создать задачу', exact: true }),
-    });
+    const taskEditor = page.locator('.task-editor-draft section.twin');
     await taskEditor
       .getByLabel('Название задачи', { exact: true })
       .fill('Созданная задача');
     await taskEditor.getByRole('button', { name: /Создать задачу/ }).click();
     await workspace.getByRole('button', { name: /^Созданная задача/ }).click();
+    if (width < 600) await workspace.getByRole('dialog').getByRole('button', { name: 'Дополнительное меню' }).click();
     await workspace
       .getByRole('dialog')
       .getByRole('button', { name: 'Расширенные настройки', exact: true })
       .click();
-    const editTask = page.locator('dialog[open]').filter({
-      has: page.getByRole('heading', {
-        name: 'Изменить задачу',
-        exact: true,
-      }),
-    });
+    const editTask = page.locator('.task-editor-draft section.twin');
     await editTask
       .getByLabel('Название задачи', { exact: true })
       .fill('Изменённая задача');
+    page.once('dialog', dialog => dialog.accept('Проверка проекта'));
+    await editTask.getByRole('button', { name: '＋ Создать метку' }).click();
+    await editTask.getByLabel('Обязательная задача проекта').uncheck();
     await editTask.getByRole('button', { name: 'Сохранить задачу' }).click();
+    await page.waitForFunction(() => {
+      const s = JSON.parse(localStorage.getItem('play-your-life-v1'));
+      const task = s.quests.find(q => q.name === 'Изменённая задача');
+      return task?.required === false && s.taskLabels?.some(label => label.id === task.labelId && label.name === 'Проверка проекта');
+    });
     await workspace
       .getByRole('button', { name: /^Изменённая задача/ })
       .waitFor();
@@ -764,8 +769,9 @@ try {
     }
     await page.locator('.pyl-quest-modes').getByRole('button', { name: 'План жизни', exact: true }).click();
     await page.getByRole('button', { name: 'Запланировать задачу' }).click();
-    const plannedTask = page.locator('.task-create-dialog');
-    await plannedTask.getByRole('heading', { name: 'Создать задачу', exact: true }).waitFor();
+    const plannedTask = page.locator('.task-editor-draft section.twin');
+    await plannedTask.getByLabel('Название задачи', { exact: true }).waitFor();
+    page.once('dialog', dialog => dialog.accept());
     await plannedTask.getByRole('button', { name: 'Отмена' }).click();
     assert.equal(errors.length, 0, errors.join('\n'));
     await context.close();

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { difficulties, spheres } from "../game";
-import type { Quest } from "../game";
+import type { GameState, Quest } from "../game";
 import { habitIcons, virtualRewards } from "../personalQuests";
 import type { Habit } from "../personalQuests";
 import { SphereBuilding } from "./SphereCity";
@@ -28,6 +28,7 @@ type Draft = {
 const days = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 export default function QuestWizard({
   quest,
+  state,
   habit,
   habitMode = false,
   initial,
@@ -37,6 +38,7 @@ export default function QuestWizard({
   onHabit,
 }: {
   quest?: Quest;
+  state: GameState;
   habit?: Habit;
   habitMode?: boolean;
   initial?: Partial<Quest>;
@@ -205,6 +207,7 @@ export default function QuestWizard({
     return (
       <Suspense fallback={<dialog open className="pyl-quest-dialog"><p>Открываю форму задачи…</p></dialog>}>
         <TaskCreationForm
+          state={state}
           quest={quest}
           initial={initial}
           taskLabels={taskLabels}

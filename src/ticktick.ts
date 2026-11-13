@@ -865,17 +865,16 @@ export function applyTickTickResult(state: GameState, result: TickTickResult) {
   };
   const linkedIds = new Set(Object.keys(connection.links));
   const linkedAt = new Date().toISOString();
-  next = {
-    ...next,
-    quests: next.quests.map((task) => {
-      if (linkedIds.has(task.id))
-        return task.tickTickSharedAt ? task : { ...task, tickTickSharedAt: linkedAt };
-      if (!task.tickTickSharedAt) return task;
-      const unlinked = { ...task };
-      delete unlinked.tickTickSharedAt;
-      return unlinked;
-    }),
-  };
+  const quests = next.quests.map((task) => {
+    if (linkedIds.has(task.id))
+      return task.tickTickSharedAt ? task : { ...task, tickTickSharedAt: linkedAt };
+    if (!task.tickTickSharedAt) return task;
+    const unlinked = { ...task };
+    delete unlinked.tickTickSharedAt;
+    return unlinked;
+  });
+  if (quests.some((task, index) => task !== next.quests[index]))
+    next = { ...next, quests };
   for (const [id, link] of Object.entries(connection.links)) {
     const task = next.quests.find((q) => q.id === id);
     if (task && applied.has(id) && !rejected.has(id))

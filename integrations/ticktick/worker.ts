@@ -55,6 +55,16 @@ async function body(request: Request, limit = 65000): Promise<Record<string, unk
     throw new BridgeError('Некорректный запрос.', 400);
   }
 }
+function userTaskText(value: unknown) {
+  return typeof value === 'string'
+    ? value.split('\n\n— PLAY YOUR LIFE —')[0].replace(/\n?\[PYL:[\w-]+\]/g, '').trim()
+    : '';
+}
+function sameTaskIntent(task: { title?: unknown; content?: unknown }, data: Record<string, unknown>) {
+  return typeof task.title === 'string' && typeof data.title === 'string' &&
+    task.title.trim() === data.title.trim() &&
+    userTaskText(task.content) === userTaskText(data.content);
+}
 const nonce = () =>
   Array.from(crypto.getRandomValues(new Uint8Array(32)), (n) =>
     n.toString(16).padStart(2, '0'),
@@ -367,12 +377,21 @@ export class TickTickAccount {
       const list = await this.api(`/project/${project}/data`);
       if (!list.ok) throw new BridgeError('Список TickTick не найден.', 404);
       const projectData = (await list.json()) as {
-        tasks?: { id: string; content?: string }[];
+        tasks?: { id: string; title?: string; content?: string }[];
       };
-      const recovered = projectData.tasks?.find((task) =>
+      const marked = projectData.tasks?.filter((task) =>
         task.content?.includes(marker),
-      );
-      if (recovered) {
+      ) ?? [];
+      if (marked.length) {
+        const matches = marked.filter((task) => sameTaskIntent(task, data));
+        if (matches.length !== 1)
+          throw new BridgeError(
+            matches.length
+              ? 'В TickTick найдено несколько задач с этой меткой и одинаковым текстом. Связь не восстановлена автоматически; проверь список вручную.'
+              : 'В TickTick найдена задача с этой меткой, но её название или заметки изменены. Связь не восстановлена автоматически; проверь входящие и список вручную.',
+            409,
+          );
+        const recovered = matches[0];
         await this.storage.put(key, { id: recovered.id });
         return json(recovered);
       }

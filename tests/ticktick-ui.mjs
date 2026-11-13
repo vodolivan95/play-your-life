@@ -66,7 +66,8 @@ async function context(width) {
     else if(path === '/authorize') result = {url:'https://ticktick.com/oauth/authorize?state=' + uid};
     else if(path === '/settings' && method === 'GET') result = a.settings;
     else if(path === '/settings' && method === 'PUT') {
-      if(data.revision !== a.settings.revision) { status=409; result={error:'Настройки изменены на другом устройстве. Обнови подключение перед сохранением.'}; }
+      if(a.failNextSettingsPut) { a.failNextSettingsPut=false; a.settings={...a.settings,revision:a.settings.revision+1}; status=409; result={error:'Настройки изменены на другом устройстве. Обнови подключение перед сохранением.'}; }
+      else if(data.revision !== a.settings.revision) { status=409; result={error:'Настройки изменены на другом устройстве. Обнови подключение перед сохранением.'}; }
       else { a.settings={...data,revision:data.revision+1}; result=a.settings; }
     }
     else if(path === '/api/project') result = [{id:'english',name:'Мой английский'},{id:'fitness',name:'Тренировки'},{id:'budget',name:'Личный бюджет'},{id:'notes',name:'Заметки',kind:'NOTE'}];
@@ -132,9 +133,23 @@ try {
     await panel(page).getByRole('button',{name:'Сохранить настройки'}).click();
     await panel(page).getByText('Настройки сохранены в вашем аккаунте.',{exact:false}).waitFor();
     assert.equal(account(uid).settings.sphereLists.sport,'fitness');
+    account(uid).failNextSettingsPut=true;
+    await panel(page).getByRole('button',{name:'Синхронизировать сейчас'}).click();
+    await panel(page).getByText('Обнови подключение перед сохранением.',{exact:false}).waitFor();
+    await page.waitForFunction(uid=>{
+      const game=JSON.parse(localStorage.getItem('ticktick-fixture-game:'+uid));
+      const connection=JSON.parse(localStorage.getItem('play-your-life-ticktick-v1:'+uid));
+      return Boolean(game?.quests[0]?.tickTickSharedAt&&connection?.links?.['task-'+uid]);
+    },uid);
+    assert.equal(account(uid).creates,1,'удалённая задача подтверждена и не создаётся повторно');
+    assert.equal(account(uid).settings.links['task-'+uid],undefined,'409 не должен считаться сохранённой серверной связью');
+    page.once('dialog',d=>d.accept());
+    await panel(page).getByRole('button',{name:'Обновить подключение'}).click();
+    await panel(page).getByText('Доступ к TickTick подтверждён.',{exact:false}).waitFor();
     await panel(page).getByRole('button',{name:'Синхронизировать сейчас'}).click();
     await panel(page).getByText('Связанные задачи проектов синхронизированы.',{exact:true}).waitFor();
     assert.equal(account(uid).creates,1); assert.equal((await stateOf(page,uid)).quests.length,1);
+    assert.ok(account(uid).settings.links['task-'+uid],'повторный обмен восстанавливает связь без новой задачи');
     // Изменение задачи в TickTick подхватывается фоновым обменом без ручного клика.
     account(uid).tasks.get('remote-task-'+uid).title='Изменено в TickTick';
     await page.clock.runFor(16000);

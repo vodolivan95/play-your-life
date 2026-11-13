@@ -160,7 +160,7 @@ test('сервер останавливает повторное создани�
     id: 'remote-1',
     title: 'Шаг',
     projectId: 'life',
-    content: '\n[PYL:local-1]',
+    content: 'Заметки\n\n— PLAY YOUR LIFE —\n[PYL:local-1]',
   };
   globalThis.fetch = async (input, init) => {
     const path = new URL(String(input)).pathname;
@@ -194,6 +194,49 @@ test('сервер останавливает повторное создани�
     200,
   );
   assert.equal(created, 1);
+});
+test('восстановление по PYL-маркеру не привязывает изменённую или неоднозначную копию', async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  const originalTask = {
+    id: 'remote-1',
+    title: 'Шаг',
+    projectId: 'life',
+    content: 'Заметки\n\n— PLAY YOUR LIFE —\n[PYL:local-1]',
+  };
+  const candidateSets = [
+    [{ ...originalTask, title: 'Шаг в понедельник' }],
+    [{ ...originalTask, content: 'Другие заметки\n\n— PLAY YOUR LIFE —\n[PYL:local-1]' }],
+    [originalTask, { ...originalTask, id: 'remote-2' }],
+  ];
+  for (const candidates of candidateSets) {
+    const f = fixture();
+    await f.storage.put('token', {
+      access_token: 'provider-token',
+      expiresAt: Date.now() + 3600000,
+    });
+    const pending = { pending: true, at: Date.now() };
+    await f.storage.put('task:life:local-1', pending);
+    let creates = 0;
+    globalThis.fetch = async (input, init) => {
+      const path = new URL(String(input)).pathname;
+      if (path.endsWith('/data')) return Response.json({ tasks: candidates });
+      if (init?.method === 'POST') {
+        creates++;
+        return Response.json({ id: 'remote-new' });
+      }
+      throw new Error(`Unexpected request: ${path}`);
+    };
+    const response = await worker.fetch(request('/create', 'POST', {
+      localId: 'local-1',
+      title: 'Шаг',
+      content: 'Заметки',
+      projectId: 'life',
+    }), f.env);
+    assert.equal(response.status, 409);
+    assert.equal(creates, 0, 'не создаёт ещё одну копию и не выбирает связь автоматически');
+    assert.deepEqual(f.entries.get('task:life:local-1'), pending);
+  }
 });
 test('неподтверждённое создание не повторяется после сетевой ошибки', async (t) => {
   const f = fixture();

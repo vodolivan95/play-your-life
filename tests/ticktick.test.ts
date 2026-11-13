@@ -140,6 +140,7 @@ test('создание и повторная синхронизация не с�
   );
   assert.equal(api.calls.filter((c) => c.path === '/create').length, 1);
   assert.equal(result.state.xp, 2450);
+  assert.equal(result.state, state, 'пустой повторный обмен не создаёт новую ссылку GameState');
 });
 test('автоматически связывает активные задачи с 1 октября и новые; старые — только по явному запросу', async () => {
   const { state, connection } = setup();

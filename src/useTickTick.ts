@@ -144,10 +144,18 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
       if ((automatic && !c.auto) || !hasTickTickTargets(c)) return;
       const result = await syncTickTick(latest.current.state, c, (path, method, data) => request(c, path, method, data), taskIds, { removals });
       const applied = applyTickTickResult(latest.current.state, result);
-      const next = c.auth === 'firebase' ? validateTickTickSettings(await request(c, '/settings', 'PUT', settings(applied.connection))) : settings(applied.connection);
       // Preserve edits made while requests were in flight.
       onChange(state => applyTickTickResult(state, result).state);
-      setConnection({ ...c, ...next });
+      try {
+        const next = c.auth === 'firebase' ? validateTickTickSettings(await request(c, '/settings', 'PUT', settings(applied.connection))) : settings(applied.connection);
+        setConnection({ ...c, ...next });
+      } catch (error) {
+        // TickTick may already have accepted writes. Keep their local state/link and stop auto-sync
+        // until settings are refreshed, rather than discarding the result and retrying blindly.
+        setConnection(applied.connection);
+        setDirty(true);
+        throw error;
+      }
       if (result.stopped?.endsWith('(401)')) setConnected(false);
       held = result.held;
       const lines = [...(held && automatic ? [summarizeHeldRemovals(held)] : []), ...applied.warnings];

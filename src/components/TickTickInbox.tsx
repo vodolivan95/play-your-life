@@ -24,6 +24,7 @@ function Row({ item, state, onChange, busy, listName, scope, expand, onAccept, o
   const stage = openStages(goal).find(s => s.id === scope?.stageId);
   return <li className="ticktick-inbox-item">
     <div className="ticktick-inbox-title"><strong>{item.remote.title}</strong>
+      {item.possibleDuplicate && <p className="ticktick-possible-duplicate" role="note">Возможный дубль: в этом списке уже есть задача с таким же названием и описанием. Проверь, что это отдельная задача, прежде чем принимать её.</p>}
       <div className="ticktick-inbox-meta"><span className="ticktick-pill">Список: {listName}</span>
         <span className="ticktick-pill">{formatIncomingDate(item.remote.dueDate) || 'Без срока'}</span></div>
     </div>

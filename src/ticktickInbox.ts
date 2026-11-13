@@ -15,8 +15,10 @@ import type { RemoteTask, TickTickConnection } from './ticktick.ts';
 export type IncomingTask = {
   remote: RemoteTask;
   projectId: string;
-  /** Сфера, список которой содержит задачу; подсказка для выбора. */
+  /** Сфера, списка которой задача содержит; подсказка для выбора. */
   sphere: string;
+  /** Копия с тем же названием и описанием, но другим ID/датой — показать для ручной проверки. */
+  possibleDuplicate?: boolean;
 };
 /** Контекст разбора из сферы, цели или открытого этапа. */
 export type IncomingScope = {
@@ -88,47 +90,111 @@ export function formatIncomingDate(value?: string | null): string {
 }
 
 const markerPattern = /\[PYL:([\w-]+)/;
+type LocalTaskIdentity = Pick<Quest, 'name' | 'notes'>;
+type LocalTaskIndex = ReadonlySet<string> | ReadonlyMap<string, LocalTaskIdentity>;
+type Ownership = { gameOwned: boolean; possibleDuplicate: boolean; changedFromSource?: boolean };
+
+function normalized(value?: string | null) {
+  return (value ?? '').normalize('NFC').replace(/\s+/g, ' ').trim();
+}
+function comparableNotes(value?: string | null) {
+  return normalized((value ?? '')
+    .replace(/\r\n?/g, '\n')
+    .replace(/\n\s*— PLAY YOUR LIFE —[\s\S]*$/i, '')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\\?\[PYL:[\w-]+\\?\]/g, ' '));
+}
+function contentIdentity(name: string, notes?: string | null) {
+  return `${normalized(name)}\u0000${comparableNotes(notes)}`;
+}
+function fingerprintIdentity(fingerprint?: string) {
+  if (!fingerprint) return undefined;
+  try {
+    const parsed: unknown = JSON.parse(fingerprint);
+    if (Array.isArray(parsed) && typeof parsed[0] === 'string')
+      return contentIdentity(parsed[0], typeof parsed[1] === 'string' ? parsed[1] : '');
+    if (parsed && typeof parsed === 'object' && 'name' in parsed && typeof parsed.name === 'string')
+      return contentIdentity(parsed.name, 'notes' in parsed && typeof parsed.notes === 'string' ? parsed.notes : '');
+  } catch { /* Старый или неполный отпечаток не позволяет безопасно сравнить копии. */ }
+  return undefined;
+}
 /**
- * Задачи TickTick со служебной меткой `[PYL:id]`, которые на самом деле являются копиями:
- * «Дублировать» в TickTick копирует заметку вместе с меткой, поэтому копия раньше считалась
- * той же игровой задачей и не показывалась ни во «Входящих», ни в календаре. Копия — это
- * задача, чья метка уже привязана к другой задаче TickTick, либо одна из нескольких несвязанных
- * задач с одинаковой меткой, либо задача с меткой игровой задачи, которой в игре уже нет
- * (если передан `localTaskIds`). Единственная несвязанная задача с меткой существующей игровой
- * задачи остаётся «своей»: её связь восстановит сервер после сбоя создания.
+ * Метка [PYL:id] только указывает на исходник: изменённое название/описание делает копию новой
+ * задачей. Совпадающее содержимое с другим ID помечается возможным дублем; исходник и единственная
+ * задача после сбоя сохранения связи не предлагаются как новые.
  */
-function gameOwnedFilter(connection: TickTickConnection, remoteByProject: Record<string, RemoteTask[]>, localTaskIds?: ReadonlySet<string>) {
+function gameOwnedFilter(connection: TickTickConnection, remoteByProject: Record<string, RemoteTask[]>, localTasks?: LocalTaskIndex) {
   const linkedByLocal = new Map(Object.entries(connection.links).map(([localId, link]) => [localId, link.remoteId]));
   const markerOwners = new Map<string, Set<string>>();
+  const remoteById = new Map<string, RemoteTask>();
   for (const list of Object.values(remoteByProject))
     for (const remote of list ?? []) {
+      if (typeof remote?.id === 'string') remoteById.set(remote.id, remote);
       const marker = markerPattern.exec(remote?.content ?? '')?.[1];
       if (!marker || typeof remote.id !== 'string') continue;
       markerOwners.set(marker, (markerOwners.get(marker) ?? new Set<string>()).add(remote.id));
     }
-  return (remote: RemoteTask) => {
+  return (remote: RemoteTask): Ownership => {
     const content = remote.content ?? '';
-    if (!content.includes('[PYL:')) return false;
+    if (!content.includes('[PYL:')) return { gameOwned: false, possibleDuplicate: false };
     const marker = markerPattern.exec(content)?.[1];
-    if (!marker) return true;
+    if (!marker) return { gameOwned: true, possibleDuplicate: false };
     const linkedRemote = linkedByLocal.get(marker);
-    if (linkedRemote) return linkedRemote === remote.id;
-    if (localTaskIds && !localTaskIds.has(marker)) return false;
-    return (markerOwners.get(marker)?.size ?? 1) < 2;
+    if (linkedRemote === remote.id) return { gameOwned: true, possibleDuplicate: false };
+    const localExists = localTasks?.has(marker);
+    if (localTasks && !localExists) return { gameOwned: false, possibleDuplicate: false };
+    const link = connection.links[marker];
+    const sourceRemote = link ? remoteById.get(link.remoteId) : undefined;
+    const sourceFields = sourceRemote ? remoteFields(sourceRemote) : undefined;
+    const localTask = localTasks instanceof Map ? localTasks.get(marker) : undefined;
+    const baseline = sourceFields
+      ? contentIdentity(sourceFields.name, sourceFields.notes)
+      : fingerprintIdentity(link?.remote) ?? (localTask ? contentIdentity(localTask.name, localTask.notes) : undefined);
+    const duplicateCount = markerOwners.get(marker)?.size ?? 1;
+    if (baseline) {
+      const candidate = remoteFields(remote);
+      if (contentIdentity(candidate.name, candidate.notes) !== baseline)
+        return { gameOwned: false, possibleDuplicate: false, changedFromSource: true };
+      // A saved link proves this is another TickTick object, even when its original is no longer
+      // in the active task response. Never hide a same-content copy merely because it is alone.
+      if (link && link.remoteId !== remote.id)
+        return { gameOwned: false, possibleDuplicate: true };
+      return duplicateCount > 1
+        ? { gameOwned: false, possibleDuplicate: true }
+        : { gameOwned: true, possibleDuplicate: false };
+    }
+    if (link && link.remoteId !== remote.id)
+      return { gameOwned: false, possibleDuplicate: duplicateCount > 1 };
+    if (duplicateCount > 1) return { gameOwned: false, possibleDuplicate: true };
+    // Один несвязанный экземпляр с живой меткой может быть задачей игры после сбоя записи связи.
+    return { gameOwned: true, possibleDuplicate: false };
   };
+}
+
+function duplicateContentFilter(remoteByProject: Record<string, RemoteTask[]>) {
+  const owners = new Map<string, Set<string>>();
+  for (const [projectId, tasks] of Object.entries(remoteByProject))
+    for (const remote of tasks ?? []) {
+      if (typeof remote?.id !== 'string' || typeof remote.title !== 'string') continue;
+      const key = `${projectId}\u0000${contentIdentity(remote.title, remote.content)}`;
+      owners.set(key, (owners.get(key) ?? new Set<string>()).add(remote.id));
+    }
+  return (projectId: string, remote: RemoteTask) =>
+    (owners.get(`${projectId}\u0000${contentIdentity(remote.title, remote.content)}`)?.size ?? 0) > 1;
 }
 
 export function findIncomingTasks(
   connection: TickTickConnection,
   remoteByProject: Record<string, RemoteTask[]>,
-  localTaskIds?: ReadonlySet<string>,
+  localTasks?: LocalTaskIndex,
 ): IncomingTask[] {
   const linked = new Set(
     Object.values(connection.links).map((link) => link.remoteId),
   );
   const dismissed = new Set(connection.dismissed);
   const seen = new Set<string>();
-  const gameOwned = gameOwnedFilter(connection, remoteByProject, localTaskIds);
+  const classify = gameOwnedFilter(connection, remoteByProject, localTasks);
+  const hasContentPeer = duplicateContentFilter(remoteByProject);
   const found: IncomingTask[] = [];
   for (const sphere of spheres) {
     const projectId = connection.sphereLists?.[sphere.id];
@@ -144,17 +210,20 @@ export function findIncomingTasks(
         typeof remote.title !== 'string' ||
         !remote.title.trim() ||
         // Выполненные и отменённые задачи не предлагаем.
-        (remote.status ?? 0) !== 0 ||
-        // Задачи, созданные самой игрой, уже имеют связь или восстановятся сервером;
-        // копии, сделанные в TickTick вместе с меткой, — новые задачи.
-        gameOwned(remote)
+        (remote.status ?? 0) !== 0
       )
         continue;
+      const ownership = classify(remote);
+      if (ownership.gameOwned) continue;
+      // Не импортируем голую серию повторов как множество новых задач. Копию с меткой,
+      // изменённым содержимым или требующую проверки, оставляем видимой во входящих.
+      if (remote.repeatFlag?.trim() && !remote.content?.includes('[PYL:')) continue;
       seen.add(remote.id);
       found.push({
         remote: { ...remote, projectId: remote.projectId || projectId },
         projectId,
         sphere: sphere.id,
+        ...(ownership.possibleDuplicate || (!ownership.changedFromSource && hasContentPeer(projectId, remote)) ? { possibleDuplicate: true } : {}),
       });
     }
   }
@@ -165,11 +234,12 @@ export function findIncomingTasks(
 export function findTickTickCalendarTasks(
   connection: TickTickConnection,
   remoteByProject: Record<string, RemoteTask[]>,
-  localTaskIds?: ReadonlySet<string>,
+  localTasks?: LocalTaskIndex,
 ): IncomingTask[] {
   const linked = new Set(Object.values(connection.links).map((link) => link.remoteId));
   const seen = new Set<string>();
-  const gameOwned = gameOwnedFilter(connection, remoteByProject, localTaskIds);
+  const classify = gameOwnedFilter(connection, remoteByProject, localTasks);
+  const hasContentPeer = duplicateContentFilter(remoteByProject);
   const found: IncomingTask[] = [];
   for (const sphere of spheres) {
     const projectId = connection.sphereLists?.[sphere.id];
@@ -177,7 +247,9 @@ export function findTickTickCalendarTasks(
     for (const remote of remoteByProject[projectId] ?? []) {
       if (!remote || typeof remote.id !== 'string' || !idPattern.test(remote.id) || seen.has(remote.id) ||
         linked.has(remote.id) || typeof remote.title !== 'string' || !remote.title.trim() ||
-        ((remote.status ?? 0) !== 0 && remote.status !== 2) || gameOwned(remote)) continue;
+        ((remote.status ?? 0) !== 0 && remote.status !== 2)) continue;
+      const ownership = classify(remote);
+      if (ownership.gameOwned || ownership.possibleDuplicate || (!ownership.changedFromSource && hasContentPeer(projectId, remote))) continue;
       let fields: ReturnType<typeof remoteFields>;
       try { fields = remoteFields(remote); } catch { continue; }
       if (!fields.dueAt && !fields.startsAt) continue;

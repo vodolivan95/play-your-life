@@ -152,9 +152,149 @@ test('копия задачи в TickTick с той же меткой [PYL] по
   const local = new Set(['task-a', 'task-b', 'task-c']);
   const expected = ['copy-of-linked', 'twin-1', 'twin-2', 'orphan'];
   assert.deepEqual(findIncomingTasks(connection, tasks, local).map((item) => item.remote.id), expected);
-  assert.deepEqual(findTickTickCalendarTasks(connection, tasks, local).map((item) => item.remote.id), expected);
+  assert.deepEqual(findIncomingTasks(connection, tasks, local).filter((item) => item.possibleDuplicate).map((item) => item.remote.id), ['twin-1', 'twin-2']);
+  assert.deepEqual(findTickTickCalendarTasks(connection, tasks, local).map((item) => item.remote.id), ['copy-of-linked', 'orphan']);
   // Без списка игровых задач «осиротевшая» метка по-прежнему считается своей.
   assert.deepEqual(findIncomingTasks(connection, tasks).map((item) => item.remote.id), expected.slice(0, 3));
+});
+
+test('копия с изменённым названием или описанием становится новой, совпадающее содержание помечается возможным дублем', () => {
+  const { connection } = setup();
+  connection.links = { 'english-1': { remoteId: 'english-original', local: 'a', remote: 'b' } };
+  const original = remote('english-original', {
+    title: 'Заниматься английским',
+    content: 'Puzzle English, урок 12\n\n— PLAY YOUR LIFE —\n[PYL:english-1]',
+    dueDate: '2026-11-12T16:00:00+0300',
+  });
+  const changedName = {
+    ...original,
+    id: 'copy-name',
+    title: 'Английский: speaking',
+    content: 'Puzzle English, урок 12\n\n— PLAY YOUR LIFE —\n[PYL:english-1]',
+    dueDate: '2026-11-14T16:00:00+0300',
+  };
+  const changedNotes = {
+    ...original,
+    id: 'copy-notes',
+    content: 'Puzzle English, разговорная практика\n\n— PLAY YOUR LIFE —\n[PYL:english-1]',
+    dueDate: '2026-11-15T16:00:00+0300',
+  };
+  const sameContentDifferentDate = {
+    ...original,
+    id: 'copy-same',
+    dueDate: '2026-11-16T16:00:00+0300',
+  };
+  const tasks = byProject([original, changedName, changedNotes, sameContentDifferentDate]);
+  const incoming = findIncomingTasks(connection, tasks, new Map([
+    ['english-1', { name: 'Заниматься английским', notes: 'Puzzle English, урок 12' }],
+  ]));
+  assert.deepEqual(incoming.map((item) => [item.remote.id, item.possibleDuplicate]), [
+    ['copy-name', undefined],
+    ['copy-notes', undefined],
+    ['copy-same', true],
+  ]);
+  assert.deepEqual(findTickTickCalendarTasks(connection, tasks).map((item) => item.remote.id), ['copy-name', 'copy-notes']);
+});
+
+test('совпадающие заголовки и пользовательские заметки — возможные дубли даже с разными PYL ID и вложениями', () => {
+  const { connection } = setup();
+  const a = remote('lesson-a', {
+    title: 'Английский: занятие',
+    dueDate: '2026-11-14T18:00:00+0300',
+    content: '![image](attachment-a.jpg)\n— PLAY YOUR LIFE —\nЦель: Английский\n\\[PYL:old-task-a\\]',
+  });
+  const b = remote('lesson-b', {
+    title: 'Английский: занятие',
+    dueDate: '2026-11-15T18:00:00+0300',
+    content: '![image](attachment-b.jpg)\n— PLAY YOUR LIFE —\nЦель: Английский\n\\[PYL:old-task-b\\]',
+  });
+  const tasks = byProject([a, b]);
+  const incoming = findIncomingTasks(connection, tasks, new Map());
+  assert.deepEqual(incoming.map((item) => [item.remote.id, item.possibleDuplicate]), [
+    ['lesson-a', true],
+    ['lesson-b', true],
+  ]);
+  assert.deepEqual(findTickTickCalendarTasks(connection, tasks).map((item) => item.remote.id), []);
+});
+
+test('копия со своей сохранённой связью не скрывается, если исходника нет в активном ответе TickTick', () => {
+  const { connection } = setup();
+  connection.links = {
+    'english-source': {
+      remoteId: 'source-not-in-list',
+      local: 'local snapshot',
+      remote: JSON.stringify(['Английский', 'Puzzle English, урок 12']),
+    },
+  };
+  const copy = remote('copy', {
+    title: 'Английский',
+    content: 'Puzzle English, урок 12\n— PLAY YOUR LIFE —\n[PYL:english-source]',
+    dueDate: '2026-11-20T18:00:00+0300',
+  });
+  const found = findIncomingTasks(connection, byProject([copy]), new Map([
+    ['english-source', { name: 'Английский', notes: 'Puzzle English, урок 12' }],
+  ]));
+  assert.deepEqual(found.map((item) => [item.remote.id, item.possibleDuplicate]), [['copy', true]]);
+});
+
+test('изменённая относительно собственного оригинала задача не помечается дублем по совпадению с другой задачей', () => {
+  const { connection } = setup();
+  connection.links = {
+    'english-source': {
+      remoteId: 'source',
+      local: 'local snapshot',
+      remote: JSON.stringify(['Старый заголовок', 'Старые заметки']),
+    },
+  };
+  const edited = remote('edited', {
+    title: 'Английский: разговорная практика',
+    content: 'Практика speaking\n— PLAY YOUR LIFE —\n[PYL:english-source]',
+  });
+  const peer = remote('peer', {
+    title: 'Английский: разговорная практика',
+    content: 'Практика speaking',
+  });
+  const found = findIncomingTasks(connection, byProject([edited, peer]), new Map([
+    ['english-source', { name: 'Старый заголовок', notes: 'Старые заметки' }],
+  ]));
+  assert.deepEqual(found.map((item) => [item.remote.id, item.possibleDuplicate]), [
+    ['edited', undefined],
+    ['peer', true],
+  ]);
+});
+
+test('регулярная задача TickTick не попадает во входящие как новая, но остаётся в календаре одним событием', () => {
+  const { connection } = setup();
+  const recurring = remote('weekly-english', {
+    title: 'Английский по расписанию',
+    repeatFlag: 'RRULE:FREQ=WEEKLY;BYDAY=TU,TH',
+    dueDate: '2026-11-17T16:00:00+0300',
+  });
+  const tasks = byProject([recurring]);
+  assert.deepEqual(findIncomingTasks(connection, tasks), []);
+  assert.deepEqual(findTickTickCalendarTasks(connection, tasks).map((item) => item.remote.id), ['weekly-english']);
+});
+
+test('копия повторяющейся задачи с изменённым содержанием остаётся новой задачей', () => {
+  const { connection } = setup();
+  connection.links = { 'english-series': { remoteId: 'series', local: 'a', remote: 'b' } };
+  const source = remote('series', {
+    title: 'Английский',
+    content: 'Puzzle English\n\n— PLAY YOUR LIFE —\n[PYL:english-series]',
+    repeatFlag: 'RRULE:FREQ=WEEKLY;BYDAY=TU,TH',
+  });
+  const copiedAndEdited = {
+    ...source,
+    id: 'series-copy',
+    title: 'Английский: разговорная практика',
+    content: 'Практика speaking\n\n— PLAY YOUR LIFE —\n[PYL:english-series]',
+    dueDate: '2026-11-20T16:00:00+0300',
+  };
+  const tasksWithCopy = byProject([source, copiedAndEdited]);
+  const incoming = findIncomingTasks(connection, tasksWithCopy, new Map([
+    ['english-series', { name: 'Английский', notes: 'Puzzle English' }],
+  ]));
+  assert.deepEqual(incoming.map((item) => item.remote.id), ['series-copy']);
 });
 test('входящие: задача из списка, привязанного к двум сферам, показывается один раз', () => {
   const { connection } = setup();

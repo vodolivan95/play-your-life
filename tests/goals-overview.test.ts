@@ -9,6 +9,7 @@ import {
   goalNextStep,
   goalUpcomingTasks,
   goalsSummary,
+  isPersistentGoal,
   pluralDays,
   shortDate,
   sortGoals,
@@ -17,6 +18,21 @@ import {
 const now = new Date('2026-10-10T12:00:00');
 const inDays = (n: number) =>
   new Date(now.getTime() + n * 86400000).toISOString();
+
+test('постоянные проекты распознаются по устойчивой части названия', () => {
+  const base = {
+    id: 'test',
+    sphere: 'finance',
+    current: 0,
+    target: 100,
+    created: now.toISOString(),
+    reward: 0,
+    rewarded: false,
+  };
+  assert.equal(isPersistentGoal({ ...base, name: 'Проект «Мои подписки»' }), true);
+  assert.equal(isPersistentGoal({ ...base, name: '📋 Однократные задачи' }), true);
+  assert.equal(isPersistentGoal({ ...base, name: 'Изучение английского' }), false);
+});
 
 function fixture() {
   let s = initialState();

@@ -28,6 +28,7 @@ import {
   goalCardPace,
   goalDaysLeft,
   goalNextStep,
+  isPersistentGoal,
   goalSortNames,
   goalsSummary,
   isGoalDone,
@@ -95,9 +96,11 @@ export default function GoalsBoard({
   const [editor, setEditor] = useState<Editor | null>(null);
   const [taskDraft, setTaskDraft] = useState<Partial<Quest> | null>(null);
   const monthNow = new Date();
-  const currentMonthlyFocus = monthlyFocusGoals(state, monthNow);
-  const monthlyFocusLimitReached =
-    currentMonthlyFocus.length >= MAX_MONTHLY_FOCUS;
+  const monthlyFocus = monthlyFocusGoals(state, monthNow);
+  const currentMonthlyFocus = monthlyFocus.filter(
+    (g) => !isPersistentGoal(g),
+  );
+  const monthlyFocusLimitReached = monthlyFocus.length >= MAX_MONTHLY_FOCUS;
   const monthlyFocusLimitMessage = `В этом месяце уже выбрано ${MAX_MONTHLY_FOCUS} из ${MAX_MONTHLY_FOCUS} главных проектов. Сначала уберите один из них.`;
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -159,12 +162,16 @@ export default function GoalsBoard({
         // поэтому здесь не дублируются — независимо от текущей вкладки.
         !monthlyFocusIds.has(g.id) &&
         (sphereFilter === 'all' || g.sphere === sphereFilter) &&
-        (goalFilter === 'all' ||
-          (goalFilter === 'paused'
-            ? g.paused && !isGoalDone(g)
-            : goalFilter === 'done'
-              ? isGoalDone(g)
-              : !isGoalDone(g) && !g.paused)),
+        (goalFilter === 'persistent'
+          ? isPersistentGoal(g)
+          : !isPersistentGoal(g) &&
+            (goalFilter === 'all'
+              ? true
+              : goalFilter === 'paused'
+                ? g.paused && !isGoalDone(g)
+                : goalFilter === 'done'
+                  ? isGoalDone(g)
+                  : !isGoalDone(g) && !g.paused)),
     ),
     sort,
   );
@@ -176,7 +183,9 @@ export default function GoalsBoard({
   const listHeading =
     goalFilter === 'all'
       ? 'Все проекты'
-      : goalFilter === 'paused'
+      : goalFilter === 'persistent'
+        ? 'Постоянные проекты'
+        : goalFilter === 'paused'
         ? 'Проекты на паузе'
         : goalFilter === 'done'
           ? 'Завершённые проекты'
@@ -495,6 +504,7 @@ export default function GoalsBoard({
               {[
                 ['all', 'Все'],
                 ['active', 'Активные'],
+                ['persistent', 'Постоянные'],
                 ['paused', 'На паузе'],
                 ['done', 'Завершённые'],
               ].map(([id, name]) => (
@@ -582,14 +592,18 @@ export default function GoalsBoard({
             <div className="panel empty">
               <span>🎯</span>
               <h3>
-                {goalFilter === 'done'
+                {goalFilter === 'persistent'
+                  ? 'Постоянных проектов пока нет'
+                  : goalFilter === 'done'
                   ? 'Твои победы ещё впереди'
                   : goalFilter === 'paused'
                     ? 'Нет проектов на паузе'
                     : 'Начни с того, что важно'}
               </h3>
               <p>
-                {goalFilter === 'paused'
+                {goalFilter === 'persistent'
+                  ? 'Здесь собраны «Мои подписки» и «Однократные задачи» — они не смешиваются с обычными проектами.'
+                  : goalFilter === 'paused'
                   ? 'Поставьте проект на паузу в его карточке, если сейчас не время им заниматься.'
                   : 'Поставь проект, выбери срок и добавь первый реальный шаг.'}
               </p>

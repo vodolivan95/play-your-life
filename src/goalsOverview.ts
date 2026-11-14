@@ -19,6 +19,12 @@ export const goalSortNames: Record<GoalSort, string> = {
 
 export const isGoalDone = (goal: Goal) => goal.current >= goal.target;
 
+/** Пользовательские постоянные сценарии, закреплённые в отдельной вкладке. */
+export function isPersistentGoal(goal: Goal) {
+  const name = goal.name.toLocaleLowerCase('ru-RU');
+  return name.includes('мои подписки') || name.includes('однократные задачи');
+}
+
 /** Whole days left until the deadline; negative when it has passed, undefined without one. */
 export function goalDaysLeft(goal: Goal, now = new Date()) {
   if (!goal.dueAt) return undefined;

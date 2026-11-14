@@ -31,6 +31,8 @@ test('постоянные проекты распознаются по усто
   };
   assert.equal(isPersistentGoal({ ...base, name: 'Проект «Мои подписки»' }), true);
   assert.equal(isPersistentGoal({ ...base, name: '📋 Однократные задачи' }), true);
+  assert.equal(isPersistentGoal({ ...base, name: 'Новый бюджет', persistent: true }), true);
+  assert.equal(isPersistentGoal({ ...base, name: 'Мои подписки', persistent: false }), false);
   assert.equal(isPersistentGoal({ ...base, name: 'Изучение английского' }), false);
 });
 

@@ -21,6 +21,7 @@ export const isGoalDone = (goal: Goal) => goal.current >= goal.target;
 
 /** Пользовательские постоянные сценарии, закреплённые в отдельной вкладке. */
 export function isPersistentGoal(goal: Goal) {
+  if (goal.persistent !== undefined) return goal.persistent;
   const name = goal.name.toLocaleLowerCase('ru-RU');
   return name.includes('мои подписки') || name.includes('однократные задачи');
 }

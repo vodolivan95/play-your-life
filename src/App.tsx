@@ -124,6 +124,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   const [pendingTask, setPendingTask] = useState<string | null>(() => readTaskRoute());
   const [selected, setSelected] = useState<string | null>(null);
   const [profileTipDismissed, setProfileTipDismissed] = useState(false);
+  const [newGoalPersistent, setNewGoalPersistent] = useState(false);
   const [modal, setModal] = useState<
     'quest' | 'goal' | 'streak' | 'start' | 'profile' | null
   >(() => (state.profile.onboardingComplete || (!userId && isTaskReviewMode()) ? null : 'start'));
@@ -741,7 +742,10 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                     setSelected(origin);
                   } else openGoal(id);
                 }}
-                onNew={() => setModal('goal')}
+                onNew={(persistent = false) => {
+                  setNewGoalPersistent(persistent);
+                  setModal('goal');
+                }}
                 onNotify={notify}
               />
             )}
@@ -952,6 +956,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
             ) : modal === 'goal' ? (
               <GoalForm
                 sphereId={selected || 'english'}
+                persistent={newGoalPersistent}
                 onSave={(input) => {
                   setState(saveGoal(state, input));
                   setModal(null);

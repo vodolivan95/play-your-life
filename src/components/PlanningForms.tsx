@@ -11,16 +11,19 @@ import {
   toISO,
 } from '../planning';
 import type { DurationUnit } from '../planning';
+import { isPersistentGoal } from '../goalsOverview';
 import Icon from './Icon';
 import ProjectImagePicker from './ProjectImagePicker';
 
 export function GoalForm({
   initial,
   sphereId = 'english',
+  persistent = false,
   onSave,
 }: {
   initial?: Goal;
   sphereId?: string;
+  persistent?: boolean;
   onSave: (
     goal: Pick<Goal, 'name' | 'sphere' | 'target' | 'reward'> & Partial<Goal>,
   ) => void;
@@ -47,6 +50,9 @@ export function GoalForm({
   const [mode, setMode] = useState(
     initial ? (initial.progressMode ?? 'manual') : 'tasks',
   );
+  const [category, setCategory] = useState(
+    initial ? isPersistentGoal(initial) : persistent,
+  );
   const [amount, setAmount] = useState('3');
   const [unit, setUnit] = useState<DurationUnit>('months');
   const [error, setError] = useState('');
@@ -68,6 +74,7 @@ export function GoalForm({
         target: mode === 'tasks' ? 100 : Number(data.get('target')),
         reward: Number(data.get('reward')),
         progressMode: mode,
+        persistent: category,
         startsAt: preserveDateInput(start, initial?.startsAt),
         dueAt: preserveDateInput(end, initial?.dueAt),
       });
@@ -91,6 +98,17 @@ export function GoalForm({
     <form className="planning-form" onSubmit={submit}>
       <div className="eyebrow">НАПРАВЛЕНИЕ ТВОЕЙ ЖИЗНИ</div>
       <h2>{initial ? 'Настроить проект' : 'Новый проект'}</h2>
+      <label>
+        Категория проекта
+        <select
+          name="persistent"
+          value={category ? 'persistent' : 'regular'}
+          onChange={(event) => setCategory(event.target.value === 'persistent')}
+        >
+          <option value="regular">Обычный проект</option>
+          <option value="persistent">Постоянный</option>
+        </select>
+      </label>
       <ProjectImagePicker
         image={image}
         onChange={setImage}

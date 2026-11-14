@@ -83,7 +83,7 @@ export default function GoalsBoard({
   onChange: Dispatch<SetStateAction<GameState>>;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
-  onNew: () => void;
+  onNew: (persistent?: boolean) => void;
   onNotify: (message: string) => void;
   backLabel?: string;
   stageId?: string;
@@ -448,7 +448,10 @@ export default function GoalsBoard({
             </button>
           )}
         </div>
-        <button className="primary-button" onClick={onNew}>
+        <button
+          className="primary-button"
+          onClick={() => onNew(goalFilter === 'persistent')}
+        >
           <Icon name="plus" size={17} /> Новый проект
         </button>
       </div>

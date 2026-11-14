@@ -219,6 +219,8 @@ export const GOAL_WEEKLY_FOCUS_GOAL_TEXT_MAX = 150;
 export const GOAL_WEEKLY_FOCUS_GOAL_TARGET_MAX = 999;
 export type Goal = {
   image?: string;
+  /** Категория постоянного проекта; undefined позволяет распознать старые проекты по имени. */
+  persistent?: boolean;
   id: string;
   name: string;
   sphere: string;

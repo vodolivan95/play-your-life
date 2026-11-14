@@ -7,8 +7,10 @@ import { planningDay, planningMetrics, planningSettings } from '../planningData'
 import { applyWeekProposal, availableMinutes, changeTaskPlanning, inboxTask, moveTaskToDay, planningSummary, planningConflicts, proposeWeek, savePlanningSettings, setTaskProject, setTaskWorkflow, stuckCategoryLabels, stuckTasks, taskDay, visiblePlanningTask, executionOverview } from '../planner';
 import type { WeekProposal } from '../planner';
 import { updateTaskSettings } from '../taskSettings';
+import { reorderTaskList } from '../planning';
 import { dependentTasks, dependencyBlockers } from '../taskDependencies';
 import './PlanningWorkspace.css';
+import TaskReorderList from './TaskReorderList';
 import { saveCustomQuest } from '../personalQuests';
 const TaskCreationForm = lazy(() => import('./TaskCreationForm'));
 const PlanningTimeline = lazy(() => import('./PlanningTimeline'));
@@ -53,6 +55,7 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
   const settings = planningSettings(state);
   const [draftSettings, setDraftSettings] = useState(settings);
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('');
+  const [taskOrder, setTaskOrder] = useState<'planned' | 'manual'>('planned');
   const own = state.quests.filter((q) => !q.ownerId || q.ownerId === ownerId);
   const day = scope === 'tomorrow' ? addDays(today, 1) : scope === 'today' ? today : anchor;
   const start = scope === 'week' ? mondayOf(anchor) : scope === 'month' ? `${anchor.slice(0, 7)}-01` : day;
@@ -78,7 +81,7 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
     return (!project || q.goalId === project) && (!sphere || q.sphere === sphere) && (!priority || (q.priority ?? 'normal') === priority)
       && (doneFilter === 'all' || q.done === (doneFilter === 'done'))
       && (!query.trim() || `${q.name} ${q.notes ?? ''}`.toLocaleLowerCase('ru-RU').includes(query.trim().toLocaleLowerCase('ru-RU')));
-  }).sort((a, b) => Number(b.planning?.mainDay === day) - Number(a.planning?.mainDay === day)
+  }).sort(taskOrder === 'manual' ? () => 0 : (a, b) => Number(b.planning?.mainDay === day) - Number(a.planning?.mainDay === day)
     || Number(a.done) - Number(b.done) || (taskDay(a) ?? '9999').localeCompare(taskDay(b) ?? '9999') || a.name.localeCompare(b.name, 'ru'));
   const activeIds = selected.filter((id) => shown.some((q) => q.id === id));
   const summary = planningSummary(state, shown, metrics);
@@ -101,7 +104,7 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
     const moves = metrics.get(q.id)?.moves ?? 0;
     const main = q.planning?.mainDay === day;
     const blocked = dependencyBlockers(state.quests, q);
-    return <li key={q.id} className={`pplan-task${q.done ? ' is-done' : ''}`}>
+    return <div className={`pplan-task${q.done ? ' is-done' : ''}`}>
       <div className="pplan-task-top">
         <input type="checkbox" aria-label={`Выбрать: ${q.name}`} checked={activeIds.includes(q.id)} onChange={(e) => setSelected((ids) => e.target.checked ? [...new Set([...ids, q.id])] : ids.filter((id) => id !== q.id))} />
         <button type="button" className="pplan-name" onClick={() => onOpen(q.id)}>{q.name}</button>
@@ -130,7 +133,17 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
         </>}
       </div>}
       {q.planning?.archivedAt && <button type="button" onClick={() => apply((s) => changeTaskPlanning(s, q.id, { archivedAt: undefined }, ownerId))}>Восстановить</button>}
-    </li>;
+    </div>;
+  }
+  function orderedList(list: Quest[], label: string) {
+    return <TaskReorderList
+      className="pplan-list"
+      tasks={list}
+      label={label}
+      enabled={taskOrder === 'manual'}
+      onReorder={(sourceId, targetId, placement) => apply((s) => reorderTaskList(s, list.map((task) => task.id), sourceId, targetId, placement), 'Порядок задач сохранён')}
+      renderTask={card}
+    />;
   }
   return <section className="pplan" aria-label="Мой план">
     <header className="pplan-head"><div><h2>Мой план</h2><p>Проекты, время и следующий шаг.</p></div><button type="button" onClick={() => setWeeklyReviewOpen(true)}>Недельный обзор</button><button type="button" onClick={() => { setDraftSettings(settings); setSettingsOpen((v) => !v); }}>Настройки плана</button></header>
@@ -160,6 +173,7 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
     <div className="pplan-row">
       <label>Дата плана<input type="date" value={anchor} onChange={(e) => e.target.value && setAnchor(e.target.value)} /></label>
       <label>Вид<select aria-label="Вид плана" value={view} onChange={(e) => setView(e.target.value as View)}><option value="list">Список</option><option value="kanban">Канбан</option><option value="matrix">Важность и срочность</option><option value="timeline">Шкала сроков</option></select></label>
+      <label>Порядок задач<select aria-label="Сортировка задач плана" value={taskOrder} onChange={(e) => setTaskOrder(e.target.value as typeof taskOrder)}><option value="planned">По плану</option><option value="manual">Вручную</option></select></label>
       <button type="button" onClick={buildProposal}>Спланировать неделю</button>
       <button type="button" onClick={() => setReview('morning')}>Начать день</button><button type="button" onClick={() => setReview('evening')}>Завершить день</button>
     </div>
@@ -234,9 +248,9 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
         if (!current || current.dueAt !== q.dueAt || current.startsAt !== q.startsAt) throw new Error('Задача изменилась. Повтори перенос.');
         return updateTaskSettings(s, q.id, { shiftDays: days, moveReason: 'Перенос на шкале сроков' });
       }, dependents.length ? `Задача перенесена. Проверь зависимые задачи (${dependents.length}): их сроки не менялись.` : 'Задача перенесена');
-    }} /></Suspense> : shown.length === 0 ? <p>В этом представлении задач нет. Измени фильтры или добавь задачу.</p> : view === 'list' ? <ul className="pplan-list">{shown.map(card)}</ul> :
+    }} /></Suspense> : shown.length === 0 ? <p>В этом представлении задач нет. Измени фильтры или добавь задачу.</p> : view === 'list' ? orderedList(shown, 'Задачи планировщика') :
       <div className="pplan-board">{(view === 'kanban' ? workflows.map(([id, label]) => ({ id, label, tasks: shown.filter((q) => (q.done ? 'done' : q.planning?.workflow ?? 'planned') === id) }))
         : [{ id: '11', label: 'Важно и срочно' }, { id: '10', label: 'Важно, не срочно' }, { id: '01', label: 'Срочно, не важно' }, { id: '00', label: 'Не важно, не срочно' }].map((g) => ({ ...g, tasks: shown.filter((q) => `${Number(!!q.planning?.important)}${Number(!!q.planning?.urgent)}` === g.id) })))
-        .map((g) => <section key={g.id} className="pplan-panel"><h3>{g.label} · {g.tasks.length}</h3><ul className="pplan-list">{g.tasks.map(card)}</ul></section>)}</div>}
+        .map((g) => <section key={g.id} className="pplan-panel"><h3>{g.label} · {g.tasks.length}</h3>{orderedList(g.tasks, `Задачи: ${g.label}`)}</section>)}</div>}
   </section>;
 }

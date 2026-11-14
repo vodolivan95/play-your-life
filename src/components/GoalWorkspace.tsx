@@ -34,6 +34,7 @@ import {
   removeStage,
   moveStage,
   reorderStageTask,
+  reorderTaskList,
   duplicateStage,
   finishStage,
   deleteGoal,
@@ -72,6 +73,7 @@ import { postponementAnalytics, timeAnalytics } from '../planningData';
 import Icon from './Icon';
 import TaskLabelBadge from './TaskLabelBadge';
 import TaskWindow from './TaskWindow';
+import TaskReorderList from './TaskReorderList';
 import { focusSlices, formatFocus } from '../focusCore';
 const FocusStats = lazy(() => import('./FocusStats'));
 import './GoalWorkspace.css';
@@ -1636,8 +1638,8 @@ export default function GoalWorkspace(p: Props) {
             taskDateLine={taskDateLine}
             onToggleTask={(task) => (task.done ? undoFinish(task) : finish(task))}
             onOpenTask={(task) => setDetail({ kind: 'task', task })}
-            onReorderTask={(sourceId, targetId) => {
-              mutate((s) => reorderStageTask(s, goal.id, stage.id, sourceId, targetId));
+            onReorderTask={(sourceId, targetId, placement) => {
+              mutate((s) => reorderStageTask(s, goal.id, stage.id, sourceId, targetId, placement));
             }}
             onAddTask={() => p.onAddTask(stage.id)}
             onEditStage={() => p.onEditStage(stage)}
@@ -1919,7 +1921,14 @@ export default function GoalWorkspace(p: Props) {
                       ＋ Добавить задачу
                     </button>
                   </div>
-                  {visibleTasks.map(taskRow)}
+                  <TaskReorderList
+                    tasks={visibleTasks}
+                    label={stage ? 'Задачи этапа в выбранном порядке' : 'Задачи проекта в выбранном порядке'}
+                    onReorder={(sourceId, targetId, placement) => {
+                      mutate((s) => reorderTaskList(s, visibleTasks.map((task) => task.id), sourceId, targetId, placement));
+                    }}
+                    renderTask={taskRow}
+                  />
                   {!visibleTasks.length && (
                     <p className="gw-muted">
                       {scopeTasks.length

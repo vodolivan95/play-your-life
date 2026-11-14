@@ -559,6 +559,17 @@
   flex-direction: column;
   gap: 10px;
 }
+.ss-task-end-drop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border: 1px dashed var(--ss-cyan);
+  border-radius: 14px;
+  color: var(--ss-cyan);
+  font-weight: 750;
+  box-shadow: 0 0 16px #23bfff26;
+}
 .ss-task {
   border: 1px solid transparent;
   border-radius: 18px;
@@ -569,8 +580,10 @@
   border-color: var(--ss-line);
 }
 .ss-task.is-dragging {
-  opacity: 0.42;
-  border-color: var(--ss-cyan);
+  opacity: 0.76;
+  border: 2px solid var(--ss-cyan);
+  box-shadow: 0 0 0 3px #23bfff35, 0 12px 26px #00132d55;
+  transform: scale(1.01);
 }
 .ss-task.is-drop-target {
   border-color: var(--ss-cyan);

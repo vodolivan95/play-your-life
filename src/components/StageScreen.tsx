@@ -47,7 +47,7 @@ type Props = {
   taskDateLine: (task: Quest) => ReactNode;
   onToggleTask: (task: Quest) => void;
   onOpenTask: (task: Quest) => void;
-  onReorderTask: (sourceId: string, targetId: string) => void;
+  onReorderTask: (sourceId: string, targetId: string, placement: 'before' | 'after' | 'end') => void;
   onAddTask: () => void;
   onEditStage: () => void;
   onDetail: (kind: StageDetailKind) => void;
@@ -131,6 +131,7 @@ type TouchDrag = {
   startX: number;
   startY: number;
   moved: boolean;
+  captured: boolean;
 };
 
 export default function StageScreen(p: Props) {
@@ -141,6 +142,7 @@ export default function StageScreen(p: Props) {
   const [query, setQuery] = useState('');
   const [draggedTaskId, setDraggedTaskId] = useState('');
   const [dropTargetTaskId, setDropTargetTaskId] = useState('');
+  const [dropAtEnd, setDropAtEnd] = useState(false);
   const touchDrag = useRef<TouchDrag | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [left, setLeft] = useState(0);
@@ -221,8 +223,16 @@ export default function StageScreen(p: Props) {
   const finished = !!session?.endsAt && left === 0;
 
   const reorderEnabled = sort === 'order' && filter === 'all' && !query.trim();
+  function elementAtPoint(x: number, y: number) {
+    const dragging = document.querySelector<HTMLElement>('.ss-task.is-dragging');
+    const oldPointerEvents = dragging?.style.pointerEvents;
+    if (dragging) dragging.style.pointerEvents = 'none';
+    const element = document.elementFromPoint(x, y);
+    if (dragging) dragging.style.pointerEvents = oldPointerEvents ?? '';
+    return element;
+  }
   function taskAtPoint(x: number, y: number) {
-    return document.elementFromPoint(x, y)?.closest<HTMLElement>('.ss-task[data-task]')?.dataset.task ?? '';
+    return elementAtPoint(x, y)?.closest<HTMLElement>('.ss-task[data-task]')?.dataset.task ?? '';
   }
   function taskRow(task: Quest) {
     const steps = task.subtasks ?? [];
@@ -233,6 +243,58 @@ export default function StageScreen(p: Props) {
         className={`ss-task ${task.done ? 'is-done' : ''}${draggedTaskId === task.id ? ' is-dragging' : ''}${dropTargetTaskId === task.id ? ' is-drop-target' : ''}`}
         key={task.id}
         data-task={task.id}
+        onPointerDown={(event) => {
+          if (!reorderEnabled) return;
+          if (event.pointerType === 'mouse' && event.button !== 0) return;
+          if (event.pointerType !== 'mouse' && !(event.target as HTMLElement).closest('.ss-drag-handle')) return;
+          const touch = event.pointerType !== 'mouse';
+          touchDrag.current = { taskId: task.id, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false, captured: touch };
+          if (touch) event.currentTarget.setPointerCapture(event.pointerId);
+          setDraggedTaskId(task.id);
+        }}
+        onPointerMove={(event) => {
+          const drag = touchDrag.current;
+          if (!drag || drag.pointerId !== event.pointerId) return;
+          if (!drag.moved && Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 8) return;
+          drag.moved = true;
+          event.preventDefault();
+          if (!drag.captured && event.pointerType === 'mouse') {
+            event.currentTarget.setPointerCapture(event.pointerId);
+            drag.captured = true;
+          }
+          const edge = 76;
+          if (event.clientY < edge) window.scrollBy({ top: -8, behavior: 'auto' });
+          else if (event.clientY > window.innerHeight - edge) window.scrollBy({ top: 8, behavior: 'auto' });
+          const targetId = taskAtPoint(event.clientX, event.clientY);
+          setDropTargetTaskId(targetId === drag.taskId ? '' : targetId);
+          const list = event.currentTarget.parentElement;
+          const lastRect = list?.querySelector<HTMLElement>('.ss-task:last-of-type')?.getBoundingClientRect();
+          setDropAtEnd(!targetId && !!lastRect && event.clientY >= lastRect.bottom - 14);
+        }}
+        onPointerUp={(event) => {
+          const drag = touchDrag.current;
+          if (!drag || drag.pointerId !== event.pointerId) return;
+          const targetId = taskAtPoint(event.clientX, event.clientY);
+          const target = targetId ? document.querySelector<HTMLElement>(`.ss-task[data-task="${CSS.escape(targetId)}"]`) : null;
+          const rect = target?.getBoundingClientRect();
+          const listRect = event.currentTarget.parentElement?.getBoundingClientRect();
+          const lastRect = event.currentTarget.parentElement?.querySelector<HTMLElement>('.ss-task:last-of-type')?.getBoundingClientRect();
+          const endZone = elementAtPoint(event.clientX, event.clientY)?.closest('.ss-task-end-drop');
+          const atEnd = !!endZone || (!targetId && !!lastRect && !!listRect && event.clientY >= lastRect.bottom - 14 && event.clientY <= listRect.bottom + 12) || (!!rect && targetId === tasks.at(-1)?.id && event.clientY >= rect.top + rect.height / 2);
+          if (drag.moved && (atEnd || (targetId && targetId !== drag.taskId)))
+            p.onReorderTask(drag.taskId, targetId, atEnd ? 'end' : rect && event.clientY >= rect.top + rect.height / 2 ? 'after' : 'before');
+          touchDrag.current = null;
+          setDraggedTaskId('');
+          setDropTargetTaskId('');
+          setDropAtEnd(false);
+        }}
+        onPointerCancel={(event) => {
+          if (touchDrag.current?.pointerId !== event.pointerId) return;
+          touchDrag.current = null;
+          setDraggedTaskId('');
+          setDropTargetTaskId('');
+          setDropAtEnd(false);
+        }}
       >
         <div className="ss-task-row">
           {reorderEnabled && (
@@ -241,43 +303,6 @@ export default function StageScreen(p: Props) {
               className="ss-drag-handle"
               aria-label={`Переместить задачу: ${task.name}`}
               title="Перетащите, чтобы изменить порядок"
-              onPointerDown={(event) => {
-                if (!reorderEnabled || (event.pointerType === 'mouse' && event.button !== 0)) return;
-                touchDrag.current = {
-                  taskId: task.id,
-                  pointerId: event.pointerId,
-                  startX: event.clientX,
-                  startY: event.clientY,
-                  moved: false,
-                };
-                event.currentTarget.setPointerCapture(event.pointerId);
-              }}
-              onPointerMove={(event) => {
-                const drag = touchDrag.current;
-                if (!drag || drag.pointerId !== event.pointerId) return;
-                if (!drag.moved && Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 8) return;
-                drag.moved = true;
-                event.preventDefault();
-                setDraggedTaskId(drag.taskId);
-                const targetId = taskAtPoint(event.clientX, event.clientY);
-                setDropTargetTaskId(targetId === drag.taskId ? '' : targetId);
-              }}
-              onPointerUp={(event) => {
-                const drag = touchDrag.current;
-                if (!drag || drag.pointerId !== event.pointerId) return;
-                const targetId = taskAtPoint(event.clientX, event.clientY);
-                if (drag.moved && targetId && targetId !== drag.taskId && reorderEnabled)
-                  p.onReorderTask(drag.taskId, targetId);
-                touchDrag.current = null;
-                setDraggedTaskId('');
-                setDropTargetTaskId('');
-              }}
-              onPointerCancel={(event) => {
-                if (touchDrag.current?.pointerId !== event.pointerId) return;
-                touchDrag.current = null;
-                setDraggedTaskId('');
-                setDropTargetTaskId('');
-              }}
             >
               ⋮⋮
             </button>
@@ -585,6 +610,7 @@ export default function StageScreen(p: Props) {
             )}
             <div className="ss-task-list">
               {visible.map(taskRow)}
+              {reorderEnabled && dropAtEnd && <div className="ss-task-end-drop">＋ В конец списка</div>}
               {!visible.length && (
                 <p className="ss-empty">
                   {tasks.length

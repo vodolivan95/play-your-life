@@ -330,7 +330,7 @@ try {
     const sourceBox = await sourceHandle.boundingBox();
     const targetBox = await targetRow.boundingBox();
     const sourcePoint = { x: sourceBox.x + sourceBox.width / 2, y: sourceBox.y + sourceBox.height / 2 };
-    const targetPoint = { x: targetBox.x + targetBox.width / 2, y: targetBox.y + targetBox.height / 2 };
+    const targetPoint = { x: targetBox.x + targetBox.width / 2, y: targetBox.y + targetBox.height / 4 };
     if (width < 600) {
       const touch = await context.newCDPSession(page);
       await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ id: 1, ...sourcePoint }] });

@@ -177,6 +177,7 @@ export default function QuestBoard({
           quests={quests}
           today={today}
           onOpen={setOpenTask}
+          onChange={onChange}
         />
       )}
       {mode === "inbox" &&
@@ -194,6 +195,7 @@ export default function QuestBoard({
           quests={quests}
           today={today}
           onOpen={setOpenTask}
+          onChange={onChange}
         />
       )}
       {mode === "calendar" && (

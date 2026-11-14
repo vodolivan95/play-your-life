@@ -263,6 +263,14 @@ export default function GoalsBoard({
           >
             {sphere.name}
           </button>
+          {isPersistentGoal(g) && (
+            <span
+              className="gl-tag is-persistent"
+              aria-label="Категория: постоянный проект"
+            >
+              ∞ Постоянный
+            </span>
+          )}
           <span
             className={`gl-tag ${late ? 'is-late' : ''} ${g.paused ? 'is-paused' : ''}`}
           >

@@ -162,6 +162,17 @@
   background: #e4f7ee;
   color: #13724a;
 }
+.gl-tag.is-persistent {
+  border: 1px solid #67c9d2;
+  background: linear-gradient(135deg, #e0f6ff, #d9fff1);
+  color: #075b73;
+  letter-spacing: 0.01em;
+}
+:root[data-theme='dark'] .gl-tag.is-persistent {
+  border-color: #3d929e;
+  background: linear-gradient(135deg, #153c5a, #15544c);
+  color: #d1fbf5;
+}
 .gl-tag.is-late {
   background: #ffe3e3;
   color: #9b1c1c;

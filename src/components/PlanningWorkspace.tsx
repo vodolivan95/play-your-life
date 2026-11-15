@@ -11,12 +11,12 @@ import { reorderTaskList } from '../planning';
 import { dependentTasks, dependencyBlockers } from '../taskDependencies';
 import './PlanningWorkspace.css';
 import TaskReorderList from './TaskReorderList';
-import WeekPlanBoard from './WeekPlanBoard';
 import { taskFinishesAfterDeadline } from '../taskEditor';
 import { saveCustomQuest } from '../personalQuests';
 const TaskCreationForm = lazy(() => import('./TaskCreationForm'));
 const PlanningTimeline = lazy(() => import('./PlanningTimeline'));
 const WeeklyReviewWizard = lazy(() => import('./WeeklyReviewWizard'));
+const WeekPlanBoard = lazy(() => import('./WeekPlanBoard'));
 
 type Scope = 'today' | 'tomorrow' | 'week' | 'month' | 'all' | 'inbox' | 'overdue' | 'archive';
 type View = 'week-board' | 'list' | 'kanban' | 'matrix' | 'timeline';
@@ -163,9 +163,9 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
       <div className="pplan-row"><button type="submit">Сохранить настройки</button><button type="button" onClick={() => setSettingsOpen(false)}>Отмена</button></div>
     </form>}
     <nav className="pplan-row" aria-label="Период плана">{scopes.map(([id, label]) => <button key={id} type="button" aria-pressed={scope === id && !quickFilter} onClick={() => { setScope(id); setView(v => id === 'week' ? 'week-board' : v === 'week-board' ? 'list' : v); setQuickFilter(''); setSelected([]); }}>{label}{id === 'inbox' ? ` (${own.filter(inboxTask).length})` : ''}</button>)}</nav>
-    {weekBoard ? <WeekPlanBoard key={start} state={state} ownerId={ownerId} today={today} week={start}
+    {weekBoard ? <Suspense fallback={<p>Загрузка плана недели…</p>}><WeekPlanBoard key={start} state={state} ownerId={ownerId} today={today} week={start}
       apply={apply} changeWeek={setAnchor} openTask={onOpen} newTask={(date) => setTaskDraft({ sphere: 'tasks', difficulty: 'Simple', dueAt: date })}
-      openReview={() => setWeeklyReviewOpen(true)} showList={() => setView('list')} /> : <>
+      openReview={() => setWeeklyReviewOpen(true)} showList={() => setView('list')} /></Suspense> : <>
     <div className="pplan-stats" aria-label="Контроль выполнения">
       <button type="button" className="pplan-stat" onClick={() => { setScope('all'); setQuickFilter(''); setSelected([]); }}><b>{overview.totalActive}</b> Всего активных</button>
       <button type="button" className="pplan-stat" onClick={() => { setScope('today'); setQuickFilter(''); setSelected([]); }}><b>{overview.plannedToday}</b> На сегодня</button>

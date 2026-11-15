@@ -82,7 +82,7 @@ function WeekTaskEditor({ task, state, week, ownerId, apply, onOpen, close }: {
         <label>Дедлайн<input type="date" value={due} disabled={task.done} onChange={e => setDue(e.target.value)} /></label>
       </div>
       {late && <p className="week-plan-warning" role="status">День выполнения позже дедлайна.</p>}
-      <label>Результат недели<select value={slot} onChange={e => setSlot(Number(e.target.value))}>
+      <label>Результат недели<select aria-label="Результат недели" value={slot} onChange={e => setSlot(Number(e.target.value))}>
         <option value={-1}>Без привязки</option>
         {outcomes.map((outcome, index) => outcome && <option key={index} value={index}>{outcome.title}</option>)}
       </select></label>

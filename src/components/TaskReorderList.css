@@ -47,29 +47,32 @@
 
 .task-reorder-grip {
   display: grid;
-  flex: 0 0 30px;
+  flex: 0 0 44px;
   align-self: center;
   place-items: center;
-  min-width: 30px;
+  width: 44px;
+  min-width: 44px;
   min-height: 44px;
-  padding: 4px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: #8fa8d2;
-  font: 800 19px/1 sans-serif;
-  letter-spacing: -5px;
+  padding: 0;
+  border: 1px solid #24b8ff82;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #1596d927, #0d8fe716);
+  color: #50cfff;
+  font: 800 26px/1 sans-serif;
+  letter-spacing: 0;
   cursor: grab;
   touch-action: none;
-  transition: background-color .16s, color .16s, transform .16s;
+  box-shadow: inset 0 0 0 1px #23c8ff12, 0 0 10px #22b8ff18;
+  transition: background-color .16s, color .16s, transform .16s, box-shadow .16s;
 }
 
 .task-reorder-grip:hover,
 .task-reorder-grip:focus-visible {
   outline: 2px solid #22b8ff;
   outline-offset: 1px;
-  background: #29bafa1c;
+  background: linear-gradient(145deg, #1596d955, #0d8fe733);
   color: #42c9ff;
+  box-shadow: inset 0 0 0 1px #23c8ff25, 0 0 14px #22b8ff35;
 }
 
 .task-reorder-grip:active { transform: scale(.94); }
@@ -80,18 +83,7 @@
 
 @media (max-width: 600px) {
   .task-reorder-grip {
-    flex-basis: 44px;
-    width: 44px;
-    min-width: 44px;
-    min-height: 44px;
-    border: 1px solid #24b8ff82;
-    border-radius: 12px;
-    background: linear-gradient(145deg, #1596d927, #0d8fe716);
-    color: #50cfff;
     font-size: 28px;
-    letter-spacing: 0;
-    line-height: 1;
-    box-shadow: inset 0 0 0 1px #23c8ff12, 0 0 12px #22b8ff18;
   }
 }
 

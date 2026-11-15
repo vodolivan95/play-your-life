@@ -154,6 +154,13 @@ try {
       await page.mouse.move(targetPoint.x, targetPoint.y, { steps: 8 });
       await page.mouse.up();
     }
+    await page.waitForFunction(
+      () => [...document.querySelectorAll('.task-reorder-item[data-flip-id]')].some((item) =>
+        item.getAnimations().some((animation) => animation.effect?.getTiming().duration === 280),
+      ),
+      undefined,
+      { timeout: 1200 },
+    );
     await page.waitForFunction(() => {
       const state = JSON.parse(localStorage.getItem("play-your-life-v1"));
       const names = state.quests.filter((q) => q.name.startsWith("Тестовая задача ")).map((q) => q.name);

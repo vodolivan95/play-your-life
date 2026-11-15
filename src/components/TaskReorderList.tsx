@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import type { Quest } from '../game';
+import { useFlipAnimation } from './useFlipAnimation';
 import './TaskReorderList.css';
 
 type Placement = 'before' | 'after' | 'end';
@@ -23,6 +24,7 @@ export default function TaskReorderList({ tasks, label, onReorder, renderTask, c
   const [announcement, setAnnouncement] = useState('');
   const drag = useRef<Drag | null>(null);
   const suppressClick = useRef(false);
+  const { listRef, captureFirst } = useFlipAnimation<HTMLUListElement>(tasks.map((task) => task.id).join('\u0000'));
 
   function elementAtPoint(x: number, y: number) {
     const dragging = document.querySelector<HTMLElement>('.task-reorder-item.is-dragging');
@@ -83,6 +85,7 @@ export default function TaskReorderList({ tasks, label, onReorder, renderTask, c
       || (!target && !!lastRect && event.clientY >= lastRect.bottom - 10 && event.clientY <= listRect.bottom + 10)
       || (!!rect && event.clientY >= rect.top + rect.height / 2 && tasks.at(-1)?.id === target);
     if (current.moved && (atEnd || (target && target !== current.id))) {
+      captureFirst();
       onReorder(current.id, target, atEnd ? 'end' : targetPlacement);
       const task = tasks.find((item) => item.id === current.id);
       setAnnouncement(task ? `${task.name}: ${atEnd ? 'перемещена в конец списка' : 'порядок изменён'}` : 'Порядок задач изменён');
@@ -109,17 +112,25 @@ export default function TaskReorderList({ tasks, label, onReorder, renderTask, c
     if (index < 0) return;
     if (event.key === 'Home') {
       event.preventDefault();
-      if (index > 0) onReorder(id, tasks[0].id, 'before');
+      if (index > 0) {
+        captureFirst();
+        onReorder(id, tasks[0].id, 'before');
+      }
       else return;
     } else if (event.key === 'End') {
       event.preventDefault();
-      if (index < tasks.length - 1) onReorder(id, '', 'end');
+      if (index < tasks.length - 1) {
+        captureFirst();
+        onReorder(id, '', 'end');
+      }
       else return;
     } else if (event.key === 'ArrowUp' && index > 0) {
       event.preventDefault();
+      captureFirst();
       onReorder(id, tasks[index - 1].id, 'before');
     } else if (event.key === 'ArrowDown' && index < tasks.length - 1) {
       event.preventDefault();
+      captureFirst();
       onReorder(id, tasks[index + 1].id, 'after');
     } else return;
     setAnnouncement(`${tasks[index].name}: порядок изменён`);
@@ -127,6 +138,7 @@ export default function TaskReorderList({ tasks, label, onReorder, renderTask, c
 
   return (
     <ul
+      ref={listRef}
       className={`task-reorder-list ${className}`}
       aria-label={label}
       onPointerMove={enabled ? pointerMove : undefined}
@@ -146,6 +158,7 @@ export default function TaskReorderList({ tasks, label, onReorder, renderTask, c
         return (
           <li
             key={task.id}
+            data-flip-id={task.id}
             data-task-order-id={task.id}
             className={`task-reorder-item ${enabled ? 'is-draggable' : ''} ${itemClassName?.(task) ?? ''}${dragging ? ' is-dragging' : ''}${dropTarget ? ` is-drop-target drop-${targetPlacement}` : ''}`}
             onPointerDown={enabled ? (event) => pointerDown(event, task.id) : undefined}

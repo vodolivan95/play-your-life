@@ -25,21 +25,35 @@ export function reorderStageTask(
   stageId: string,
   sourceId: string,
   targetId: string,
+  placement: 'before' | 'after' | 'end' = 'before',
 ): GameState {
   const matches = (task: Quest) => task.goalId === goalId && task.stageId === stageId;
   const source = state.quests.find((task) => task.id === sourceId && matches(task));
-  const target = state.quests.find((task) => task.id === targetId && matches(task));
-  if (!source || !target || sourceId === targetId) return state;
+  const target = targetId ? state.quests.find((task) => task.id === targetId && matches(task)) : undefined;
+  if (!source || (targetId && !target)) return state;
+  return reorderTaskList(state, state.quests.filter(matches).map((task) => task.id), sourceId, targetId, placement);
+}
 
-  const stageTasks = state.quests.filter(matches);
-  const reordered = [...stageTasks];
-  const from = reordered.findIndex((task) => task.id === sourceId);
-  const to = reordered.findIndex((task) => task.id === targetId);
-  reordered.splice(to, 0, ...reordered.splice(from, 1));
-
+/** Reorder visible list members in the persisted quest sequence; an empty target puts the task last. */
+export function reorderTaskList(
+  state: GameState,
+  listIds: readonly string[],
+  sourceId: string,
+  targetId: string,
+  placement: 'before' | 'after' | 'end' = 'before',
+): GameState {
+  const ordered = listIds.filter((id, index) => listIds.indexOf(id) === index && state.quests.some((task) => task.id === id));
+  const from = ordered.indexOf(sourceId);
+  if (from < 0 || (placement !== 'end' && !ordered.includes(targetId)) || sourceId === targetId) return state;
+  const next = [...ordered];
+  next.splice(from, 1);
+  const to = placement === 'end' ? next.length : next.indexOf(targetId) + (placement === 'after' ? 1 : 0);
+  next.splice(to, 0, sourceId);
+  if (next.every((id, index) => id === ordered[index])) return state;
   let index = 0;
-  const quests = state.quests.map((task) => matches(task) ? reordered[index++] : task);
-  return { ...state, quests };
+  const ids = new Set(ordered);
+  const tasksById = new Map(state.quests.map((task) => [task.id, task]));
+  return { ...state, quests: state.quests.map((task) => ids.has(task.id) ? tasksById.get(next[index++])! : task) };
 }
 export function localDateTime(date = new Date()) {
   return `${dateKey(date)}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;

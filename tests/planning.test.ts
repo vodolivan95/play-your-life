@@ -20,6 +20,7 @@ import {
   planTransferText,
   preserveDateInput,
   reorderStageTask,
+  reorderTaskList,
   removeStage,
   saveGoal,
   saveStage,
@@ -368,4 +369,19 @@ test('перетаскивание меняет порядок только за
     reorderStageTask(reordered, goal(s).id, stageId, third.id, 'unknown'),
     reordered,
   );
+});
+test('ручной порядок поддерживает перенос в произвольную позицию и в конец списка', () => {
+  let state = plan();
+  const prefixCount = state.quests.length;
+  state = add(add(add(add(state, 'Один'), 'Два'), 'Три'), 'Четыре');
+  const prefix = state.quests.slice(0, prefixCount).map((task) => task.id);
+  const ids = state.quests.slice(prefixCount).map((task) => task.id);
+  const movedToEnd = reorderTaskList(state, ids, ids[0], '', 'end');
+  assert.deepEqual(movedToEnd.quests.map((task) => task.id), [...prefix, ...ids.slice(1), ids[0]]);
+
+  const movedAfter = reorderTaskList(state, ids, ids[0], ids[2], 'after');
+  assert.deepEqual(movedAfter.quests.map((task) => task.id), [...prefix, ids[1], ids[2], ids[0], ids[3]]);
+
+  const subset = reorderTaskList(state, [ids[0], ids[2]], ids[0], '', 'end');
+  assert.deepEqual(subset.quests.map((task) => task.id), [...prefix, ids[2], ids[1], ids[0], ids[3]]);
 });

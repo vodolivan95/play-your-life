@@ -43,7 +43,7 @@ try {
     await plan.getByLabel('Быстрая задача', { exact: true }).fill('Подготовить план');
     await plan.getByRole('button', { name: 'Добавить задачу', exact: true }).click();
     await page.getByRole('dialog', { name: 'Создать задачу', exact: true }).getByRole('button', { name: 'Создать задачу', exact: true }).click();
-    const task = plan.locator('.pplan-task').filter({ hasText: 'Подготовить план' });
+    const task = plan.locator('.task-reorder-content > .pplan-task').filter({ hasText: 'Подготовить план' });
     await task.waitFor();
     await task.getByRole('button', { name: 'Подготовить план', exact: true }).click();
     const win = page.getByRole('dialog', { name: 'Подготовить план' });
@@ -116,7 +116,7 @@ try {
     await task.getByText('Переносов: 1.', { exact: false }).waitFor();
     await plan.getByRole('button', { name: 'Часто переношу', exact: true }).click();
     await task.waitFor();
-    assert.equal(await plan.locator('.pplan-task').count(), 1, 'фильтр «Часто переношу» должен оставить задачу с переносами');
+    assert.equal(await plan.locator('.task-reorder-content > .pplan-task').count(), 1, 'фильтр «Часто переношу» должен оставить задачу с переносами');
     await plan.getByRole('button', { name: 'Часто переношу', exact: true }).click();
     // Возвращаем порог к значению по умолчанию — далее в тесте другая задача не должна
     // получить собственное предупреждение «Переносов» (у неё 0 переносов, порог 1 бы не мешал,
@@ -130,7 +130,7 @@ try {
     await plan.getByLabel('Быстрая задача', { exact: true }).fill('Согласовать план');
     await plan.getByRole('button', { name: 'Добавить задачу', exact: true }).click();
     await page.getByRole('dialog', { name: 'Создать задачу', exact: true }).getByRole('button', { name: 'Создать задачу', exact: true }).click();
-    const prior = plan.locator('.pplan-task').filter({ hasText: 'Согласовать план' });
+    const prior = plan.locator('.task-reorder-content > .pplan-task').filter({ hasText: 'Согласовать план' });
     await prior.waitFor();
     const ids = await page.evaluate(() => {
       const s = JSON.parse(localStorage.getItem('play-your-life-v1'));

@@ -127,6 +127,39 @@ try {
       "просроченные, будущие и бессрочные задачи не должны попадать в список на сегодня",
     );
     await page.locator(".pyl-quest-modes").getByRole("button", { name: "Список", exact: true }).click();
+    await page.getByLabel("Сортировка списка задач").selectOption("manual");
+    const reorderRows = page.locator(".gtl-stage ul.task-reorder-list > li[data-task-order-id]");
+    assert.equal(await reorderRows.count(), 4, "ручной список показывает все четыре созданные задачи");
+    const readOrder = async () => await reorderRows.locator(".gtl-row .gtl-name > span").allTextContents();
+    const beforeOrder = await readOrder();
+    const sourceRow = reorderRows.first();
+    const sourceHandle = sourceRow.locator(".task-reorder-grip");
+    const targetRow = reorderRows.last();
+    await sourceHandle.evaluate((element) => element.scrollIntoView({ block: "center", behavior: "instant" }));
+    const sourceBox = await (mobile ? sourceHandle : sourceRow).boundingBox();
+    const targetBox = await targetRow.boundingBox();
+    const sourcePoint = { x: sourceBox.x + sourceBox.width / 2, y: sourceBox.y + sourceBox.height / 2 };
+    const targetPoint = { x: targetBox.x + targetBox.width / 2, y: targetBox.y + targetBox.height / 2 };
+    if (mobile) {
+      const touch = await context.newCDPSession(page);
+      await touch.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ id: 1, ...sourcePoint }] });
+      await touch.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ id: 1, ...targetPoint }] });
+      await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      await touch.detach();
+    } else {
+      // Перетаскивание начинается с основной области карточки, не с ручки.
+      const cardPoint = { x: sourceBox.x + sourceBox.width - 18, y: sourceBox.y + sourceBox.height / 2 };
+      await page.mouse.move(cardPoint.x, cardPoint.y);
+      await page.mouse.down();
+      await page.mouse.move(targetPoint.x, targetPoint.y, { steps: 8 });
+      await page.mouse.up();
+    }
+    await page.waitForFunction(() => {
+      const state = JSON.parse(localStorage.getItem("play-your-life-v1"));
+      const names = state.quests.filter((q) => q.name.startsWith("Тестовая задача ")).map((q) => q.name);
+      return names.length === 4 && names.at(-1) === "Тестовая задача вчера";
+    });
+    assert.deepEqual(await readOrder(), [...beforeOrder.slice(1), beforeOrder[0]], "задача переносится через весь список в конец");
     await page
       .getByRole("button", { name: "＋ Новая задача" })
       .first()

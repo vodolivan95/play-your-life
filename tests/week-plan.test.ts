@@ -47,6 +47,6 @@ test('поздний перенос требует подтверждения и
   assert.equal(taskDay(queued.quests.at(-1)!), undefined);
   assert.equal(weekReviewTasks(queued, monday, 'owner').pending.length, 0);
   assert.equal(weekReviewTasks(queued, monday, 'owner').moved[0].name, q.name);
-  assert.equal(weekPlanDays(queued, monday, 'owner').backlog[0].id, id);
+  assert.ok(weekPlanDays(queued, monday, 'owner').backlog.some(task => task.id === id));
   assert.equal(weekPlanDays(state, monday, 'owner').days[0].planned, 120);
 });

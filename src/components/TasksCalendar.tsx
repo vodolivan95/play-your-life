@@ -24,8 +24,8 @@ import './TasksCalendar.css';
 const weekdays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
 const monthGenitive = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-const firstHour = 8;
-const lastHour = 23;
+const defaultFirstHour = 8;
+const defaultLastHour = 23;
 const hourHeight = 48;
 
 const sphereOf = (id: string) => spheres.find((s) => s.id === id);
@@ -40,12 +40,27 @@ const itemDateRange = (item: CalendarItem) => item.spanStartDay && item.spanEndD
 const resizeStep = 5;
 const minDuration = 15;
 const clockOf = (minutes: number) => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
-/** Время по положению курсора в колонке дня: привязка к 5 минутам, в пределах видимых часов. */
-const timeFromOffset = (y: number) => {
-  const raw = firstHour * 60 + (y / hourHeight) * 60;
-  const snapped = Math.round(raw / resizeStep) * resizeStep;
-  return Math.max(firstHour * 60, Math.min(lastHour * 60, snapped));
-};
+function timedBox(start: string, end: string) {
+  const startMinute = minutesOf(start);
+  const top = (startMinute / 60) * hourHeight + 1;
+  const height = Math.max(26, ((minutesOf(end) - startMinute) / 60) * hourHeight - 3);
+  return { top, height };
+}
+
+/** Записи отсортированы по началу. Минимальная высота коротких событий тоже занимает полосу. */
+function timedLayout(entries: CalendarItem[]) {
+  const laneEnds: number[] = [];
+  const events = entries.flatMap((item) => {
+    if (!item.start || !item.end) return [];
+    const { top, height } = timedBox(item.start, item.end);
+    const available = laneEnds.findIndex((end) => end <= top);
+    const lane = available === -1 ? laneEnds.length : available;
+    const bottom = top + height;
+    laneEnds[lane] = bottom;
+    return [{ item, start: item.start, end: item.end, lane, bottom }];
+  });
+  return { events, laneCount: laneEnds.length };
+}
 
 function Chip({ item, selected, onPick, onDragStart, onDragEnd, dragging }: { item: CalendarItem; selected: boolean; onPick: () => void; onDragStart: (e: DragEvent) => void; onDragEnd: () => void; dragging: boolean }) {
   const { quest } = item;
@@ -108,6 +123,17 @@ export default function TasksCalendar({
   const [resize, setResize] = useState<{ id: string; day: string; edge: 'start' | 'end'; colTop: number; start: string; end: string } | null>(null);
   const suppressClick = useRef(false);
   const items = useMemo(() => [...calendarItems(quests), ...tickTickCalendarItems(incoming)], [quests, incoming]);
+  const grid = view === 'month' || view === 'twoWeeks';
+  const columns = useMemo(() => calendarDays(view, anchor).map((day) => ({
+    day, entries: calendarSegmentsForDay(items, day),
+  })), [view, anchor, items]);
+  const timedColumns = grid ? [] : columns.map((column) => ({ ...column, ...timedLayout(column.entries) }));
+  const timedEvents = timedColumns.flatMap((column) => column.events);
+  const firstHour = timedEvents.reduce((hour, event) => Math.min(hour, Math.floor(minutesOf(event.start) / 60)), defaultFirstHour);
+  const lastHour = timedEvents.reduce((hour, event) => Math.max(hour, Math.ceil(minutesOf(event.end) / 60)), defaultLastHour);
+  const timelineOffset = firstHour * hourHeight;
+  const timelineHeight = timedEvents.reduce((height, event) => Math.max(height, event.bottom - timelineOffset + 3), (lastHour - firstHour) * hourHeight);
+  const maxLanes = Math.max(1, ...timedColumns.map((column) => column.laneCount));
   const openItem = (item: CalendarItem) => {
     if (item.source !== 'ticktick') onOpen(item.quest);
     else if (item.remoteId) onOpenIncoming?.(item.remoteId);
@@ -159,25 +185,33 @@ export default function TasksCalendar({
   const trackResize = (e: ReactPointerEvent<HTMLSpanElement>) => {
     if (!resize) return;
     e.preventDefault();
-    const minutes = timeFromOffset(e.clientY - resize.colTop);
+    const raw = firstHour * 60 + ((e.clientY - resize.colTop) / hourHeight) * 60;
+    const snapped = Math.round(raw / resizeStep) * resizeStep;
+    const minMinute = firstHour * 60;
+    const maxMinute = Math.min(lastHour * 60, 23 * 60 + 59);
+    const minutes = Math.max(minMinute, Math.min(maxMinute, snapped));
     setResize((r) => {
       if (!r) return r;
       if (r.edge === 'start') {
-        const start = clockOf(Math.min(minutes, minutesOf(r.end) - minDuration));
-        return { ...r, start };
+        const latestStart = Math.max(minMinute, minutesOf(r.end) - minDuration);
+        return { ...r, start: clockOf(Math.min(minutes, latestStart)) };
       }
-      const end = clockOf(Math.max(minutes, minutesOf(r.start) + minDuration));
-      return { ...r, end };
+      const earliestEnd = Math.min(maxMinute, minutesOf(r.start) + minDuration);
+      return { ...r, end: clockOf(Math.max(minutes, earliestEnd)) };
     });
   };
   const finishResize = (e: ReactPointerEvent<HTMLSpanElement>) => {
     if (!resize) return;
     e.currentTarget.releasePointerCapture(e.pointerId);
-    onResize?.(items.find((x) => x.quest.id === resize.id)!.quest, resize.day, resize.start, resize.end);
+    const item = items.find((entry) => entry.quest.id === resize.id);
+    if (item) onResize?.(item.quest, resize.day, resize.start, resize.end);
     setResize(null);
     window.setTimeout(() => { suppressClick.current = false; }, 0);
   };
-  const days = calendarDays(view, anchor);
+  const cancelResize = () => {
+    setResize(null);
+    suppressClick.current = false;
+  };
   const anchorDate = parseDay(anchor);
   const now = new Date(`${today}T${new Date().toTimeString().slice(0, 5)}:00`);
   const summary = daySummary(items, today);
@@ -185,7 +219,6 @@ export default function TasksCalendar({
   const load = weekLoad(items, today);
   const maxLoad = Math.max(1, ...load.map((x) => x.count));
   const selected = items.find((item) => item.quest.id === selectedId);
-  const grid = view === 'month' || view === 'twoWeeks';
   const limit = view === 'month' ? 3 : 7;
   const ringLength = 2 * Math.PI * 42;
   const until = upcoming ? minutesUntil(upcoming, now) : undefined;
@@ -206,6 +239,8 @@ export default function TasksCalendar({
     setAnchor(shiftAnchor(view, anchor, direction));
     setFocus('');
   };
+
+  const toggleDay = (day: string) => setFocus((current) => current === day ? '' : day);
 
   const dayNumber = (day: string) => {
     const date = parseDay(day);
@@ -286,8 +321,7 @@ export default function TasksCalendar({
           <>
             <div className="tcal-weekdays">{weekdays.map((w) => (<div key={w}>{w}</div>))}</div>
             <div className="tcal-grid">
-              {days.map((day) => {
-                const list = calendarSegmentsForDay(items, day);
+              {columns.map(({ day, entries: list }) => {
                 const focused = focus === day;
                 const date = parseDay(day);
                 const other = view === 'month' && date.getMonth() !== anchorDate.getMonth();
@@ -306,7 +340,7 @@ export default function TasksCalendar({
                       className="tcal-num"
                       aria-pressed={focused}
                       aria-label={`${focused ? 'Свернуть' : 'Развернуть'} день ${longDate(day)}`}
-                      onClick={() => setFocus(focused ? '' : day)}
+                      onClick={() => toggleDay(day)}
                     >
                       {dayNumber(day)}
                     </button>
@@ -315,7 +349,7 @@ export default function TasksCalendar({
                         <Chip key={item.quest.id} item={item} selected={selectedId === item.quest.id} onPick={() => pickItem(item)} onDragStart={startDrag(item)} onDragEnd={endDrag} dragging={draggedId === item.quest.id} />
                       ))}
                     </div>
-                    {!focused && list.length > limit && <span className="tcal-more">ещё {list.length - limit}</span>}
+                    {!focused && list.length > limit && <button type="button" className="tcal-more" onClick={() => toggleDay(day)}>ещё {list.length - limit}</button>}
                     {focused && <span className="tcal-hint">Колесо мыши листает · нажмите на число, чтобы выйти</span>}
                   </div>
                 );
@@ -324,10 +358,13 @@ export default function TasksCalendar({
           </>
         ) : (
           <div className="tcal-timed-wrap">
-            <div className="tcal-timed" style={{ ['--cols' as string]: days.length, minWidth: days.length > 1 ? 720 : 360 }}>
+            <div className="tcal-timed" style={{
+              '--cols': columns.length,
+              minWidth: Math.max(columns.length > 1 ? 720 : 360, 56 + columns.length * maxLanes * 64),
+            } as CSSProperties}>
               <div className="tcal-timed-head">
                 <div />
-                {days.map((day) => {
+                {columns.map(({ day }) => {
                   const date = parseDay(day);
                   return (
                     <div key={day} className={day === today ? 'is-today' : ''}>
@@ -339,21 +376,21 @@ export default function TasksCalendar({
               </div>
               <div className="tcal-allday">
                 <small>весь день / интервал</small>
-                {days.map((day) => (
+                {columns.map(({ day, entries }) => (
                   <div key={day} data-day={day} className={overDay === day ? 'is-drop' : ''} onDragOver={allowDrop(day)} onDragLeave={() => setOverDay((d) => (d === day ? '' : d))} onDrop={dropOnDay(day)}>
-                    {calendarSegmentsForDay(items, day).filter((item) => !item.start).map((item) => (
+                    {entries.filter((item) => !item.start).map((item) => (
                       <Chip key={item.quest.id} item={item} selected={selectedId === item.quest.id} onPick={() => pickItem(item)} onDragStart={startDrag(item)} onDragEnd={endDrag} dragging={draggedId === item.quest.id} />
                     ))}
                   </div>
                 ))}
               </div>
-              <div className="tcal-hours" style={{ height: (lastHour - firstHour) * hourHeight }}>
+              <div className="tcal-hours" style={{ height: timelineHeight, gridTemplateRows: `${timelineHeight}px` }}>
                 <div className="tcal-hour-labels">
                   {Array.from({ length: lastHour - firstHour }, (_, i) => (
                     <span key={i} style={{ top: i * hourHeight - 7 }}>{String(firstHour + i).padStart(2, '0')}:00</span>
                   ))}
                 </div>
-                {days.map((day) => (
+                {timedColumns.map(({ day, events, laneCount }) => (
                   <div
                     key={day}
                     data-day={day}
@@ -362,12 +399,11 @@ export default function TasksCalendar({
                     onDragLeave={() => setOverDay((d) => (d === day ? '' : d))}
                     onDrop={dropOnDay(day)}
                   >
-                    {calendarSegmentsForDay(items, day).filter((item) => item.start && item.end).map((item) => {
+                    {events.map(({ item, start: eventStart, end: eventEnd, lane }) => {
                       const live = resize?.id === item.quest.id ? resize : null;
-                      const start = live?.start ?? item.start!;
-                      const end = live?.end ?? item.end!;
-                      const top = ((minutesOf(start) - firstHour * 60) / 60) * hourHeight + 1;
-                      const height = Math.max(26, ((minutesOf(end) - minutesOf(start)) / 60) * hourHeight - 3);
+                      const start = live?.start ?? eventStart;
+                      const end = live?.end ?? eventEnd;
+                      const { top, height } = timedBox(start, end);
                       const movable = item.source !== 'ticktick' && !item.quest.done;
                       const resizable = item.source !== 'ticktick' && !item.quest.done && !!onResize;
                       return (
@@ -375,12 +411,18 @@ export default function TasksCalendar({
                           key={item.quest.id}
                           type="button"
                           className={`tcal-event${item.quest.done ? ' is-done' : ''}${selectedId === item.quest.id ? ' is-selected' : ''}${draggedId === item.quest.id ? ' is-dragging' : ''}${live ? ' is-resizing' : ''}${resizable ? ' is-resizable' : ''}`}
-                          style={{ '--c': colorOf(item.quest), top, height } as CSSProperties}
+                          style={{
+                            '--c': colorOf(item.quest),
+                            top: top - timelineOffset,
+                            height,
+                            left: `calc(${(lane / laneCount) * 100}% + 3px)`,
+                            right: `calc(${((laneCount - lane - 1) / laneCount) * 100}% + 3px)`,
+                          } as CSSProperties}
                           onClick={() => { if (!suppressClick.current) pickItem(item); }}
                           draggable={movable && !resize}
                           onDragStart={movable ? startDrag(item) : undefined}
                           onDragEnd={endDrag}
-                          title={item.source === 'ticktick' ? 'Из TickTick' : item.quest.tickTickSharedAt ? 'Перенос уйдёт в TickTick' : undefined}
+                          title={`${item.quest.name}${item.source === 'ticktick' ? ' · из TickTick' : item.quest.tickTickSharedAt ? ' · перенос уйдёт в TickTick' : ''}`}
                         >
                           {resizable && (
                             <span
@@ -389,6 +431,7 @@ export default function TasksCalendar({
                               onPointerDown={beginResize(item, 'start')}
                               onPointerMove={trackResize}
                               onPointerUp={finishResize}
+                              onPointerCancel={cancelResize}
                             >
                               <svg width="14" height="8" viewBox="0 0 14 8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l5-4 5 4" /></svg>
                             </span>
@@ -402,6 +445,7 @@ export default function TasksCalendar({
                               onPointerDown={beginResize(item, 'end')}
                               onPointerMove={trackResize}
                               onPointerUp={finishResize}
+                              onPointerCancel={cancelResize}
                             >
                               <svg width="14" height="8" viewBox="0 0 14 8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 2l5 4 5-4" /></svg>
                             </span>

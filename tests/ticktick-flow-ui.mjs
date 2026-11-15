@@ -350,10 +350,20 @@ try {
   const phoneAccount = account(phoneUid);
   phoneAccount.connected = true;
   phoneAccount.settings = { ...emptyTickTickSettings(), auto: false, sphereLists: { english: 'english' } };
-  const phoneDay = new Date().toISOString().slice(0, 10);
+  const phoneNow = new Date();
+  const phoneDay = phoneNow.toISOString().slice(0, 10);
+  const phoneMonthDay = (offset) => new Date(Date.UTC(phoneNow.getUTCFullYear(), phoneNow.getUTCMonth() + offset, 12)).toISOString().slice(0, 10);
   phoneAccount.tasks.set('phone-remote', {
     id: 'phone-remote', projectId: 'english', title: 'Задача TickTick на телефоне',
     status: 0, dueDate: phoneDay + 'T00:00:00+0000',
+  });
+  phoneAccount.tasks.set('phone-past', {
+    id: 'phone-past', projectId: 'english', title: 'Прошлая запись TickTick', content: 'Описание прошлой записи',
+    repeatFlag: 'RRULE:FREQ=DAILY', status: 0, dueDate: phoneMonthDay(-1) + 'T00:00:00+0000',
+  });
+  phoneAccount.tasks.set('phone-future', {
+    id: 'phone-future', projectId: 'english', title: 'Будущая запись TickTick',
+    status: 0, dueDate: phoneMonthDay(1) + 'T00:00:00+0000',
   });
   const phoneCtx = await context(390);
   const phone = await phoneCtx.newPage();
@@ -373,12 +383,26 @@ try {
 
   await phoneCalendar.getByRole('button', { name: /Задача TickTick на телефоне/ }).tap();
   const phoneEditor = phone.getByRole('dialog', { name: 'Принять в игру', exact: true });
-  await phoneEditor.getByRole('button', { name: 'Принять в игру', exact: true }).waitFor();
-  phone.once('dialog', dialog => dialog.accept());
-  await phoneEditor.getByRole('button', { name: 'Отмена', exact: true }).tap();
-  await phoneEditor.waitFor({ state: 'detached' });
+  const closePhoneEditor = async () => {
+    await phoneEditor.getByRole('button', { name: 'Принять в игру', exact: true }).waitFor();
+    phone.once('dialog', dialog => dialog.accept());
+    await phoneEditor.getByRole('button', { name: 'Отмена', exact: true }).tap();
+    await phoneEditor.waitFor({ state: 'detached' });
+  };
+  await closePhoneEditor();
   assert.equal(await phoneCalendar.getByRole('button', { name: 'Месяц', exact: true }).getAttribute('aria-pressed'), 'true');
   assert.equal((await stateOf(phone, phoneUid)).quests.length, 1, 'касание и отмена не импортируют задачу TickTick');
+  await phoneCalendar.getByRole('button', { name: 'Назад', exact: true }).tap();
+  await phoneCalendar.getByRole('button', { name: /Прошлая запись TickTick/ }).tap();
+  const oldPhoneEntry = phone.getByRole('dialog', { name: 'Прошлая запись TickTick', exact: true });
+  await oldPhoneEntry.getByText('Описание прошлой записи', { exact: true }).waitFor();
+  await oldPhoneEntry.getByRole('button', { name: 'Закрыть', exact: true }).tap();
+  await oldPhoneEntry.waitFor({ state: 'detached' });
+
+  await phoneCalendar.getByRole('button', { name: 'Сегодня', exact: true }).tap();
+  await phoneCalendar.getByRole('button', { name: 'Вперёд', exact: true }).tap();
+  await phoneCalendar.getByRole('button', { name: /Будущая запись TickTick/ }).tap();
+  await closePhoneEditor();
   await phoneCtx.close();
   activePage = page;
 

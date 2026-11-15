@@ -77,7 +77,7 @@ try {
   await cell.first().waitFor();
   assert.equal(await cell.first().locator(".tcal-chip").count(), 3);
   assert.equal((await cell.first().locator(".tcal-more").textContent())?.trim(), "ещё 4");
-  await cell.first().locator(".tcal-num").click();
+  await cell.first().getByRole("button", { name: "ещё 4", exact: true }).click();
   assert.equal(await cell.first().locator(".tcal-chip").count(), 7);
   const scroll = cell.first().locator(".tcal-list");
   assert.equal(await scroll.evaluate((el) => getComputedStyle(el).overflowY), "auto");
@@ -204,6 +204,9 @@ try {
       { ...q, id: 'next-week', name: 'Другая неделя', done: true, completedAt: '2026-11-09T12:00:00.000Z' },
       { ...q, id: 'night-plan', name: 'Ночная задача', dueAt: '2026-11-06T21:30:00.000Z' },
       { ...q, id: 'declined', name: 'Отменённая задача', dueAt: '2026-11-07', wontDo: true },
+      { ...q, id: 'old-calendar-task', name: 'Старая выполненная задача', done: true, startsAt: '2026-11-06T06:10:00+03:00', dueAt: '2026-11-06T06:45:00+03:00' },
+      { ...q, id: 'future-calendar-task', name: 'Будущая поздняя задача', sourceType: 'USER_CREATED', startsAt: '2026-11-08T23:40:00+03:00', dueAt: '2026-11-08T23:59:00+03:00' },
+      { ...q, id: 'future-overlap-task', name: 'Ещё одна задача на то же время', sourceType: 'USER_CREATED', startsAt: '2026-11-08T23:40:00+03:00', dueAt: '2026-11-08T23:59:00+03:00' },
     ];
     localStorage.setItem('play-your-life-v1', JSON.stringify(s));
   });
@@ -221,6 +224,29 @@ try {
   const nightRow = page.locator('.gtl-item').filter({ hasText: 'Ночная задача' });
   assert.equal(await nightRow.locator('.is-late').count(), 0);
   assert.match(await nightRow.locator('.gtl-due').innerText(), /7 ноя/);
+  await page.getByRole('button', { name: 'Календарь', exact: true }).click();
+  const openCalendarTask = async (name) => {
+    await calendar.getByRole('button', { name: new RegExp(name) }).click();
+    const dialog = page.getByRole('dialog', { name, exact: true });
+    await dialog.waitFor();
+    await dialog.getByRole('button', { name: 'Закрыть', exact: true }).click();
+    await dialog.waitFor({ state: 'detached' });
+  };
+  const oldTask = 'Старая выполненная задача';
+  const futureTasks = ['Будущая поздняя задача', 'Ещё одна задача на то же время'];
+  await openCalendarTask(oldTask);
+  await openCalendarTask(futureTasks[0]);
+
+  await calendar.getByRole('button', { name: 'День', exact: true }).click();
+  await openCalendarTask('Ночная задача');
+  await calendar.getByRole('button', { name: 'Вперёд', exact: true }).click();
+  for (const name of futureTasks) await openCalendarTask(name);
+  await calendar.getByRole('button', { name: 'Назад', exact: true }).click();
+  await calendar.getByRole('button', { name: 'Назад', exact: true }).click();
+  await openCalendarTask(oldTask);
+
+  await calendar.getByRole('button', { name: 'Неделя', exact: true }).click();
+  for (const name of [oldTask, ...futureTasks]) await openCalendarTask(name);
   assert.deepEqual(errors, []);
   console.log("tasks-calendar-ui: ok");
 } finally {

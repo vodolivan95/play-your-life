@@ -39,3 +39,9 @@
 .wrw .wrw-late{grid-column:1/-1;color:#8b4807}
 :root[data-theme='dark'] .wrw .wrw-late{color:#ffc189}
 @media(max-width:560px){.wrw-task-columns{grid-template-columns:1fr}}
+.wrw-compact{background:#f8faff}
+:root[data-theme='dark'] .wrw-compact{background:#131e35}
+.wrw-summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.wrw-summary span{background:#eaf2ff;border:0;overflow-wrap:anywhere}
+:root[data-theme='dark'] .wrw-summary span{background:#1b2a46}
+.wrw-list li:has(.wrw-move) button:first-child{font-weight:650}

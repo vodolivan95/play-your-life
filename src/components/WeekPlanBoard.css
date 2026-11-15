@@ -85,3 +85,8 @@
 @media (pointer:coarse) {
   .pplan .week-plan button { min-height:44px }
 }
+.week-plan-period{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.week-plan-period>span{padding:4px 7px;border:1px solid var(--week-line);border-radius:7px;background:var(--week-raised);font-size:12px}
+.week-plan-load{margin-top:2px;height:3px}
+.week-plan-day[data-over=true] .week-plan-load>span{background:var(--week-warning)}
+.pplan .week-plan-dialog .week-plan-check{display:flex;align-items:center;gap:7px}

@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { DragEvent, ReactNode } from 'react';
 import type { GameState, Quest } from '../game';
-import { taskDay } from '../planner';
+import { setTaskWorkflow, taskDay } from '../planner';
 import { planningDay } from '../planningData';
 import { updateTaskSettings } from '../taskSettings';
 import { taskFinishesAfterDeadline } from '../taskEditor';
@@ -45,18 +45,22 @@ function Modal({ title, close, children }: { title: string; close: () => void; c
   </dialog>;
 }
 
-function WeekTaskEditor({ task, state, week, ownerId, apply, onOpen, close }: {
-  task: Quest; state: GameState; week: string; ownerId: string; apply: Apply; onOpen: () => void; close: () => void;
+function WeekTaskEditor({ task, project, state, week, ownerId, apply, onOpen, close }: {
+  task: Quest; project: string; state: GameState; week: string; ownerId: string; apply: Apply; onOpen: () => void; close: () => void;
 }) {
   const outcomes = weekOutcomes(state, week);
   const previousSlot = outcomes.findIndex(outcome => outcome?.taskIds.includes(task.id));
-  const originalDate = taskDay(task) ?? '';
-  const originalDue = planningDay(task.deadlineAt) ?? '';
+  const [original] = useState(task);
+  const originalDate = taskDay(original) ?? '';
+  const originalDue = planningDay(original.deadlineAt) ?? '';
+  const originalEstimate = String(original.estimateMinutes ?? '');
   const [day, setDay] = useState(originalDate);
   const [due, setDue] = useState(originalDue);
   const [slot, setSlot] = useState(previousSlot);
-  const deadlineAt = due === originalDue ? task.deadlineAt : due || undefined;
-  const preview = { ...task, deadlineAt };
+  const [estimate, setEstimate] = useState(originalEstimate);
+  const [done, setDone] = useState(original.done);
+  const deadlineAt = due === originalDue ? original.deadlineAt : due || undefined;
+  const preview = { ...original, deadlineAt };
   const late = !!day && weekMoveIsLate(preview, day);
   const datesEdited = day !== originalDate || due !== originalDue;
   return <Modal title={task.name} close={close}>
@@ -66,17 +70,30 @@ function WeekTaskEditor({ task, state, week, ownerId, apply, onOpen, close }: {
       apply(current => {
         const latest = current.quests.find(q => q.id === task.id && (!q.ownerId || q.ownerId === ownerId));
         if (!latest) throw new Error('Задача больше недоступна.');
+        if (datesEdited && (latest.startsAt !== original.startsAt || latest.dueAt !== original.dueAt || latest.deadlineAt !== original.deadlineAt))
+          throw new Error('Даты задачи изменились. Открой её снова.');
+        if (estimate !== originalEstimate && latest.estimateMinutes !== original.estimateMinutes)
+          throw new Error('Оценка времени изменилась. Открой задачу снова.');
         let next = current;
-        if (datesEdited) {
-          if (latest.done || latest.startsAt !== task.startsAt || latest.dueAt !== task.dueAt || latest.deadlineAt !== task.deadlineAt)
-            throw new Error('Даты задачи изменились. Открой её снова.');
-          if (due !== originalDue) next = updateTaskSettings(next, task.id, { deadlineAt: deadlineAt ?? null, allowPastDeadline: true });
-          if (day !== originalDate) next = moveWeekTask(next, task.id, day || null, ownerId, late);
+        if (due !== originalDue || estimate !== originalEstimate) next = updateTaskSettings(next, task.id, {
+          ...(due !== originalDue ? { deadlineAt: deadlineAt ?? null, allowPastDeadline: true } : {}),
+          ...(estimate !== originalEstimate ? { estimateMinutes: estimate ? Number(estimate) : null } : {}),
+        });
+        if (day !== originalDate) next = moveWeekTask(next, task.id, day || null, ownerId, late);
+        if (slot !== previousSlot) next = linkWeekTask(next, week, task.id, slot === -1 ? null : slot, ownerId);
+        if (done !== original.done && done !== latest.done) {
+          next = setTaskWorkflow(next, task.id, done ? 'done' : 'planned', ownerId);
+          if (next.quests.find(q => q.id === task.id)?.done !== done)
+            throw new Error('Задача пока недоступна для изменения статуса. Проверь начало, проект и зависимости.');
         }
-        return slot === previousSlot ? next : linkWeekTask(next, week, task.id, slot === -1 ? null : slot, ownerId);
+        return next;
       });
       close();
     }}>
+      <div className="week-plan-dates">
+        <div><small>Проект</small><p>{project}</p></div>
+        <label>Оценка, мин<input type="number" min={1} max={43200} value={estimate} disabled={task.done} onChange={e => setEstimate(e.target.value)} /></label>
+      </div>
       <div className="week-plan-dates">
         <label>День выполнения<input type="date" value={day} disabled={task.done} onChange={e => setDay(e.target.value)} /></label>
         <label>Дедлайн<input type="date" value={due} disabled={task.done} onChange={e => setDue(e.target.value)} /></label>
@@ -86,6 +103,7 @@ function WeekTaskEditor({ task, state, week, ownerId, apply, onOpen, close }: {
         <option value={-1}>Без привязки</option>
         {outcomes.map((outcome, index) => outcome && <option key={index} value={index}>{outcome.title}</option>)}
       </select></label>
+      <label className="week-plan-check"><input type="checkbox" checked={done} onChange={e => setDone(e.target.checked)} /> Выполнена</label>
       <div className="week-plan-actions"><button type="button" onClick={onOpen}>Открыть задачу</button><button type="submit">Сохранить</button></div>
     </form>
   </Modal>;
@@ -206,7 +224,8 @@ export default function WeekPlanBoard({ state, ownerId, today, week, apply, chan
     return <section className="week-plan-day" key={day.day} aria-label={full(day.day)} data-today={day.day === today} data-over={over > 0} {...dropProps(day.day)}>
       <header><h4>{weekday(day.day)} <time dateTime={day.day}>{date(day.day).getDate()}</time></h4>
         <small>{compact && !day.planned && !day.budget ? 'Выходной' : minutes(day.planned) + ' / ' + minutes(day.budget)}</small>
-        {over > 0 && <small className="week-plan-warning">Сверх бюджета · {minutes(over)}</small>}
+        {!compact && <span className="week-plan-bar week-plan-load" aria-hidden="true"><span style={{ width: (day.budget ? Math.min(1, day.planned / day.budget) * 100 : day.planned ? 100 : 0) + '%' }} /></span>}
+        {over > 0 && <small className="week-plan-warning">Перегрузка · {minutes(over)}</small>}
       </header>
       <div className="week-plan-cards">{day.tasks.map(card)}</div>
       <button type="button" className="week-plan-add" aria-label={'Добавить задачу на ' + full(day.day)} onClick={() => newTask(day.day)}>+ Добавить</button>
@@ -214,7 +233,7 @@ export default function WeekPlanBoard({ state, ownerId, today, week, apply, chan
   }
   const linkedTasks = (ids: string[] = []) => tasks.filter(task => ids.includes(task.id) && !task.planning?.archivedAt && !task.wontDo);
   return <section className="week-plan" aria-label="План недели">
-    <header className="week-plan-head"><h3>{short(week)} — {full(addDays(week, 6))}</h3>
+    <header className="week-plan-head"><div className="week-plan-period"><span>Неделя</span><h3>{short(week)} — {full(addDays(week, 6))}</h3></div>
       <div className="week-plan-actions">
         <button type="button" onClick={() => changeWeek(mondayOf(today))}>К текущей</button>
         <button type="button" aria-label="Предыдущая неделя" onClick={() => changeWeek(addDays(week, -7))}>‹</button>
@@ -248,13 +267,14 @@ export default function WeekPlanBoard({ state, ownerId, today, week, apply, chan
         <div className="week-plan-weekend">{days.slice(5).map(day => column(day, true))}</div>
         <section className="week-plan-backlog" {...dropProps('')}>
           <div className="week-plan-head"><h3>Без даты · {backlog.length}</h3><button type="button" onClick={() => newTask()}>+ Задача без даты</button></div>
+          {backlog.length > 0 && <small>Перетащи задачу на день или выбери дату в карточке.</small>}
           <div className="week-plan-cards">{backlog.map(card)}</div>
           {!backlog.length && <small>Нет задач без даты.</small>}
         </section>
       </div>
       <WeekTime days={days} projects={projectHours} total={total} />
     </div>
-    {editedTask && <WeekTaskEditor key={editedTask.id} task={editedTask} state={state} week={week} ownerId={ownerId} apply={apply}
+    {editedTask && <WeekTaskEditor key={editedTask.id} task={editedTask} project={projectNames.get(editedTask.goalId ?? '') ?? 'Без проекта'} state={state} week={week} ownerId={ownerId} apply={apply}
       close={() => setTaskId('')} onOpen={() => { setTaskId(''); openTask(editedTask.id); }} />}
     {goalIndex !== null && <WeekOutcomeEditor key={goalIndex} current={outcomes[goalIndex]?.title ?? ''}
       tasks={linkedTasks(outcomes[goalIndex]?.taskIds)} close={() => setGoalIndex(null)}

@@ -176,7 +176,7 @@ try {
     stored = await page.evaluate(() => JSON.parse(localStorage.getItem('play-your-life-v1')));
     assert.deepEqual(stored.quests.find((q) => q.id === ids.target).planning.dependencyIds, [ids.prior]);
     await plan.getByLabel('Вид плана', { exact: true }).selectOption('timeline');
-    for (const theme of ['dark', 'light']) {
+    for (const theme of ['light', 'dark']) {
       if (mobile) {
         await page.locator('.pyl-tabbar').getByRole('button', { name: /^Ещё/ }).click();
         await page.getByRole('button', { name: theme === 'dark' ? 'Тёмная тема' : 'Светлая тема', exact: true }).click();
@@ -201,11 +201,18 @@ try {
     const editor = page.getByRole('dialog', { name: 'Подготовить план', exact: true });
     assert.ok(await editor.getByLabel('День выполнения', { exact: true }).inputValue());
     await editor.getByLabel('Дедлайн', { exact: true }).fill(targetDate);
+    assert.equal(await editor.getByLabel('Оценка, мин', { exact: true }).inputValue(), '30');
+    assert.equal(await editor.getByLabel('Выполнена', { exact: true }).isChecked(), false);
+    await page.screenshot({ path: `work/planner/${mobile ? 'mobile' : 'desktop'}-week-task.png` });
     await editor.getByLabel('Результат недели', { exact: true }).selectOption('0');
     await editor.getByRole('button', { name: 'Сохранить', exact: true }).click();
     await week.getByRole('button', { name: /Согласовать результат недели.*0 из 1/ }).waitFor();
+    await page.screenshot({ path: `work/planner/${mobile ? 'mobile' : 'desktop'}-week-before-review.png`, fullPage: true });
     await week.getByRole('button', { name: 'Итоги недели', exact: true }).click();
-    const weekReview = page.getByRole('dialog', { name: 'Недельный обзор', exact: true });
+    const weekReview = page.getByRole('dialog', { name: 'Итоги недели', exact: true });
+    await weekReview.getByText('Осталось', { exact: true }).waitFor();
+    assert.equal(await weekReview.getByRole('navigation', { name: 'Шаги обзора' }).count(), 0);
+    await page.screenshot({ path: `work/planner/${mobile ? 'mobile' : 'desktop'}-week-review-before.png` });
     await weekReview.getByLabel('Новый день для «Подготовить план»', { exact: true }).selectOption('unscheduled');
     await weekReview.getByRole('button', { name: 'Перенести «Подготовить план»', exact: true }).click();
     const moved = weekReview.getByRole('region', { name: 'Перенесённые задачи', exact: true });

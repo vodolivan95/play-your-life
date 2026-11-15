@@ -154,7 +154,7 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
   }
   return <section className="pplan" aria-label="Мой план">
     <header className="pplan-head"><div><h2>Мой план</h2><p>Проекты, время и следующий шаг.</p></div>{!weekBoard && <button type="button" onClick={() => setWeeklyReviewOpen(true)}>Недельный обзор</button>}<button type="button" onClick={() => { setDraftSettings(settings); setSettingsOpen((v) => !v); }}>Настройки плана</button></header>
-    {weeklyReviewOpen && <Suspense fallback={null}><WeeklyReviewWizard state={state} ownerId={ownerId} initialWeek={scope === 'week' ? start : undefined} onClose={() => setWeeklyReviewOpen(false)} onApply={apply} onOpenTask={onOpen} /></Suspense>}
+    {weeklyReviewOpen && <Suspense fallback={null}><WeeklyReviewWizard state={state} ownerId={ownerId} initialWeek={weekBoard ? start : undefined} onClose={() => setWeeklyReviewOpen(false)} onApply={apply} onOpenTask={onOpen} /></Suspense>}
     {!weekBoard && !state.planningSettings && <p>Пока используется базовый бюджет: 8 часов по будням, резерв 20%. Уточни доступное время в настройках плана.</p>}
     {settingsOpen && <form className="pplan-panel" aria-label="Настройки плана" onSubmit={(e) => { e.preventDefault(); apply((s) => savePlanningSettings(s, draftSettings)); setSettingsOpen(false); }}>
       <h3>Доступное время и ограничения</h3><p>Рабочий день минус резерв. Расчёт использует часовой пояс устройства.</p>

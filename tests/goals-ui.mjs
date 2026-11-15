@@ -327,6 +327,7 @@ try {
     const sourceHandle = taskRows.filter({ hasText: 'Повторить слова' }).locator('.ss-drag-handle');
     const targetRow = taskRows.filter({ hasText: 'Выучить слова' });
     await sourceHandle.evaluate((el, mobile) => el.scrollIntoView({ block: mobile ? 'center' : 'nearest' }), width < 600);
+    await page.waitForTimeout(160); // Wait until native/inertial scrolling is idle.
     const sourceBox = await sourceHandle.boundingBox();
     const targetBox = await targetRow.boundingBox();
     const sourcePoint = { x: sourceBox.x + sourceBox.width / 2, y: sourceBox.y + sourceBox.height / 2 };

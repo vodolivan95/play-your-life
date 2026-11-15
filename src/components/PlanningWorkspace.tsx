@@ -11,13 +11,15 @@ import { reorderTaskList } from '../planning';
 import { dependentTasks, dependencyBlockers } from '../taskDependencies';
 import './PlanningWorkspace.css';
 import TaskReorderList from './TaskReorderList';
+import WeekPlanBoard from './WeekPlanBoard';
+import { taskFinishesAfterDeadline } from '../taskEditor';
 import { saveCustomQuest } from '../personalQuests';
 const TaskCreationForm = lazy(() => import('./TaskCreationForm'));
 const PlanningTimeline = lazy(() => import('./PlanningTimeline'));
 const WeeklyReviewWizard = lazy(() => import('./WeeklyReviewWizard'));
 
 type Scope = 'today' | 'tomorrow' | 'week' | 'month' | 'all' | 'inbox' | 'overdue' | 'archive';
-type View = 'list' | 'kanban' | 'matrix' | 'timeline';
+type View = 'week-board' | 'list' | 'kanban' | 'matrix' | 'timeline';
 const scopes: [Scope, string][] = [['today', 'Сегодня'], ['tomorrow', 'Завтра'], ['week', 'Неделя'], ['month', 'Месяц'], ['all', 'Все задачи'], ['inbox', 'Входящие'], ['overdue', 'Просроченные'], ['archive', 'Архив']];
 type QuickFilter = '' | 'attention' | 'oftenPostponed' | 'noDate' | 'project' | 'blocked';
 // Быстрые фильтры «Контроля выполнения» (ТЗ «Этап 3», раздел 2.2). Независимы от вкладок периода:
@@ -52,6 +54,7 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
   const [review, setReview] = useState<'morning' | 'evening' | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [weeklyReviewOpen, setWeeklyReviewOpen] = useState(false);
+  const weekBoard = scope === 'week' && view === 'week-board';
   const settings = planningSettings(state);
   const [draftSettings, setDraftSettings] = useState(settings);
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('');
@@ -104,6 +107,7 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
     const moves = metrics.get(q.id)?.moves ?? 0;
     const main = q.planning?.mainDay === day;
     const blocked = dependencyBlockers(state.quests, q);
+    const deadline = planningDay(q.deadlineAt);
     return <div className={`pplan-task${q.done ? ' is-done' : ''}`}>
       <div className="pplan-task-top">
         <input type="checkbox" aria-label={`Выбрать: ${q.name}`} checked={activeIds.includes(q.id)} onChange={(e) => setSelected((ids) => e.target.checked ? [...new Set([...ids, q.id])] : ids.filter((id) => id !== q.id))} />
@@ -112,6 +116,9 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
           onClick={() => apply((s) => changeTaskPlanning(s, q.id, { mainDay: main ? undefined : day }, ownerId))}>{main ? '★' : '☆'}</button>}
       </div>
       <small>{spheres.find((s) => s.id === q.sphere)?.name} · {taskDay(q) ? labelDay(taskDay(q)!) : 'Без даты'} · {q.estimateMinutes ? fmt(q.estimateMinutes) : 'Нет оценки'} · Факт: {fmt(metrics.get(q.id)?.minutes ?? 0)}</small>
+      {deadline && <small className={taskFinishesAfterDeadline(q) ? 'pplan-warning' : undefined}>
+        {taskFinishesAfterDeadline(q) ? 'День выполнения позже дедлайна' : 'Дедлайн'} · {labelDay(deadline)}
+      </small>}
       {blocked.length > 0 && !q.done && <p className="pplan-warning">Задача заблокирована: {blocked.map((d) => d.name).join(", ")}. Открой задачу, чтобы проверить зависимости.</p>}
       {moves >= settings.moveWarning && <p className="pplan-warning">Переносов: {moves}. Открой задачу, чтобы уменьшить объём или добавить подзадачи.</p>}
       {!q.planning?.archivedAt && <div className="pplan-row">
@@ -146,16 +153,19 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
     />;
   }
   return <section className="pplan" aria-label="Мой план">
-    <header className="pplan-head"><div><h2>Мой план</h2><p>Проекты, время и следующий шаг.</p></div><button type="button" onClick={() => setWeeklyReviewOpen(true)}>Недельный обзор</button><button type="button" onClick={() => { setDraftSettings(settings); setSettingsOpen((v) => !v); }}>Настройки плана</button></header>
-    {weeklyReviewOpen && <Suspense fallback={null}><WeeklyReviewWizard state={state} onClose={() => setWeeklyReviewOpen(false)} onApply={apply} onOpenTask={onOpen} /></Suspense>}
-    {!state.planningSettings && <p>Пока используется базовый бюджет: 8 часов по будням, резерв 20%. Уточни доступное время в настройках плана.</p>}
+    <header className="pplan-head"><div><h2>Мой план</h2><p>Проекты, время и следующий шаг.</p></div>{!weekBoard && <button type="button" onClick={() => setWeeklyReviewOpen(true)}>Недельный обзор</button>}<button type="button" onClick={() => { setDraftSettings(settings); setSettingsOpen((v) => !v); }}>Настройки плана</button></header>
+    {weeklyReviewOpen && <Suspense fallback={null}><WeeklyReviewWizard state={state} ownerId={ownerId} initialWeek={scope === 'week' ? start : undefined} onClose={() => setWeeklyReviewOpen(false)} onApply={apply} onOpenTask={onOpen} /></Suspense>}
+    {!weekBoard && !state.planningSettings && <p>Пока используется базовый бюджет: 8 часов по будням, резерв 20%. Уточни доступное время в настройках плана.</p>}
     {settingsOpen && <form className="pplan-panel" aria-label="Настройки плана" onSubmit={(e) => { e.preventDefault(); apply((s) => savePlanningSettings(s, draftSettings)); setSettingsOpen(false); }}>
       <h3>Доступное время и ограничения</h3><p>Рабочий день минус резерв. Расчёт использует часовой пояс устройства.</p>
       <div className="pplan-grid">{([['dailyMinutes', 'Доступно минут в день', 0, 1440], ['reservePercent', 'Резерв, %', 0, 90], ['mainLimit', 'Главных задач в день', 1, 20], ['moveWarning', 'Предупреждать после переносов', 1, 100], ['wipLimit', 'Лимит задач в работе', 1, 100]] as const).map(([key, label, min, max]) => <label key={key}>{label}<input type="number" required min={min} max={max} step={1} value={draftSettings[key]} onChange={(e) => setDraftSettings({ ...draftSettings, [key]: Number(e.target.value) })} /></label>)}</div>
       <fieldset><legend>Дни для планирования</legend><div className="pplan-row">{['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'].map((label, n) => <label key={n}><input type="checkbox" checked={draftSettings.weekdays.includes(n)} onChange={(e) => setDraftSettings({ ...draftSettings, weekdays: e.target.checked ? [...draftSettings.weekdays, n] : draftSettings.weekdays.filter((d) => d !== n) })} /> {label}</label>)}</div></fieldset>
       <div className="pplan-row"><button type="submit">Сохранить настройки</button><button type="button" onClick={() => setSettingsOpen(false)}>Отмена</button></div>
     </form>}
-    <nav className="pplan-row" aria-label="Период плана">{scopes.map(([id, label]) => <button key={id} type="button" aria-pressed={scope === id && !quickFilter} onClick={() => { setScope(id); setQuickFilter(''); setSelected([]); }}>{label}{id === 'inbox' ? ` (${own.filter(inboxTask).length})` : ''}</button>)}</nav>
+    <nav className="pplan-row" aria-label="Период плана">{scopes.map(([id, label]) => <button key={id} type="button" aria-pressed={scope === id && !quickFilter} onClick={() => { setScope(id); setView(v => id === 'week' ? 'week-board' : v === 'week-board' ? 'list' : v); setQuickFilter(''); setSelected([]); }}>{label}{id === 'inbox' ? ` (${own.filter(inboxTask).length})` : ''}</button>)}</nav>
+    {weekBoard ? <WeekPlanBoard key={start} state={state} ownerId={ownerId} today={today} week={start}
+      apply={apply} changeWeek={setAnchor} openTask={onOpen} newTask={(date) => setTaskDraft({ sphere: 'tasks', difficulty: 'Simple', dueAt: date })}
+      openReview={() => setWeeklyReviewOpen(true)} showList={() => setView('list')} /> : <>
     <div className="pplan-stats" aria-label="Контроль выполнения">
       <button type="button" className="pplan-stat" onClick={() => { setScope('all'); setQuickFilter(''); setSelected([]); }}><b>{overview.totalActive}</b> Всего активных</button>
       <button type="button" className="pplan-stat" onClick={() => { setScope('today'); setQuickFilter(''); setSelected([]); }}><b>{overview.plannedToday}</b> На сегодня</button>
@@ -172,7 +182,7 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
     </nav>
     <div className="pplan-row">
       <label>Дата плана<input type="date" value={anchor} onChange={(e) => e.target.value && setAnchor(e.target.value)} /></label>
-      <label>Вид<select aria-label="Вид плана" value={view} onChange={(e) => setView(e.target.value as View)}><option value="list">Список</option><option value="kanban">Канбан</option><option value="matrix">Важность и срочность</option><option value="timeline">Шкала сроков</option></select></label>
+      <label>Вид<select aria-label="Вид плана" value={view} onChange={(e) => setView(e.target.value as View)}>{scope === 'week' && <option value="week-board">План недели</option>}<option value="list">Список</option><option value="kanban">Канбан</option><option value="matrix">Важность и срочность</option><option value="timeline">Шкала сроков</option></select></label>
       <label>Порядок задач<select aria-label="Сортировка задач плана" value={taskOrder} onChange={(e) => setTaskOrder(e.target.value as typeof taskOrder)}><option value="planned">По плану</option><option value="manual">Вручную</option></select></label>
       <button type="button" onClick={buildProposal}>Спланировать неделю</button>
       <button type="button" onClick={() => setReview('morning')}>Начать день</button><button type="button" onClick={() => setReview('evening')}>Завершить день</button>
@@ -216,15 +226,6 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
     <form className="pplan-row" onSubmit={(e) => { e.preventDefault(); setTaskDraft({ name: title, sphere: 'tasks', difficulty: 'Simple', dueAt: ['today', 'tomorrow'].includes(scope) ? day : undefined }); }}>
       <input aria-label="Быстрая задача" maxLength={100} required value={title} placeholder="Что нужно сделать?" onChange={(e) => setTitle(e.target.value)} /><button type="submit">Добавить задачу</button>
     </form>
-    {taskDraft && <Suspense fallback={<p>Загрузка задачи…</p>}><TaskCreationForm state={state} initial={taskDraft}
-      onClose={() => setTaskDraft(null)} onSave={(task, labels) => {
-        onChange(current => {
-          const next = saveCustomQuest({ ...current, taskLabels: labels }, task, ownerId);
-          const created = next.quests.at(-1)!;
-          return changeTaskPlanning(next, created.id, { inbox: !task.dueAt && !task.startsAt, workflow: task.dueAt || task.startsAt ? 'ready' : 'planned' }, ownerId);
-        });
-        setTitle(''); notify('Задача создана');
-      }} /></Suspense>}
     <div className="pplan-row" aria-label="Фильтры плана"><input type="search" aria-label="Поиск в плане" value={query} placeholder="Поиск задач" onChange={(e) => setQuery(e.target.value)} />
       <select aria-label="Сфера плана" value={sphere} onChange={(e) => setSphere(e.target.value)}><option value="">Все сферы</option>{spheres.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>
       <select aria-label="Проект плана" value={project} onChange={(e) => setProject(e.target.value)}><option value="">Все проекты</option>{state.goals.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select>
@@ -252,5 +253,15 @@ export default function PlanningWorkspace({ state, ownerId, today, onChange, onO
       <div className="pplan-board">{(view === 'kanban' ? workflows.map(([id, label]) => ({ id, label, tasks: shown.filter((q) => (q.done ? 'done' : q.planning?.workflow ?? 'planned') === id) }))
         : [{ id: '11', label: 'Важно и срочно' }, { id: '10', label: 'Важно, не срочно' }, { id: '01', label: 'Срочно, не важно' }, { id: '00', label: 'Не важно, не срочно' }].map((g) => ({ ...g, tasks: shown.filter((q) => `${Number(!!q.planning?.important)}${Number(!!q.planning?.urgent)}` === g.id) })))
         .map((g) => <section key={g.id} className="pplan-panel"><h3>{g.label} · {g.tasks.length}</h3>{orderedList(g.tasks, `Задачи: ${g.label}`)}</section>)}</div>}
+    </>}
+    {taskDraft && <Suspense fallback={<p>Загрузка задачи…</p>}><TaskCreationForm state={state} initial={taskDraft}
+      onClose={() => setTaskDraft(null)} onSave={(task, labels) => {
+        onChange(current => {
+          const next = saveCustomQuest({ ...current, taskLabels: labels }, task, ownerId);
+          const created = next.quests.at(-1)!;
+          return changeTaskPlanning(next, created.id, { inbox: !task.dueAt && !task.startsAt, workflow: task.dueAt || task.startsAt ? 'ready' : 'planned' }, ownerId);
+        });
+        setTitle(''); notify('Задача создана');
+      }} /></Suspense>}
   </section>;
 }

@@ -186,6 +186,39 @@ try {
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
       await page.screenshot({ path: `work/planner/${mobile ? 'mobile' : 'desktop'}-${theme}.png`, fullPage: true });
     }
+
+    await plan.getByLabel('Дата плана', { exact: true }).fill(nextWeek);
+    await plan.getByRole('button', { name: 'Неделя', exact: true }).click();
+    const week = plan.getByRole('region', { name: 'План недели', exact: true });
+    await week.getByRole('heading', { name: 'Свободное время', exact: true }).waitFor();
+    await week.getByRole('button', { name: 'Добавить результат недели 1', exact: true }).click();
+    const outcome = page.getByRole('dialog', { name: 'Результат недели', exact: true });
+    await outcome.getByLabel('Название результата').fill('Согласовать результат недели');
+    await outcome.getByRole('button', { name: 'Сохранить', exact: true }).click();
+    await week.getByRole('button', { name: /Согласовать результат недели/ }).waitFor();
+    const weekTask = week.getByRole('button', { name: /^Подготовить план/ });
+    await weekTask.click();
+    const editor = page.getByRole('dialog', { name: 'Подготовить план', exact: true });
+    assert.ok(await editor.getByLabel('День выполнения', { exact: true }).inputValue());
+    await editor.getByLabel('Дедлайн', { exact: true }).fill(targetDate);
+    await editor.getByLabel('Результат недели', { exact: true }).selectOption('0');
+    await editor.getByRole('button', { name: 'Сохранить', exact: true }).click();
+    await week.getByRole('button', { name: /Согласовать результат недели.*0 из 1/ }).waitFor();
+    await week.getByRole('button', { name: 'Итоги недели', exact: true }).click();
+    const weekReview = page.getByRole('dialog', { name: 'Недельный обзор', exact: true });
+    await weekReview.getByLabel('Новый день для «Подготовить план»', { exact: true }).selectOption('unscheduled');
+    await weekReview.getByRole('button', { name: 'Перенести «Подготовить план»', exact: true }).click();
+    const moved = weekReview.getByRole('region', { name: 'Перенесённые задачи', exact: true });
+    await moved.getByText('Без даты', { exact: true }).waitFor();
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+    await page.screenshot({ path: `work/planner/${mobile ? 'mobile' : 'desktop'}-week-review.png` });
+    await weekReview.getByRole('button', { name: 'Закрыть', exact: true }).click();
+    await week.locator('.week-plan-backlog').getByRole('button', { name: /^Подготовить план/ }).waitFor();
+    const updatedWeek = await page.evaluate(() => JSON.parse(localStorage.getItem('play-your-life-v1')));
+    assert.equal(updatedWeek.quests.find(q => q.id === ids.target).deadlineAt, targetDate);
+    assert.equal(updatedWeek.weekPlanOutcomes[nextWeek][0].taskIds[0], ids.target);
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+    await page.screenshot({ path: `work/planner/${mobile ? 'mobile' : 'desktop'}-week-board.png`, fullPage: true });
     await context.close();
   }
   console.log('planner-ui: desktop/mobile ok');

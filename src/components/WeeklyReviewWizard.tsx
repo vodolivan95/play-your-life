@@ -16,6 +16,7 @@ import { addDays, mondayOf } from '../tasksCalendar';
 import { isGoalDone } from '../goalsOverview';
 import './Overlay.css';
 import './WeeklyReviewWizard.css';
+import WeekReviewTaskLists from './WeekReviewTaskLists';
 
 const STEPS = ['Итоги недели', 'Проблемные задачи', 'Продвижение проектов', 'Фокус недели', 'Подтверждение'] as const;
 const fmtWeek = (d: string) => `${new Date(`${d}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })} – ${new Date(`${addDays(d, 6)}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}`;
@@ -24,16 +25,20 @@ const fmtMinutes = (n: number) => (n >= 60 ? `${Math.floor(n / 60)} ч ${n % 60 
 /** «Мастер недельного обзора» (ТЗ «Этап 3», раздел 5): 5 коротких шагов, без обязательных полей. */
 export default function WeeklyReviewWizard({
   state,
+  ownerId,
+  initialWeek,
   onClose,
   onApply,
   onOpenTask,
 }: {
   state: GameState;
+  ownerId: string;
+  initialWeek?: string;
   onClose: () => void;
   onApply: (action: (s: GameState) => GameState, message?: string) => void;
   onOpenTask: (id: string) => void;
 }) {
-  const [weekFrom, setWeekFrom] = useState(weekAnchor());
+  const [weekFrom, setWeekFrom] = useState(() => initialWeek ?? weekAnchor());
   const [step, setStep] = useState(0);
   const [focusGoalIds, setFocusGoalIds] = useState<string[]>(() => weeklyReviewOf(state, weekFrom)?.focusGoalIds ?? []);
   const [focusNote, setFocusNote] = useState(() => weeklyReviewOf(state, weekFrom)?.focusNote ?? '');
@@ -62,7 +67,7 @@ export default function WeeklyReviewWizard({
   }
   return (
     <div className="pyl-overlay wrw-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <section className="wrw" role="dialog" aria-modal="true" aria-labelledby="wrw-title">
+      <section className={step === 0 ? 'wrw wrw-with-tasks' : 'wrw'} role="dialog" aria-modal="true" aria-labelledby="wrw-title">
         <header className="wrw-head">
           <div>
             <h2 id="wrw-title">Недельный обзор</h2>
@@ -90,6 +95,8 @@ export default function WeeklyReviewWizard({
               Неделя обзора
               <input type="date" value={weekFrom} onChange={(e) => e.target.value && selectWeek(mondayOf(e.target.value))} />
             </label>
+            {viewSaved && <small>Списки ниже отражают текущее состояние задач.</small>}
+            <WeekReviewTaskLists key={weekFrom} state={state} week={weekFrom} ownerId={ownerId} apply={onApply} onOpen={onOpenTask} readOnly={viewSaved} />
           </div>
         )}
         {step === 1 && (

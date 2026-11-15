@@ -296,6 +296,7 @@ export type GameState = {
   focusSession?: import('./planningData.ts').ActiveFocusSession;
   /** Мастер недельного обзора (ТЗ «Этап 3», раздел 5): сохранённые итоги по неделям, ключ — понедельник 'YYYY-MM-DD'. */
   weeklyReviews?: Record<string, import('./weeklyReview.ts').WeeklyReview>;
+  weekPlanOutcomes?: import('./weekPlan.ts').WeekPlanOutcomes;
   habits?: import('./personalQuests').Habit[];
   habitCompletions?: import('./personalQuests').HabitCompletion[];
   coinTransactions?: import('./personalQuests').CoinTransaction[];

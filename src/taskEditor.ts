@@ -3,8 +3,16 @@ import type { GameState, Quest } from './game.ts';
 import { validTaskDetails } from './taskDetails.ts';
 import { validProjectImage } from './projectImage.ts';
 
+const endOfDeadline = (value: string) => Date.parse(value.length === 10 ? value + 'T23:59:59.999' : value);
+
+export function taskFinishesAfterDeadline(task: Partial<Quest>): boolean {
+  if (!task.deadlineAt) return false;
+  const deadline = endOfDeadline(task.deadlineAt);
+  return [task.startsAt, task.dueAt].some(value => !!value && Date.parse(value) > deadline);
+}
+
 /** Shared validation for creation, inbox acceptance and editing; no new task records for checklist items. */
-export function validateTaskEditorFields(task: Partial<Quest>, checkSchedule = true) {
+export function validateTaskEditorFields(task: Partial<Quest>, checkSchedule = true, allowPastDeadline = false) {
   if (task.rewardCoins !== undefined && (!Number.isInteger(task.rewardCoins) || task.rewardCoins < 0 || task.rewardCoins > 100)) throw new Error('Лайфкоины: целое число от 0 до 100.');
   if (!validTaskDetails(task.details)) throw new Error('Проверь заметки, участников и вложения задачи.');
   if (!validProjectImage(task.coverImage)) throw new Error('Некорректная обложка.');
@@ -16,8 +24,7 @@ export function validateTaskEditorFields(task: Partial<Quest>, checkSchedule = t
   }
   if (checkSchedule && task.startsAt && task.dueAt && Date.parse(task.startsAt) > Date.parse(task.dueAt))
     throw new Error('Окончание не может быть раньше начала.');
-  const endOf = (v: string) => Date.parse(v.length === 10 ? `${v}T23:59:59.999` : v);
-  if (checkSchedule && task.deadlineAt && [task.startsAt, task.dueAt].some(v => v && Date.parse(v) > endOf(task.deadlineAt!)))
+  if (checkSchedule && !allowPastDeadline && taskFinishesAfterDeadline(task))
     throw new Error('Начало и окончание не могут быть позже дедлайна.');
   if (task.repeat !== undefined && !['daily', 'weekdays', 'weekly', 'monthly'].includes(task.repeat))
     throw new Error('Выбери правило повторения.');

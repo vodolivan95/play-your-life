@@ -11,6 +11,7 @@ import { validKeySpheres } from './lifePlanMap.ts';
 import { validReview, validMoodCheckins } from './keyResults.ts';
 import { validImportance } from './monthReport.ts';
 import { validWeeklyReview } from './weeklyReview.ts';
+import { validWeekPlanOutcomes } from './weekPlan.ts';
 import type { GameState, Quest } from './game.ts';
 import { validDependencyGraph } from './taskDependencies.ts';
 import {
@@ -505,6 +506,7 @@ export function validateState(value: unknown): asserts value is SavedState {
     return fail();
   if (!validMoodCheckins(value.moodCheckins)) return fail();
   if (!validImportance(value.sphereImportance)) return fail();
+  if (value.weekPlanOutcomes !== undefined && !validWeekPlanOutcomes(value.weekPlanOutcomes)) return fail();
   if (
     value.weeklyReviews !== undefined &&
     (!record(value.weeklyReviews) ||

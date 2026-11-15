@@ -134,6 +134,12 @@ try {
     const beforeOrder = await readOrder();
     const sourceRow = reorderRows.first();
     const sourceHandle = sourceRow.locator(".task-reorder-grip");
+    if (mobile) {
+      const gripBox = await sourceHandle.boundingBox();
+      assert.equal((await sourceHandle.textContent()).trim(), "⋮", "на телефоне показана понятная ручка из трёх точек");
+      assert.ok(gripBox.width >= 44 && gripBox.height >= 44, "у мобильной ручки удобная область касания 44×44 px");
+      assert.notEqual(await sourceHandle.evaluate((el) => getComputedStyle(el).backgroundImage), "none", "ручка заметно выделена фоном");
+    }
     const targetRow = reorderRows.last();
     await sourceHandle.evaluate((element) => element.scrollIntoView({ block: "center", behavior: "instant" }));
     await page.waitForTimeout(160); // Scroll-idle window before checking that FLIP is allowed.

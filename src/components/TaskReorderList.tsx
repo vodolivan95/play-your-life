@@ -163,7 +163,7 @@ export default function TaskReorderList({ tasks, label, onReorder, renderTask, c
             className={`task-reorder-item ${enabled ? 'is-draggable' : ''} ${itemClassName?.(task) ?? ''}${dragging ? ' is-dragging' : ''}${dropTarget ? ` is-drop-target drop-${targetPlacement}` : ''}`}
             onPointerDown={enabled ? (event) => pointerDown(event, task.id) : undefined}
           >
-            {enabled && <button type="button" className="task-reorder-grip" aria-label={`Переместить задачу: ${task.name}. Стрелки меняют место, Home — в начало, End — в конец`} title="Перетащите мышью или пальцем; клавиши Home/End — начало/конец" onKeyDown={(event) => keyDown(event, task.id)}>⋮⋮</button>}
+            {enabled && <button type="button" className="task-reorder-grip" aria-label={`Переместить задачу: ${task.name}. Стрелки меняют место, Home — в начало, End — в конец`} title="Потяните за ⋮, чтобы переместить; клавиши Home/End — начало/конец" onKeyDown={(event) => keyDown(event, task.id)}>⋮</button>}
             <div className="task-reorder-content">{renderTask(task)}</div>
           </li>
         );

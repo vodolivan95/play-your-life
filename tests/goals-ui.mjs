@@ -325,8 +325,15 @@ try {
     const taskRows = workspace.locator('.ss-task-list .ss-task');
     assert.deepEqual(await taskRows.locator('.ss-task-main strong').allTextContents(), ['Выучить слова', 'Повторить слова']);
     const sourceHandle = taskRows.filter({ hasText: 'Повторить слова' }).locator('.ss-drag-handle');
+    if (width < 600) {
+      const gripBox = await sourceHandle.boundingBox();
+      assert.equal((await sourceHandle.textContent()).trim(), '⋮', 'на телефоне у этапной задачи показаны три точки перетаскивания');
+      assert.ok(gripBox.width >= 44 && gripBox.height >= 44, 'мобильная ручка этапа имеет область касания не меньше 44×44 px');
+      assert.notEqual(await sourceHandle.evaluate((el) => getComputedStyle(el).backgroundImage), 'none', 'ручка этапа заметна на тёмной карточке');
+    }
     const targetRow = taskRows.filter({ hasText: 'Выучить слова' });
     await sourceHandle.evaluate((el, mobile) => el.scrollIntoView({ block: mobile ? 'center' : 'nearest' }), width < 600);
+    await page.waitForTimeout(160); // Wait until native/inertial scrolling is idle.
     const sourceBox = await sourceHandle.boundingBox();
     const targetBox = await targetRow.boundingBox();
     const sourcePoint = { x: sourceBox.x + sourceBox.width / 2, y: sourceBox.y + sourceBox.height / 2 };

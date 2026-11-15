@@ -134,8 +134,15 @@ try {
     const beforeOrder = await readOrder();
     const sourceRow = reorderRows.first();
     const sourceHandle = sourceRow.locator(".task-reorder-grip");
+    if (mobile) {
+      const gripBox = await sourceHandle.boundingBox();
+      assert.equal((await sourceHandle.textContent()).trim(), "⋮", "на телефоне показана понятная ручка из трёх точек");
+      assert.ok(gripBox.width >= 44 && gripBox.height >= 44, "у мобильной ручки удобная область касания 44×44 px");
+      assert.notEqual(await sourceHandle.evaluate((el) => getComputedStyle(el).backgroundImage), "none", "ручка заметно выделена фоном");
+    }
     const targetRow = reorderRows.last();
     await sourceHandle.evaluate((element) => element.scrollIntoView({ block: "center", behavior: "instant" }));
+    await page.waitForTimeout(160); // Scroll-idle window before checking that FLIP is allowed.
     const sourceBox = await (mobile ? sourceHandle : sourceRow).boundingBox();
     const targetBox = await targetRow.boundingBox();
     const sourcePoint = { x: sourceBox.x + sourceBox.width / 2, y: sourceBox.y + sourceBox.height / 2 };
@@ -155,11 +162,24 @@ try {
       await page.mouse.up();
     }
     await page.waitForFunction(
-      () => [...document.querySelectorAll('.task-reorder-item[data-flip-id]')].some((item) =>
-        item.getAnimations().some((animation) => animation.effect?.getTiming().duration === 280),
+      (mobile) => [...document.querySelectorAll('.task-reorder-item[data-flip-id]')].some((item) =>
+        item.getAnimations().some((animation) =>
+          animation.effect?.getTiming().duration === (mobile ? 190 : 280),
+        ),
       ),
-      undefined,
+      mobile,
       { timeout: 1200 },
+    );
+    await page.evaluate(() => window.dispatchEvent(new Event('scroll')));
+    assert.equal(
+      await page.evaluate(() => [...document.querySelectorAll('.task-reorder-item[data-flip-id]')].some((item) =>
+        item.getAnimations().some((animation) =>
+          (animation.effect?.getTiming().duration === 190 || animation.effect?.getTiming().duration === 280) &&
+          animation.playState === 'running',
+        ),
+      )),
+      false,
+      'native scrolling cancels active FLIP effects so they do not compete for mobile frames',
     );
     await page.waitForFunction(() => {
       const state = JSON.parse(localStorage.getItem("play-your-life-v1"));

@@ -309,9 +309,9 @@ export default function StageScreen(p: Props) {
               type="button"
               className="ss-drag-handle"
               aria-label={`Переместить задачу: ${task.name}`}
-              title="Перетащите, чтобы изменить порядок"
+              title="Потяните за ⋮, чтобы изменить порядок"
             >
-              ⋮⋮
+              ⋮
             </button>
           )}
           <button

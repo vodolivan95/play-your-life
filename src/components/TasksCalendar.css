@@ -103,7 +103,11 @@
 .tcal-list { display: flex; flex-direction: column; gap: 3px; min-height: 0; }
 .tcal-list.is-scroll { max-height: 170px; overflow-y: auto; overscroll-behavior: contain; padding-right: 3px; scrollbar-width: thin; scrollbar-color: rgba(138, 180, 255, 0.5) transparent; }
 .tcal-list.is-scroll.is-tall { max-height: 280px; }
-.tcal-more { padding: 0 6px; font-size: 11px; font-weight: 700; color: var(--t-muted); }
+.tcal-more {
+  align-self: start; padding: 3px 6px; border: 0; border-radius: 6px; background: transparent;
+  font-size: 11px; font-weight: 700; color: var(--t-muted); cursor: pointer;
+}
+.tcal-more:hover, .tcal-more:focus-visible { color: var(--t-accent); }
 .tcal-hint { padding: 2px 6px 0; font-size: 11px; font-weight: 700; color: var(--t-accent); }
 .tcal-chip {
   display: block; width: 100%; min-height: 24px; padding: 2px 6px; border: 0; border-left: 3px solid var(--c); border-radius: 10px;
@@ -144,7 +148,7 @@
 .tcal-col { position: relative; border-left: 1px solid var(--t-line); background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 47px, var(--t-line) 47px, var(--t-line) 48px); }
 .tcal-col.is-today { background-color: var(--t-today); }
 .tcal-event {
-  position: absolute; left: 3px; right: 3px; box-sizing: border-box; padding: 5px 8px; border: 0; border-left: 3px solid var(--c); border-radius: 12px; overflow: hidden;
+  position: absolute; box-sizing: border-box; padding: 5px 8px; border: 0; border-left: 3px solid var(--c); border-radius: 12px; overflow: hidden;
   display: flex; flex-direction: column; gap: 2px; text-align: left; color: var(--t-text);
   background: linear-gradient(135deg, color-mix(in srgb, var(--c) calc(var(--t-alpha) * 100%), transparent), color-mix(in srgb, var(--c) calc(var(--t-alpha) * 45%), transparent));
   box-shadow: 0 4px 14px color-mix(in srgb, var(--c) 26%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.22);

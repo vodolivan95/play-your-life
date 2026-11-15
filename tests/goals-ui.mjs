@@ -244,6 +244,13 @@ try {
       .getByRole('button', { name: 'Закрыть', exact: true })
       .click();
     await tabs.getByRole('button', { name: 'Задачи', exact: true }).click();
+    const projectTaskRows = workspace.locator('ul.task-reorder-list > li[data-task-order-id]');
+    assert.equal(await projectTaskRows.count(), 3, 'в рабочем пространстве проекта показаны все карточки задач');
+    const projectGrip = projectTaskRows.first().locator('.task-reorder-grip');
+    assert.equal((await projectGrip.textContent()).trim(), '⋮', 'у карточек задач проекта есть явная ручка');
+    const projectGripBox = await projectGrip.boundingBox();
+    assert.ok(projectGripBox.width >= 44 && projectGripBox.height >= 44, 'ручка проекта видна и удобна для касания на каждом breakpoint');
+    assert.notEqual(await projectGrip.evaluate((el) => getComputedStyle(el).backgroundImage), 'none', 'ручка проекта имеет контрастную голубую подложку');
     await workspace.getByLabel('Фильтр по этапу').selectOption(ids.c);
     await workspace
       .getByText('В выбранном этапе задач пока нет.', { exact: true })
@@ -325,12 +332,10 @@ try {
     const taskRows = workspace.locator('.ss-task-list .ss-task');
     assert.deepEqual(await taskRows.locator('.ss-task-main strong').allTextContents(), ['Выучить слова', 'Повторить слова']);
     const sourceHandle = taskRows.filter({ hasText: 'Повторить слова' }).locator('.ss-drag-handle');
-    if (width < 600) {
-      const gripBox = await sourceHandle.boundingBox();
-      assert.equal((await sourceHandle.textContent()).trim(), '⋮', 'на телефоне у этапной задачи показаны три точки перетаскивания');
-      assert.ok(gripBox.width >= 44 && gripBox.height >= 44, 'мобильная ручка этапа имеет область касания не меньше 44×44 px');
-      assert.notEqual(await sourceHandle.evaluate((el) => getComputedStyle(el).backgroundImage), 'none', 'ручка этапа заметна на тёмной карточке');
-    }
+    const stageGripBox = await sourceHandle.boundingBox();
+    assert.equal((await sourceHandle.textContent()).trim(), '⋮', 'у карточек этапа показаны три точки перетаскивания');
+    assert.ok(stageGripBox.width >= 44 && stageGripBox.height >= 44, 'ручка этапа удобна для касания на каждом breakpoint');
+    assert.notEqual(await sourceHandle.evaluate((el) => getComputedStyle(el).backgroundImage), 'none', 'ручка этапа заметна на тёмной карточке');
     const targetRow = taskRows.filter({ hasText: 'Выучить слова' });
     await sourceHandle.evaluate((el, mobile) => el.scrollIntoView({ block: mobile ? 'center' : 'nearest' }), width < 600);
     await page.waitForTimeout(160); // Wait until native/inertial scrolling is idle.

@@ -331,6 +331,15 @@ try {
     const targetBox = await targetRow.boundingBox();
     const sourcePoint = { x: sourceBox.x + sourceBox.width / 2, y: sourceBox.y + sourceBox.height / 2 };
     const targetPoint = { x: targetBox.x + targetBox.width / 2, y: targetBox.y + targetBox.height / 4 };
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.evaluate(() => {
+      window.__flipPlayCount = 0;
+      const animate = Element.prototype.animate;
+      Element.prototype.animate = function (...args) {
+        window.__flipPlayCount += 1;
+        return animate.apply(this, args);
+      };
+    });
     if (width < 600) {
       const touch = await context.newCDPSession(page);
       await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ id: 1, ...sourcePoint }] });
@@ -343,6 +352,7 @@ try {
       await page.mouse.move(targetPoint.x, targetPoint.y, { steps: 5 });
       await page.mouse.up();
     }
+    assert.ok(await page.evaluate(() => window.__flipPlayCount > 0), 'stage reorder must invoke Web Animations API');
     assert.deepEqual(await taskRows.locator('.ss-task-main strong').allTextContents(), ['Повторить слова', 'Выучить слова']);
     await page.waitForFunction(({ goalId, stageId }) => {
       const state = JSON.parse(localStorage.getItem('play-your-life-v1'));

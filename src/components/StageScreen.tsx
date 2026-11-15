@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import type { GameState, Goal, GoalStage, Quest } from '../game';
 import TaskLabelBadge from './TaskLabelBadge';
+import { useFlipAnimation } from './useFlipAnimation';
 import './StageScreen.css';
 
 export type StageStop = {
@@ -184,6 +185,9 @@ export default function StageScreen(p: Props) {
           : a.name.localeCompare(b.name, 'ru'),
     );
   }, [tasks, filter, sort, query]);
+  const { listRef: taskListRef, captureFirst: captureTaskPositions } = useFlipAnimation<HTMLDivElement>(
+    visible.map((task) => task.id).join('\u0000'),
+  );
 
   useEffect(() => {
     if (session && !sessionDialog.current?.open) sessionDialog.current?.showModal();
@@ -242,6 +246,7 @@ export default function StageScreen(p: Props) {
       <article
         className={`ss-task ${task.done ? 'is-done' : ''}${draggedTaskId === task.id ? ' is-dragging' : ''}${dropTargetTaskId === task.id ? ' is-drop-target' : ''}`}
         key={task.id}
+        data-flip-id={task.id}
         data-task={task.id}
         onPointerDown={(event) => {
           if (!reorderEnabled) return;
@@ -281,8 +286,10 @@ export default function StageScreen(p: Props) {
           const lastRect = event.currentTarget.parentElement?.querySelector<HTMLElement>('.ss-task:last-of-type')?.getBoundingClientRect();
           const endZone = elementAtPoint(event.clientX, event.clientY)?.closest('.ss-task-end-drop');
           const atEnd = !!endZone || (!targetId && !!lastRect && !!listRect && event.clientY >= lastRect.bottom - 14 && event.clientY <= listRect.bottom + 12) || (!!rect && targetId === tasks.at(-1)?.id && event.clientY >= rect.top + rect.height / 2);
-          if (drag.moved && (atEnd || (targetId && targetId !== drag.taskId)))
+          if (drag.moved && (atEnd || (targetId && targetId !== drag.taskId))) {
+            captureTaskPositions();
             p.onReorderTask(drag.taskId, targetId, atEnd ? 'end' : rect && event.clientY >= rect.top + rect.height / 2 ? 'after' : 'before');
+          }
           touchDrag.current = null;
           setDraggedTaskId('');
           setDropTargetTaskId('');
@@ -608,7 +615,7 @@ export default function StageScreen(p: Props) {
                 </span>
               </div>
             )}
-            <div className="ss-task-list">
+            <div ref={taskListRef} className="ss-task-list">
               {visible.map(taskRow)}
               {reorderEnabled && dropAtEnd && <div className="ss-task-end-drop">＋ В конец списка</div>}
               {!visible.length && (

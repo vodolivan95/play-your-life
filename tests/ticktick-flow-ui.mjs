@@ -157,6 +157,7 @@ try {
   await remoteCalendarItem.click();
   const incomingEditor = page.getByRole('dialog',{name:'Принять в игру',exact:true});
   await incomingEditor.getByRole('button',{name:'Принять в игру',exact:true}).waitFor();
+  page.once('dialog', dialog => dialog.accept());
   await incomingEditor.getByRole('button',{name:'Отмена',exact:true}).click();
   await incomingEditor.waitFor({state:'detached'});
   await remoteCalendarItem.waitFor();

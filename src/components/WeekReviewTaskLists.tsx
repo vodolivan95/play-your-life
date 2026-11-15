@@ -43,9 +43,9 @@ export default function WeekReviewTaskLists({ state, week, ownerId, apply, onOpe
   const nextWeek = Array.from({ length: 7 }, (_, index) => addDays(week, index + 7));
   return <>
     {compact && <div className="wrw-grid wrw-summary" aria-label="Сводка недели">
-      <span><b>{done.length}</b>Выполнено</span>
-      <span><b>{pending.length}</b>Осталось</span>
-      <span><b>{moved.length}</b>Перенесено</span>
+      <span><b>{done.length}</b><small>Выполнено</small></span>
+      <span><b>{pending.length}</b><small>Осталось</small></span>
+      <span><b>{moved.length}</b><small>Перенесено</small></span>
     </div>}
     <div className="wrw-task-columns">
       <section aria-label="Незавершённые задачи">

@@ -22,7 +22,9 @@ import TasksSummary from "./TasksSummary";
 import TasksCalendar from "./TasksCalendar";
 import TasksAside from "./TasksAside";
 import TickTickInbox from "./TickTickInbox";
+import { TickTickCalendarTask } from "./TickTickInboxDialog";
 import { TickTickContext } from "../tickTickContext";
+import type { IncomingTask } from "../ticktickInbox";
 import "./QuestBoard.css";
 import "./TasksAside.css";
 
@@ -71,7 +73,7 @@ export default function QuestBoard({
     [progress, setProgress] = useState<Quest | null>(null),
     [progressValue, setProgressValue] = useState(0),
     [celebrate, setCelebrate] = useState("");
-  const [focusIncomingId, setFocusIncomingId] = useState<string | null>(null);
+  const [calendarTask, setCalendarTask] = useState<{ item: IncomingTask; canAccept: boolean } | null>(null);
   useEffect(() => {
     if (initialTaskId) onInitialTaskOpened?.();
     // Один раз при открытии страницы: задача уже передана в начальное состояние.
@@ -182,7 +184,7 @@ export default function QuestBoard({
       )}
       {mode === "inbox" &&
         (connected ? (
-          <TickTickInbox state={state} onChange={onChange} focusRemoteId={focusIncomingId} />
+          <TickTickInbox state={state} onChange={onChange} />
         ) : (
           <p className="pyl-tasks-empty">
             TickTick не подключён. Подключи его в профиле, и новые задачи из
@@ -203,7 +205,11 @@ export default function QuestBoard({
           quests={quests}
           today={today}
           incoming={connected ? manager?.calendarTasks ?? [] : []}
-          onOpenIncoming={(remoteId) => { setFocusIncomingId(remoteId); setMode("inbox"); }}
+          onOpenIncoming={(remoteId) => {
+            const incomingTask = manager?.incoming.find((task) => task.remote.id === remoteId);
+            const item = incomingTask ?? manager?.calendarTasks.find((task) => task.remote.id === remoteId);
+            if (item) setCalendarTask({ item, canAccept: Boolean(incomingTask) });
+          }}
           onOpen={(q) => setOpenTask(q.id)}
           onMove={(q, days) => {
             try {
@@ -237,6 +243,18 @@ export default function QuestBoard({
           onHabit={(h) =>
             apply((s) => saveHabit(s, h, ownerId), "Привычка сохранена")
           }
+        />
+      )}
+      {calendarTask && connected && manager && (
+        <TickTickCalendarTask
+          key={calendarTask.item.remote.id}
+          item={calendarTask.item}
+          state={state}
+          onChange={onChange}
+          onClose={() => setCalendarTask(null)}
+          onAccept={calendarTask.canAccept ? async (choice) => {
+            notify(await manager.acceptIncoming(calendarTask.item.remote.id, choice));
+          } : undefined}
         />
       )}
       {openTask && (

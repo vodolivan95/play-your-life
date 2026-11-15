@@ -118,6 +118,7 @@ try {
   a.tasks.set('r1',{id:'r1',projectId:'english',title:'Купить билеты',status:0,dueDate:today+'T09:00:00+0000'});
   a.tasks.set('r2',{id:'r2',projectId:'english',title:'Записаться к врачу',status:0});
   a.tasks.set('r3',{id:'r3',projectId:'english',title:'Подготовить отпуск на 2029 год',status:0,dueDate:'2029-06-01T09:00:00+0000'});
+  a.tasks.set('r-repeat',{id:'r-repeat',projectId:'english',title:'Повторяющаяся задача',content:'Описание повторяющейся задачи',status:0,dueDate:today+'T00:00:00+0000',repeatFlag:'RRULE:FREQ=DAILY'});
   await page.goto(harness(uid));
   await page.locator('.sidebar').getByRole('button',{name:/^Мои задачи/}).click();
   await page.getByRole('button',{name:/^Входящие/}).first().click();
@@ -145,13 +146,28 @@ try {
   await remoteCalendarItem.waitFor();
   assert.equal(await remoteCalendarItem.count(),1,'датированная задача TickTick отображается в календаре до принятия');
   assert.equal(await incomingCalendar.locator('.tcal-chip').filter({hasText:'Записаться к врачу'}).count(),0,'бездатная задача TickTick не попадает в календарь');
+  const recurringItem = incomingCalendar.getByRole('button',{name:/Повторяющаяся задача/});
+  await recurringItem.press('Enter');
+  const recurringDetails = page.getByRole('dialog',{name:'Повторяющаяся задача',exact:true});
+  await recurringDetails.getByText('Описание повторяющейся задачи',{exact:true}).waitFor();
+  assert.equal(await recurringDetails.getByRole('button',{name:'Принять в игру'}).count(),0);
+  await page.keyboard.press('Escape');
+  await recurringDetails.waitFor({state:'detached'});
+
   await remoteCalendarItem.click();
-  await incomingCalendar.getByRole('button',{name:'Открыть действия задачи',exact:true}).click();
-  await inbox.locator('li',{hasText:'Купить билеты'}).getByRole('button',{name:'Принять в игру'}).waitFor();
-  // 1. Одиночная задача без цели.
+  const incomingEditor = page.getByRole('dialog',{name:'Принять в игру',exact:true});
+  await incomingEditor.getByRole('button',{name:'Принять в игру',exact:true}).waitFor();
+  await incomingEditor.getByRole('button',{name:'Отмена',exact:true}).click();
+  await incomingEditor.waitFor({state:'detached'});
+  await remoteCalendarItem.waitFor();
+  assert.equal((await stateOf(page,uid)).quests.length,0,'клик и отмена не импортируют задачу');
+  // 1. Одиночная задача без цели принимается прямо из календаря.
+  await remoteCalendarItem.click();
+  await incomingEditor.getByLabel('Проект',{exact:true}).selectOption('');
+  await incomingEditor.getByRole('button',{name:'Принять в игру',exact:true}).click();
+  await incomingEditor.waitFor({state:'detached'});
+  await page.getByRole('button',{name:/^Входящие/}).first().click();
   const row = t => inbox.locator('li',{hasText:t});
-  await row('Купить билеты').getByLabel('Проект', {exact:true}).selectOption('');
-  await row('Купить билеты').getByRole('button',{name:'Принять в игру'}).click();
   // 2. Задача в новую цель и новый этап.
   await row('Записаться к врачу').getByRole('button',{name:'Разобрать'}).click();
   await row('Записаться к врачу').getByLabel('Проект', {exact:true}).selectOption('goal-1');

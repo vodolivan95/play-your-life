@@ -17,6 +17,7 @@ import React, {useState, useEffect} from 'react';
 import {createRoot} from 'react-dom/client';
 import App from '../../src/App';
 import {newAccountGame} from '../../src/accountGame';
+import {dateKey} from '../../src/game';
 import '../../src/styles.css'; import '../../src/interface.css'; import '../../src/components/AdaptiveLayout.css';
 const uid = new URLSearchParams(location.search).get('uid') || 'guest';
 const demo = uid === 'demo';
@@ -26,7 +27,9 @@ function Fixture() {
     const saved = localStorage.getItem(key); if(saved) return JSON.parse(saved);
     const s = newAccountGame('Тестовый игрок'); s.profile.onboardingComplete = true; s.profile.mode = demo ? 'demo' : 'personal';
     s.goals = [{id:'goal-1', name:'Вылечить зубы', sphere:'english', current:0, target:100, created:'2026-10-01', reward:0, rewarded:false, progressMode:'tasks',stages:[{id:'stage-1',name:'Первый визит',status:'active',completionMode:'tasks'}]},{id:'goal-2', name:'Бросить курить', sphere:'english', current:0, target:100, created:'2026-10-01', reward:0, rewarded:false, progressMode:'tasks'}];
-    s.quests = [];
+    s.quests = uid === 'calendar-phone'
+      ? [{id:'phone-local',name:'Игровая задача на телефоне',sphere:'english',xp:20,done:false,difficulty:'Medium',dueAt:dateKey()}]
+      : [];
     return s;
   });
   useEffect(() => localStorage.setItem(key, JSON.stringify(state)), [state]);
@@ -118,6 +121,7 @@ try {
   a.tasks.set('r1',{id:'r1',projectId:'english',title:'Купить билеты',status:0,dueDate:today+'T09:00:00+0000'});
   a.tasks.set('r2',{id:'r2',projectId:'english',title:'Записаться к врачу',status:0});
   a.tasks.set('r3',{id:'r3',projectId:'english',title:'Подготовить отпуск на 2029 год',status:0,dueDate:'2029-06-01T09:00:00+0000'});
+  a.tasks.set('r-repeat',{id:'r-repeat',projectId:'english',title:'Повторяющаяся задача',content:'Описание повторяющейся задачи',status:0,dueDate:today+'T00:00:00+0000',repeatFlag:'RRULE:FREQ=DAILY'});
   await page.goto(harness(uid));
   await page.locator('.sidebar').getByRole('button',{name:/^Мои задачи/}).click();
   await page.getByRole('button',{name:/^Входящие/}).first().click();
@@ -145,13 +149,29 @@ try {
   await remoteCalendarItem.waitFor();
   assert.equal(await remoteCalendarItem.count(),1,'датированная задача TickTick отображается в календаре до принятия');
   assert.equal(await incomingCalendar.locator('.tcal-chip').filter({hasText:'Записаться к врачу'}).count(),0,'бездатная задача TickTick не попадает в календарь');
+  const recurringItem = incomingCalendar.getByRole('button',{name:/Повторяющаяся задача/});
+  await recurringItem.press('Enter');
+  const recurringDetails = page.getByRole('dialog',{name:'Повторяющаяся задача',exact:true});
+  await recurringDetails.getByText('Описание повторяющейся задачи',{exact:true}).waitFor();
+  assert.equal(await recurringDetails.getByRole('button',{name:'Принять в игру'}).count(),0);
+  await page.keyboard.press('Escape');
+  await recurringDetails.waitFor({state:'detached'});
+
   await remoteCalendarItem.click();
-  await incomingCalendar.getByRole('button',{name:'Открыть действия задачи',exact:true}).click();
-  await inbox.locator('li',{hasText:'Купить билеты'}).getByRole('button',{name:'Принять в игру'}).waitFor();
-  // 1. Одиночная задача без цели.
+  const incomingEditor = page.getByRole('dialog',{name:'Принять в игру',exact:true});
+  await incomingEditor.getByRole('button',{name:'Принять в игру',exact:true}).waitFor();
+  page.once('dialog', dialog => dialog.accept());
+  await incomingEditor.getByRole('button',{name:'Отмена',exact:true}).click();
+  await incomingEditor.waitFor({state:'detached'});
+  await remoteCalendarItem.waitFor();
+  assert.equal((await stateOf(page,uid)).quests.length,0,'клик и отмена не импортируют задачу');
+  // 1. Одиночная задача без цели принимается прямо из календаря.
+  await remoteCalendarItem.click();
+  await incomingEditor.getByLabel('Проект',{exact:true}).selectOption('');
+  await incomingEditor.getByRole('button',{name:'Принять в игру',exact:true}).click();
+  await incomingEditor.waitFor({state:'detached'});
+  await page.getByRole('button',{name:/^Входящие/}).first().click();
   const row = t => inbox.locator('li',{hasText:t});
-  await row('Купить билеты').getByLabel('Проект', {exact:true}).selectOption('');
-  await row('Купить билеты').getByRole('button',{name:'Принять в игру'}).click();
   // 2. Задача в новую цель и новый этап.
   await row('Записаться к врачу').getByRole('button',{name:'Разобрать'}).click();
   await row('Записаться к врачу').getByLabel('Проект', {exact:true}).selectOption('goal-1');
@@ -325,7 +345,44 @@ try {
   await offlineInboxDialog.getByText(/Изменения задач сохранены в игре/i).waitFor();
   await offlineInboxDialog.getByRole('region',{name:'Настройки TickTick'}).waitFor();
   await ctx.setOffline(false);
-  console.log('TickTick flow UI passed: inbox accept, scope from sphere/goal/stage, native dialog switch, demo and offline states. Mock services only.');
+  // 12. В мобильной раскладке обе карточки открываются касанием прямо в календаре.
+  const phoneUid = 'calendar-phone';
+  const phoneAccount = account(phoneUid);
+  phoneAccount.connected = true;
+  phoneAccount.settings = { ...emptyTickTickSettings(), auto: false, sphereLists: { english: 'english' } };
+  const phoneDay = new Date().toISOString().slice(0, 10);
+  phoneAccount.tasks.set('phone-remote', {
+    id: 'phone-remote', projectId: 'english', title: 'Задача TickTick на телефоне',
+    status: 0, dueDate: phoneDay + 'T00:00:00+0000',
+  });
+  const phoneCtx = await context(390);
+  const phone = await phoneCtx.newPage();
+  activePage = phone;
+  phone.on('pageerror', e => pageErrors.push(e.message));
+  await phone.goto(harness(phoneUid));
+  await phone.locator('.pyl-tabbar').getByRole('button', { name: /^Ещё/ }).tap();
+  await phone.locator('.pyl-more').getByRole('button', { name: /^Мои задачи/ }).tap();
+  await phone.getByRole('button', { name: 'Календарь', exact: true }).tap();
+  const phoneCalendar = phone.getByRole('region', { name: 'Календарь задач' });
+
+  await phoneCalendar.getByRole('button', { name: 'Игровая задача на телефоне', exact: true }).tap();
+  const phoneTask = phone.getByRole('dialog', { name: 'Игровая задача на телефоне', exact: true });
+  await phoneTask.waitFor();
+  await phoneTask.getByRole('button', { name: 'Закрыть', exact: true }).tap();
+  await phoneTask.waitFor({ state: 'detached' });
+
+  await phoneCalendar.getByRole('button', { name: /Задача TickTick на телефоне/ }).tap();
+  const phoneEditor = phone.getByRole('dialog', { name: 'Принять в игру', exact: true });
+  await phoneEditor.getByRole('button', { name: 'Принять в игру', exact: true }).waitFor();
+  phone.once('dialog', dialog => dialog.accept());
+  await phoneEditor.getByRole('button', { name: 'Отмена', exact: true }).tap();
+  await phoneEditor.waitFor({ state: 'detached' });
+  assert.equal(await phoneCalendar.getByRole('button', { name: 'Месяц', exact: true }).getAttribute('aria-pressed'), 'true');
+  assert.equal((await stateOf(phone, phoneUid)).quests.length, 1, 'касание и отмена не импортируют задачу TickTick');
+  await phoneCtx.close();
+  activePage = page;
+
+  console.log('TickTick flow UI passed: desktop click and mobile tap, inbox accept, scope from sphere/goal/stage, native dialog switch, demo and offline states. Mock services only.');
 } catch (error) {
   console.error('Fixture requests:', JSON.stringify(calls));
   console.error('Fixture page errors:', JSON.stringify(pageErrors));

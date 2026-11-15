@@ -2,11 +2,13 @@ import { useContext, useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { spheres } from '../game';
 import type { GameState } from '../game';
-import type { IncomingScope } from '../ticktickInbox';
+import { remoteFields } from '../ticktick';
+import { formatIncomingDate } from '../ticktickInbox';
+import type { IncomingChoice, IncomingScope, IncomingTask } from '../ticktickInbox';
 import { TickTickContext } from '../tickTickContext';
 import Icon from './Icon';
 import TickTickConnection from './TickTickConnection';
-import TickTickInbox from './TickTickInbox';
+import TickTickInbox, { IncomingTaskEditor } from './TickTickInbox';
 import './TickTickInboxDialog.css';
 
 export function TickTickInboxContent({ state, onChange, scope }: {
@@ -63,4 +65,40 @@ export default function TickTickInboxDialog({ state, onChange, scope, onClose }:
       <TickTickInboxContent state={state} onChange={onChange} scope={scope} />
     </div>
   </dialog>;
+}
+
+function CalendarTaskDetails({ item, onClose }: { item: IncomingTask; onClose: () => void }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const element = dialog.current;
+    element?.showModal();
+    return () => element?.close();
+  }, []);
+  const { remote } = item;
+  const { notes, startsAt, dueAt } = remoteFields(remote);
+  const start = startsAt ? formatIncomingDate(remote.startDate) : '';
+  const end = dueAt ? formatIncomingDate(remote.dueDate) : '';
+  return <dialog ref={dialog} className="ticktick-inbox-dialog" aria-label={remote.title} onCancel={onClose}
+    onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="dialog-content ticktick-calendar-details">
+      <button type="button" className="icon-button modal-close" aria-label="Закрыть" onClick={onClose} autoFocus><Icon name="close" /></button>
+      <h2>{remote.title}</h2>
+      <p className="muted">TickTick · {remote.status === 2 ? 'Выполнена' : 'Только просмотр'}</p>
+      {start && <p>Начало · {start}</p>}
+      {end && <p>Окончание · {end}</p>}
+      {notes && <p className="ticktick-calendar-notes">{notes}</p>}
+    </div>
+  </dialog>;
+}
+
+export function TickTickCalendarTask({ item, state, onChange, onClose, onAccept }: {
+  item: IncomingTask;
+  state: GameState;
+  onChange: Dispatch<SetStateAction<GameState>>;
+  onClose: () => void;
+  onAccept?: (choice: IncomingChoice) => Promise<void>;
+}) {
+  return onAccept
+    ? <IncomingTaskEditor item={item} state={state} onChange={onChange} onClose={onClose} onAccept={onAccept} />
+    : <CalendarTaskDetails item={item} onClose={onClose} />;
 }

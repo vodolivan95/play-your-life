@@ -2,7 +2,8 @@
   width: 820px;
   max-width: calc(100% - 24px);
 }
-.ticktick-inbox-dialog-body > h2 {
+.ticktick-inbox-dialog-body > h2,
+.ticktick-calendar-details > h2 {
   padding-right: 32px;
 }
 .ticktick-inbox-dialog-body .ticktick-inbox {
@@ -17,6 +18,12 @@
   padding-bottom: 10px;
   max-width: 100%;
   overflow-wrap: anywhere;
+}
+.ticktick-calendar-details {
+  overflow-wrap: anywhere;
+}
+.ticktick-calendar-notes {
+  white-space: pre-wrap;
 }
 .sph-inbox-action {
   display: flex;

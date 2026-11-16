@@ -1160,6 +1160,14 @@ export default function GoalWorkspace(p: Props) {
                         >
                           Настроить доступ этапа →
                         </button>
+                        {!!m.tasks.length && <TaskReorderList
+                          tasks={m.tasks}
+                          label={`Задачи этапа ${s.name} в проекте`}
+                          onReorder={(sourceId, targetId, placement) => {
+                            mutate((current) => reorderTaskList(current, m.tasks.map((task) => task.id), sourceId, targetId, placement));
+                          }}
+                          renderTask={taskRow}
+                        />}
                       </div>
                     ) : (
                       <>

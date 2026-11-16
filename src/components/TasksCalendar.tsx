@@ -70,7 +70,7 @@ function Chip({ item, selected, onPick, onDragStart, onDragEnd, dragging }: { it
       draggable={movable}
       onDragStart={movable ? onDragStart : undefined}
       onDragEnd={onDragEnd}
-      title={`${quest.name}${spanTitle}${item.source === 'ticktick' ? ' · из TickTick, только просмотр' : quest.tickTickSharedAt ? ' · перенос уйдёт в TickTick' : ''}`}
+      title={`${quest.name}${spanTitle}${item.source === 'ticktick' ? ' · из TickTick' : quest.tickTickSharedAt ? ' · перенос уйдёт в TickTick' : ''}`}
     >
       {`${spanLead}${item.start ? `${item.start} ` : ''}${quest.pinned ? '📌 ' : ''}${item.source === 'ticktick' || quest.tickTickSharedAt ? '⟳ ' : ''}${quest.name}`}
     </button>
@@ -90,7 +90,7 @@ export default function TasksCalendar({
   quests: Quest[];
   today: string;
   onOpen: (quest: Quest) => void;
-  /** Активная задача TickTick открывается через её штатный разбор, не как локальная копия. */
+  /** Внешняя задача открывается по её ID в TickTick. */
   incoming?: IncomingTask[];
   onOpenIncoming?: (remoteId: string) => void;
   /** Перенос задачи на другой день перетаскиванием: столько дней сдвинуть срок. */
@@ -108,9 +108,13 @@ export default function TasksCalendar({
   const [resize, setResize] = useState<{ id: string; day: string; edge: 'start' | 'end'; colTop: number; start: string; end: string } | null>(null);
   const suppressClick = useRef(false);
   const items = useMemo(() => [...calendarItems(quests), ...tickTickCalendarItems(incoming)], [quests, incoming]);
+  const openItem = (item: CalendarItem) => {
+    if (item.source !== 'ticktick') onOpen(item.quest);
+    else if (item.remoteId) onOpenIncoming?.(item.remoteId);
+  };
   const pickItem = (item: CalendarItem) => {
     setSelectedId(item.quest.id);
-    if (item.source !== 'ticktick') onOpen(item.quest);
+    openItem(item);
   };
   const startDrag = (item: CalendarItem) => (e: DragEvent) => {
     e.dataTransfer.effectAllowed = 'move';
@@ -376,7 +380,7 @@ export default function TasksCalendar({
                           draggable={movable && !resize}
                           onDragStart={movable ? startDrag(item) : undefined}
                           onDragEnd={endDrag}
-                          title={item.source === 'ticktick' ? 'Из TickTick · только просмотр' : item.quest.tickTickSharedAt ? 'Перенос уйдёт в TickTick' : undefined}
+                          title={item.source === 'ticktick' ? 'Из TickTick' : item.quest.tickTickSharedAt ? 'Перенос уйдёт в TickTick' : undefined}
                         >
                           {resizable && (
                             <span
@@ -421,9 +425,7 @@ export default function TasksCalendar({
             <span>{itemDateRange(selected)} · {sphereOf(selected.quest.sphere)?.name ?? 'Сфера'} · {selected.source === 'ticktick' ? 'TickTick · синхронизировано' : selected.quest.tickTickSharedAt ? 'TickTick' : 'только в игре'}</span>
           </div>
           <b>{selected.source === 'ticktick' ? 'TickTick' : `+${questReward(selected.quest)} XP`}</b>
-          {selected.source === 'ticktick'
-            ? <button type="button" onClick={() => onOpenIncoming?.(selected.remoteId ?? '')}>Открыть действия задачи</button>
-            : <button type="button" onClick={() => onOpen(selected.quest)}>Открыть задачу</button>}
+          <button type="button" onClick={() => openItem(selected)}>Открыть задачу</button>
         </div>
       ) : (
         <p className="tcal-empty">{items.length ? 'Нажмите на задачу, чтобы увидеть подробности.' : 'В календаре пока нет задач со сроком. Добавьте срок задаче, и она появится здесь.'}</p>

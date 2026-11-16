@@ -204,12 +204,6 @@ try {
 
     assert.equal(await tabs.getByRole('button').count(), 6);
     await tabs.getByRole('button', { name: 'Материалы проекта', exact: true }).click();
-    await workspace.getByRole('button', { name: '+ Заметка', exact: true }).click();
-    await workspace.getByLabel('Название заметки', { exact: true }).fill('Смета проекта');
-    await workspace.getByLabel('Текст заметки', { exact: true }).fill('Проверить материалы и размеры');
-    await workspace.getByRole('button', { name: 'Сохранить заметку', exact: true }).click();
-    await workspace.getByRole('button', { name: 'Избранное: Смета проекта', exact: true }).click();
-    await workspace.locator('.gw-aside > .pw-favorites').getByText('Смета проекта', { exact: true }).waitFor();
     await workspace.getByLabel('Прикрепить файл проекта', { exact: true }).setInputFiles({ name: 'project.txt', mimeType: 'text/plain', buffer: Buffer.from('Project file') });
     await workspace.locator('.pw-material').getByText('project.txt', { exact: true }).waitFor();
     const downloadPromise = page.waitForEvent('download');

@@ -128,12 +128,12 @@ try {
     await page.waitForFunction(id => !JSON.parse(localStorage.getItem('play-your-life-v1')).monthlyFocus.goalIds.includes(id), ids[1]);
     // После снятия третье место свободно, можно назначить другой проект.
     await page.evaluate(id => { location.hash = `/goals/${id}`; }, ids[3]);
-    await page.locator('.gw-banner h2').filter({ hasText: 'Запасная цель' }).waitFor();
+    await page.locator('.gw-project-hero h2').filter({ hasText: 'Запасная цель' }).waitFor();
     await page.locator('.gw-banner-tools summary').click();
     await page.getByRole('button', { name: 'Сделать главным проектом месяца', exact: true }).click();
     await page.waitForFunction(id => JSON.parse(localStorage.getItem('play-your-life-v1')).monthlyFocus.goalIds.includes(id), ids[3]);
     await page.evaluate(id => { location.hash = `/goals/${id}`; }, ids[1]);
-    await page.locator('.gw-banner h2').filter({ hasText: 'Фокус Б' }).waitFor();
+    await page.locator('.gw-project-hero h2').filter({ hasText: 'Фокус Б' }).waitFor();
     await page.locator('.gw-banner-tools summary').click();
     assert.equal(await page.getByRole('button', { name: 'Сделать главным проектом месяца', exact: true }).isDisabled(), true, 'Четвёртая цель запрещена');
     // Аккаунт только в профиле, после возврата сохраняется новый выбор.

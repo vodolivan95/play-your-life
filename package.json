@@ -21,6 +21,7 @@
     "test:tasks-calendar": "node tests/tasks-calendar-ui.mjs",
     "test:live-city": "node tests/live-city-ui.mjs",
     "test:goals-ui": "node tests/goals-ui.mjs",
+    "test:project-grips-ui": "node tests/project-grips-ui.mjs",
     "test:theme-ui": "node tests/theme-ui.mjs",
     "test:spheres-ui": "node tests/spheres-ui.mjs",
     "test:key-results-ui": "node tests/key-results-ui.mjs",

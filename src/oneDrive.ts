@@ -20,7 +20,7 @@ export async function initOneDrive(uid: string): Promise<AccountInfo | null> {
 }
 export async function connectOneDrive(uid: string) {
   const app = application(); await app.initialize();
-  await app.loginRedirect({ scopes, state: uid });
+  await app.loginRedirect({ scopes, state: uid, prompt: 'select_account' });
 }
 export async function disconnectOneDrive(uid: string) {
   const app = application(); const account = await initOneDrive(uid);

@@ -268,6 +268,11 @@ try {
     assert.equal((await projectGrip.textContent()).trim(), '⋮', 'у карточек задач проекта есть явная ручка');
     const projectGripBox = await projectGrip.boundingBox();
     assert.ok(projectGripBox.width >= 44 && projectGripBox.height >= 44, 'ручка проекта видна и удобна для касания на каждом breakpoint');
+    const projectRowBox = await projectTaskRows.first().boundingBox();
+    const projectCheckBox = await projectTaskRows.first().locator('.gw-task-check').boundingBox();
+    assert.ok(projectGripBox.x >= projectRowBox.x && projectGripBox.x + projectGripBox.width <= projectRowBox.x + projectRowBox.width, 'ручка находится внутри карточки проекта');
+    assert.ok(projectCheckBox.x > projectGripBox.x + projectGripBox.width && projectCheckBox.x - projectGripBox.x - projectGripBox.width < 36, 'три точки стоят рядом с чекбоксом');
+
     assert.notEqual(await projectGrip.evaluate((el) => getComputedStyle(el).backgroundImage), 'none', 'ручка проекта имеет контрастную голубую подложку');
     await workspace.getByLabel('Фильтр по этапу').selectOption(ids.c);
     await workspace

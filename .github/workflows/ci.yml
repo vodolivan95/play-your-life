@@ -56,6 +56,8 @@ jobs:
       - run: npm run test:planner-ui
       - run: npm run test:tasks-calendar
       - run: npm run test:goals-ui
+      - name: Verify project task grips in locked stages on desktop and phone
+        run: npm run test:project-grips-ui
       - run: npm run test:theme-ui
       - run: npm run test:spheres-ui
       - name: Verify account TickTick settings with isolated mock services

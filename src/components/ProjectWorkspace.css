@@ -168,3 +168,38 @@
 :root .gw-project .primary-button:disabled { color:var(--ss-muted); background:var(--ss-panel-2); box-shadow:none; border:1px solid var(--ss-line); opacity:.7; }
 :root .gw-project .pw-sidebar-group .gw-card { background:none; box-shadow:none; }
 :root .gw-project .gw-card, :root .gw-project .gw-roadmap { background:var(--ss-panel); }
+
+/* Ручка и строка задачи составляют одну карточку — как на экране этапа. */
+:root .gw-project .task-reorder-list > .task-reorder-item {
+  gap: 0;
+  align-items: center;
+  padding-left: 12px;
+  border: 2px solid var(--ss-line);
+  border-radius: 18px;
+  background: var(--ss-panel-2);
+}
+:root .gw-project .task-reorder-list > .task-reorder-item.is-dragging,
+:root .gw-project .task-reorder-list > .task-reorder-item.is-drop-target {
+  border-color: var(--ss-cyan);
+  box-shadow: var(--ss-glow);
+}
+:root .gw-project .task-reorder-list > .task-reorder-item .task-reorder-grip {
+  color: #50cfff;
+  background: linear-gradient(145deg, #1596d927, #0d8fe716);
+  border-color: #24b8ff82;
+}
+:root .gw-project .task-reorder-list > .task-reorder-item .task-reorder-grip:is(:hover, :focus-visible) {
+  color: #42c9ff;
+  background: linear-gradient(145deg, #1596d955, #0d8fe733);
+}
+:root .gw-project .task-reorder-content > .gw-task {
+  margin: 0;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+@media (max-width: 600px) {
+  :root .gw-project .task-reorder-list > .task-reorder-item { padding-left: 8px; }
+  :root .gw-project .task-reorder-content > .gw-task { padding: 10px 8px; }
+}

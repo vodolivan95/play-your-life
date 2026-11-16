@@ -908,6 +908,9 @@ export default function GoalWorkspace(p: Props) {
     return changed;
   }
   function undoFinish(task: Quest) {
+    const parent = stages.find((item) => item.id === task.stageId);
+    const blocked = parent && (stageAccess(state, goal, parent) || (parent.status === 'paused' ? 'Этап приостановлен.' : ''));
+    if (blocked) { p.onNotify(blocked); return false; }
     const changed = mutate((s) => reopenQuest(s, task.id));
     if (changed)
       p.onNotify('Отметка выполнения снята. Полученная награда остаётся и повторно не начислится.');
@@ -941,6 +944,9 @@ export default function GoalWorkspace(p: Props) {
     setProgressValue(task.currentValue ?? 0);
   }
   function saveProgress(task: Quest, value: number) {
+    const parent = stages.find((item) => item.id === task.stageId);
+    const blocked = parent && (stageAccess(state, goal, parent) || (parent.status === 'paused' ? 'Этап приостановлен.' : ''));
+    if (blocked) { p.onNotify(blocked); return; }
     if (goal.paused) {
       p.onNotify('Проект на паузе. Возобновите проект, чтобы завершать задачи.');
       return;
@@ -966,10 +972,7 @@ export default function GoalWorkspace(p: Props) {
       >
         <button
           className="gw-task-check"
-          disabled={!task.done && (
-            !!blocked ||
-            (!!task.startsAt && Date.parse(task.startsAt) > now)
-          )}
+          disabled={!!blocked || (!task.done && !!task.startsAt && Date.parse(task.startsAt) > now)}
           aria-label={`${task.done ? 'Отменить выполнение' : 'Выполнить'}: ${task.name}`}
           onClick={() => task.done ? undoFinish(task) : finish(task)}
         >
@@ -1160,6 +1163,14 @@ export default function GoalWorkspace(p: Props) {
                         >
                           Настроить доступ этапа →
                         </button>
+                        {!!m.tasks.length && <TaskReorderList
+                          tasks={m.tasks}
+                          label={`Задачи этапа ${s.name} в проекте`}
+                          onReorder={(sourceId, targetId, placement) => {
+                            mutate((current) => reorderTaskList(current, m.tasks.map((task) => task.id), sourceId, targetId, placement));
+                          }}
+                          renderTask={taskRow}
+                        />}
                       </div>
                     ) : (
                       <>

@@ -30,6 +30,7 @@ jobs:
     env:
       VITE_BASE_PATH: /play-your-life/
       VITE_TICKTICK_BRIDGE_URL: ${{ vars.VITE_TICKTICK_BRIDGE_URL }}
+      VITE_MICROSOFT_CLIENT_ID: ${{ vars.VITE_MICROSOFT_CLIENT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

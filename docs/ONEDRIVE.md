@@ -7,7 +7,7 @@
 1. Зарегистрируйте приложение в Microsoft Entra admin center → App registrations. Тип аккаунтов: личные Microsoft и организационные (если нужны оба типа).
 2. В Authentication добавьте платформу **Single-page application** с URI `https://vodolivan95.github.io/play-your-life/`. Для разработки добавьте `http://localhost:5173/` (или точный адрес dev-сервера).
 3. В API permissions добавьте делегированные Microsoft Graph `User.Read` и `Files.ReadWrite`. Для организаций администратор может требовать consent.
-4. Скопируйте **Application (client) ID** в `VITE_MICROSOFT_CLIENT_ID`. Это публичный идентификатор SPA, не секрет. Клиентский секрет SPA не требуется и в Vite не помещается.
+4. Скопируйте **Application (client) ID** в `VITE_MICROSOFT_CLIENT_ID`: для GitHub Pages добавьте его в **Settings → Secrets and variables → Actions → Variables**, для Vercel — в **Project Settings → Environment Variables** и повторно разверните проект, для локального запуска — в `.env.local`. Это публичный идентификатор SPA, не секрет. Клиентский секрет SPA не требуется и в Vite не помещается.
 5. Запустите `npm ci` и `npm run dev`; войдите в Play Your Life и откройте «Мой диск».
 
 ## Поведение и границы

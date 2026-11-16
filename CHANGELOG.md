@@ -1,6 +1,6 @@
 ## 0.86.0 — Мой диск
 
-Добавлен раздел OneDrive в меню, вход Microsoft через MSAL PKCE, сетка папок и операции Microsoft Graph. Настройка и ограничения: [docs/ONEDRIVE.md](docs/ONEDRIVE.md).
+Добавлен раздел OneDrive в меню, вход Microsoft через MSAL PKCE, сетка папок и операции Microsoft Graph. Бюджет суммарных JS/CSS увеличен с 1025 до 1032 КБ gzip: фактическая сборка 1027,1 КБ с официальной библиотекой MSAL; стартовый скрипт остаётся в лимите 420 КБ. Настройка и ограничения: [docs/ONEDRIVE.md](docs/ONEDRIVE.md).
 
 ## 0.85.1 — Ручки задач проекта
 

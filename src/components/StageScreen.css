@@ -401,7 +401,7 @@
   padding: 2px 0 4px;
   scrollbar-width: none;
 }
-.gw-workspace .ss nav.ss-tabs button {
+:is(.gw-workspace .ss, .gw-workspace.ss) nav.ss-tabs button {
   min-height: 54px;
   padding: 12px 22px;
   border: 1px solid var(--ss-line);
@@ -411,13 +411,13 @@
   font-size: 15px;
   font-weight: 700;
 }
-.gw-workspace .ss nav.ss-tabs button.selected {
+:is(.gw-workspace .ss, .gw-workspace.ss) nav.ss-tabs button.selected {
   background: linear-gradient(120deg, #7be6ff, #25b4f5);
   border-color: transparent;
   color: #04233a;
   box-shadow: 0 6px 22px #25b4f540;
 }
-.gw-workspace .ss nav.ss-tabs button:not(.selected):hover {
+:is(.gw-workspace .ss, .gw-workspace.ss) nav.ss-tabs button:not(.selected):hover {
   background: var(--ss-cyan-soft);
   color: var(--ss-text);
 }

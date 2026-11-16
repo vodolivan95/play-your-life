@@ -73,10 +73,15 @@ import { postponementAnalytics, timeAnalytics } from '../planningData';
 import Icon from './Icon';
 import TaskLabelBadge from './TaskLabelBadge';
 import TaskWindow from './TaskWindow';
+import ProjectMaterials, { ProjectFavorites } from './ProjectMaterials';
+import { ProjectNextStep, ProjectTaskDate, ProjectReschedule } from './ProjectTaskTools';
+import { calendarDay, questsForCalendarDay } from '../tasksCalendar';
 import TaskReorderList from './TaskReorderList';
 import { focusSlices, formatFocus } from '../focusCore';
 const FocusStats = lazy(() => import('./FocusStats'));
 import './GoalWorkspace.css';
+import './StageScreen.css';
+import './ProjectWorkspace.css';
 
 const StageScreen = lazy(() => import('./StageScreen'));
 
@@ -115,20 +120,15 @@ const dayKey = (date: Date) =>
 /** Компактная строка «период · дедлайн» для карточки этапа в дорожной карте. */
 function stageDateLine(s: GoalStage, status: string) {
   if (!s.startsAt && !s.dueAt) return null;
-  const range = s.startsAt && s.dueAt
-    ? `${shortDate(s.startsAt)} → ${shortDate(s.dueAt)}`
-    : s.startsAt
-      ? `с ${shortDate(s.startsAt)}`
-      : `до ${shortDate(s.dueAt)}`;
   return (
     <small className="gw-stage-dates">
-      <span aria-hidden="true">📅</span> {range}
+      <span aria-hidden="true">📅</span> Начало: {shortDate(s.startsAt)} · Окончание: {shortDate(s.dueAt)}
       {s.dueAt && (
         <>
           {' '}
-          · <span aria-hidden="true">⏳</span>{' '}
+          · <span className="pw-deadline"><span aria-hidden="true">⏳</span>{' '}
           {status === 'completed' ? 'Дедлайн был' : 'Дедлайн'}:{' '}
-          {shortDate(s.dueAt)}
+          {shortDate(s.dueAt)}{status !== 'completed' && stageDays(s).remaining !== null && ` · ${stageDays(s).remaining! < 0 ? 'Просрочено' : 'Осталось'} ${Math.abs(stageDays(s).remaining!)} дн.`}</span>
         </>
       )}
     </small>
@@ -641,10 +641,12 @@ function Statistics({
   );
 }
 /** Компактный спарклайн прогресса проекта по сохранённым точкам — для боковой панели. */
-function WeeklyProgressCard({ state, goal }: { state: GameState; goal: Goal }) {
+function WeeklyProgressCard({ state, goal, now }: { state: GameState; goal: Goal; now: number }) {
   const data = goalStatistics(state, goal);
   const current = Math.round(goalProgressValue(state, goal));
   const points = data.progress;
+  const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
+  const weekBefore = points.filter(p => Date.parse(p.date) <= now - 7 * 86400000).at(-1);
   const coords =
     points.length > 1
       ? (() => {
@@ -678,6 +680,7 @@ function WeeklyProgressCard({ state, goal }: { state: GameState; goal: Goal }) {
               strokeLinecap="round"
               strokeLinejoin="round"
             />
+            {coords.map((c, i) => <circle key={i} cx={c.x} cy={c.y} r="5" fill="var(--ss-cyan, #0a84ff)" tabIndex={0} role="button" aria-label={`${shortDate(points[i].date)}: ${Math.round(points[i].value)}%`} onFocus={() => setSelectedPoint(i)} onMouseEnter={() => setSelectedPoint(i)} onClick={() => setSelectedPoint(i)}><title>{shortDate(points[i].date)}: {Math.round(points[i].value)}%</title></circle>)}
             <circle
               cx={coords[coords.length - 1].x}
               cy={coords[coords.length - 1].y}
@@ -691,6 +694,8 @@ function WeeklyProgressCard({ state, goal }: { state: GameState; goal: Goal }) {
           </p>
         )}
       </div>
+      {selectedPoint !== null && points[selectedPoint] && <p className="gw-muted">{shortDate(points[selectedPoint].date)} · {Math.round(points[selectedPoint].value)}%</p>}
+      {weekBefore && <p className="gw-muted">За 7 дней: {current - Math.round(weekBefore.value) > 0 ? '+' : ''}{current - Math.round(weekBefore.value)} п. п.</p>}
       {points.length > 1 && (
         <small className="gw-muted">
           {shortDate(points[0].date)} — {shortDate(points[points.length - 1].date)}
@@ -710,6 +715,7 @@ export default function GoalWorkspace(p: Props) {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [tab, setTab] = useState(goal.projectReview ? 'tasks' : 'overview');
   const [filter, setFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
   const [now, setNow] = useState(() => Date.now());
   const today = dateKey(new Date(now));
   const monthNow = new Date(now);
@@ -760,7 +766,7 @@ export default function GoalWorkspace(p: Props) {
   }, [detail]);
   const sphere = spheres.find((s) => s.id === goal.sphere)!;
   const history = goalHistory(state, goal, stage?.id);
-  const nextTask = nextGoalTask(state, goal);
+  const nextTask = nextGoalTask(state, goal, new Date(now), q => !q.wontDo && !q.planning?.archivedAt && !dependencyBlockMessage(state.quests, q));
   const activeStage = activeGoalStage(state, goal, new Date(now));
   // На экране этапа «Почему важен этот этап» относится к открытому этапу.
   const whyStage = stage ?? activeStage;
@@ -770,7 +776,7 @@ export default function GoalWorkspace(p: Props) {
   ).length;
   const group = stage ? stageMetrics(state, goal, stage) : null;
   const scopeTasks = stage ? group!.tasks : tasks;
-  const visibleTasks = scopeTasks.filter(
+  const stageFilteredTasks = scopeTasks.filter(
     (q) =>
       stage ||
       filter === 'all' ||
@@ -778,6 +784,9 @@ export default function GoalWorkspace(p: Props) {
         ? !q.stageId || !stages.some((s) => s.id === q.stageId)
         : q.stageId === filter),
   );
+  const todayIds = new Set(questsForCalendarDay(stageFilteredTasks, today).map(q => q.id));
+  const matchesDate = (q: Quest, f: string) => f === 'all' || (f === 'today' ? todayIds.has(q.id) : f === 'overdue' ? !q.done && !!calendarDay(q.deadlineAt || q.dueAt) && calendarDay(q.deadlineAt || q.dueAt)! < today : !q.dueAt && !q.startsAt);
+  const visibleTasks = stageFilteredTasks.filter(q => matchesDate(q, dateFilter));
   const viewedTask =
     detail?.kind === 'task'
       ? state.quests.find(
@@ -973,7 +982,7 @@ export default function GoalWorkspace(p: Props) {
           <strong>{task.name}</strong>
           <TaskLabelBadge labelId={task.labelId} labels={state.taskLabels} />
           <small>
-            {taskDateLine(task)}
+            {stageId ? taskDateLine(task) : <ProjectTaskDate task={task} />}
             {task.required === false ? ' · Необязательная' : ''}
             {task.targetValue && !task.done
               ? ` · ${task.currentValue ?? 0}/${task.targetValue} ${task.unit ?? ''}`
@@ -981,6 +990,7 @@ export default function GoalWorkspace(p: Props) {
           </small>
         </button>
         <span className="gw-task-xp">+{task.xp} XP</span>
+        {!stageId && !task.done && <ProjectReschedule task={task} mutate={mutate} />}
         <button
           className="gw-icon-button"
           aria-label={`Открыть задачу: ${task.name}`}
@@ -1066,6 +1076,12 @@ export default function GoalWorkspace(p: Props) {
           </h2>
           <div>
             {tab !== 'stages' && (
+              <button className="text-button" onClick={() => setExpanded(v => v.filter(id => !stages.some(s => s.id === id && stageMetrics(state, goal, s).complete)))}>
+                Свернуть завершённые
+              </button>
+            )}
+            {activeId && <button className="text-button" onClick={() => { setExpanded(v => [...new Set([...v, activeId])]); requestAnimationFrame(() => document.querySelector(`[data-stage="${activeId}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })); }}>К текущему этапу ↑</button>}
+            {tab !== 'stages' && (
               <button className="text-button" onClick={() => setExpanded([])}>
                 Свернуть все этапы
               </button>
@@ -1076,7 +1092,8 @@ export default function GoalWorkspace(p: Props) {
           </div>
         </div>
         <div className="gw-roadmap">
-          {stages.map((s, index) => {
+          {stages.slice().reverse().map((s) => {
+            const index = stages.indexOf(s);
             const m = stageMetrics(state, goal, s),
               status = stageState(state, goal, s),
               open = tab === 'stages' || expanded.includes(s.id),
@@ -1476,7 +1493,7 @@ export default function GoalWorkspace(p: Props) {
   const days = stageDays(goal);
   const stageScreen = !!stage && !stageAccess(state, goal, stage);
   return (
-    <div className="gw-workspace">
+    <div className={`gw-workspace ${!stageId ? 'ss gw-project' : ''}`}>
       <nav className="gw-breadcrumbs" aria-label="Навигационная цепочка">
         <button onClick={() => p.onSelect(null)}>Проекты</button>
         <span>›</span>
@@ -1505,7 +1522,8 @@ export default function GoalWorkspace(p: Props) {
         </div>
       )}
       {!stageScreen && (
-      <section className={`gw-banner ${stageId ? 'gw-banner-compact' : ''}`}>
+      <section className={stageId ? 'gw-banner gw-banner-compact' : 'ss-hero gw-project-hero'}>
+        <div className={!stageId ? 'ss-hero-image' : undefined}>
         <img
           className="gw-banner-image"
           src={
@@ -1515,8 +1533,9 @@ export default function GoalWorkspace(p: Props) {
           }
           alt=""
         />
-        {projectTools()}
-        <div className="gw-banner-copy">
+        </div>
+        <div className={!stageId ? 'ss-hero-tools' : undefined}>{projectTools()}</div>
+        <div className={stageId ? 'gw-banner-copy' : 'ss-hero-copy'}>
           <div className="gw-banner-sphere">
             <SphereIcon id={goal.sphere} />
             <span>{sphere.name}</span>
@@ -1557,7 +1576,7 @@ export default function GoalWorkspace(p: Props) {
             </span>
           </div>
         </div>
-        <div className="gw-banner-progress">
+        <div className={stageId ? 'gw-banner-progress' : 'ss-hero-ring'}>
           <ProgressRing value={goalProgress} label="Общий прогресс проекта" />
           <small>Общий прогресс проекта</small>
           {stageId && (
@@ -1731,8 +1750,9 @@ export default function GoalWorkspace(p: Props) {
               </button>
             </div>
           )}
+          {!stage && <div className="pw-reward-strip">{rewards()}</div>}
           <nav
-            className="gw-tabs"
+            className={`gw-tabs ${!stageId ? 'ss-tabs' : ''}`}
             aria-label={stage ? 'Разделы этапа' : 'Разделы проекта'}
           >
             {(stage
@@ -1749,6 +1769,7 @@ export default function GoalWorkspace(p: Props) {
                   ['tasks', 'Задачи', 'calendar'],
                   ['statistics', 'Статистика', 'statistics'],
                   ['history', 'История', 'plan'],
+                  ['materials', 'Материалы проекта', 'attachment'],
                 ]
             ).map(([id, name, icon]) => (
               <button
@@ -1775,6 +1796,9 @@ export default function GoalWorkspace(p: Props) {
           )}
           <div className="gw-columns">
             <div className="gw-main">
+              {!stage && tab === 'overview' && <ProjectNextStep state={state} goal={goal} task={nextTask ?? undefined} mutate={mutate} onOpen={task => setDetail({ kind: 'task', task })} />}
+              {!stage && tab === 'materials' && <ProjectMaterials key={`${p.ownerId}:${goal.id}`} state={state} goal={goal} ownerId={p.ownerId} onChange={p.onChange} notify={p.onNotify} onLegacyNotes={() => setDetail({ kind: 'notes' })} />}
+
               {!stage && (tab === 'overview' || tab === 'stages') && roadmap()}
               {!stage && tab === 'overview' && (
                 <Card title="Контрольные точки" icon="checkpoints" className="gw-checkpoints">
@@ -1831,41 +1855,6 @@ export default function GoalWorkspace(p: Props) {
                         ＋ Добавить контрольную точку
                       </button>
                     </form>
-                  )}
-                </Card>
-              )}
-              {!stage && tab === 'overview' && (
-                <Card title="Следующий шаг" icon="nextStep" className="gw-next-step">
-                  {nextTask ? (
-                    <div>
-                      <div>
-                        <h3>{nextTask.name}</h3>
-                        <p>
-                          {nextTask.notes ||
-                            'Откройте задачу и сделайте следующий шаг.'}
-                        </p>
-                        <small>
-                          +{nextTask.xp} XP
-                          {questCoins(nextTask)
-                            ? ` · ${questCoins(nextTask)} лайфкоинов`
-                            : ''}
-                        </small>
-                      </div>
-                      <button
-                        className="primary-button"
-                        onClick={() =>
-                          setDetail({ kind: 'task', task: nextTask })
-                        }
-                      >
-                        Начать →
-                      </button>
-                    </div>
-                  ) : (
-                    <p>
-                      {tasks.length && tasks.every((q) => q.done)
-                        ? 'Все задачи выполнены. Добавьте следующий этап или подтвердите достижение проекта.'
-                        : 'Сейчас нет доступных задач. Добавьте задачу или проверьте даты и условия этапов.'}
-                    </p>
                   )}
                 </Card>
               )}
@@ -1948,6 +1937,7 @@ export default function GoalWorkspace(p: Props) {
                       ＋ Добавить задачу
                     </button>
                   </div>
+                  {!stage && <div className="pw-filters" aria-label="Фильтры дат">{[['all', 'Все'], ['today', 'Сегодня'], ['overdue', 'Просрочено'], ['undated', 'Без даты']].map(([id, label]) => <button key={id} aria-pressed={dateFilter === id} onClick={() => setDateFilter(id)}>{label} <b>{stageFilteredTasks.filter(q => matchesDate(q, id)).length}</b></button>)}</div>}
                   <TaskReorderList
                     tasks={visibleTasks}
                     label={stage ? 'Задачи этапа в выбранном порядке' : 'Задачи проекта в выбранном порядке'}
@@ -2031,6 +2021,7 @@ export default function GoalWorkspace(p: Props) {
                 )}
             </div>
             <aside className="gw-aside">
+              {!stage && <ProjectFavorites goal={goal} onOpen={() => setTab('materials')} onLegacyNotes={() => setDetail({ kind: 'notes' })} />}
               {stage ? (
                 <>
                   <Card title="Прогресс этапа">
@@ -2069,7 +2060,7 @@ export default function GoalWorkspace(p: Props) {
                 </>
               ) : (
                 <>
-                  {tab !== 'rewards' && rewards()}
+                  <section className="pw-sidebar-group" aria-label="Результат и прогресс">
                   <Card title="Конечный результат" icon="finalResult">
                     <button
                       className="gw-final-result"
@@ -2098,7 +2089,7 @@ export default function GoalWorkspace(p: Props) {
                       );
                     })()}
                   </Card>
-                  <WeeklyProgressCard state={state} goal={goal} />
+                  <WeeklyProgressCard state={state} goal={goal} now={now} /></section><section className="pw-sidebar-group" aria-label="Фокус недели">
                   <Card title="Фокус на эту неделю" icon="weeklyFocus">
                     <button
                       className="gw-weekly-focus-btn"
@@ -2109,31 +2100,6 @@ export default function GoalWorkspace(p: Props) {
                       <span>✎</span>
                     </button>
                   </Card>
-                  <Card title="Почему этот проект важен для меня" icon="motivation">
-                    <button
-                      className="gw-motivation"
-                      onClick={() => setDetail({ kind: 'motivation' })}
-                    >
-                      {goal.motivation ||
-                        'Добавьте свою причину — она поможет двигаться к проекту.'}
-                      <span>✎</span>
-                    </button>
-                  </Card>
-                  {activeStage && (
-                    <Card title="Почему важен этот этап" icon="stageWhy">
-                      <p className="gw-muted gw-stage-why-title">
-                        {activeStage.name}
-                      </p>
-                      <button
-                        className="gw-stage-why"
-                        onClick={() => setDetail({ kind: 'stageWhy' })}
-                      >
-                        {activeStage.whyImportant ||
-                          'Почему именно этот этап важен сейчас?'}
-                        <span>✎</span>
-                      </button>
-                    </Card>
-                  )}
                   <Card title="Фокус на эту неделю — измеримый" icon="weeklyFocusGoal">
                     {goal.weeklyFocusGoal ? (
                       <div className="gw-weekly-focus-goal">
@@ -2214,6 +2180,33 @@ export default function GoalWorkspace(p: Props) {
                       </button>
                     )}
                   </Card>
+                  </section><details className="pw-sidebar-group pw-motivation" open><summary>Мотивация и план</summary>
+                  <Card title="Почему этот проект важен для меня" icon="motivation">
+                    <button
+                      className="gw-motivation"
+                      onClick={() => setDetail({ kind: 'motivation' })}
+                    >
+                      {goal.motivation ||
+                        'Добавьте свою причину — она поможет двигаться к проекту.'}
+                      <span>✎</span>
+                    </button>
+                  </Card>
+                  {activeStage && (
+                    <Card title="Почему важен этот этап" icon="stageWhy">
+                      <p className="gw-muted gw-stage-why-title">
+                        {activeStage.name}
+                      </p>
+                      <button
+                        className="gw-stage-why"
+                        onClick={() => setDetail({ kind: 'stageWhy' })}
+                      >
+                        {activeStage.whyImportant ||
+                          'Почему именно этот этап важен сейчас?'}
+                        <span>✎</span>
+                      </button>
+                    </Card>
+                  )}
+                  {woopCard()}{ifThenCard()}</details><section className="pw-sidebar-group" aria-label="Заметки и история">
                   <Card title="Заметки" icon="notes">
                     <button
                       className="gw-goal-notes"
@@ -2233,14 +2226,14 @@ export default function GoalWorkspace(p: Props) {
                       Все события →
                     </button>
                   </Card>
-                  {woopCard()}
-                  {ifThenCard()}
+                  </section>
                 </>
               )}
             </aside>
           </div>
         </>
       )}
+      {!stageId && nextTask && <button className="ss-primary pw-mobile-continue" onClick={() => { setTab('overview'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Продолжить: {nextTask.name} ↑</button>}
       <dialog
         ref={dialog}
         aria-label={

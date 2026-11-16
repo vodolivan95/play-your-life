@@ -202,8 +202,26 @@ try {
       undefined,
     );
 
-    assert.equal(await tabs.getByRole('button').count(), 5);
+    assert.equal(await tabs.getByRole('button').count(), 6);
+    await tabs.getByRole('button', { name: 'Материалы проекта', exact: true }).click();
+    await workspace.getByLabel('Прикрепить файл проекта', { exact: true }).setInputFiles({ name: 'project.txt', mimeType: 'text/plain', buffer: Buffer.from('Project file') });
+    await workspace.locator('.pw-material').getByText('project.txt', { exact: true }).waitFor();
+    const downloadPromise = page.waitForEvent('download');
+    await workspace.locator('.pw-material').getByText('project.txt', { exact: true }).click();
+    assert.equal((await downloadPromise).suggestedFilename(), 'project.txt');
+    await workspace.getByRole('button', { name: 'Избранное: project.txt', exact: true }).click();
+    await workspace.locator('.pw-favorites').getByText('project.txt', { exact: true }).waitFor();
+    await tabs.getByRole('button', { name: 'Обзор', exact: true }).click();
+    assert.equal(await workspace.locator('.pw-countdown').count(), 0, 'таймер скрыт до запуска');
+    await workspace.locator('.pw-next').getByRole('button', { name: /Начать/ }).click();
+    await workspace.locator('.pw-countdown').waitFor();
+    await workspace.locator('.pw-next').getByRole('button', { name: 'Пауза', exact: true }).click();
+    await workspace.locator('.pw-next').getByRole('button', { name: 'Продолжить', exact: true }).click();
+    await workspace.locator('.pw-next').getByRole('button', { name: 'Завершить сессию', exact: true }).click();
+    assert.equal(await workspace.locator('.pw-countdown').count(), 0);
+
     assert.equal(await workspace.locator('.gw-roadmap-stage').count(), 3);
+    assert.deepEqual(await workspace.locator('.gw-roadmap-stage').evaluateAll((els) => els.map((el) => el.getAttribute('data-stage'))), [ids.c, ids.b, ids.a], 'маршрут проекта идёт снизу вверх, сохраняя номера этапов');
     assert.equal(await workspace.locator('.gw-stage-tasks').count(), 1);
     await workspace.locator('.gw-reward-content').click();
     await workspace
@@ -233,7 +251,7 @@ try {
     }, ids.id);
     await workspace.waitFor();
     await workspace
-      .getByRole('button', { name: 'Начать →', exact: true })
+      .getByRole('button', { name: 'Открыть задачу →', exact: true })
       .click();
     await workspace
       .getByRole('dialog')
@@ -275,7 +293,7 @@ try {
     }
     const overviewSource = overviewTasks.filter({ hasText: 'Повторить слова' }).locator('.task-reorder-grip');
     const overviewTarget = overviewTasks.filter({ hasText: 'Выучить слова' });
-    await overviewSource.evaluate((el, mobile) => el.scrollIntoView({ block: mobile ? 'center' : 'nearest' }), width < 600);
+    await overviewSource.evaluate((el) => el.scrollIntoView({ block: 'center' }), width < 600);
     await page.waitForTimeout(160);
     const overviewSourceBox = await overviewSource.boundingBox();
     const overviewTargetBox = await overviewTarget.boundingBox();
@@ -373,7 +391,7 @@ try {
     assert.ok(stageGripBox.width >= 44 && stageGripBox.height >= 44, 'ручка этапа удобна для касания на каждом breakpoint');
     assert.notEqual(await sourceHandle.evaluate((el) => getComputedStyle(el).backgroundImage), 'none', 'ручка этапа заметна на тёмной карточке');
     const targetRow = taskRows.filter({ hasText: 'Повторить слова' });
-    await sourceHandle.evaluate((el, mobile) => el.scrollIntoView({ block: mobile ? 'center' : 'nearest' }), width < 600);
+    await sourceHandle.evaluate((el) => el.scrollIntoView({ block: 'center' }), width < 600);
     await page.waitForTimeout(160); // Wait until native/inertial scrolling is idle.
     const sourceBox = await sourceHandle.boundingBox();
     const targetBox = await targetRow.boundingBox();
@@ -400,6 +418,8 @@ try {
       await page.mouse.move(targetPoint.x, targetPoint.y, { steps: 5 });
       await page.mouse.up();
     }
+    await page.screenshot({ path: `work/goal-redesign/drag-${width}.png` });
+    await page.waitForFunction(() => window.__flipPlayCount > 0);
     assert.ok(await page.evaluate(() => window.__flipPlayCount > 0), 'stage reorder must invoke Web Animations API');
     assert.deepEqual(await taskRows.locator('.ss-task-main strong').allTextContents(), ['Выучить слова', 'Повторить слова']);
     await page.waitForFunction(({ goalId, stageId }) => {
@@ -533,7 +553,7 @@ try {
       await stageB.evaluate((el) => el.classList.contains('gw-stage-active')),
     );
     await workspace
-      .locator('.gw-banner')
+      .locator('.gw-project-hero')
       .getByRole('img', { name: 'Общий прогресс проекта: 33%' })
       .waitFor();
     await tabs.getByRole('button', { name: 'Этапы', exact: true }).click();

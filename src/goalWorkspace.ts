@@ -147,10 +147,11 @@ export function stageDays(
         : null,
   };
 }
-export function nextGoalTask(state: GameState, goal: Goal, now = new Date()) {
+export function nextGoalTask(state: GameState, goal: Goal, now = new Date(), eligible: (task: Quest) => boolean = () => true) {
   const candidates = state.quests.filter((q) => {
     if (
       q.goalId !== goal.id ||
+      !eligible(q) ||
       q.done ||
       q.rewardClaimed ||
       (q.startsAt && Date.parse(q.startsAt) > now.getTime())

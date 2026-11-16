@@ -5,7 +5,7 @@
  */
 export type MenuIconId =
   | 'home' | 'spheres' | 'tasks' | 'quests' | 'goals' | 'plan' | 'monthly'
-  | 'tree' | 'achievements' | 'shop' | 'city' | 'statistics' | 'profile' | 'budget';
+  | 'tree' | 'achievements' | 'shop' | 'city' | 'statistics' | 'profile' | 'budget' | 'drive';
 import { habitsIconSvg, tasksIconSvg } from './menuIconsNew';
 type Stop = readonly [number, string, number?];
 
@@ -18,6 +18,7 @@ const P = (d: string, f: string): string => `<path d="${d}" fill="url(#${f})"/><
 const Rr = (x: number, y: number, w: number, h: number, r: number, f: string): string => { const a = `x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}"`; return `<rect ${a} fill="url(#${f})"/><rect ${a} fill="url(#sh)"/><rect ${a} fill="none" stroke="url(#rim)" stroke-width="1.1"/>`; };
 const Ci = (cx: number, cy: number, r: number, f: string): string => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#${f})"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#sh)"/><circle cx="${cx}" cy="${cy}" r="${r - .5}" fill="none" stroke="url(#rim)" stroke-width="1.1"/>`;
 const SVGS: Record<MenuIconId, string> = {
+  drive: LG('c', [[0, '#a8dfff'], [1, '#267cd8']]) + '<path d="M18 48h31a10 10 0 0 0 0-20 17 17 0 0 0-32-3 12 12 0 0 0 1 23z" fill="url(#c)" stroke="#e7f8ff" stroke-width="2"/>',
   tasks: '',
   home:
     LG('w', [[0, '#FFFFFF'], [.55, '#E4E9F2'], [1, '#B9C3D6']]) + LG('r', [[0, '#E0766F'], [.5, '#B84A4B'], [1, '#7E2D36']]) + LG('d', [[0, '#7FB2F2'], [1, '#2F63C2']]) + LG('g', [[0, '#FFF3C2'], [1, '#F2B84B']]) +

@@ -1146,7 +1146,20 @@ export default function GoalWorkspace(p: Props) {
                       </div>
                     ) : (
                       <>
-                        {m.tasks.map(taskRow)}
+                        <TaskReorderList
+                          tasks={m.tasks}
+                          label={`Задачи этапа ${s.name} в проекте`}
+                          onReorder={(sourceId, targetId, placement) => {
+                            mutate((current) => reorderTaskList(
+                              current,
+                              m.tasks.map((task) => task.id),
+                              sourceId,
+                              targetId,
+                              placement,
+                            ));
+                          }}
+                          renderTask={taskRow}
+                        />
                         {!m.tasks.length && (
                           <p className="gw-muted">
                             Добавьте первый шаг этого этапа.
@@ -1190,11 +1203,25 @@ export default function GoalWorkspace(p: Props) {
           (q) => !q.stageId || !stages.some((s) => s.id === q.stageId),
         ) && (
           <Card title="Задачи без этапа">
-            {tasks
-              .filter(
+            <TaskReorderList
+              tasks={tasks.filter(
                 (q) => !q.stageId || !stages.some((s) => s.id === q.stageId),
-              )
-              .map(taskRow)}
+              )}
+              label="Задачи проекта без этапа"
+              onReorder={(sourceId, targetId, placement) => {
+                const unassigned = tasks.filter(
+                  (q) => !q.stageId || !stages.some((s) => s.id === q.stageId),
+                );
+                mutate((current) => reorderTaskList(
+                  current,
+                  unassigned.map((task) => task.id),
+                  sourceId,
+                  targetId,
+                  placement,
+                ));
+              }}
+              renderTask={taskRow}
+            />
             <button className="text-button" onClick={() => p.onAddTask()}>
               ＋ Добавить задачу
             </button>

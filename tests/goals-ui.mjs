@@ -265,6 +265,42 @@ try {
     await stageA
       .getByRole('button', { name: 'Раскрыть этап: База A1–A2' })
       .click();
+    const overviewTasks = stageA.locator('.gw-stage-tasks .task-reorder-list > li[data-task-order-id]');
+    assert.equal(await overviewTasks.count(), 2, 'в раскрытом этапе обзорной вкладки показаны сортируемые карточки');
+    for (const row of await overviewTasks.all()) {
+      const grip = row.locator('.task-reorder-grip');
+      assert.equal((await grip.textContent()).trim(), '⋮', 'в обзорной карточке задачи проекта есть ручка перетаскивания');
+      const box = await grip.boundingBox();
+      assert.ok(box.width >= 44 && box.height >= 44, 'ручка обзорной карточки заметна и удобна');
+    }
+    const overviewSource = overviewTasks.filter({ hasText: 'Повторить слова' }).locator('.task-reorder-grip');
+    const overviewTarget = overviewTasks.filter({ hasText: 'Выучить слова' });
+    await overviewSource.evaluate((el, mobile) => el.scrollIntoView({ block: mobile ? 'center' : 'nearest' }), width < 600);
+    await page.waitForTimeout(160);
+    const overviewSourceBox = await overviewSource.boundingBox();
+    const overviewTargetBox = await overviewTarget.boundingBox();
+    const overviewSourcePoint = { x: overviewSourceBox.x + overviewSourceBox.width / 2, y: overviewSourceBox.y + overviewSourceBox.height / 2 };
+    const overviewTargetPoint = { x: overviewTargetBox.x + overviewTargetBox.width / 2, y: overviewTargetBox.y + overviewTargetBox.height / 4 };
+    if (width < 600) {
+      const touch = await context.newCDPSession(page);
+      await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ id: 1, ...overviewSourcePoint }] });
+      await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ id: 1, ...overviewTargetPoint }] });
+      await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await touch.detach();
+    } else {
+      await page.mouse.move(overviewSourcePoint.x, overviewSourcePoint.y);
+      await page.mouse.down();
+      await page.mouse.move(overviewTargetPoint.x, overviewTargetPoint.y, { steps: 5 });
+      await page.mouse.up();
+    }
+    assert.deepEqual(await overviewTasks.locator('.gw-task-name strong').allTextContents(), ['Повторить слова', 'Выучить слова'], 'перетаскивание работает прямо в обзоре проекта');
+    await page.waitForFunction(({ goalId, stageId }) => {
+      const state = JSON.parse(localStorage.getItem('play-your-life-v1'));
+      const order = state.quests
+        .filter((task) => task.goalId === goalId && task.stageId === stageId)
+        .map((task) => task.name);
+      return JSON.stringify(order) === JSON.stringify(['Повторить слова', 'Выучить слова']);
+    }, { goalId: ids.id, stageId: ids.a });
     await stageB
       .getByRole('button', { name: 'Раскрыть этап: Разговорная практика' })
       .click();
@@ -330,13 +366,13 @@ try {
     await page.waitForURL(`**/#/goals/${ids.id}/stages/${ids.a}`);
     assert.equal(await tabs.getByRole('button').count(), 5);
     const taskRows = workspace.locator('.ss-task-list .ss-task');
-    assert.deepEqual(await taskRows.locator('.ss-task-main strong').allTextContents(), ['Выучить слова', 'Повторить слова']);
-    const sourceHandle = taskRows.filter({ hasText: 'Повторить слова' }).locator('.ss-drag-handle');
+    assert.deepEqual(await taskRows.locator('.ss-task-main strong').allTextContents(), ['Повторить слова', 'Выучить слова']);
+    const sourceHandle = taskRows.filter({ hasText: 'Выучить слова' }).locator('.ss-drag-handle');
     const stageGripBox = await sourceHandle.boundingBox();
     assert.equal((await sourceHandle.textContent()).trim(), '⋮', 'у карточек этапа показаны три точки перетаскивания');
     assert.ok(stageGripBox.width >= 44 && stageGripBox.height >= 44, 'ручка этапа удобна для касания на каждом breakpoint');
     assert.notEqual(await sourceHandle.evaluate((el) => getComputedStyle(el).backgroundImage), 'none', 'ручка этапа заметна на тёмной карточке');
-    const targetRow = taskRows.filter({ hasText: 'Выучить слова' });
+    const targetRow = taskRows.filter({ hasText: 'Повторить слова' });
     await sourceHandle.evaluate((el, mobile) => el.scrollIntoView({ block: mobile ? 'center' : 'nearest' }), width < 600);
     await page.waitForTimeout(160); // Wait until native/inertial scrolling is idle.
     const sourceBox = await sourceHandle.boundingBox();
@@ -365,13 +401,13 @@ try {
       await page.mouse.up();
     }
     assert.ok(await page.evaluate(() => window.__flipPlayCount > 0), 'stage reorder must invoke Web Animations API');
-    assert.deepEqual(await taskRows.locator('.ss-task-main strong').allTextContents(), ['Повторить слова', 'Выучить слова']);
+    assert.deepEqual(await taskRows.locator('.ss-task-main strong').allTextContents(), ['Выучить слова', 'Повторить слова']);
     await page.waitForFunction(({ goalId, stageId }) => {
       const state = JSON.parse(localStorage.getItem('play-your-life-v1'));
       const order = state.quests
         .filter((task) => task.goalId === goalId && task.stageId === stageId)
         .map((task) => task.name);
-      return JSON.stringify(order) === JSON.stringify(['Повторить слова', 'Выучить слова']);
+      return JSON.stringify(order) === JSON.stringify(['Выучить слова', 'Повторить слова']);
     }, { goalId: ids.id, stageId: ids.a });
     await page.reload();
     await page.getByRole('button', { name: 'Продолжить игру на этом устройстве' }).click();
@@ -381,7 +417,7 @@ try {
     await workspace.locator('.ss-task-list .ss-task-main strong').first().waitFor();
     assert.deepEqual(
       await workspace.locator('.ss-task-list .ss-task-main strong').allTextContents(),
-      ['Повторить слова', 'Выучить слова'],
+      ['Выучить слова', 'Повторить слова'],
       'Порядок этапа должен восстановиться из LocalStorage после перезагрузки',
     );
     await workspace.locator('.ss-reward').click();

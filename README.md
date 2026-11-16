@@ -6,7 +6,7 @@
 
 
 
-Текущая версия приложения — **0.83.6** (кандидат в `codex/project-stage-visible-task-grips`; опубликованная `main` — 0.83.5). Актуальные исходники опубликованного сайта находятся в `main`. [Состав версии](CHANGELOG.md).
+Текущая версия приложения — **0.83.7** (кандидат в `codex/project-overview-task-drag`; опубликованная `main` — 0.83.6). Актуальные исходники опубликованного сайта находятся в `main`. [Состав версии](CHANGELOG.md).
 
 
 
@@ -163,6 +163,5 @@ SPORT — первый настоящий 3D Room Engine на Three.js, React Th
 
 
 Один раз выберите **Settings → Pages → Source → GitHub Actions**. Подробные шаги: [docs/PAGES.md](docs/PAGES.md).
-
 
 

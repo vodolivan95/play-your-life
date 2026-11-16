@@ -17,6 +17,7 @@ export function ProjectFavorites({ goal, onOpen, onLegacyNotes }: { goal: Goal; 
 }
 export default function ProjectMaterials({ state, goal, ownerId, onChange, notify, onLegacyNotes }: Props) {
   const [editing, setEditing] = useState<ProjectMaterial | null>(null);
+  const [newNote, setNewNote] = useState(false);
   const [busy, setBusy] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const mounted = useRef(0);
@@ -53,20 +54,21 @@ export default function ProjectMaterials({ state, goal, ownerId, onChange, notif
   }
   async function remove(m: ProjectMaterial) {
     if (!window.confirm(`Удалить материал «${m.title}»?`)) return;
+    if (editing?.id === m.id) setEditing(null);
     if (apply(s => updateProjectMaterial(s, goal.id, { id: m.id, remove: true })) && m.kind === 'file') {
       try { await materialFile(ownerId, goal.id, m.id, 'delete'); } catch { notify('Материал удалён из проекта; очистка файла на устройстве не удалась.'); }
     }
   }
   return <section className="ss-panel pw-materials"><div className="ss-panel-head"><h3><Icon name="attachment" /> Материалы проекта</h3><div className="ss-actions">
-    <button className="ss-primary" onClick={() => setEditing({ id: crypto.randomUUID(), kind: 'note', title: '', text: '', starred: false, updatedAt: new Date().toISOString() })}>+ Заметка</button>
+    <button className="ss-primary" onClick={() => { setNewNote(true); setEditing({ id: crypto.randomUUID(), kind: 'note', title: '', text: '', starred: false, updatedAt: new Date().toISOString() }); }}>+ Заметка</button>
     <button className="ss-secondary" disabled={busy} onClick={() => fileInput.current?.click()}>{busy ? 'Сохраняем…' : '+ Файл'}</button>
     <input ref={fileInput} type="file" hidden aria-label="Прикрепить файл проекта" onChange={e => void upload(e.target.files?.[0])} /></div></div>
     <p>Заметки сохраняются вместе с проектом. Файлы до 20 МБ доступны только в этом браузере: они не входят в облачную синхронизацию и резервную копию игры. OneDrive пока не подключён.</p>
-    {editing && <form className="pw-material-form" onSubmit={e => { e.preventDefault(); if (apply(s => updateProjectMaterial(s, goal.id, { ...editing, title: editing.title.trim(), updatedAt: new Date().toISOString() }))) setEditing(null); }}>
+    {editing && <form className="pw-material-form" onSubmit={e => { e.preventDefault(); if (apply(s => { const current = s.goals.find(g => g.id === goal.id)?.materials?.find(m => m.id === editing.id); if (!newNote && !current) throw new Error('Заметка уже удалена.'); return updateProjectMaterial(s, goal.id, { ...(current ?? editing), title: editing.title.trim(), text: editing.text, updatedAt: new Date().toISOString() }); })) setEditing(null); }}>
       <label>Название заметки<input required maxLength={200} value={editing.title} onChange={e => setEditing({ ...editing, title: e.target.value })} /></label>
       <label>Текст заметки<textarea rows={6} maxLength={5000} value={editing.text ?? ''} onChange={e => setEditing({ ...editing, text: e.target.value })} /></label>
       <div className="ss-actions"><button type="submit" className="ss-primary">Сохранить заметку</button><button type="button" className="ss-secondary" onClick={() => setEditing(null)}>Отмена</button></div></form>}
     <article className="pw-material"><Icon name="document" /><button className="pw-material-copy" onClick={onLegacyNotes}><strong>Заметки проекта</strong><span>{goal.notes || 'Добавьте общие заметки по проекту'}</span></button><button className="pw-star" aria-label="Избранное: Заметки проекта" aria-pressed={!!goal.notesStarred} onClick={() => apply(s => ({ ...s, goals: s.goals.map(g => g.id === goal.id ? { ...g, notesStarred: !g.notesStarred } : g) }))}>★</button></article>
-    {(goal.materials ?? []).map(m => <article className="pw-material" key={m.id} data-material={m.id}><Icon name={m.kind === 'note' ? 'document' : 'attachment'} /><button className="pw-material-copy" onClick={() => m.kind === 'note' ? setEditing(m) : void download(m)}><strong>{m.title}</strong><span>{m.kind === 'note' ? m.text || 'Пустая заметка' : `${Math.ceil((m.size ?? 0) / 1024)} КБ · На устройстве · Скачать`}</span></button><button className="pw-star" aria-label={`Избранное: ${m.title}`} aria-pressed={m.starred} onClick={() => toggle(m)}>★</button><button className="ss-link" aria-label={`Удалить материал: ${m.title}`} onClick={() => void remove(m)}>×</button></article>)}
+    {(goal.materials ?? []).map(m => <article className="pw-material" key={m.id} data-material={m.id}><Icon name={m.kind === 'note' ? 'document' : 'attachment'} /><button className="pw-material-copy" onClick={() => m.kind === 'note' ? (setNewNote(false), setEditing(m)) : void download(m)}><strong>{m.title}</strong><span>{m.kind === 'note' ? m.text || 'Пустая заметка' : `${Math.ceil((m.size ?? 0) / 1024)} КБ · На устройстве · Скачать`}</span></button><button className="pw-star" aria-label={`Избранное: ${m.title}`} aria-pressed={m.starred} onClick={() => toggle(m)}>★</button><button className="ss-link" aria-label={`Удалить материал: ${m.title}`} onClick={() => void remove(m)}>×</button></article>)}
   </section>;
 }

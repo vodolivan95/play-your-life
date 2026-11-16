@@ -38,6 +38,7 @@ export function ProjectNextStep({ state, goal, task, mutate, onOpen }: { state: 
     const q = s.quests.find(q => q.id === selected?.id);
     const g = s.goals.find(g => g.id === goal.id);
     if (!q || !g) return s;
+    if (q.wontDo || q.planning?.archivedAt) throw new Error('Задача исключена из активного плана.');
     const stage = g.stages?.find(st => st.id === q.stageId);
     const reason = g.paused ? 'Проект на паузе' : stage && (stageAccess(s, g, stage) || (stage.status === 'paused' ? 'Этап на паузе' : '')) || dependencyBlockMessage(s.quests, q);
     if (reason) throw new Error(reason);

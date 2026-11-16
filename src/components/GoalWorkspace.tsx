@@ -641,12 +641,12 @@ function Statistics({
   );
 }
 /** Компактный спарклайн прогресса проекта по сохранённым точкам — для боковой панели. */
-function WeeklyProgressCard({ state, goal }: { state: GameState; goal: Goal }) {
+function WeeklyProgressCard({ state, goal, now }: { state: GameState; goal: Goal; now: number }) {
   const data = goalStatistics(state, goal);
   const current = Math.round(goalProgressValue(state, goal));
   const points = data.progress;
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
-  const weekBefore = points.filter(p => Date.parse(p.date) <= Date.now() - 7 * 86400000).at(-1);
+  const weekBefore = points.filter(p => Date.parse(p.date) <= now - 7 * 86400000).at(-1);
   const coords =
     points.length > 1
       ? (() => {
@@ -766,7 +766,7 @@ export default function GoalWorkspace(p: Props) {
   }, [detail]);
   const sphere = spheres.find((s) => s.id === goal.sphere)!;
   const history = goalHistory(state, goal, stage?.id);
-  const nextTask = nextGoalTask(state, goal);
+  const nextTask = nextGoalTask(state, goal, new Date(now), q => !q.wontDo && !q.planning?.archivedAt && !dependencyBlockMessage(state.quests, q));
   const activeStage = activeGoalStage(state, goal, new Date(now));
   // На экране этапа «Почему важен этот этап» относится к открытому этапу.
   const whyStage = stage ?? activeStage;
@@ -2089,7 +2089,7 @@ export default function GoalWorkspace(p: Props) {
                       );
                     })()}
                   </Card>
-                  <WeeklyProgressCard state={state} goal={goal} /></section><section className="pw-sidebar-group" aria-label="Фокус недели">
+                  <WeeklyProgressCard state={state} goal={goal} now={now} /></section><section className="pw-sidebar-group" aria-label="Фокус недели">
                   <Card title="Фокус на эту неделю" icon="weeklyFocus">
                     <button
                       className="gw-weekly-focus-btn"

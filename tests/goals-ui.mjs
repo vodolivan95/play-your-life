@@ -299,7 +299,7 @@ try {
     }
     const overviewSource = overviewTasks.filter({ hasText: 'Повторить слова' }).locator('.task-reorder-grip');
     const overviewTarget = overviewTasks.filter({ hasText: 'Выучить слова' });
-    await overviewSource.evaluate((el, mobile) => el.scrollIntoView({ block: mobile ? 'center' : 'nearest' }), width < 600);
+    await overviewSource.evaluate((el) => el.scrollIntoView({ block: 'center' }), width < 600);
     await page.waitForTimeout(160);
     const overviewSourceBox = await overviewSource.boundingBox();
     const overviewTargetBox = await overviewTarget.boundingBox();
@@ -397,7 +397,7 @@ try {
     assert.ok(stageGripBox.width >= 44 && stageGripBox.height >= 44, 'ручка этапа удобна для касания на каждом breakpoint');
     assert.notEqual(await sourceHandle.evaluate((el) => getComputedStyle(el).backgroundImage), 'none', 'ручка этапа заметна на тёмной карточке');
     const targetRow = taskRows.filter({ hasText: 'Повторить слова' });
-    await sourceHandle.evaluate((el, mobile) => el.scrollIntoView({ block: mobile ? 'center' : 'nearest' }), width < 600);
+    await sourceHandle.evaluate((el) => el.scrollIntoView({ block: 'center' }), width < 600);
     await page.waitForTimeout(160); // Wait until native/inertial scrolling is idle.
     const sourceBox = await sourceHandle.boundingBox();
     const targetBox = await targetRow.boundingBox();
@@ -424,6 +424,7 @@ try {
       await page.mouse.move(targetPoint.x, targetPoint.y, { steps: 5 });
       await page.mouse.up();
     }
+    await page.screenshot({ path: `work/goal-redesign/drag-${width}.png` });
     await page.waitForFunction(() => window.__flipPlayCount > 0);
     assert.ok(await page.evaluate(() => window.__flipPlayCount > 0), 'stage reorder must invoke Web Animations API');
     assert.deepEqual(await taskRows.locator('.ss-task-main strong').allTextContents(), ['Выучить слова', 'Повторить слова']);

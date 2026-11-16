@@ -1,3 +1,4 @@
+import { validProjectMaterials } from './projectMaterials.ts';
 import { validTaskPlanning, validPlanningSettings, validPlanningEvent, validActiveFocus, validDay } from './planningData.ts';
 import { validPersonalState, validQuestExtension } from './questValidation.ts';
 import { SPHERE_PROGRESSION_MODEL } from './sphereProgress.ts';
@@ -311,6 +312,8 @@ export function validateState(value: unknown): asserts value is SavedState {
     !list(
       value.goals,
       (g) =>
+        validProjectMaterials(g.materials) &&
+        (g.notesStarred === undefined || typeof g.notesStarred === 'boolean') &&
         text(g.id) &&
         !!g.id &&
         text(g.name) &&

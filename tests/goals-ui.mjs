@@ -202,8 +202,32 @@ try {
       undefined,
     );
 
-    assert.equal(await tabs.getByRole('button').count(), 5);
+    assert.equal(await tabs.getByRole('button').count(), 6);
+    await tabs.getByRole('button', { name: 'Материалы проекта', exact: true }).click();
+    await workspace.getByRole('button', { name: '+ Заметка', exact: true }).click();
+    await workspace.getByLabel('Название заметки', { exact: true }).fill('Смета проекта');
+    await workspace.getByLabel('Текст заметки', { exact: true }).fill('Проверить материалы и размеры');
+    await workspace.getByRole('button', { name: 'Сохранить заметку', exact: true }).click();
+    await workspace.getByRole('button', { name: 'Избранное: Смета проекта', exact: true }).click();
+    await workspace.locator('.gw-aside > .pw-favorites').getByText('Смета проекта', { exact: true }).waitFor();
+    await workspace.getByLabel('Прикрепить файл проекта', { exact: true }).setInputFiles({ name: 'project.txt', mimeType: 'text/plain', buffer: Buffer.from('Project file') });
+    await workspace.locator('.pw-material').getByText('project.txt', { exact: true }).waitFor();
+    const downloadPromise = page.waitForEvent('download');
+    await workspace.locator('.pw-material').getByText('project.txt', { exact: true }).click();
+    assert.equal((await downloadPromise).suggestedFilename(), 'project.txt');
+    await workspace.getByRole('button', { name: 'Избранное: project.txt', exact: true }).click();
+    await workspace.locator('.pw-favorites').getByText('project.txt', { exact: true }).waitFor();
+    await tabs.getByRole('button', { name: 'Обзор', exact: true }).click();
+    assert.equal(await workspace.locator('.pw-countdown').count(), 0, 'таймер скрыт до запуска');
+    await workspace.locator('.pw-next').getByRole('button', { name: /Начать/ }).click();
+    await workspace.locator('.pw-countdown').waitFor();
+    await workspace.locator('.pw-next').getByRole('button', { name: 'Пауза', exact: true }).click();
+    await workspace.locator('.pw-next').getByRole('button', { name: 'Продолжить', exact: true }).click();
+    await workspace.locator('.pw-next').getByRole('button', { name: 'Завершить сессию', exact: true }).click();
+    assert.equal(await workspace.locator('.pw-countdown').count(), 0);
+
     assert.equal(await workspace.locator('.gw-roadmap-stage').count(), 3);
+    assert.deepEqual(await workspace.locator('.gw-roadmap-stage').evaluateAll((els) => els.map((el) => el.getAttribute('data-stage'))), [ids.c, ids.b, ids.a], 'маршрут проекта идёт снизу вверх, сохраняя номера этапов');
     assert.equal(await workspace.locator('.gw-stage-tasks').count(), 1);
     await workspace.locator('.gw-reward-content').click();
     await workspace
@@ -233,7 +257,7 @@ try {
     }, ids.id);
     await workspace.waitFor();
     await workspace
-      .getByRole('button', { name: 'Начать →', exact: true })
+      .getByRole('button', { name: 'Открыть задачу →', exact: true })
       .click();
     await workspace
       .getByRole('dialog')
@@ -497,7 +521,7 @@ try {
       await stageB.evaluate((el) => el.classList.contains('gw-stage-active')),
     );
     await workspace
-      .locator('.gw-banner')
+      .locator('.gw-project-hero')
       .getByRole('img', { name: 'Общий прогресс проекта: 33%' })
       .waitFor();
     await tabs.getByRole('button', { name: 'Этапы', exact: true }).click();

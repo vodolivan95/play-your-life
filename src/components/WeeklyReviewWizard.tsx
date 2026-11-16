@@ -16,6 +16,7 @@ import { addDays, mondayOf } from '../tasksCalendar';
 import { isGoalDone } from '../goalsOverview';
 import './Overlay.css';
 import './WeeklyReviewWizard.css';
+import WeekReviewTaskLists from './WeekReviewTaskLists';
 
 const STEPS = ['Итоги недели', 'Проблемные задачи', 'Продвижение проектов', 'Фокус недели', 'Подтверждение'] as const;
 const fmtWeek = (d: string) => `${new Date(`${d}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })} – ${new Date(`${addDays(d, 6)}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}`;
@@ -24,16 +25,21 @@ const fmtMinutes = (n: number) => (n >= 60 ? `${Math.floor(n / 60)} ч ${n % 60 
 /** «Мастер недельного обзора» (ТЗ «Этап 3», раздел 5): 5 коротких шагов, без обязательных полей. */
 export default function WeeklyReviewWizard({
   state,
+  ownerId,
+  initialWeek,
   onClose,
   onApply,
   onOpenTask,
 }: {
   state: GameState;
+  ownerId: string;
+  initialWeek?: string;
   onClose: () => void;
   onApply: (action: (s: GameState) => GameState, message?: string) => void;
   onOpenTask: (id: string) => void;
 }) {
-  const [weekFrom, setWeekFrom] = useState(weekAnchor());
+  const compact = initialWeek !== undefined;
+  const [weekFrom, setWeekFrom] = useState(() => initialWeek ?? weekAnchor());
   const [step, setStep] = useState(0);
   const [focusGoalIds, setFocusGoalIds] = useState<string[]>(() => weeklyReviewOf(state, weekFrom)?.focusGoalIds ?? []);
   const [focusNote, setFocusNote] = useState(() => weeklyReviewOf(state, weekFrom)?.focusNote ?? '');
@@ -62,24 +68,24 @@ export default function WeeklyReviewWizard({
   }
   return (
     <div className="pyl-overlay wrw-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <section className="wrw" role="dialog" aria-modal="true" aria-labelledby="wrw-title">
+      <section className={compact ? 'wrw wrw-with-tasks wrw-compact' : step === 0 ? 'wrw wrw-with-tasks' : 'wrw'} role="dialog" aria-modal="true" aria-labelledby="wrw-title">
         <header className="wrw-head">
           <div>
-            <h2 id="wrw-title">Недельный обзор</h2>
+            <h2 id="wrw-title">{compact ? 'Итоги недели' : 'Недельный обзор'}</h2>
             <p>{fmtWeek(weekFrom)}{viewSaved ? ' · сохранённый обзор' : existing && ' · уже подведён, сохранение обновит его'}</p>
           </div>
           <button type="button" className="wrw-close" aria-label="Закрыть" onClick={onClose}>✕</button>
         </header>
-        <nav className="wrw-steps" aria-label="Шаги обзора">
+        {!compact && <nav className="wrw-steps" aria-label="Шаги обзора">
           {STEPS.map((label, i) => (
             <button key={label} type="button" aria-current={i === step} className="wrw-step" onClick={() => setStep(i)}>
               {i + 1}. {label}
             </button>
           ))}
-        </nav>
+        </nav>}
         {step === 0 && (
           <div className="wrw-panel" aria-label="Итоги недели">
-            <div className="wrw-grid">
+            {!compact && <><div className="wrw-grid">
               <span><b>{totals.done}</b>выполнено</span>
               <span><b>{totals.undone}</b>не выполнено</span>
               <span><b>{totals.overdue}</b>просрочено</span>
@@ -89,7 +95,9 @@ export default function WeeklyReviewWizard({
             <label>
               Неделя обзора
               <input type="date" value={weekFrom} onChange={(e) => e.target.value && selectWeek(mondayOf(e.target.value))} />
-            </label>
+            </label></>}
+            {viewSaved && <small>Списки ниже отражают текущее состояние задач.</small>}
+            <WeekReviewTaskLists key={weekFrom} state={state} week={weekFrom} ownerId={ownerId} apply={onApply} onOpen={onOpenTask} readOnly={viewSaved} compact={compact} />
           </div>
         )}
         {step === 1 && (
@@ -184,10 +192,10 @@ export default function WeeklyReviewWizard({
             )}
           </div>
         )}
-        <div className="wrw-nav">
+        {!compact && <div className="wrw-nav">
           <button type="button" disabled={step === 0} onClick={() => setStep((s) => Math.max(0, s - 1))}>← Назад</button>
           <button type="button" disabled={step === STEPS.length - 1} onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}>Дальше →</button>
-        </div>
+        </div>}
       </section>
     </div>
   );

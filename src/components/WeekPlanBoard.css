@@ -1,0 +1,92 @@
+.week-plan {
+  --week-line: #cad7ea;
+  --week-card: #f5f8fe;
+  --week-raised: #eaf2ff;
+  --week-track: #d4e2f8;
+  --week-booked: #448de2;
+  --week-free: #94d8c8;
+  --week-warning: #8b4807;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  container-type: inline-size;
+}
+:root[data-theme='dark'] .week-plan {
+  --week-line: #2a3b5b;
+  --week-card: #111d34;
+  --week-raised: #182945;
+  --week-track: #2a3e59;
+  --week-booked: #74b1fa;
+  --week-free: #67bca8;
+  --week-warning: #ffc189;
+}
+.week-plan .week-plan-head, .week-plan-actions { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:7px }
+.week-plan h3, .week-plan h4, .week-plan .week-plan-chart-legend { margin:0 }
+.week-plan-head .week-plan-actions { justify-content:flex-start }
+.pplan .week-plan button.week-plan-review { border-color:var(--week-booked); background:var(--week-raised) }
+.week-plan-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(225px,25%); align-items:start; gap:12px }
+.week-plan-main { display:grid; gap:9px; min-width:0 }
+.week-plan-main h3 { margin-bottom:6px }
+.week-plan-outcomes, .week-plan-figures { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px }
+.week-plan .week-plan-outcomes button { display:grid; align-content:start; gap:5px; text-align:left; min-width:0; padding:8px 9px }
+.week-plan-figures > span { display:grid; gap:2px; padding:8px; border:1px solid var(--week-line); border-radius:9px; background:var(--week-card); font-size:12px }
+.week-plan-figures strong { font-size:17px }
+.week-plan-days, .week-plan-weekend { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px }
+.week-plan-weekend { grid-template-columns:repeat(2,minmax(0,1fr)) }
+.week-plan-day, .week-plan-backlog, .week-plan-time { border:1px solid var(--week-line); background:var(--week-card); border-radius:10px; min-width:0 }
+.week-plan-day, .week-plan-backlog { display:grid; align-content:start; gap:6px; padding:7px; overflow-wrap:anywhere }
+.week-plan-day[data-today=true] { border-color:var(--week-booked) }
+.week-plan-day[data-over=true] { border-color:color-mix(in srgb,var(--week-warning) 55%,var(--week-line)) }
+.week-plan [data-drop-active=true] { outline:2px solid var(--week-booked); outline-offset:-2px; background:var(--week-raised) }
+.week-plan-day header { display:grid; gap:2px }
+.week-plan-day header time { color:var(--muted) }
+.week-plan-cards { display:grid; gap:5px; min-width:0 }
+.week-plan-weekend .week-plan-cards,.week-plan-backlog .week-plan-cards { grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr)) }
+.week-plan button.week-plan-task { min-width:0; display:grid; justify-items:start; gap:2px; padding:6px; text-align:left; font-size:12px }
+.week-plan-task[draggable=true] { cursor:grab }
+.week-plan-task small { font-size:11px }
+.week-plan-task[data-late=true] { border-color:color-mix(in srgb,var(--week-warning) 50%,var(--week-line)) }
+.week-plan-task[data-done=true] > span { text-decoration:line-through }
+.week-plan button.week-plan-add { border-style:dashed; padding:5px 4px; font-size:12px }
+.week-plan .week-plan-warning, .week-plan-dialog .week-plan-warning { color:var(--week-warning) }
+.week-plan-time { display:grid; overflow:hidden }
+.week-plan-time-hero, .week-plan-chart { display:grid; gap:5px; padding:10px 12px }
+.week-plan-time-hero { background:var(--week-raised) }
+.week-plan-time-hero strong { font-size:26px; line-height:1.15; font-variant-numeric:tabular-nums }
+.week-plan-chart { border-top:1px solid var(--week-line) }
+.week-plan-chart-legend, .week-plan-chart li { font-size:12px }
+.week-plan-chart-legend span:first-child { color:var(--week-booked) }
+.week-plan-chart-legend span:nth-child(2) { color:var(--week-free) }
+.week-plan-chart ul { display:grid; gap:3px; list-style:none; margin:0; padding:0 }
+.week-plan-balance,.week-plan-project { display:grid; grid-template-columns:24px minmax(0,1fr) auto; align-items:center; gap:6px }
+.week-plan-project { grid-template-columns:6px minmax(0,1fr) auto; overflow-wrap:anywhere }
+.week-plan-dot { width:6px; height:6px; border-radius:2px }
+.week-plan-bar { display:flex; height:5px; min-width:0; overflow:hidden; border-radius:4px; background:var(--week-track) }
+.week-plan-bar.is-balance { background:var(--week-free) }
+.week-plan-bar > span { display:block; height:100%; background:var(--week-booked) }
+.week-plan-dialog { width:min(440px,calc(100% - 24px)); padding:15px; max-height:calc(100dvh - 24px); overflow:auto; border:1px solid var(--week-line); border-radius:12px; color:inherit; background:var(--week-card) }
+.week-plan-dialog::backdrop { background:#071326a8 }
+.week-plan-dialog header { display:flex; justify-content:space-between; align-items:start; gap:10px; margin-bottom:10px }
+.week-plan-dialog form { display:grid; gap:10px }
+.week-plan-dialog input,.week-plan-dialog select { width:100% }
+.week-plan-dialog .week-plan-dates { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px }
+.week-plan-dialog .week-plan-actions { justify-content:flex-end }
+@container (max-width:850px) {
+  .week-plan-layout { grid-template-columns:minmax(0,1fr) }
+}
+@container (max-width:570px) {
+  .week-plan-days { grid-template-columns:repeat(3,minmax(0,1fr)) }
+  .week-plan-outcomes { grid-template-columns:minmax(0,1fr) }
+  .week-plan-figures > span { padding:6px }
+}
+@container (max-width:370px) {
+  .week-plan-days { grid-template-columns:repeat(2,minmax(0,1fr)) }
+}
+@media (pointer:coarse) {
+  .pplan .week-plan button { min-height:44px }
+}
+.week-plan-period{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.week-plan-period>span{padding:4px 7px;border:1px solid var(--week-line);border-radius:7px;background:var(--week-raised);font-size:12px}
+.week-plan-load{margin-top:2px;height:3px}
+.week-plan-day[data-over=true] .week-plan-load>span{background:var(--week-warning)}
+.pplan .week-plan-dialog .week-plan-check{display:flex;align-items:center;gap:7px}

@@ -32,6 +32,8 @@ export type TaskPatch = {
   deadlineAt?: string | null;
   /** Перенос задачи в календаре перетаскиванием: сдвигает срок (и начало, если есть) на столько дней, время суток сохраняется. */
   shiftDays?: number;
+  /** Только после явного подтверждения переноса в недельном плане. */
+  allowPastDeadline?: boolean;
   stageId?: string | null;
   sync?: boolean;
   repeat?: Quest['repeat'] | null;
@@ -69,7 +71,7 @@ export function duePreset(dueAt: string | undefined, today: string): DuePreset {
   return 'date';
 }
 /** Сдвигает дату (обычную 'YYYY-MM-DD' или ISO со временем) на N дней, сохраняя время суток. */
-function shiftDate(value: string, days: number): string {
+export function shiftDate(value: string, days: number): string {
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return addDays(value, days);
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
@@ -216,7 +218,7 @@ export function updateTaskSettings(state: GameState, id: string, patch: TaskPatc
   }
   if (patch.pinned !== undefined) q.pinned = patch.pinned || undefined;
   if (patch.wontDo !== undefined) q.wontDo = patch.wontDo || undefined;
-  validateTaskEditorFields(q, [patch.startsAt, patch.dueAt, patch.deadlineAt, patch.shiftDays].some(v => v !== undefined));
+  validateTaskEditorFields(q, [patch.startsAt, patch.dueAt, patch.deadlineAt, patch.shiftDays].some(v => v !== undefined), patch.allowPastDeadline);
   const clean = Object.fromEntries(Object.entries(q).filter(([, v]) => v !== undefined)) as Quest;
   let next = { ...state, quests: state.quests.map((item) => (item.id === id ? clean : item)) };
   if (patch.goalId !== undefined || patch.weight !== undefined) {

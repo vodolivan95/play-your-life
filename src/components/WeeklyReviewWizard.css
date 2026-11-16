@@ -45,3 +45,10 @@
 .wrw-summary span{background:#eaf2ff;border:0;overflow-wrap:anywhere}
 :root[data-theme='dark'] .wrw-summary span{background:#1b2a46}
 .wrw-list li:has(.wrw-move) button:first-child{font-weight:650}
+
+.wrw.wrw-compact .wrw-move{width:100%;margin:4px 0 0;padding:0;border:0;background:none;box-shadow:none}
+.wrw.wrw-compact .wrw-move select{font-size:13px}
+@media(max-width:350px){
+  .wrw.wrw-compact .wrw-move{grid-template-columns:minmax(0,1fr)}
+  .wrw.wrw-compact .wrw-move button{justify-self:start}
+}

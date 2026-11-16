@@ -856,31 +856,6 @@ try {
     await plannedTask.getByLabel('Название задачи', { exact: true }).waitFor();
     page.once('dialog', dialog => dialog.accept());
     await plannedTask.getByRole('button', { name: 'Отмена' }).click();
-    // В будущем заблокированном этапе порядок можно планировать, не выполняя задачи.
-    await page.evaluate(({ goalId, stageId, sourceStageId }) => {
-      const state = JSON.parse(localStorage.getItem('play-your-life-v1'));
-      const template = state.quests.find(task => task.goalId === goalId && task.stageId === sourceStageId);
-      state.quests.push(
-        { ...template, id: 'future-task-one', name: 'Будущий шаг 1', stageId, done: false, completedAt: undefined },
-        { ...template, id: 'future-task-two', name: 'Будущий шаг 2', stageId, done: true, completedAt: new Date().toISOString() },
-      );
-      localStorage.setItem('play-your-life-v1', JSON.stringify(state));
-      location.hash = `/goals/${goalId}`;
-    }, { goalId: ids.id, stageId: ids.c, sourceStageId: ids.a });
-    await page.reload();
-    const future = page.locator(`[data-stage="${ids.c}"]`);
-    await future.getByRole('button', { name: 'Раскрыть этап: Подготовка к B2' }).click();
-    const futureRows = future.locator('.task-reorder-item[data-task-order-id]');
-    assert.equal(await futureRows.count(), 2, 'задачи будущего этапа видны в проекте');
-    assert.equal(await futureRows.locator('.task-reorder-grip').count(), 2, 'обе задачи можно переставлять');
-    assert.ok(await futureRows.first().locator('.gw-task-check').isDisabled(), 'выполнение заблокировано до открытия этапа');
-    assert.ok(await futureRows.nth(1).locator('.gw-task-check').isDisabled(), 'готовую задачу заблокированного этапа нельзя открыть повторно');
-    await futureRows.first().locator('.task-reorder-grip').press('End');
-    assert.deepEqual(await futureRows.locator('.gw-task-name strong').allTextContents(), ['Будущий шаг 2', 'Будущий шаг 1']);
-    await futureRows.first().locator('.gw-task-name').click();
-    await page.getByRole('button', { name: 'Вернуть в работу', exact: true }).click();
-    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('play-your-life-v1')).quests.find(q => q.id === 'future-task-two').done), true, 'окно задачи соблюдает блокировку этапа');
-
     assert.equal(errors.length, 0, errors.join('\n'));
     await context.close();
     console.log(

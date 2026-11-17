@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.git/
+work/
+graphify-out/
+public/
+src/assets/
+package-lock.json
+*.tsbuildinfo
+.env
+.env.*

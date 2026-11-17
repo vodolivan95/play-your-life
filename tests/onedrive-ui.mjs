@@ -25,7 +25,7 @@ try {
     const ctx = await browser.newContext({ viewport: { width, height: 960 }, isMobile: width < 600, hasTouch: width < 600 });
     const files = [item('docs', 'Документы', true), item('archive', '01. АРХИВ', true), item('work', '03. РАБОТА', true), item('study', '04. ОБУЧЕНИЕ', true), item('note', 'План.md'), item('pdf', 'Обзор.pdf', false, 900), ...Array.from({ length: 94 }, (_, i) => item(`file-${i}`, `Файл ${i}.txt`, false, i + 1))];
     const extras = [item('more-1', 'Продолжение 1.txt'), item('more-2', 'Продолжение 2.txt')];
-    let connected = true, noAccess = false, unsupportedSearch = false, deletions = 0;
+    let connected = true, noAccess = false, unsupportedSearch = false, authProblem = false, failedReconnection = false, revokedOnRead = false, deletions = 0;
     await ctx.route(`${bridge}/**`, async route => {
       const req = route.request(), url = new URL(req.url()), method = req.method();
       const headers = { 'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Headers': 'Authorization, Content-Type, Content-Range', 'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, PUT, OPTIONS' };
@@ -33,12 +33,19 @@ try {
       if (method === 'OPTIONS') return route.fulfill({ status: 204, headers });
       const uid = req.headers().authorization?.replace('Bearer fixture-', '');
       calls.push({ uid, path: url.pathname, method });
-      if (url.pathname === '/status') return send({ connected: uid === 'alice' && connected, username: 'alice@example.test' });
+      if (url.pathname === '/status') return send(uid === 'alice' && authProblem ? {connected:false, authError:{code:'AADSTS50020',stage:'callback',correlationId:'fixture-correlation',message:'Тип Microsoft-аккаунта не разрешён настройками приложения.'}} : uid === 'alice' && connected ? {connected:true,username:'alice@example.test',displayName:'Тестовый пользователь',driveId:'drive-alice',...(failedReconnection?{authError:{code:'AADSTS50020',stage:'callback',correlationId:'fixture-correlation',message:'Тип Microsoft-аккаунта не разрешён настройками приложения.'}}:{})} : {connected:false});
+      if (url.pathname === '/diagnostics') return send({clientId:'11111111-1111-4111-8111-111111111111', authority:'https://login.microsoftonline.com/consumers',redirectUri:bridge+'/callback',scopes:['User.Read','Files.ReadWrite'],configured:true,issues:[]});
+      if (url.pathname === '/authorize' && method === 'POST') {
+        assert.equal(new URLSearchParams(req.postData()).get('credential'),'fixture-alice');
+        assert.equal(url.searchParams.has('credential'),false); connected=true; authProblem=false;
+        return route.fulfill({status:303,headers:{Location:`${origin}/work/onedrive/harness.html?uid=alice#/drive`}});
+      }
       if (url.pathname === '/disconnect') { connected = false; return send({ connected: false }); }
       if (!connected || uid !== 'alice') return send({ error: 'Подключите OneDrive.' }, 401);
       if (url.pathname === '/uploads') return send({ id: 'test-upload' });
       if (url.pathname === '/uploads/test-upload') return method === 'GET' ? send({ nextExpectedRanges: ['0-'] }) : send(item('new-upload', 'upload.txt'), 201);
       const path = decodeURIComponent(url.searchParams.get('path') || '');
+      if (revokedOnRead) return send({error:'Доступ Microsoft истёк или отозван. Повторите подключение OneDrive.'},401);
       if (noAccess) return send({ error: 'Нет доступа к файлу или папке.' }, 403);
       if (path === '/me/drive') return send({ id: 'drive-alice', quota: { used: 1024, total: 10240 } });
       if (path.includes('/delta?')) return send({ value: [], '@odata.deltaLink': 'https://graph.microsoft.com/v1.0/me/drive/root/delta?token=fixture' });
@@ -61,7 +68,7 @@ try {
     await ctx.addInitScript(() => { for (const [id,color] of [['docs','blue'],['work','blue'],['study','teal']]) localStorage.setItem('pyl:drive-color:alice:drive-alice:'+id,color); });
     const page = await ctx.newPage(); activePage = page; page.on('pageerror', e => errors.push(String(e)));
     const home = `${origin}/work/onedrive/harness.html?uid=alice&theme=${width < 600 ? 'dark' : 'light'}#/drive`;
-    await page.goto(home); await page.getByRole('button', { name: 'Документы', exact: false }).filter({ has: page.locator('.od-folder') }).waitFor();
+    await page.goto(home); await page.getByText('Тестовый пользователь · Подключено',{exact:true}).waitFor(); await page.getByRole('button', { name: 'Документы', exact: false }).filter({ has: page.locator('.od-folder') }).waitFor();
     assert.equal(await page.locator('.od-item').count(), 100);
     if (width < 640) await tools(page, true);
     await page.getByRole('button', { name: 'Показать ещё', exact: true }).click(); await page.locator('.od-item').filter({ hasText: 'Продолжение 2.txt' }).waitFor();
@@ -112,6 +119,28 @@ try {
     noAccess = true; await page.getByRole('button', { name: 'Обновить', exact: true }).click(); await page.getByRole('alert').getByText('Нет доступа', { exact: false }).waitFor();
     noAccess = false; await page.getByRole('button', { name: 'Повторить чтение', exact: true }).click(); await page.getByRole('button', { name: 'Документы', exact: false }).filter({ has: page.locator('.od-folder') }).waitFor();
     await page.getByRole('button', { name: 'Отключить OneDrive', exact: true }).click(); await page.getByRole('button', { name: 'Подключить OneDrive', exact: true }).waitFor();
+    if (width === 1440 || width === 390) {
+      authProblem=true; await page.reload();
+      await page.getByRole('heading',{name:'Не удалось подключить OneDrive',exact:true}).waitFor();
+      assert.equal(await page.locator('.od-item').count(),0,'a failed login never shows fake connected files');
+      await page.getByText('Диагностика подключения',{exact:true}).click();
+      await page.getByRole('button',{name:'Проверить настройки сервера',exact:true}).click();
+      await page.getByText('11111111-1111-4111-8111-111111111111',{exact:true}).waitFor();
+      await page.getByRole('button',{name:'Повторить подключение',exact:true}).click();
+      await page.getByText('Тестовый пользователь · Подключено',{exact:true}).waitFor();
+      await page.getByRole('button', { name: 'Документы', exact: false }).filter({has:page.locator('.od-folder')}).waitFor();
+      failedReconnection=true; await page.reload();
+      await page.getByRole('button', { name: 'Документы', exact: false }).filter({has:page.locator('.od-folder')}).waitFor();
+      assert.ok(await page.getByRole('alert').isVisible(),'failed reconnect warning survives the initial listing refresh');
+      failedReconnection=false; await page.reload();
+      await page.getByRole('button', { name: 'Документы', exact: false }).filter({has:page.locator('.od-folder')}).waitFor();
+      if (width < 640) await tools(page,true);
+      revokedOnRead=true; await page.getByRole('button',{name:'Обновить',exact:true}).click();
+      await page.getByRole('heading',{name:'Не удалось подключить OneDrive',exact:true}).waitFor();
+      assert.equal(await page.locator('.od-item').count(),0,'revoked connection clears visible cached files');
+      revokedOnRead=false; await page.getByRole('button',{name:'Повторить подключение',exact:true}).click();
+      await page.getByText('Тестовый пользователь · Подключено',{exact:true}).waitFor();
+    }
     const other = await ctx.newPage(); await other.goto(`${origin}/work/onedrive/harness.html?uid=bob#/drive`); await other.getByRole('button', { name: 'Подключить OneDrive', exact: true }).waitFor(); assert.equal(await other.locator('.od-item').count(), 0);
     await ctx.close();
   }

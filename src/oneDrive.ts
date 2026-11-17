@@ -5,10 +5,14 @@ export type DriveItem = {
 };
 export type DriveInfo = { id: string; quota?: { used?: number; total?: number } };
 export type DrivePage = { value: DriveItem[]; '@odata.nextLink'?: string; '@odata.deltaLink'?: string };
+export type DriveAuthDiagnostic = { code: string; stage: string; correlationId: string; message: string };
+export type DriveConnection = { connected: boolean; username?: string; displayName?: string; driveId?: string; authError?: DriveAuthDiagnostic };
+export type DriveConfiguration = { clientId?: string; authority: string; redirectUri?: string; scopes: string[]; configured: boolean; issues: { code: string; message: string }[] };
 export const rootPath = (id?: string) => id ? `/me/drive/items/${encodeURIComponent(id)}` : '/me/drive/root';
 export class GraphError extends Error {
   status: number;
-  constructor(status: number, message: string) { super(message); this.status = status; }
+  diagnostic?: DriveAuthDiagnostic;
+  constructor(status: number, message: string, diagnostic?: DriveAuthDiagnostic) { super(message); this.status = status; this.diagnostic = diagnostic; }
 }
 export function friendlyError(error: unknown): string {
   if (error instanceof GraphError) return error.message;
@@ -68,7 +72,9 @@ export class OneDriveClient {
         // A mutation is never replayed automatically. Long Retry-After remains a visible error.
         if ((!init.method || init.method === 'GET') && [429, 502, 503, 504].includes(response.status) && attempt < 2 && delay <= 10000) { await pause(delay, signal); continue; }
         const data = await response.json().catch(() => ({}));
-        throw new GraphError(response.status, typeof data.error === 'string' ? data.error : 'OneDrive не подтвердил выполнение операции.');
+        const d = data.diagnostic;
+        const diagnostic = d && typeof d.code === 'string' && /^[\w]{1,64}$/.test(d.code) && typeof d.stage === 'string' && typeof d.message === 'string' && typeof d.correlationId === 'string' && /^[a-f0-9-]{36}$/i.test(d.correlationId) ? d as DriveAuthDiagnostic : undefined;
+        throw new GraphError(response.status, typeof data.error === 'string' ? data.error : 'OneDrive не подтвердил выполнение операции.', diagnostic);
       }
       return response;
     }
@@ -80,7 +86,8 @@ export class OneDriveClient {
   graph<T>(path: string, init: RequestInit = {}, signal?: AbortSignal): Promise<T> {
     return this.json<T>(`/graph?path=${encodeURIComponent(path)}`, init, signal);
   }
-  status(signal?: AbortSignal) { return this.json<{ connected: boolean; username?: string }>('/status', {}, signal); }
+  status(signal?: AbortSignal) { return this.json<DriveConnection>('/status', {}, signal); }
+  diagnostics() { return this.json<DriveConfiguration>('/diagnostics'); }
   async connect() {
     const origin = this.origin(), credential = await this.getToken();
     // A top-level POST sets the HttpOnly OAuth cookie without depending on third-party cookies.

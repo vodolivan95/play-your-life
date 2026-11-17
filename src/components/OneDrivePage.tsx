@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { friendlyError, GraphError, mergeDriveItems, OneDriveClient, rootPath, sortDriveItems } from '../oneDrive';
-import type { DriveInfo, DriveItem, DrivePage } from '../oneDrive';
+import type { DriveAuthDiagnostic, DriveConfiguration, DriveConnection, DriveInfo, DriveItem, DrivePage } from '../oneDrive';
 import { DriveDialog, DrivePicker, DrivePreview } from './OneDriveDialogs';
 import OneDriveFolder from './OneDriveFolder';
 import { folderColors } from '../oneDriveLinks';
@@ -35,7 +35,9 @@ function FileThumbnail({ client, item }: { client: OneDriveClient; item: DriveIt
 
 export default function OneDrivePage({ uid, getToken }: { uid?: string; getToken?: () => Promise<string> }) {
   const [client] = useState(() => new OneDriveClient(getToken || (() => Promise.reject(new GraphError(401, 'Войдите в аккаунт Play Your Life.')))));
-  const [connection, setConnection] = useState<{ connected: boolean; username?: string } | null>(null);
+  const [connection, setConnection] = useState<DriveConnection | null>(null);
+  const [authDiagnostic, setAuthDiagnostic] = useState<DriveAuthDiagnostic>();
+  const [configuration, setConfiguration] = useState<DriveConfiguration>();
   const [error, setError] = useState(''), [notice, setNotice] = useState(''), [busy, setBusy] = useState(false), [mutating, setMutating] = useState(false);
   const [drive, setDrive] = useState<DriveInfo | null>(null), [items, setItems] = useState<DriveItem[]>([]), [next, setNext] = useState<string>();
   const [folderId, setFolderId] = useState(folderFromHash), [trail, setTrail] = useState<DriveItem[]>([]);
@@ -74,7 +76,12 @@ export default function OneDrivePage({ uid, getToken }: { uid?: string; getToken
       const saved = Date.now(); client.cache.set(cacheKey, { page: { ...page, value }, saved });
       if (client.cache.size > 20) client.cache.delete(client.cache.keys().next().value!);
       setItems(value); setNext(page['@odata.nextLink']); setCachedAt(undefined);
-    } catch (e) { if (!controller.signal.aborted) setError(friendlyError(e)); }
+    } catch (e) {
+      if (!controller.signal.aborted) {
+        setError(friendlyError(e));
+        if (e instanceof GraphError && e.status === 401) { setConnection({ connected: false }); setAuthDiagnostic(e.diagnostic); setItems([]); }
+      }
+    }
     finally { if (!controller.signal.aborted) setBusy(false); }
   }, [client, cacheKey, folderId, debounced]);
   useEffect(() => { const timeout = setTimeout(() => setDebounced(query.trim()), 350); return () => clearTimeout(timeout); }, [query]);
@@ -83,7 +90,7 @@ export default function OneDrivePage({ uid, getToken }: { uid?: string; getToken
     if (!uid) { queueMicrotask(() => setConnection({ connected: false })); return; }
     // Remove credentials left by the superseded SPA implementation; never migrate them to game data.
     for (const key of Object.keys(sessionStorage)) if (key.startsWith('msal.') || /^pyl:onedrive:.*:account$/.test(key)) sessionStorage.removeItem(key);
-    client.status(controller.signal).then(setConnection).catch(e => { if (!controller.signal.aborted) { setConnection({ connected: false }); setError(friendlyError(e)); } });
+    client.status(controller.signal).then(info => { setConnection(info); setAuthDiagnostic(info.authError); if (info.authError) setError(info.authError.message); }).catch(e => { if (!controller.signal.aborted) { setConnection({ connected: false }); setAuthDiagnostic(e instanceof GraphError ? e.diagnostic : undefined); setError(friendlyError(e)); } });
     return () => { controller.abort(); request.current?.abort(); uploadAbort.current?.abort(); };
   }, [client, uid]);
   useEffect(() => { if (connection?.connected) queueMicrotask(() => void refresh()); return () => request.current?.abort(); }, [connection?.connected, refresh]);
@@ -168,16 +175,18 @@ export default function OneDrivePage({ uid, getToken }: { uid?: string; getToken
   };
   const percent = drive?.quota?.total ? Math.min(100, Math.round((drive.quota.used || 0) / drive.quota.total * 100)) : 0;
   if (!connection) return <div className="od-status" role="status">Проверяем подключение OneDrive…</div>;
-  if (!connection.connected) return <section className="od-connect"><div className="od-cloud">☁</div><h2>Мой диск</h2><p>Подключите личный OneDrive, чтобы управлять своими файлами в Play Your Life.</p>{error && <p role="alert">{error}</p>}<button disabled={!uid || mutating} onClick={() => { setMutating(true); void client.connect().catch(e => { setError(friendlyError(e)); setMutating(false); }); }}>Подключить OneDrive</button>{!uid && <p>Войдите в аккаунт Play Your Life для личного подключения.</p>}</section>;
+  if (!connection.connected) return <section className="od-connect"><div className="od-cloud">☁</div><h2>{error ? 'Не удалось подключить OneDrive' : 'Подключите OneDrive'}</h2><p>Храните документы, фотографии и другие файлы в своём облачном хранилище Microsoft.</p>{error && <p role="alert">{error}</p>}<button disabled={!uid || mutating} onClick={() => { setMutating(true); void client.connect().catch(e => { setError(friendlyError(e)); setMutating(false); }); }}>{error ? 'Повторить подключение' : 'Подключить OneDrive'}</button>{!uid && <p>Войдите в аккаунт Play Your Life для личного подключения.</p>}
+    {error && uid && <details><summary>Диагностика подключения</summary>{authDiagnostic && <p>{authDiagnostic.code} · {authDiagnostic.stage} · Код обращения: {authDiagnostic.correlationId}</p>}<button onClick={() => void client.diagnostics().then(setConfiguration).catch(e => setError(friendlyError(e)))}>Проверить настройки сервера</button>{configuration && <><dl><dt>Client ID</dt><dd>{configuration.clientId || 'Не задан'}</dd><dt>Authority</dt><dd>{configuration.authority}</dd><dt>Web redirect URI</dt><dd>{configuration.redirectUri || 'Не задан'}</dd><dt>Разрешения</dt><dd>{configuration.scopes.join(', ')}</dd></dl>{configuration.issues.map(issue => <p key={issue.code}>{issue.message}</p>)}</>}</details>}
+  </section>;
   return <section className={`od-page${selection.length ? ' od-selecting' : ''}${toolsOpen ? ' od-tools-open' : ''}`} onDragOver={e => e.preventDefault()} onDrop={onDrop}>
-    <div className="od-header"><div className="od-title"><span className="od-cloud">☁</span><div><h2>Мой диск</h2><p>{connection.username || 'OneDrive'}</p>{drive?.quota?.total !== undefined && <><p className="od-quota-meta">Использовано {size(drive.quota.used)} из {size(drive.quota.total)} ({percent}%)</p><div className="od-quota"><span style={{ width: `${percent}%` }} /></div></>}</div></div><label className="od-search"><span>⌕</span><input aria-label="Поиск в моём диске" placeholder="Поиск в моём диске…" value={query} onChange={e => { setQuery(e.target.value); setNotice(''); }} />{query && <button onClick={() => { setQuery(''); setNotice(''); }} aria-label="Очистить поиск">×</button>}</label></div>
+    <div className="od-header"><div className="od-title"><span className="od-cloud">☁</span><div><h2>Мой диск</h2><p>{connection.displayName || 'OneDrive'} · Подключено</p><p>{connection.username}</p>{drive?.quota?.total !== undefined && <><p className="od-quota-meta">Использовано {size(drive.quota.used)} из {size(drive.quota.total)} ({percent}%)</p><div className="od-quota"><span style={{ width: `${percent}%` }} /></div></>}</div></div><label className="od-search"><span>⌕</span><input aria-label="Поиск в моём диске" placeholder="Поиск в моём диске…" value={query} onChange={e => { setQuery(e.target.value); setNotice(''); }} />{query && <button onClick={() => { setQuery(''); setNotice(''); }} aria-label="Очистить поиск">×</button>}</label></div>
     <div className="od-mobile-tabs"><button aria-pressed={filter === 'image'} onClick={() => setFilter('image')}>Фотографии</button><button aria-pressed={filter !== 'image'} onClick={() => setFilter('all')}>Файлы</button></div>
     <div className="od-row"><div className="od-actions"><button disabled={mutating || offline} onClick={() => setEdit({ name: '' })}>＋ Папка</button><button className="od-primary" disabled={mutating || offline} onClick={() => input.current?.click()}>Загрузить файлы</button><button disabled={busy || mutating || offline} onClick={() => { client.cache.clear(); void refresh(); }}>Обновить</button></div><input type="file" multiple hidden ref={input} onChange={onFile} /><button disabled={mutating} onClick={() => void operate(async () => { await client.disconnect(); setItems([]); setDrive(null); setConnection({ connected: false }); }, 'OneDrive отключён', false)}>Отключить OneDrive</button></div>
     <div className="od-toolbar"><div className="od-filters">{types.map(t => <button key={t.id} aria-pressed={filter === t.id} className={filter === t.id ? 'active' : ''} onClick={() => setFilter(t.id)}>{t.label}</button>)}</div><div className="od-view"><button aria-label="Плитка" aria-pressed={!list} onClick={() => setList(false)}>▦</button><button aria-label="Список" aria-pressed={list} onClick={() => setList(true)}>☷</button><button aria-pressed={details} onClick={() => setDetails(!details)}>ⓘ Сведения</button></div></div>
     <div className="od-sort"><label><span>Сортировка</span><select aria-label="Сортировка" value={sort} onChange={e => setSort(e.target.value as typeof sort)}><option value="name">По названию</option><option value="size">По размеру</option><option value="date">По дате изменения</option></select></label><button aria-label="Изменить направление сортировки" onClick={() => setDescending(!descending)}>{descending ? '↓' : '↑'}</button><span>В загруженных файлах ({items.length})</span><button className="od-tools-toggle" aria-label="Инструменты" title="Инструменты" aria-expanded={toolsOpen} onClick={() => setToolsOpen(!toolsOpen)}>⚙</button></div>
     <nav className="od-breadcrumb" aria-label="Расположение"><button onClick={() => navigate()}>Мой диск</button>{trail.map(item => <button key={item.id} onClick={() => navigate(item.id)}> / {item.name}</button>)}{debounced && <span> / Поиск: {debounced}</span>}{folderId && <button onClick={() => navigate(trail.at(-2)?.id)}>↑ На уровень выше</button>}</nav>
     {(offline || cachedAt) && <p className="od-notice" role="status">{offline ? 'Нет подключения к интернету. Облачные операции недоступны.' : 'Показаны сохранённые метаданные; обновляем…'}{cachedAt && ` Сохранено: ${new Date(cachedAt).toLocaleTimeString('ru')}.`}</p>}
-    {notice && <p role="status" className="od-notice">{notice}</p>}{error && <div role="alert" className="od-error">{error} <button disabled={busy || offline} onClick={() => void refresh()}>Повторить чтение</button><button disabled={mutating || offline} onClick={() => void client.connect().catch(e => setError(friendlyError(e)))}>Войти Microsoft заново</button></div>}
+    {notice && <p role="status" className="od-notice">{notice}</p>}{(error || authDiagnostic) && <div role="alert" className="od-error">{error || authDiagnostic?.message} <button disabled={busy || offline} onClick={() => void refresh()}>Повторить чтение</button><button disabled={mutating || offline} onClick={() => void client.connect().catch(e => setError(friendlyError(e)))}>Войти Microsoft заново</button></div>}
     {progress && <div className="od-progress" role="status">{progress.name}: {progress.percent}% <button onClick={() => uploadAbort.current?.abort()}>Отменить загрузку</button><progress max="100" value={progress.percent} /></div>}
     <div className="od-actions od-selection"><label><input type="checkbox" checked={!!visible.length && visible.every(item => selection.includes(item.id))} onChange={e => setSelection(e.target.checked ? visible.map(item => item.id) : [])} /> Выбрать загруженные</label>{selected.length > 0 && <><span>Выбрано: {selected.length}</span><button disabled={mutating || offline} onClick={() => setMoving(true)}>Переместить</button><button disabled={mutating || offline} onClick={() => remove(selected)}>Удалить выбранные</button>{selected.length === 1 && <><button onClick={() => open(selected[0])}>Открыть выбранное</button><button onClick={() => setContextId(contextId ? undefined : selected[0].id)}>Действия</button></>}</>}</div>
     <div className={details ? 'od-body details' : 'od-body'}><div>{busy && !items.length ? <p role="status">Загружаем файлы…</p> : !visible.length ? <p className="od-empty">{error ? 'Файлы не удалось загрузить.' : debounced || filter !== 'all' ? 'В загруженной части нет совпадений.' : 'Папка пуста.'}</p> : <div className={list ? 'od-list' : 'od-grid'}>{visible.map(item => <article key={item.id} className={`od-item${selection.includes(item.id) ? ' selected' : ''}`}>

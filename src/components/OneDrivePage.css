@@ -99,3 +99,4 @@
   .od-header { margin-bottom: 12px; }.od-title h2 { font-size: 24px; }.od-title p { font-size: 13px; }.od-title .od-cloud { font-size: 36px; }
   .od-breadcrumb { margin-bottom: 12px; }.od-grid { margin-top: 18px; }
 }
+.od-connect details { max-width: 600px; margin: 20px auto; text-align: left; overflow-wrap: anywhere; }.od-connect details dl { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }.od-connect details dd { margin: 0; }

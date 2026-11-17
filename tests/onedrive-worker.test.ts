@@ -30,23 +30,26 @@ test('Firebase isolation, one-use PKCE callback, encrypted sessions, Graph and u
     return `${text}.${Buffer.from(await crypto.subtle.sign('RSASSA-PKCS1-v1_5', pair.privateKey, new TextEncoder().encode(text))).toString('base64url')}`;
   };
   // SDK boundaries are mocked; Firebase signature verification, routing, encryption, PKCE generation and HTTP logic are real.
-  let verifier = '', exchanges = 0, silent = 0;
+  let verifier = '', oidcNonce = '', exchanges = 0, silent = 0;
+  let nonceMismatch = false, exchangeError = false, refreshError = false, networkRefreshError = false, probeDenied = false;
+  const authLogs: unknown[] = []; t.mock.method(console, 'warn', (...items: unknown[]) => authLogs.push(items));
   t.mock.method(ConfidentialClientApplication.prototype, 'getAuthCodeUrl', async (data: Record<string, string>) => {
-    assert.equal(data.codeChallengeMethod, 'S256'); assert.ok(data.codeChallenge.length > 40);
+    assert.deepEqual(data.scopes,['User.Read','Files.ReadWrite']); assert.equal(data.codeChallengeMethod, 'S256'); assert.ok(data.codeChallenge.length > 40); oidcNonce = data.nonce; assert.match(oidcNonce, /^[a-f0-9]{64}$/); assert.notEqual(data.state.split('.')[1], oidcNonce);
     return `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?${new URLSearchParams({ state: data.state, code_challenge: data.codeChallenge })}`;
   });
   t.mock.method(ConfidentialClientApplication.prototype, 'acquireTokenByCode', async (data: { codeVerifier: string; code: string }) => {
     exchanges++; verifier = data.codeVerifier;
-    return { account: { homeAccountId: data.code, username: `${data.code}@example.test` } };
+    if (exchangeError) throw { errorCode:'invalid_client', message:'AADSTS7000215 fixture-provider-secret must never be exposed' };
+    return { account: { homeAccountId: data.code, username: `${data.code}@example.test` }, accessToken:`provider-${data.code}`, idTokenClaims:{nonce:nonceMismatch?'wrong':oidcNonce} };
   });
   t.mock.method(TokenCache.prototype, 'serialize', () => 'fixture-provider-refresh-secret');
   t.mock.method(TokenCache.prototype, 'deserialize', () => {});
   t.mock.method(TokenCache.prototype, 'getAccountByHomeId', async (id: string) => ({ homeAccountId: id }));
-  t.mock.method(ConfidentialClientApplication.prototype, 'acquireTokenSilent', async (data: { account: { homeAccountId: string } }) => { silent++; return { accessToken: `provider-${data.account.homeAccountId}` }; });
+  t.mock.method(ConfidentialClientApplication.prototype, 'acquireTokenSilent', async (data: { account: { homeAccountId: string } }) => { silent++; if(networkRefreshError) throw new TypeError('private-network-secret'); if (refreshError) throw { errorCode:'invalid_grant', message:'private refresh fixture-provider-secret' }; return { accessToken: `provider-${data.account.homeAccountId}` }; });
   const objects = new Map<string, OneDriveAccount>(), stores = new Map<string, Map<string, unknown>>(), names = new Map<string, string>();
   const env: Env = {
     APP_URL: 'https://app.example/life/', BRIDGE_URL: 'https://bridge.example', FIREBASE_PROJECT_ID: 'fixture-project',
-    MICROSOFT_CLIENT_ID: 'fixture-client', MICROSOFT_CLIENT_SECRET: 'fixture-secret', TOKEN_ENCRYPTION_KEY: 'e'.repeat(64),
+    MICROSOFT_CLIENT_ID: crypto.randomUUID(), MICROSOFT_CLIENT_SECRET: 'fixture-secret', TOKEN_ENCRYPTION_KEY: 'e'.repeat(64),
     ACCOUNTS: {
       idFromName: name => { if (!names.has(name)) names.set(name, String(names.size + 1).padStart(64, '0')); return { toString: () => names.get(name)! }; },
       idFromString: id => ({ toString: () => id }),
@@ -62,12 +65,15 @@ test('Firebase isolation, one-use PKCE callback, encrypted sessions, Graph and u
     },
   };
   let graphCalls = 0, uploadCalls = 0, throttled = false;
+  const graphMethods: string[] = [];
   globalThis.fetch = async (input, init) => {
     const url = String(input);
     if (url.startsWith('https://www.googleapis.com/')) return Response.json({ keys: [jwk] });
     if (url.startsWith('https://graph.microsoft.com/')) {
-      graphCalls++;
+      graphCalls++; graphMethods.push(init?.method || 'GET');
       assert.equal(new Headers(init?.headers).get('Authorization'), 'Bearer provider-user-a');
+      if (url.includes('/me?')) return Response.json({id:'profile-a',displayName:'Тестовый пользователь',mail:'user-a@example.test'});
+      if (url.includes('/me/drive?')) return probeDenied ? Response.json({error:'fixture secret'}, {status:403}) : Response.json({id:'drive-a'});
       if (throttled) return Response.json({ error: { message: 'RAW SECRET ERROR' } }, { status: 429, headers: { 'Retry-After': '20' } });
       if (init?.method === 'PATCH') {
         assert.equal(new Headers(init.headers).get('If-Match'), '"version-1"');
@@ -94,6 +100,12 @@ test('Firebase isolation, one-use PKCE callback, encrypted sessions, Graph and u
   assert.equal(objects.size, 0);
   assert.equal((await worker.fetch(new Request('https://bridge.example/status', { headers: { Origin: 'https://attacker.example' } }), env)).status, 403);
   assert.equal((await call(a, '/status', 'OPTIONS')).status, 204);
+  const incomplete = await worker.fetch(new Request('https://bridge.example/diagnostics',{headers:{Origin:'https://app.example',Authorization:`Bearer ${a}`}}),{...env,MICROSOFT_CLIENT_SECRET:''});
+  assert.equal(incomplete.status,200);assert.equal((await incomplete.json() as {configured:boolean}).configured,false);
+  assert.equal(objects.size,0,'public configuration diagnosis cannot open a different user account');
+  const unconfiguredLogin=await worker.fetch(new Request('https://bridge.example/authorize',{method:'POST',headers:{Origin:'https://app.example','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({credential:a})}),{...env,MICROSOFT_CLIENT_SECRET:''});
+  assert.equal(unconfiguredLogin.status,303);assert.equal(unconfiguredLogin.headers.get('Location'),'https://app.example/life/#/drive');
+  assert.equal(objects.size,0);
   const start = await worker.fetch(new Request('https://bridge.example/authorize', { method: 'POST', headers: { Origin: 'https://app.example', 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ credential: a }) }), env);
   assert.equal(start.status, 303, 'top-level login works without third-party cookies');
   assert.equal(start.headers.get('Location')!.includes(a), false, 'Firebase credential is never in a URL');
@@ -103,14 +115,14 @@ test('Firebase isolation, one-use PKCE callback, encrypted sessions, Graph and u
   const callback = (s = state, cookie = csrf) => worker.fetch(new Request(`https://bridge.example/callback?state=${s}&code=user-a`, { headers: { Cookie: cookie } }), env);
   assert.equal((await callback(state, '')).status, 400, 'login CSRF rejected');
   assert.equal((await callback(state.slice(0, -1) + 'f')).status, 400);
-  const completed = await callback(); assert.equal(completed.status, 303); assert.equal(exchanges, 1);
+  const completed = await callback(); assert.equal(completed.status, 303); assert.equal(exchanges, 1); assert.equal(graphCalls,3); assert.deepEqual(graphMethods,['GET','GET','GET'],'connection probes must not change any user file');
   assert.equal(completed.headers.get('Location'), 'https://app.example/life/#/drive');
   const challenge = Buffer.from(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))).toString('base64url');
   assert.equal(challenge, target.searchParams.get('code_challenge'));
   assert.equal((await callback()).status, 400, 'state cannot be replayed');
   assert.deepEqual(await (await call(b, '/status?uid=user-a')).json(), { connected: false });
-  assert.deepEqual(await (await call(a, '/status')).json(), { connected: true, username: 'user-a@example.test' });
-  assert.deepEqual(await (await call(await jwt('user-a'), '/status')).json(), { connected: true, username: 'user-a@example.test' }, 'another device uses same verified UID');
+  assert.deepEqual(await (await call(a, '/status')).json(), { connected: true, username: 'user-a@example.test', displayName:'Тестовый пользователь',driveId:'drive-a' });
+  assert.deepEqual(await (await call(await jwt('user-a'), '/status')).json(), { connected: true, username: 'user-a@example.test', displayName:'Тестовый пользователь',driveId:'drive-a' }, 'another device uses same verified UID');
   const entries = stores.get(names.get('user-a')!)!;
   assert.equal(JSON.stringify([...entries]).includes('refresh-secret'), false);
   const result = await call(a, `/graph?path=${encodeURIComponent('/me/drive/root/children')}`);
@@ -133,6 +145,30 @@ test('Firebase isolation, one-use PKCE callback, encrypted sessions, Graph and u
   throttled = true;
   const limited = await call(a, `/graph?path=${encodeURIComponent('/me/drive/root/children')}`, 'POST', JSON.stringify({ name: 'folder', folder: {} }));
   assert.equal(limited.status, 429); assert.equal(limited.headers.get('Retry-After'), '20'); assert.equal((await limited.text()).includes('RAW SECRET'), false);
+  throttled = false;
+  const diagnostics = await (await call(a, '/diagnostics')).json() as {clientId:string;authority:string;redirectUri:string};
+  assert.equal(diagnostics.clientId, env.MICROSOFT_CLIENT_ID); assert.equal(diagnostics.authority, 'https://login.microsoftonline.com/consumers'); assert.equal(diagnostics.redirectUri,'https://bridge.example/callback');
+  assert.equal(JSON.stringify(diagnostics).includes('fixture-secret'),false);
+  const begin = async () => { const response=await call(a,'/authorize','POST'); const target = new URL((await response.json() as {url:string}).url); return {state:target.searchParams.get('state')!,cookie:response.headers.get('Set-Cookie')!.split(';')[0]}; };
+  const finish = async (attempt:{state:string;cookie:string}, params='code=user-a') => worker.fetch(new Request(`https://bridge.example/callback?state=${attempt.state}&${params}`, {headers:{Cookie:attempt.cookie}}),env);
+  for (const mode of ['nonce','exchange','graph','cancel'] as const) {
+    const attempt=await begin(); nonceMismatch=mode==='nonce'; exchangeError=mode==='exchange'; probeDenied=mode==='graph';
+    const response=await finish(attempt, mode==='cancel'?'error=access_denied&error_description=AADSTS50020%20fixture-provider-secret':'code=user-a');
+    assert.equal(response.status,303); assert.equal(response.headers.get('Location'),'https://app.example/life/#/drive');
+    const status=await (await call(a,'/status')).json() as {connected:boolean;authError:{code:string;stage:string}};
+    assert.equal(status.connected,true,'failed reconnection preserves previous validated account');
+    assert.equal(status.authError.code,({nonce:'OAUTH_NONCE_MISMATCH',exchange:'AADSTS7000215',graph:'HTTP_403',cancel:'AADSTS50020'})[mode]);
+    assert.equal(JSON.stringify(status).includes('fixture-provider-secret'),false);
+    assert.equal(entries.has('pending'),false);
+    nonceMismatch=false; exchangeError=false; probeDenied=false;
+  }
+  refreshError=true;
+  const revoked=await (await call(a,'/status')).json() as {connected:boolean;authError:{code:string}};
+  assert.equal(revoked.connected,false);assert.equal(revoked.authError.code,'invalid_grant');assert.ok(entries.has('connection'),'revocation does not silently delete encrypted connection');
+  refreshError=false; networkRefreshError=true;
+  const offline=await call(a,'/status');assert.equal(offline.status,503);assert.ok(entries.has('connection'));
+  assert.equal(JSON.stringify(authLogs).includes('fixture-provider-secret'),false);assert.equal(JSON.stringify(authLogs).includes('private-network-secret'),false);
+  networkRefreshError=false;
   const callsBeforeDisconnect = graphCalls;
   await call(a, '/disconnect', 'POST'); assert.equal(entries.size, 0);
   assert.equal(graphCalls, callsBeforeDisconnect, 'disconnect never deletes provider files');

@@ -1,6 +1,6 @@
 # Мой диск — Microsoft OneDrive
 
-Кандидат 0.86.1, продолжение [PR #337](https://github.com/vodolivan95/play-your-life/pull/337), [Issue #338](https://github.com/vodolivan95/play-your-life/issues/338). Microsoft Entra пока не зарегистрирован (подтверждено владельцем 17 ноября 2026). Реальный вход и файловые операции на личном OneDrive не проверены. Production не опубликован.
+Кандидат 0.86.2, продолжение [PR #337](https://github.com/vodolivan95/play-your-life/pull/337), [Issue #338](https://github.com/vodolivan95/play-your-life/issues/338). Microsoft Entra пока не зарегистрирован (подтверждено владельцем 17 ноября 2026). Разбор подтверждённой ошибки входа в Entra и актуальная матрица проверки: [ONEDRIVE-OAUTH-AUDIT.md](ONEDRIVE-OAUTH-AUDIT.md). Реальный вход и файловые операции на личном OneDrive не проверены. Production не опубликован.
 
 ## Предварительный аудит
 
@@ -29,7 +29,7 @@
 7. Загрузка идёт через непрозрачные серверные upload handles, привязанные к тому же UID. Контент скачивается через сервер; при переходе на CDN Microsoft Authorization header не передаётся. Содержимое файлов не хранится в базе.
 8. Отключение удаляет серверный кеш, pending OAuth и upload handles. Файлы OneDrive не удаляются. Следующее подключение требует Microsoft-входа. Разрешение приложения в Microsoft можно отдельно отозвать в настройках Microsoft-аккаунта.
 
-Microsoft Graph permission: **delegated `Files.ReadWrite`**. `User.Read` удалён как ненужный; стандартные OAuth scopes MSAL (`openid`, `profile`, `offline_access`) нужны для входа/обновления. Отдельный общий Microsoft-аккаунт не используется. Доступ к конкретному файлу дополнительно проверяет Microsoft; ссылка во вложении не предоставляет разрешений. Открытие ссылки другим пользователем требует его собственного подключения и прав Microsoft.
+Microsoft Graph permissions: **delegated `User.Read`, `Files.ReadWrite`**. `User.Read` используется для read-only проверки `/me` и имени/почты профиля; стандартные OAuth scopes MSAL (`openid`, `profile`, `offline_access`) нужны для входа/обновления. Отдельный общий Microsoft-аккаунт не используется. Доступ к конкретному файлу дополнительно проверяет Microsoft; ссылка во вложении не предоставляет разрешений. Открытие ссылки другим пользователем требует его собственного подключения и прав Microsoft.
 
 ## Расположение папок по скриншоту пользователя
 
@@ -56,11 +56,13 @@ Microsoft Graph permission: **delegated `Files.ReadWrite`**. `User.Read` уда�
 
 Прежняя инструкция 0.86.0 про SPA и `VITE_MICROSOFT_CLIENT_ID` заменена серверной схемой. Клиентский ID не требуется фронтенду.
 
+Перед регистрацией: для административного входа нужен доступ к настоящему каталогу Entra с правом регистрации приложений. Личный Outlook без связанного каталога может получить AADSTS50020 для ADIbizaUX в Microsoft Services; это не OAuth вашего OneDrive. Сначала выберите собственный каталог или получите/создайте его по [инструкции Microsoft](https://learn.microsoft.com/en-us/troubleshoot/entra/entra-id/app-integration/error-code-aadsts50020-user-account-identity-provider-does-not-exist).
+
 1. Откройте Microsoft Entra admin center → **App registrations → New registration**. Назовите приложение Play Your Life OneDrive. Выберите тип аккаунтов с поддержкой личных Microsoft-аккаунтов. Можно выбрать организационные + личные, оставив серверный authority `consumers` до отдельной проверки организаций.
 2. Сохраните **Application (client) ID**. Это публичный идентификатор; не подставляйте случайный UUID.
 3. Выберите HTTPS-origin будущего Worker (Workers dashboard показывает его для имени `play-your-life-onedrive`) или собственный домен. В **Authentication → Add a platform → Web** добавьте точный адрес этого сервера с путём `/callback`. Это серверный **Web redirect URI**, а не SPA URI и не адрес GitHub Pages. Путь/схема/домен должны точно совпасть с `BRIDGE_URL + /callback`.
 4. В **Certificates & secrets → Client secrets** создайте секрет. Скопируйте **Value** в защищённое хранилище/Worker Secret `MICROSOFT_CLIENT_SECRET`. Поле Secret ID вместо Value не подойдёт. Секрет не отправляйте в чат и не добавляйте в Vite, git или `.env` репозитория. Запишите срок действия для последующей замены.
-5. В **API permissions → Microsoft Graph → Delegated permissions** добавьте **Files.ReadWrite**. Удалите стандартный `User.Read`, если он остался и не используется другим кодом этого Entra-приложения. Application permissions не нужны. Не запрашивайте пароль Microsoft в Play Your Life.
+5. В **API permissions → Microsoft Graph → Delegated permissions** добавьте **User.Read** и **Files.ReadWrite**. Application permissions не нужны. Не запрашивайте пароль Microsoft в Play Your Life.
 6. Настройте серверные переменные и секреты по таблице ниже, разверните Worker. При регистрации допускается сначала выбрать адрес Worker, затем обновить точный redirect URI после его создания.
 7. Укажите адрес сервера в `VITE_ONEDRIVE_BRIDGE_URL` для frontend build, пересоберите preview. Войдите в Play Your Life → «Мой диск» → «Подключить OneDrive». Microsoft должен запросить согласие на ваши файлы.
 8. Пройдите live-матрицу ниже двумя разными пользователями до публикации. Корпоративные аккаунты проверяются отдельно при смене authority.
@@ -93,7 +95,7 @@ Worker также требует binding `ACCOUNTS` с классом `OneDriveA
 
 Для GitHub Actions подготовлен `.github/workflows/onedrive.yml`. Он отключён, пока repository variable `ONEDRIVE_ENABLED` не равна `true`. Нужны:
 
-- Repository variables: `MICROSOFT_CLIENT_ID`, `VITE_ONEDRIVE_BRIDGE_URL`, `ONEDRIVE_ENABLED`.
+- Repository variables: `MICROSOFT_CLIENT_ID`, `VITE_ONEDRIVE_BRIDGE_URL`, `ONEDRIVE_ENABLED`, при необходимости `MICROSOFT_TENANT` (`consumers` по умолчанию).
 - Repository secrets: `MICROSOFT_CLIENT_SECRET`, `ONEDRIVE_TOKEN_ENCRYPTION_KEY`, существующие `CLOUDFLARE_API_TOKEN` и `CLOUDFLARE_ACCOUNT_ID`.
 - Workflow собирает именно коммит main, для которого прошёл `Project checks`; ручной запуск также доступен после явной настройки. В предоставленном wrangler.toml `APP_URL` соответствует GitHub Pages; перед использованием другого frontend укажите его адрес в серверной конфигурации.
 - Pages получает `VITE_ONEDRIVE_BRIDGE_URL` из repository variables. Для Vercel укажите переменную в нужном Preview/Production Environment и пересоберите сайт. Сервер должен разрешать этот frontend origin; для изолированного preview используйте отдельный Worker с теми же требованиями шифрования и callback.

@@ -64,6 +64,8 @@ jobs:
         run: node tests/ticktick-ui.mjs
       - name: Verify TickTick inbox and two-way sync flow in the browser (mock services)
         run: node tests/ticktick-flow-ui.mjs
+      - name: Verify OneDrive on desktop and phone with isolated service fixtures
+        run: node tests/onedrive-ui.mjs
       - run: npm run build
       - run: node tests/logo-ui.mjs
       - name: Save mobile and desktop previews
@@ -78,6 +80,7 @@ jobs:
             work/logo-*.png
             work/goal-redesign/*.png
             work/ticktick/*.png
+            work/onedrive/*.png
             work/theme/*.png
             work/spheres/*.png
             work/spellcheck-*.png

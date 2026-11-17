@@ -13,5 +13,6 @@ export const navigation: { id: MenuIconId; label: string; icon: string }[] = [
   { id: 'shop', label: 'Магазин', icon: 'shop' },
   { id: 'city', label: 'Город', icon: 'city' },
   { id: 'statistics', label: 'Ключевые итоги', icon: 'statistics' },
+  { id: 'drive', label: 'Мой диск', icon: 'drive' },
   { id: 'profile', label: 'Профиль', icon: 'profile' },
 ];

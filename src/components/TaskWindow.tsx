@@ -35,6 +35,7 @@ import TaskDescription from "./TaskDescription";
 import Icon from "./Icon";
 import "./TaskWindow.css";
 const FocusSection = lazy(() => import("./FocusSection"));
+const OneDriveAttachButton = lazy(() => import('./OneDriveAttachButton'));
 const tabs = [
   "Планирование",
   "Описание",
@@ -1690,6 +1691,10 @@ function TaskWindowContent({
                   {busy ? "Подготовка…" : "＋ Добавить фото"}
                 </button>
                 <button disabled={locked || busy || attachments.length >= 10} onClick={() => fileInput.current?.click()}>＋ Добавить файл</button>
+                <Suspense fallback={null}><OneDriveAttachButton disabled={locked || busy || attachments.length >= 10} notify={notify} onSelect={link => {
+                  const url = `${location.origin}${location.pathname}#/drive?drive=${encodeURIComponent(link.driveId)}&item=${encodeURIComponent(link.itemId)}`;
+                  updateDetails(current => ({ attachments: [...(current.attachments ?? []), { id: crypto.randomUUID(), name: link.name.slice(0, 200), type: 'link', url, oneDrive: link }] }));
+                }} /></Suspense>
                 <input hidden ref={fileInput} type="file" aria-label="Прикрепить файл" accept="application/pdf,text/plain,video/mp4,.docx,.xlsx" onChange={e => { void uploadFile(e.target.files?.[0]); e.target.value = ''; }} />
                 <button
                   disabled={locked || attachments.length >= 10}

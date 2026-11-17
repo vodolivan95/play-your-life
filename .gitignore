@@ -22,3 +22,6 @@ room-preview/
 # Python-кэш
 __pycache__/
 *.pyc
+
+# Локальное состояние Wrangler (не учётные данные проекта)
+.wrangler/

@@ -1,0 +1,58 @@
+name: Deploy OneDrive bridge
+
+on:
+  workflow_run:
+    workflows: ["Project checks"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: onedrive-bridge
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: vars.ONEDRIVE_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Validate required configuration without printing values
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          MICROSOFT_CLIENT_ID: ${{ vars.MICROSOFT_CLIENT_ID }}
+          MICROSOFT_CLIENT_SECRET: ${{ secrets.MICROSOFT_CLIENT_SECRET }}
+          TOKEN_ENCRYPTION_KEY: ${{ secrets.ONEDRIVE_TOKEN_ENCRYPTION_KEY }}
+          BRIDGE_URL: ${{ vars.VITE_ONEDRIVE_BRIDGE_URL }}
+        run: |
+          for required in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID MICROSOFT_CLIENT_ID MICROSOFT_CLIENT_SECRET TOKEN_ENCRYPTION_KEY BRIDGE_URL; do
+            if [ -z "${!required}" ]; then
+              echo "::error::Добавьте $required по инструкции docs/ONEDRIVE.md."
+              exit 1
+            fi
+          done
+      - name: Deploy server with encrypted per-user cache
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '4.147.0'
+          workingDirectory: integrations/onedrive
+          command: deploy --var BRIDGE_URL:${{ vars.VITE_ONEDRIVE_BRIDGE_URL }} --var MICROSOFT_CLIENT_ID:${{ vars.MICROSOFT_CLIENT_ID }} --var MICROSOFT_TENANT:${{ vars.MICROSOFT_TENANT || 'consumers' }}
+          secrets: |
+            MICROSOFT_CLIENT_SECRET
+            TOKEN_ENCRYPTION_KEY
+        env:
+          MICROSOFT_CLIENT_SECRET: ${{ secrets.MICROSOFT_CLIENT_SECRET }}
+          TOKEN_ENCRYPTION_KEY: ${{ secrets.ONEDRIVE_TOKEN_ENCRYPTION_KEY }}

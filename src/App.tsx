@@ -30,6 +30,7 @@ const SkillTree = lazy(() => import('./components/SkillTree'));
 const LifePlanner = lazy(() => import('./components/LifePlanner'));
 const QuestBoard = lazy(() => import('./components/QuestBoard'));
 const HabitsPage = lazy(() => import('./components/HabitsPage'));
+const OneDrivePage = lazy(() => import('./components/OneDrivePage'));
 import GameArt from './components/GameArt';
 import Avatar from './components/Avatar';
 import DataBackup from './components/DataBackup';
@@ -109,7 +110,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   const setState = onChange ?? setLocalState;
   const tickTick = useTickTick(state, setState, userId, tickTickToken);
   const [page, setPage] = useState(() =>
-    readTaskRoute() ? 'tasks' : readGoalRoute() || location.hash === '#goals' ? 'goals' : location.hash === '#city'
+    readTaskRoute() ? 'tasks' : readGoalRoute() || location.hash === '#goals' ? 'goals' : location.hash.startsWith('#/drive') ? 'drive' : location.hash === '#city'
       ? 'city'
       : location.hash.startsWith('#ticktick=') || location.hash === '#profile'
         ? 'profile'
@@ -134,6 +135,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
   }, [userId, state.profile.onboardingComplete]);
   useEffect(() => {
     const changed = () => {
+      if (location.hash.startsWith('#/drive')) { setPage('drive'); return; }
       const taskId = readTaskRoute();
       if (taskId) { setPendingTask(taskId); setFocusedGoalId(null); setGoalLocation(null); setPage('tasks'); return; }
       const route = readGoalRoute(); setGoalLocation(route);
@@ -217,8 +219,9 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
     }
   }
   function navigate(id: string) {
-    if (id === 'profile') window.history.pushState(null, '', location.pathname + location.search + '#profile');
-    else if (readGoalRoute() || readTaskRoute() || location.hash === '#goals' || location.hash === '#profile' || location.hash.startsWith('#ticktick=')) window.history.pushState(null, '', location.pathname + location.search + (id === 'city' ? '#city' : ''));
+    if (id === 'drive') window.location.hash = '#/drive';
+    else if (id === 'profile') window.history.pushState(null, '', location.pathname + location.search + '#profile');
+    else if (readGoalRoute() || readTaskRoute() || location.hash === '#goals' || location.hash === '#profile' || location.hash.startsWith('#ticktick=') || location.hash.startsWith('#/drive')) window.history.pushState(null, '', location.pathname + location.search + (id === 'city' ? '#city' : ''));
     setGoalLocation(null);
     setPage(id);
     setSelected(null);
@@ -401,6 +404,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                 notify={notify}
               />
             )}
+            {page === 'drive' && <OneDrivePage key={userId || 'guest'} uid={userId} getToken={tickTickToken} />}
             {page === 'home' && <HomeDashboard state={state} onSphere={(id) => { setSelected(id); setSphereTab('overview'); setPage('spheres'); }} onQuests={() => navigate('tasks')} onIntegration={() => navigate('profile')} onCreate={newQuest} onStart={() => setModal('start')} onNavigate={navigate} renderQuest={q => <QuestRow key={q.id} quest={q} />} />}
             {page === 'spheres' && !sphere && <SpheresOverview state={state} onSelect={(id) => { setSelected(id); setSphereTab('overview'); window.scrollTo({ top: 0 }); }} onQuick={setQuickSphere} onQuest={(id) => { setQuestTemplate(null); setQuestSphere(id); setModal('quest'); }} onQuests={() => navigate('tasks')} renderQuest={(q) => <QuestRow key={q.id} quest={q} />} onAddRecommendation={(idea) => { setState(current => current.goals.some(g => g.sphere === idea.sphereId && g.name === idea.title && g.current < g.target) ? current : saveGoal(current, { name: idea.title, description: idea.description, sphere: idea.sphereId, target: 100, reward: 100, progressMode: 'tasks' })); notify('Проект добавлен в план. Открой его и добавь этапы и задачи.'); }} />}
             {sphere && (

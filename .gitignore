@@ -22,3 +22,6 @@ room-preview/
 # Python-кэш
 __pycache__/
 *.pyc
+
+# Локальный индекс связей кода
+graphify-out/

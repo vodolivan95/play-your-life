@@ -1,6 +1,8 @@
 import type { GameState, Quest } from "./game.ts";
 import { validProjectImage } from "./projectImage.ts";
 import { goalProgressValue } from "./goalWorkspace.ts";
+import { validDriveLink } from './oneDriveLinks.ts';
+import type { DriveLink } from './oneDriveLinks.ts';
 
 export type TaskAttachment = {
   id: string;
@@ -8,6 +10,7 @@ export type TaskAttachment = {
   url: string;
   type: "photo" | "file" | "link";
   size?: number;
+  oneDrive?: DriveLink;
 };
 export type TaskDetails = {
   motivation?: string;
@@ -122,6 +125,7 @@ export function validTaskDetails(
             (a.type === "photo"
               ? validProjectImage(a.url) && !!a.url
               : !!safeWebUrl(a.url) || (a.type === "file" && safeEmbeddedFile(a.url))) &&
+            (a.oneDrive === undefined || a.type === 'link' && validDriveLink(a.oneDrive) && !a.oneDrive.folder) &&
             (a.size === undefined || (Number.isFinite(a.size) && a.size >= 0)),
         )))
   );

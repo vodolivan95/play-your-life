@@ -9,7 +9,7 @@ import ThemeSwitch from './ThemeSwitch';
 import './AppMenu.css';
 
 /** Разделы, которые не помещаются в нижнюю панель и открываются шторкой «Ещё». */
-const moreIds: MenuIconId[] = ['tasks', 'spheres', 'budget', 'tree', 'achievements', 'shop', 'statistics', 'knowledge', 'profile'];
+const moreIds: MenuIconId[] = ['tasks', 'spheres', 'budget', 'tree', 'achievements', 'shop', 'statistics', 'knowledge', 'notes', 'profile'];
 
 /**
  * Нижняя панель телефона: Главная, Привычки, выпуклая «Проекты» по центру, Город и «Ещё».

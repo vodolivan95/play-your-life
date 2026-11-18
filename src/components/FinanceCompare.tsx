@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { GameState } from '../game';
-import { cagr, compareCategories, yearsSummary } from '../finance';
-import type { CategoryDelta } from '../finance';
+import { cagr, categoryBreakdown, compareCategories, yearTransactions, yearsSummary } from '../finance';
+import type { FinanceCategory } from '../finance';
 import './FinanceCompare.css';
 
 const money = (n: number) => `${Math.round(n).toLocaleString('ru-RU')} ₽`;
@@ -22,10 +23,9 @@ function Delta({ value, kind, text }: { value: number | null; kind: 'expense' | 
 }
 
 /** Вкладка «Сравнение»: доходы и расходы по годам и статьи расходов год к году. */
-export default function FinanceCompare({ state }: { state: GameState }) {
+export default function FinanceCompare({ state, slot }: { state: GameState; slot?: HTMLElement | null }) {
   const years = useMemo(() => yearsSummary(state), [state]);
-  const [pickA, setPickA] = useState<string | null>(null);
-  const [pickB, setPickB] = useState<string | null>(null);
+  const [picked, setPicked] = useState<string[] | null>(null);
 
   if (years.length < 2) {
     return (
@@ -39,9 +39,15 @@ export default function FinanceCompare({ state }: { state: GameState }) {
   // По умолчанию — два последних полных года: неполный текущий год искажает сравнение.
   const last = years[years.length - 1];
   const defaultB = last.months < 12 && years.length >= 3 ? years[years.length - 2].year : last.year;
-  const yearB = pickB ?? defaultB;
-  const idxB = years.findIndex((y) => y.year === yearB);
-  const yearA = pickA && pickA !== yearB ? pickA : (years[idxB - 1] ?? years[idxB + 1]).year;
+  const desc = [...years].reverse(); // в списках — сверху вниз, начиная с нового года
+  const idxDefault = years.findIndex((y) => y.year === defaultB);
+  const defaults = [defaultB, (years[idxDefault - 1] ?? years[idxDefault + 1]).year];
+  const sel = (picked ?? defaults).filter((y) => years.some((x) => x.year === y));
+  // До четырёх лет: в таблицах — от нового к старому; сводка сравнивает самый старый с самым новым.
+  let chosen = [...new Set(sel)].sort((a, b) => Number(b) - Number(a));
+  if (chosen.length < 2) chosen = [...new Set([...chosen, ...desc.map((y) => y.year)])].slice(0, 2).sort((a, b) => Number(b) - Number(a));
+  const yearB = chosen[0];
+  const yearA = chosen[chosen.length - 1];
   const A = years.find((y) => y.year === yearA)!;
   const B = years.find((y) => y.year === yearB)!;
   const change = (a: number, b: number) => (a > 0 ? ((b - a) / a) * 100 : null);
@@ -74,31 +80,63 @@ export default function FinanceCompare({ state }: { state: GameState }) {
   if (fell[0]) insights.push(`Больше всего сэкономлено на «${fell[0].category.name}»: ${signedMoney(fell[0].diff)} (${pct(fell[0].pct)}).`);
   if (best) insights.push(`Лучший год по норме сбережений — ${best.year}: ${best.savingsRate!.toFixed(0)}% дохода осталось.`);
 
-  const rows = (list: CategoryDelta[], kind: 'expense' | 'income') => {
-    const max = Math.max(1, ...list.flatMap((d) => [d.a, d.b]));
-    return list.map((d) => (
-      <tr key={d.category.id}>
-        <th scope="row"><span aria-hidden="true">{d.category.icon}</span> {d.category.name}</th>
-        <td>{money(d.a)}</td>
-        <td>{money(d.b)}</td>
-        <td className="fc-num">{signedMoney(d.diff)}</td>
-        <td>{d.a === 0 ? <span className="fc-tag is-new">новая</span> : d.b === 0 ? <span className="fc-tag">нет в {yearB}</span> : <Delta value={d.pct} kind={kind} />}</td>
-        <td className="fc-bars" aria-hidden="true">
-          <i className="is-a" style={{ width: `${(d.a / max) * 100}%` }} />
-          <i className={`is-b is-${kind}`} style={{ width: `${(d.b / max) * 100}%` }} />
-        </td>
-      </tr>
-    ));
+  const matrix = (kind: 'expense' | 'income') => {
+    const per = chosen.map((y) => categoryBreakdown(state, yearTransactions(state, y), kind));
+    const cats = new Map<string, FinanceCategory>();
+    per.forEach((rows) => rows.forEach((r) => cats.set(r.category.id, r.category)));
+    return [...cats.values()]
+      .map((category) => {
+        const values = per.map((rows) => rows.find((r) => r.category.id === category.id)?.amount ?? 0);
+        const first = values[values.length - 1];
+        const last = values[0];
+        return { category, values, diff: last - first, pct: change(first, last), first, last };
+      })
+      .sort((x, y) => Math.abs(y.diff) - Math.abs(x.diff));
   };
+  const table = (kind: 'expense' | 'income', label: string) => {
+    const list = matrix(kind);
+    const max = Math.max(1, ...list.flatMap((d) => d.values));
+    return (
+      <table className="fc-table">
+        <thead><tr><th>{label}</th>{chosen.map((y) => <th key={y}>{y}</th>)}<th>{yearA} → {yearB}</th><th>%</th><th className="fc-bars-head">Сравнение</th></tr></thead>
+        <tbody>
+          {list.map((d) => (
+            <tr key={d.category.id}>
+              <th scope="row"><span aria-hidden="true">{d.category.icon}</span> {d.category.name}</th>
+              {d.values.map((v, i) => <td key={chosen[i]}>{money(v)}</td>)}
+              <td className="fc-num">{signedMoney(d.diff)}</td>
+              <td>{d.first === 0 ? <span className="fc-tag is-new">новая</span> : d.last === 0 ? <span className="fc-tag">нет в {yearB}</span> : <Delta value={d.pct} kind={kind} />}</td>
+              <td className="fc-bars" aria-hidden="true">
+                {d.values.map((v, i) => <i key={chosen[i]} className={`is-b is-${kind} is-y${i}`} style={{ width: `${(v / max) * 100}%` }} />)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  };
+
+  const picker = (
+    <div className="fc-pick" role="group" aria-label="Годы для сравнения">
+      <span>Годы</span>
+      {chosen.map((y, i) => (
+        <span className="fc-pick-slot" key={`${i}-${y}`}>
+          <select aria-label={`Год ${i + 1}`} value={y} onChange={(e) => { const next = [...chosen]; next[i] = e.target.value; setPicked(next); }}>
+            {desc.map((x) => <option key={x.year} value={x.year}>{x.year}</option>)}
+          </select>
+          {chosen.length > 2 && <button type="button" aria-label={`Убрать ${y}`} onClick={() => setPicked(chosen.filter((_, j) => j !== i))}>×</button>}
+        </span>
+      ))}
+      {chosen.length < 4 && desc.length > chosen.length && (
+        <button type="button" className="fc-add" onClick={() => setPicked([...chosen, desc.find((x) => !chosen.includes(x.year))!.year])}>+ год</button>
+      )}
+    </div>
+  );
 
   return (
     <div className="fc">
-      <div className="fc-pick">
-        <label>Сравнить <select aria-label="Год A" value={yearA} onChange={(e) => setPickA(e.target.value)}>{years.filter((y) => y.year !== yearB).map((y) => <option key={y.year}>{y.year}</option>)}</select></label>
-        <span aria-hidden="true">→</span>
-        <label>с <select aria-label="Год B" value={yearB} onChange={(e) => setPickB(e.target.value)}>{years.map((y) => <option key={y.year}>{y.year}</option>)}</select></label>
-        <small>{years[0].year}–{years[years.length - 1].year}: {years.length} {years.length < 5 ? 'года' : 'лет'} данных{partial}</small>
-      </div>
+      {slot ? createPortal(picker, slot) : picker}
+      <small className="fc-span">{years[0].year}–{years[years.length - 1].year}: {years.length} {years.length < 5 ? 'года' : 'лет'} данных{partial}</small>
 
       <div className="fc-kpis">
         <div className="panel fc-kpi"><span>Доход {yearA} → {yearB}</span><b>{money(B.income)}</b><em>было {money(A.income)} · <Delta value={incomeChange} kind="income" /></em></div>
@@ -123,7 +161,7 @@ export default function FinanceCompare({ state }: { state: GameState }) {
             <thead><tr><th>Год</th><th>Доход</th><th>г/г</th><th>Расходы</th><th>г/г</th><th>Остаток</th><th>Норма сбер.</th><th>Расходы в месяц</th><th className="fc-bars-head">Доход / расходы</th></tr></thead>
             <tbody>
               {[...years].reverse().map((y) => (
-                <tr key={y.year} className={y.year === yearA || y.year === yearB ? 'is-picked' : ''}>
+                <tr key={y.year} className={chosen.includes(y.year) ? 'is-picked' : ''}>
                   <th scope="row">{y.year}{y.months < 12 && <small> · {y.months} мес.</small>}</th>
                   <td>{money(y.income)}</td>
                   <td><Delta value={y.incomeChange} kind="income" /></td>
@@ -155,23 +193,17 @@ export default function FinanceCompare({ state }: { state: GameState }) {
       </div>
 
       <section className="panel fc-cats">
-        <div className="section-heading"><div><h2>Статьи расходов: {yearA} → {yearB}</h2><p>По величине изменения; серая полоса — {yearA}, цветная — {yearB}</p></div></div>
+        <div className="section-heading"><div><h2>Статьи расходов: {chosen.slice().reverse().join(' → ')}</h2><p>По величине изменения {yearA} → {yearB}; полосы сверху вниз — от {yearB} к {yearA}</p></div></div>
         <div className="fc-table-wrap">
-          <table className="fc-table">
-            <thead><tr><th>Статья</th><th>{yearA}</th><th>{yearB}</th><th>Изменение</th><th>%</th><th className="fc-bars-head">Сравнение</th></tr></thead>
-            <tbody>{rows(expenseDeltas, 'expense')}</tbody>
-          </table>
+          {table('expense', 'Статья')}
         </div>
       </section>
 
       {incomeDeltas.length > 0 && (
         <section className="panel fc-cats">
-          <div className="section-heading"><div><h2>Источники дохода: {yearA} → {yearB}</h2><p>Откуда пришли деньги и как это изменилось</p></div></div>
+          <div className="section-heading"><div><h2>Источники дохода: {chosen.slice().reverse().join(' → ')}</h2><p>Откуда пришли деньги и как это изменилось</p></div></div>
           <div className="fc-table-wrap">
-            <table className="fc-table">
-              <thead><tr><th>Источник</th><th>{yearA}</th><th>{yearB}</th><th>Изменение</th><th>%</th><th className="fc-bars-head">Сравнение</th></tr></thead>
-              <tbody>{rows(incomeDeltas, 'income')}</tbody>
-            </table>
+            {table('income', 'Источник')}
           </div>
         </section>
       )}

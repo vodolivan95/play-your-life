@@ -78,3 +78,12 @@
   .fm-sessions li{grid-template-columns:auto minmax(0,1fr) auto}.fm-sessions li span:nth-child(3){display:none}
 }
 @media(prefers-reduced-motion:reduce){.fm-donut-seg{transition:none}}
+
+/* 0.89.9: компактнее — фильтры, итоги и пояснение стоят справа от календаря, а не над ним. */
+@media (min-width: 1200px) {
+  .fm { grid-template-columns: minmax(0, 470px) minmax(0, 1fr); column-gap: 28px; align-items: start; }
+  .fm > * { grid-column: 1 / -1; }
+  .fm > details.fm-block:first-of-type { grid-column: 1; grid-row: 2 / span 6; }
+  .fm > .fm-filters, .fm > .fm-stats, .fm > .fm-empty, .fm > .fm-spheres, .fm > .fm-panel { grid-column: 2; }
+  .fm > .fm-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

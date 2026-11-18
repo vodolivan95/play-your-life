@@ -107,6 +107,7 @@ export default function FinancePage({
   notify: (message: string) => void;
 }) {
   const [view, setView] = useState<View>('month');
+  const [compareSlot, setCompareSlot] = useState<HTMLDivElement | null>(null);
   const [month, setMonth] = useState(monthKey);
   const [year, setYear] = useState(yearKey);
   const [editId, setEditId] = useState<string | null>(null);
@@ -296,6 +297,7 @@ export default function FinancePage({
             <button className="icon-button outlined" aria-label="Следующий месяц" disabled={month >= monthKey()} onClick={() => { const next = moveMonth(month, 1); if (validMonth(next) && next <= monthKey()) setMonth(next); }}>→</button>
           </div>
         )}
+        {view === 'compare' && <div className="fin-nav fin-compare-slot" ref={setCompareSlot} />}
         {view === 'year' && (
           <div className="fin-nav">
             <label className="fin-year-select">
@@ -387,7 +389,7 @@ export default function FinancePage({
         </>
       ) : view === 'compare' ? (
         <Suspense fallback={<p role="status">Считаем сравнение…</p>}>
-          <FinanceCompare state={state} />
+          <FinanceCompare state={state} slot={compareSlot} />
         </Suspense>
       ) : view === 'year' ? (
         <>

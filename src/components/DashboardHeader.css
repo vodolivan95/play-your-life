@@ -42,3 +42,6 @@
   .dashboard-profile { order: 3; padding: 0; background: none !important; }
   .dashboard-profile-text { display: none; }
 }
+
+/* 0.89.9: колокольчик уведомлений скрыт по просьбе пользователя (пока не нужен); счётчик задач остаётся в «Мои задачи». */
+.dashboard-header .dashboard-notifications, .dashboard-notifications { display: none !important; }

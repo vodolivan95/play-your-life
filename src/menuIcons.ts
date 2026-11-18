@@ -5,7 +5,7 @@
  */
 export type MenuIconId =
   | 'home' | 'spheres' | 'tasks' | 'quests' | 'goals' | 'plan' | 'monthly'
-  | 'tree' | 'achievements' | 'shop' | 'city' | 'statistics' | 'profile' | 'budget' | 'knowledge' | 'psychology';
+  | 'tree' | 'achievements' | 'shop' | 'city' | 'statistics' | 'profile' | 'budget' | 'knowledge' | 'notes' | 'psychology';
 import { habitsIconSvg, tasksIconSvg } from './menuIconsNew';
 type Stop = readonly [number, string, number?];
 
@@ -91,6 +91,12 @@ const SVGS: Record<MenuIconId, string> = {
     Rr(13, 8, 34, 46, 7, 'cv') + Rr(18, 11, 31, 43, 6, 'pg') +
     '<rect x="23" y="18" width="20" height="3.4" rx="1.7" fill="#4C7FD6"/><rect x="23" y="25" width="16" height="3" rx="1.5" fill="#B9C3D8"/><rect x="23" y="31" width="19" height="3" rx="1.5" fill="#C9D1E2"/><rect x="23" y="37" width="13" height="3" rx="1.5" fill="#C9D1E2"/>' +
     Ci(46, 46, 9, 'pl') + '<path d="M46 41.5v9M41.5 46h9" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>',
+  notes:
+    LG('ny', [[0, '#FFF3B0'], [.6, '#FFD24D'], [1, '#F2A93B']]) + LG('nf', [[0, '#FFE58A'], [1, '#E8A93A']]) + LG('np', [[0, '#FF8FA3'], [1, '#E0567F']]) +
+    '<path d="M13 12a5 5 0 0 1 5-5h28a5 5 0 0 1 5 5v26L38 51H18a5 5 0 0 1-5-5z" fill="url(#ny)"/>' +
+    '<path d="M51 38H43a5 5 0 0 0-5 5v8z" fill="url(#nf)"/>' +
+    '<rect x="20" y="18" width="22" height="3.4" rx="1.7" fill="#B07A12" opacity=".75"/><rect x="20" y="25" width="18" height="3" rx="1.5" fill="#B07A12" opacity=".5"/><rect x="20" y="31" width="14" height="3" rx="1.5" fill="#B07A12" opacity=".5"/>' +
+    Ci(32, 9, 4.5, 'np'),
   profile:
     LG('k', [[0, '#FFFFFF'], [1, '#DCE3F0']]) + LG('t', [[0, '#7FB6FF'], [1, '#2F63C2']]) + RG('av', [[0, '#8EC5FF'], [.6, '#3B7CE0'], [1, '#2450A8']]) +
     Rr(7, 13, 50, 38, 9, 'k') + Ci(21.5, 34, 9.5, 'av') +

@@ -38,16 +38,16 @@ const views: [NotesView, string, string][] = [['all', 'Все заметки', '
 const colorOf = (id: NoteColor) => noteColors.find((c) => c.id === id) ?? noteColors[0];
 const localInput = (iso?: string) => { if (!iso) return ''; const d = new Date(iso); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
 
-type Props = { ownerId: string; sphereId: string; sphereName: string; author: string; notify: (message: string) => void };
+type Props = { ownerId: string; sphereId: string; sphereName: string; author: string; notify: (message: string) => void; openNoteId?: string | null };
 
 /** Заметки сферы: карточки как в Google Keep, папки, закреп и окно-редактор. */
-export default function SphereNotes({ ownerId, sphereId, sphereName, author, notify }: Props) {
+export default function SphereNotes({ ownerId, sphereId, sphereName, author, notify, openNoteId = null }: Props) {
   const parse = useCallback((raw: string | null) => parseNotes(raw), []);
   const { doc, update, error, savedAt } = useStoredDoc<NotesData>(notesStorageKey(ownerId), parse);
   const [view, setView] = useState<NotesView>('all');
   const [folder, setFolder] = useState<string | null>(null);
   const [query, setQuery] = useState('');
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(openNoteId);
   const [pop, setPop] = useState<'' | 'color' | 'reminder' | 'history' | 'folder'>('');
   const [folderDraft, setFolderDraft] = useState<{ id?: string; name: string } | null>(null);
 

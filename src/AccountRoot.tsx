@@ -452,6 +452,7 @@ function CloudGame({ user }: { user: User }) {
     <App
       state={snapshot.state!}
       userId={user.uid}
+      userEmail={user.email}
       tickTickToken={() => user.getIdToken()}
       accountTools={bar}
       onChange={(next) => {

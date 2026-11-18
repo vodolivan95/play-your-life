@@ -515,3 +515,55 @@ export function validFinancePayments(value: unknown): value is PaymentEntry[] {
   }
   return true;
 }
+
+// ── Импорт личного отчёта (помесячные итоги из таблицы Excel, подготовленные в JSON) ──
+export type FinanceReport = {
+  format: 'pyl-finance-report';
+  version: 1;
+  title?: string;
+  categories: { id: string; name: string; icon: string; type: FinanceKind }[];
+  items: { type: FinanceKind; categoryId: string; month: string; amount: number }[];
+};
+
+export function parseFinanceReport(raw: string): FinanceReport {
+  let data: unknown;
+  try { data = JSON.parse(raw); } catch { throw new Error('Файл не похож на отчёт: это не JSON.'); }
+  if (!isRecord(data) || data.format !== 'pyl-finance-report' || !Array.isArray(data.categories) || !Array.isArray(data.items))
+    throw new Error('Это не файл личного отчёта PLAY YOUR LIFE.');
+  const categories = (data.categories as unknown[]).filter((c): c is FinanceReport['categories'][number] =>
+    isRecord(c) && typeof c.id === 'string' && /^lr-[a-z0-9-]{1,30}$/.test(c.id) && typeof c.name === 'string' && !!c.name.trim() && typeof c.icon === 'string' && isKind(c.type));
+  const ids = new Set(categories.map((c) => c.id));
+  const items = (data.items as unknown[]).filter((i): i is FinanceReport['items'][number] =>
+    isRecord(i) && isKind(i.type) && typeof i.categoryId === 'string' && ids.has(i.categoryId) && typeof i.month === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(i.month) &&
+    typeof i.amount === 'number' && i.amount > 0 && i.amount <= MAX_FINANCE_AMOUNT);
+  if (!items.length) throw new Error('В отчёте нет сумм для импорта.');
+  return { format: 'pyl-finance-report', version: 1, title: typeof data.title === 'string' ? data.title : undefined, categories, items };
+}
+
+/**
+ * Добавляет категории отчёта (id `lr-…`) и помесячные суммы как записи первого числа месяца.
+ * Повторный импорт заменяет прежние записи отчёта, ручные записи не трогаются.
+ */
+export function importFinanceReport(state: GameState, report: FinanceReport, now = new Date()): { state: GameState; added: number } {
+  const own = (state.financeCategories ?? []).filter((c) => !c.id.startsWith('lr-'));
+  const used = new Set(report.items.map((i) => i.categoryId));
+  const cats: FinanceCategory[] = report.categories.filter((c) => used.has(c.id)).map((c) => ({ id: c.id, name: c.name.trim().slice(0, 40), icon: c.icon.slice(0, 8) || '🏷️', type: c.type, custom: true }));
+  if (own.length + cats.length > MAX_FINANCE_CATEGORIES) throw new Error(`Слишком много категорий: можно не больше ${MAX_FINANCE_CATEGORIES}.`);
+  const kept = transactions(state).filter((t) => !t.id.startsWith('lr-'));
+  const byCat = new Map(cats.map((c) => [c.id, c]));
+  const added = report.items
+    .filter((i) => byCat.get(i.categoryId)?.type === i.type)
+    .map<FinanceTransaction>((i) => ({
+      id: `lr-${i.month}-${i.categoryId.slice(3)}`.slice(0, 80),
+      type: i.type,
+      amount: Math.round(i.amount * 100) / 100,
+      categoryId: i.categoryId,
+      date: `${i.month}-01`,
+      note: `${report.title ?? 'Личный отчёт'} · итог за месяц`.slice(0, MAX_FINANCE_NOTE),
+      createdAt: now.toISOString(),
+      source: 'manual',
+    }));
+  const unique = [...new Map(added.map((t) => [t.id, t])).values()];
+  if (kept.length + unique.length > MAX_FINANCE_TRANSACTIONS) throw new Error('Слишком много записей для импорта.');
+  return { state: { ...state, financeCategories: [...own, ...cats], financeTransactions: [...kept, ...unique] }, added: unique.length };
+}

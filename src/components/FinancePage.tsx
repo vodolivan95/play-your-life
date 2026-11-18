@@ -133,6 +133,24 @@ export default function FinancePage({
   const series = yearMonthlySeries(state, year);
   const maxMonthExpense = Math.max(1, ...series.map((m) => m.expense));
 
+  // 0.89.5: дополнительные показатели вкладок «Помесячно», «По году» и «Платежи».
+  const savingsRate = (t: { income: number; net: number }) => (t.income > 0 ? `${Math.round((t.net / t.income) * 100)}%` : '—');
+  const monthDays = (() => {
+    const [y, m] = month.split('-').map(Number);
+    const total = new Date(y, m, 0).getDate();
+    return month === monthKey() ? new Date().getDate() : total;
+  })();
+  const monthExpenses = monthList.filter((t) => t.type === 'expense');
+  const biggestExpense = monthExpenses.reduce<(typeof monthExpenses)[number] | null>((best, t) => (!best || t.amount > best.amount ? t : best), null);
+  const biggestExpenseCategory = biggestExpense ? categories.find((c) => c.id === biggestExpense.categoryId) : undefined;
+  const topMonthCategory = monthCategories[0];
+  const activeMonths = series.filter((m) => m.expense > 0 || m.income > 0);
+  const priciestMonth = activeMonths.reduce<(typeof series)[number] | null>((best, m) => (!best || m.expense > best.expense ? m : best), null);
+  const cheapestMonth = activeMonths.filter((m) => m.expense > 0).reduce<(typeof series)[number] | null>((best, m) => (!best || m.expense < best.expense ? m : best), null);
+  const plusMonths = activeMonths.filter((m) => m.income - m.expense > 0).length;
+  const prevYearTotals = validYear(String(Number(year) - 1)) ? totals(yearTransactions(state, String(Number(year) - 1))) : null;
+  const yearExpenseChange = prevYearTotals && prevYearTotals.expense ? Math.round(((yearTotals.expense - prevYearTotals.expense) / prevYearTotals.expense) * 100) : null;
+  const avgIncomeMonth = activeMonths.length ? yearTotals.income / activeMonths.length : 0;
   const allPayments = payments(state);
   const dueSoon = paymentsDueSoon(allPayments);
   const filteredPayments = paymentFilter === 'all' ? allPayments : allPayments.filter((p) => p.group === paymentFilter);
@@ -141,6 +159,11 @@ export default function FinancePage({
   const thisMonthPayments = allPayments.filter((p) => p.nextDate.slice(0, 7) === monthKey());
   const thisMonthPaymentsTotal = thisMonthPayments.reduce((sum, p) => sum + (p.amount ?? 0), 0);
   const thisMonthPaymentsUnknown = thisMonthPayments.filter((p) => p.amount === null).length;
+  const monthlyLoad = allPayments.reduce((sum, p) => sum + (p.amount !== null && typeof p.interval === 'number' && p.interval > 0 ? p.amount / p.interval : 0), 0);
+  const dueSoonTotal = dueSoon.reduce((sum, p) => sum + (p.amount ?? 0), 0);
+  const autopayCount = allPayments.filter((p) => p.autopay).length;
+  const currentMonthIncome = totals(monthTransactions(state, monthKey())).income;
+  const pendingCount = allPayments.filter((p) => isPendingPayment(p) || p.amount === null).length;
 
   function todayKey() {
     const d = new Date();
@@ -263,6 +286,23 @@ export default function FinancePage({
           <button type="button" role="tab" aria-selected={view === 'year'} className={view === 'year' ? 'active' : ''} onClick={() => setView('year')}>По году</button>
           <button type="button" role="tab" aria-selected={view === 'payments'} className={view === 'payments' ? 'active' : ''} onClick={() => setView('payments')}>Платежи</button>
         </div>
+        {view === 'month' && (
+          <div className="fin-nav">
+            <button className="icon-button outlined" aria-label="Предыдущий месяц" onClick={() => setMonth(moveMonth(month, -1))}>←</button>
+            <b>{monthLabel(month)}</b>
+            <button className="icon-button outlined" aria-label="Следующий месяц" disabled={month >= monthKey()} onClick={() => { const next = moveMonth(month, 1); if (validMonth(next) && next <= monthKey()) setMonth(next); }}>→</button>
+          </div>
+        )}
+        {view === 'year' && (
+          <div className="fin-nav">
+            <label className="fin-year-select">
+              <span>Год</span>
+              <select aria-label="Выбрать год" value={year} onChange={(e) => validYear(e.target.value) && setYear(e.target.value)}>
+                {years.map((y) => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </label>
+          </div>
+        )}
         {view === 'payments' ? (
           <button type="button" className="primary-button fin-add" onClick={openCreatePayment}>
             <Icon name="plus" size={16} /> Добавить платёж
@@ -282,12 +322,6 @@ export default function FinancePage({
 
       {view === 'month' ? (
         <>
-          <div className="fin-nav">
-            <button className="icon-button outlined" aria-label="Предыдущий месяц" onClick={() => setMonth(moveMonth(month, -1))}>←</button>
-            <b>{monthLabel(month)}</b>
-            <button className="icon-button outlined" aria-label="Следующий месяц" disabled={month >= monthKey()} onClick={() => { const next = moveMonth(month, 1); if (validMonth(next) && next <= monthKey()) setMonth(next); }}>→</button>
-          </div>
-
           <div className="fin-kpis">
             <div className="panel fin-kpi fin-kpi-expense">
               <span>Траты за месяц</span>
@@ -304,6 +338,13 @@ export default function FinancePage({
               <b className={monthTotals.net < 0 ? 'negative' : ''}>{monthTotals.net >= 0 ? '+' : ''}{money(monthTotals.net)}</b>
               <em>доход минус траты</em>
             </div>
+          </div>
+
+          <div className="fin-kpis fin-kpis-more">
+            <div className="panel fin-kpi"><span>Норма сбережений</span><b>{savingsRate(monthTotals)}</b><em>какая доля дохода осталась</em></div>
+            <div className="panel fin-kpi"><span>Тратишь в день</span><b>{money(monthTotals.expense / Math.max(1, monthDays))}</b><em>в среднем за {monthDays} {wordDays(monthDays)}</em></div>
+            <div className="panel fin-kpi"><span>Крупнейшая трата</span><b>{biggestExpense ? money(biggestExpense.amount) : '—'}</b><em>{biggestExpense ? `${biggestExpenseCategory?.name ?? 'Без категории'} · ${dayLabel(biggestExpense.date)}` : 'трат пока нет'}</em></div>
+            <div className="panel fin-kpi"><span>Главная статья</span><b>{topMonthCategory ? `${topMonthCategory.category.icon} ${Math.round(topMonthCategory.share * 100)}%` : '—'}</b><em>{topMonthCategory ? topMonthCategory.category.name : 'трат пока нет'}</em></div>
           </div>
 
           <CategoryBreakdown title="На что ушли траты" rows={monthCategories} total={monthTotals.expense} />
@@ -343,15 +384,6 @@ export default function FinancePage({
         </>
       ) : view === 'year' ? (
         <>
-          <div className="fin-nav">
-            <label className="fin-year-select">
-              <span>Год</span>
-              <select aria-label="Выбрать год" value={year} onChange={(e) => validYear(e.target.value) && setYear(e.target.value)}>
-                {years.map((y) => <option key={y} value={y}>{y}</option>)}
-              </select>
-            </label>
-          </div>
-
           <div className="fin-kpis">
             <div className="panel fin-kpi fin-kpi-expense">
               <span>Траты за {yearLabel(year)}</span>
@@ -368,6 +400,15 @@ export default function FinancePage({
               <b className={yearTotals.net < 0 ? 'negative' : ''}>{yearTotals.net >= 0 ? '+' : ''}{money(yearTotals.net)}</b>
               <em>доход минус траты</em>
             </div>
+          </div>
+
+          <div className="fin-kpis fin-kpis-more">
+            <div className="panel fin-kpi"><span>Норма сбережений</span><b>{savingsRate(yearTotals)}</b><em>доля дохода, оставшаяся за год</em></div>
+            <div className="panel fin-kpi"><span>К прошлому году</span><b className={yearExpenseChange !== null && yearExpenseChange > 0 ? 'negative' : ''}>{yearExpenseChange === null ? '—' : `${yearExpenseChange >= 0 ? '+' : ''}${yearExpenseChange}%`}</b><em>{yearExpenseChange === null ? 'нет данных за прошлый год' : 'изменение трат'}</em></div>
+            <div className="panel fin-kpi"><span>Самый дорогой месяц</span><b>{priciestMonth ? money(priciestMonth.expense) : '—'}</b><em>{priciestMonth ? priciestMonth.label : 'данных пока нет'}</em></div>
+            <div className="panel fin-kpi"><span>Самый экономный месяц</span><b>{cheapestMonth ? money(cheapestMonth.expense) : '—'}</b><em>{cheapestMonth ? cheapestMonth.label : 'данных пока нет'}</em></div>
+            <div className="panel fin-kpi"><span>Средний доход в месяц</span><b>{activeMonths.length ? money(avgIncomeMonth) : '—'}</b><em>по {activeMonths.length} {activeMonths.length === 1 ? 'месяцу' : 'месяцам'} с записями</em></div>
+            <div className="panel fin-kpi"><span>Месяцев в плюсе</span><b>{activeMonths.length ? `${plusMonths} из ${activeMonths.length}` : '—'}</b><em>доход больше трат</em></div>
           </div>
 
           <section className="panel fin-chart">
@@ -432,6 +473,13 @@ export default function FinancePage({
               <b>{allPayments.length}</b>
               <em>регулярных и разовых</em>
             </div>
+          </div>
+
+          <div className="fin-kpis fin-kpis-more">
+            <div className="panel fin-kpi"><span>Нагрузка в месяц</span><b>{monthlyLoad ? money(monthlyLoad) : '—'}</b><em>регулярные платежи в пересчёте на месяц</em></div>
+            <div className="panel fin-kpi"><span>Ближайшие 7 дней</span><b>{dueSoon.length ? money(dueSoonTotal) : '—'}</b><em>{dueSoon.length ? `${dueSoon.length} ${wordRecords(dueSoon.length)}` : 'платежей нет'}</em></div>
+            <div className="panel fin-kpi"><span>Доля от дохода</span><b>{currentMonthIncome > 0 && monthlyLoad ? `${Math.round((monthlyLoad / currentMonthIncome) * 100)}%` : '—'}</b><em>{currentMonthIncome > 0 ? 'нагрузка к доходу этого месяца' : 'нет дохода за этот месяц'}</em></div>
+            <div className="panel fin-kpi"><span>Автоплатежи</span><b>{allPayments.length ? `${autopayCount} из ${allPayments.length}` : '—'}</b><em>{pendingCount ? `уточнить: ${pendingCount}` : 'все суммы и даты известны'}</em></div>
           </div>
 
           <section className="panel fin-list">

@@ -104,7 +104,7 @@ try {
         assert.equal(await page.locator('.pyl-city-card').isVisible(), false);
       }
       assert.equal(await page.locator('.sidebar .play-wordmark').count(), 1);
-      assert.equal(await page.locator('.sidebar .pyl-player').count(), 1);
+      assert.equal(await page.locator('.sidebar .pyl-player').count(), 0); // 0.87.1: карточка игрока — в верхнем баннере
       const buttons = page.locator('.sidebar .pyl-menu-nav .pyl-nav-item');
       assert.equal(await buttons.count(), 13); // 0.87.0: + «База знаний»
       for (const [index, id] of ['home','spheres','goals','tasks','quests','budget','tree','achievements','shop','city','statistics','knowledge','profile'].entries()) {

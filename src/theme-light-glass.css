@@ -98,3 +98,7 @@
   :where(:root:not([data-theme="dark"])) * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
   :root:not([data-theme="dark"]) { --glass: rgba(255, 255, 255, 0.92); --glass-strong: #fff; }
 }
+
+/* 0.87.1, по просьбе пользователя: ровный светло-голубой фон без градиентов. */
+:root:not([data-theme="dark"]) { background: #eaf2ff; }
+:root:not([data-theme="dark"]) body { background: #eaf2ff; }

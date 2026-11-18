@@ -2,14 +2,13 @@ import type { GameState } from '../game';
 import { navigation } from '../navigation';
 import { menuIconSrc } from '../menuIcons';
 import { useMenuTheme } from '../menuTheme';
-import PlayerCard from './PlayerCard';
 import SidebarReference from './SidebarReference';
 import ThemeSwitch from './ThemeSwitch';
 import CityMiniLive from './CityMiniLive';
 import './AppMenu.css';
 
-/** Левое меню компьютера: логотип, игрок, тема под карточкой игрока, плоский список из 11 разделов и карта города. */
-export default function AppSidebar({ page, state, questCount, onNavigate }: { page: string; state: GameState; questCount: number; onNavigate: (id: string) => void }) {
+/** Левое меню компьютера: логотип, тема (карточка игрока убрана в 0.87.1 — она есть в верхнем баннере), плоский список из 11 разделов и карта города. */
+export default function AppSidebar({ page, questCount, onNavigate }: { page: string; state: GameState; questCount: number; onNavigate: (id: string) => void }) {
   const [theme] = useMenuTheme();
   const isActive = (id: string) => page === id || (id === 'statistics' && page === 'monthly');
   return (
@@ -24,7 +23,6 @@ export default function AppSidebar({ page, state, questCount, onNavigate }: { pa
       >
         <SidebarReference />
       </a>
-      <PlayerCard state={state} />
       <div className="pyl-menu-theme">
         <ThemeSwitch />
       </div>

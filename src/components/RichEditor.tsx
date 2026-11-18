@@ -323,7 +323,6 @@ export default function RichEditor({ docKey, html, onChange, variant, placeholde
               {popup === 'marker' && <div className="re-pop re-swatches">{HIGHLIGHT.map((c) => <button key={c} type="button" className={c === 'transparent' ? 'is-none' : ''} style={{ background: c }} aria-label={c === 'transparent' ? 'Без выделения' : `Выделение ${c}`} onMouseDown={(e) => e.preventDefault()} onClick={() => { exec('hiliteColor', c); setPopup(null); }} />)}</div>}
             </span>
             {kb && <B name="clear" title="Очистить форматирование" onPress={() => { exec('removeFormat'); exec('unlink'); }} />}
-            {status && <span className="re-status">{status}</span>}
           </div>
           <div className="re-row">
             <B name="left" title="По левому краю" onPress={() => exec('justifyLeft')} />
@@ -369,6 +368,10 @@ export default function RichEditor({ docKey, html, onChange, variant, placeholde
               </span>
             )}
             {kb && <B name="database" title="Таблица-база с заголовками полей" onPress={() => { refresh(); addTable(true); }} />}
+            {!kb && <B name="divider" title="Разделитель" onPress={() => insert('<hr><p><br></p>')} />}
+            {!kb && <B name="clear" title="Очистить форматирование" onPress={() => exec('removeFormat')} />}
+          </div>
+          <div className="re-row">
             {kb && <B name="callout" title="Выноска" onPress={() => insert('<div class="kb-callout is-info" data-kb-block="callout"><p>💡 <br></p></div><p><br></p>')} />}
             {kb && <B name="mention" title="Упоминание" onPress={() => insert(`<span class="kb-mention" data-mention="${esc(author)}">@${esc(author)}</span>&nbsp;`)} />}
             {kb && <B name="quote" title="Цитата" onPress={() => setBlockType('blockquote')} />}
@@ -381,14 +384,14 @@ export default function RichEditor({ docKey, html, onChange, variant, placeholde
                 {popup === 'video' && <form className="re-pop re-form" onSubmit={(e) => { e.preventDefault(); addVideo(); }}><input autoFocus placeholder="Ссылка YouTube, Rutube, VK" value={input} onChange={(e) => setInput(e.target.value)} aria-label="Ссылка на видео" /><button type="submit">Вставить</button></form>}
               </span>
             )}
-            <B name="divider" title="Разделитель" onPress={() => insert('<hr><p><br></p>')} />
+            {kb && <B name="divider" title="Разделитель" onPress={() => insert('<hr><p><br></p>')} />}
             {kb && (
               <span className="re-pop-wrap">
                 <B name="emoji" title="Эмодзи" onPress={() => open('emoji')} />
                 {popup === 'emoji' && <div className="re-pop re-emoji">{EMOJI.map((em) => <button key={em} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => insert(em)}>{em}</button>)}</div>}
               </span>
             )}
-            {!kb && <B name="clear" title="Очистить форматирование" onPress={() => exec('removeFormat')} />}
+            {kb && status && <span className="re-status">{status}</span>}
           </div>
         </div>
       )}

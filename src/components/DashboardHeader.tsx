@@ -8,6 +8,7 @@ import type { SearchResult } from '../globalSearch';
 import Avatar from './Avatar';
 import Icon from './Icon';
 import LyubertsyWeather from './LyubertsyWeather';
+import './DashboardHeader.css';
 
 const mskTimeFormatter = new Intl.DateTimeFormat('ru-RU', {
   timeZone: 'Europe/Moscow',
@@ -40,6 +41,11 @@ export default function DashboardHeader({ state, onProfile, onQuests, onSearchRe
   }, []);
   const count = questsForCalendarDay(state.quests, dateKey(now)).filter(q => !q.done).length;
   const results = useMemo(() => searchEverything(state, query), [state, query]);
+  const player = playerProgress(state);
+  // Как в карточке игрока: в личном режиме уровень — каждые 200 XP.
+  const personal = state.profile.mode === 'personal';
+  const xpNow = personal ? state.xp % 200 : state.xp;
+  const xpNext = personal ? 200 : player.nextXP;
   function selectResult(result: SearchResult) {
     onSearchResult(result);
     setQuery('');
@@ -63,7 +69,7 @@ export default function DashboardHeader({ state, onProfile, onQuests, onSearchRe
         <input
           id="dashboard-search-input"
           type="search"
-          placeholder="Искать везде: задачи, цели, сферы, город, достижения…"
+          placeholder="Искать везде: задачи, цели, сферы…"
           value={query}
           autoComplete="off"
           onChange={e => { setQuery(e.target.value); setOpen(true); }}
@@ -101,8 +107,15 @@ export default function DashboardHeader({ state, onProfile, onQuests, onSearchRe
       <LyubertsyWeather />
       <details className="dashboard-notifications"><summary aria-label="Уведомления"><Icon name="bell" />{count > 0 && <span>{count}</span>}</summary><div><strong>Уведомления</strong><p>{count ? `Сегодня осталось задач: ${count}.` : 'На сегодня нет незавершённых задач.'}</p><button className="text-button" onClick={onQuests}>Открыть задачи →</button></div></details>
       <div className="dashboard-metric dashboard-metric-coins"><span className="metric-badge" aria-hidden="true">₽</span><div><strong>{state.coins}</strong><small>Лайфкоины</small></div></div>
-      <div className="dashboard-metric dashboard-metric-level"><span className="metric-badge">⭐</span><div><strong>{playerProgress(state).level}</strong><small>Уровень</small></div></div>
-      <button className="avatar small dashboard-avatar" aria-label="Личный профиль" onClick={onProfile}><Avatar value={state.profile.avatar} photo={state.profile.photo} frame={state.shop?.equippedFrame} /></button>
+      <div className="dashboard-metric dashboard-metric-level"><span className="metric-badge">⭐</span><div><strong>{player.level}</strong><small>Уровень</small></div></div>
+      <button type="button" className="dashboard-profile" aria-label="Личный профиль" onClick={onProfile}>
+        <span className="avatar small dashboard-avatar"><Avatar value={state.profile.avatar} photo={state.profile.photo} frame={state.shop?.equippedFrame} /></span>
+        <span className="dashboard-profile-text">
+          <strong>{state.profile.name}</strong>
+          <small>{player.title} · {player.maxed ? `${state.xp} XP` : `${xpNow} / ${xpNext} XP`}</small>
+          <i aria-hidden="true"><b style={{ width: `${Math.min(100, Math.max(0, player.progress))}%` }} /></i>
+        </span>
+      </button>
     </div>
   </div>;
 }

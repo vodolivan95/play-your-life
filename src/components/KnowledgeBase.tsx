@@ -4,13 +4,14 @@ import {
   addComment, addSpace, archiveArticle, breadcrumbs, childrenOf, createArticle, deleteForever, duplicateArticle, emptyTrash, htmlToMarkdown,
   isAlive, kbStorageKey, kbTemplates, markViewed, moveArticle, parseKnowledgeBase, removeSpace, removeTerm, restoreArticle, restoreVersion,
   saveTerm, searchArticles, spaceAnalytics, spaceOfSphere, tableOfContents, trashArticle, unarchiveArticle, updateArticle, updateComment,
-  updateSpace, wordCount, KB_TRASH_DAYS,
+  updateSpace, wordCount, mergeKnowledgeBase, KB_TRASH_DAYS,
 } from '../knowledgeBase';
 import type { KbArticle, KbSpace, KnowledgeBase as KbData } from '../knowledgeBase';
 import RichEditor, { Svg } from './RichEditor';
 import { EMOJI, readImage, sanitizeHtml } from '../richText';
 import type { PageRef } from './RichEditor';
 import { useStoredDoc } from './useStoredDoc';
+import { sphereAssets } from '../sphereAssets';
 import './KnowledgeBase.css';
 
 type SphereLike = { id: string; name: string; icon: string; color: string };
@@ -117,14 +118,15 @@ function TreeItem({ kb, article, depth, currentId, open, onToggle, onOpen, onAdd
   );
 }
 
-type Props = { ownerId: string; author: string; photo?: string; spheres: SphereLike[]; sphereId?: string; notify: (message: string) => void };
+type Props = { ownerId: string; author: string; photo?: string; spheres: SphereLike[]; sphereId?: string; notify: (message: string) => void; /** С чего открыть раздел: страница пространства (вкладка сферы) или список пространств (пункт меню). */ start?: 'home' | 'spaces'; /** Фото сфер для карточек пространств. */ covers?: Record<string, string> };
 
 /** База знаний: пространства по сферам жизни, дерево статей и редактор — по образцу Teamly. */
-export default function KnowledgeBase({ ownerId, author, photo, spheres, sphereId, notify }: Props) {
+export default function KnowledgeBase({ ownerId, author, photo, spheres, sphereId, notify, start = 'home', covers = {} }: Props) {
   const parse = useCallback((raw: string | null) => parseKnowledgeBase(raw, spheres), [spheres]);
   const { doc: kb, update, error, savedAt } = useStoredDoc<KbData>(kbStorageKey(ownerId), parse);
   const [spaceId, setSpaceId] = useState(() => spaceOfSphere(kb, sphereId ?? '')?.id ?? kb.spaces[0]?.id ?? '');
-  const [view, setView] = useState<View>({ k: 'home' });
+  const [view, setView] = useState<View>({ k: start });
+  const importInput = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState(false);
   const [rail, setRail] = useState<Rail>(null);
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -496,20 +498,53 @@ export default function KnowledgeBase({ ownerId, author, photo, spheres, sphereI
     ), <button type="button" className="kb-primary" onClick={() => setTermEdit({ term: '', definition: '' })}>＋ Термин</button>);
   })();
 
-  const spacesPage = listPage('Список пространств', (
-    <div className="kb-space-grid">
-      {kb.spaces.map((s) => {
-        const count = kb.articles.filter((a) => a.spaceId === s.id && isAlive(a)).length;
-        return (
-          <button key={s.id} type="button" className="kb-space-card" style={{ '--kb-space': s.color } as CSSProperties} onClick={() => { setSpaceId(s.id); go({ k: 'home' }); }}>
-            <span className="kb-space-badge">{s.icon}</span>
-            <b>{s.name}</b>
-            <small>{count} {count % 10 === 1 && count % 100 !== 11 ? 'статья' : count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 12 || count % 100 > 14) ? 'статьи' : 'статей'}{s.sphereId ? ' · сфера жизни' : ''}</small>
-          </button>
-        );
-      })}
-    </div>
-  ), <button type="button" className="kb-primary" onClick={() => { setDraft({ a: '', b: '' }); setDialog('newSpace'); }}>＋ Новое пространство</button>);
+  const exportAll = () => download(`База знаний ${new Date().toLocaleDateString('ru-RU')}.json`, JSON.stringify(kb, null, 2), 'application/json');
+  const importAll = async (file?: File) => {
+    if (!file) return;
+    try {
+      const incoming = parseKnowledgeBase(await file.text(), spheres);
+      const { kb: next, added } = mergeKnowledgeBase(kb, incoming);
+      update(next);
+      notify(added ? `Импортировано страниц: ${added}.` : 'Новых страниц в файле нет.');
+    } catch { notify('Не удалось прочитать файл базы знаний.'); }
+  };
+  const totalPages = kb.articles.filter(isAlive).length;
+  const pagesWord = (n: number) => (n % 10 === 1 && n % 100 !== 11 ? 'страница' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'страницы' : 'страниц');
+  const spacesPage = (
+    <section className="kb-spaces">
+      <div className="kb-spaces-head">
+        <div>
+          <small className="kb-kicker">БАЗА ЗНАНИЙ</small>
+          <h2>Список пространств</h2>
+          <p>Каждая сфера жизни — отдельное пространство. Всего страниц: {totalPages}.</p>
+        </div>
+        <div className="kb-row">
+          <button type="button" className="kb-secondary" onClick={exportAll}><span aria-hidden="true">⤓</span> Экспорт</button>
+          <button type="button" className="kb-secondary" onClick={() => importInput.current?.click()}><span aria-hidden="true">⤒</span> Импорт</button>
+          <input ref={importInput} type="file" accept="application/json,.json" hidden onChange={(e) => { void importAll(e.target.files?.[0]); e.target.value = ''; }} />
+        </div>
+      </div>
+      <div className="kb-space-grid">
+        {kb.spaces.map((s) => {
+          const count = kb.articles.filter((a) => a.spaceId === s.id && isAlive(a)).length;
+          const cover = s.sphereId ? covers[s.sphereId] ?? (sphereAssets as Record<string, { buildingThumbnail?: string } | undefined>)[s.sphereId]?.buildingThumbnail : undefined;
+          return (
+            <button key={s.id} type="button" className="kb-space-card" style={{ '--kb-space': s.color } as CSSProperties} onClick={() => { setSpaceId(s.id); go({ k: 'home' }); }}>
+              <span className="kb-space-cover" style={cover ? { backgroundImage: `url(${cover})` } : undefined}>{!cover && <span aria-hidden="true">{s.icon}</span>}</span>
+              <span className="kb-space-info">
+                <span className="kb-space-tile" aria-hidden="true">{s.icon}</span>
+                <span className="kb-space-text"><b>{s.name}</b><small>{count ? `${count} ${pagesWord(count)}` : 'Пока пусто'}</small></span>
+                <span className="kb-space-go" aria-hidden="true">›</span>
+              </span>
+            </button>
+          );
+        })}
+        <button type="button" className="kb-space-card kb-space-new" onClick={() => { setDraft({ a: '', b: '' }); setDialog('newSpace'); }}>
+          <span className="kb-space-plus" aria-hidden="true">＋</span><b>Новое пространство</b><small>Для тем вне сфер жизни</small>
+        </button>
+      </div>
+    </section>
+  );
 
   let main: ReactNode = null;
   if (view.k === 'spaces') main = spacesPage;
@@ -573,7 +608,7 @@ export default function KnowledgeBase({ ownerId, author, photo, spheres, sphereI
   );
 
   return (
-    <section className={`kb${collapsed ? ' side-collapsed' : ''}`} aria-label="База знаний" onClick={(e) => { if (menu && !(e.target as HTMLElement).closest('.kb-menu-wrap')) setMenu(''); }}>
+    <section className={`kb${collapsed ? ' side-collapsed' : ''}${view.k === 'spaces' ? ' is-spaces' : ''}`} aria-label="База знаний" onClick={(e) => { if (menu && !(e.target as HTMLElement).closest('.kb-menu-wrap')) setMenu(''); }}>
       {view.k !== 'spaces' && sidebar}
       <div className="kb-main">
         <header className="kb-top">{crumbs}{pageActions}{homeActions}</header>

@@ -1,0 +1,44 @@
+/* Верхний баннер 0.87.0: одна строка на компьютере, карточка игрока с именем, титулом и полосой XP. */
+.dashboard-profile { display: flex; align-items: center; gap: 12px; flex-shrink: 0; min-width: 0; padding: 6px 16px 6px 6px; border: 0; border-radius: 16px; background: #fff; color: inherit; cursor: pointer; text-align: left; }
+.dashboard-profile:hover { box-shadow: 0 6px 18px #234c8d1f; }
+.dashboard-profile-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; max-width: 200px; }
+.dashboard-profile-text strong { font-size: 16px; font-weight: 800; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dashboard-profile-text small { font-size: 12px; font-weight: 700; color: #2f6bff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dashboard-profile-text i { display: block; height: 5px; border-radius: 3px; background: #e3e9f6; overflow: hidden; }
+.dashboard-profile-text i b { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #5aa9ff, #2f6bff); }
+:root[data-theme='dark'] .dashboard-profile { background: #0f1830; }
+:root[data-theme='dark'] .dashboard-profile-text small { color: #8fb4ff; }
+:root[data-theme='dark'] .dashboard-profile-text i { background: #22325a; }
+
+@media (min-width: 761px) {
+  .topbar .dashboard-header { flex-wrap: nowrap; gap: 12px; max-width: none; }
+  .topbar .dashboard-header-left { flex-wrap: nowrap; }
+  .topbar .dashboard-search-wrap { flex: 1 1 220px; min-width: 220px; max-width: none; margin: 0; }
+  .topbar .dashboard-header-right { flex-wrap: nowrap; gap: 10px; }
+  .topbar .dashboard-search input { text-overflow: ellipsis; }
+}
+/* Сначала прячется дата и подписи, чтобы всё помещалось в одну строку. */
+@media (min-width: 761px) and (max-width: 1700px) {
+  .topbar .dashboard-date { display: none; }
+  .topbar .dashboard-clock { border-radius: 14px; }
+  .topbar .home-weather .weather-source { display: none; }
+}
+@media (min-width: 761px) and (max-width: 1360px) {
+  .topbar .dashboard-metric small, .topbar .home-weather small { display: none; }
+  .topbar .dashboard-metric { padding: 8px 12px 8px 8px; }
+  .topbar .dashboard-profile-text { display: none; }
+  .topbar .dashboard-profile { padding: 4px; }
+  .topbar .home-weather { padding: 9px 12px; }
+}
+/* Узкий планшет: поиск уходит на вторую строку во всю ширину. */
+@media (min-width: 761px) and (max-width: 1120px) {
+  .topbar .dashboard-header { flex-wrap: wrap; }
+  .topbar .dashboard-search-wrap { order: 3; flex-basis: 100%; }
+  .topbar .dashboard-header-right { margin-left: auto; }
+  .topbar .dashboard-profile-text { display: none; }
+  .topbar .dashboard-profile { padding: 0; background: none; }
+}
+@media (max-width: 760px) {
+  .dashboard-profile { order: 3; padding: 0; background: none !important; }
+  .dashboard-profile-text { display: none; }
+}

@@ -177,12 +177,6 @@
 .kb-terms dd { margin: 6px 0 0; color: var(--kb-muted); white-space: pre-wrap; }
 .kb-term-form, .kb-form { display: flex; flex-direction: column; gap: 10px; }
 .kb-field { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--kb-muted); }
-.kb-space-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
-.kb-space-card { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 18px; border-radius: 18px; border: 1px solid var(--kb-line); background: var(--kb-bg); text-align: left; cursor: pointer; transition: transform .15s, box-shadow .15s; }
-.kb-space-card:hover { transform: translateY(-2px); box-shadow: 0 12px 26px #1d3a7a1f; border-color: var(--kb-space, var(--kb-accent)); }
-.kb-space-card b { font-size: 17px; }
-.kb-space-card small { color: var(--kb-muted); }
-.kb-space-card .kb-space-badge { width: 52px; height: 52px; font-size: 28px; border-radius: 16px; }
 
 /* Окна */
 .kb-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px; background: #0b1428a6; backdrop-filter: blur(3px); }
@@ -238,3 +232,32 @@
 .kb .kb-title-input, .kb .kb-search input, .kb .kb-tag-input { background: transparent !important; color: var(--kb-text) !important; box-shadow: none !important; }
 .kb .kb-title-input, .kb .kb-search input { border: 0 !important; }
 .kb-add-desc { align-self: flex-start; }
+
+/* Список пространств: карточки с фото сферы, как в макете пользователя. */
+.kb.is-spaces { background: transparent; border: 0; box-shadow: none; overflow: visible; }
+.kb.is-spaces .kb-top { display: none; }
+.kb.is-spaces .kb-scroll { padding: 0; }
+.kb-spaces { display: flex; flex-direction: column; gap: 22px; }
+.kb-spaces-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.kb-kicker { color: var(--kb-accent); font-size: 13px; font-weight: 800; letter-spacing: .12em; }
+.kb-spaces-head h2 { margin: 6px 0 6px; font-size: 34px; font-weight: 900; letter-spacing: -.01em; }
+.kb-spaces-head p { margin: 0; color: var(--kb-muted); font-size: 16px; }
+.kb-spaces-head .kb-secondary { min-height: 46px; padding: 0 20px; border-radius: 14px; box-shadow: 0 6px 18px #1d3a7a14; }
+.kb-spaces-head .kb-secondary span { color: var(--kb-accent); font-size: 18px; }
+.kb-space-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
+.kb-space-card { display: flex; flex-direction: column; padding: 0; border-radius: 20px; overflow: hidden; border: 1px solid var(--kb-line); background: var(--kb-bg); text-align: left; cursor: pointer; box-shadow: 0 10px 26px #1d3a7a14; transition: transform .15s, box-shadow .15s; }
+.kb-space-card:hover { transform: translateY(-3px); box-shadow: 0 16px 34px #1d3a7a26; }
+.kb-space-cover { display: grid; place-items: center; aspect-ratio: 16 / 5; background: linear-gradient(135deg, color-mix(in srgb, var(--kb-space, #2f6bff) 70%, #fff), var(--kb-space, #2f6bff)) center / cover no-repeat; font-size: 40px; }
+.kb-space-info { display: flex; align-items: center; gap: 10px; padding: 14px 12px 14px 14px; }
+.kb-space-tile { width: 40px; height: 40px; flex-shrink: 0; display: grid; place-items: center; border-radius: 14px; font-size: 22px; background: color-mix(in srgb, var(--kb-space, #2f6bff) 16%, var(--kb-bg)); }
+.kb-space-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.kb-space-text b { font-size: 16px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kb-space-text small { color: var(--kb-muted); font-size: 14px; }
+.kb-space-go { width: 28px; height: 28px; flex-shrink: 0; display: grid; place-items: center; border-radius: 50%; background: var(--kb-accent-soft); color: var(--kb-accent); font-size: 20px; font-weight: 700; }
+.kb-space-new { align-items: center; justify-content: center; gap: 6px; min-height: 180px; border-style: dashed; box-shadow: none; color: var(--kb-muted); }
+.kb-space-new b { color: var(--kb-text); font-size: 17px; }
+.kb-space-plus { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 50%; background: var(--kb-accent-soft); color: var(--kb-accent); font-size: 24px; }
+@media (max-width: 760px) {
+  .kb-spaces-head h2 { font-size: 26px; }
+  .kb-space-grid { grid-template-columns: 1fr; gap: 12px; }
+}

@@ -29,6 +29,8 @@ export const habitIcons = [
   ["art", "🎨", "Хобби"],
   ["learning", "🧠", "Обучение"],
   ["psychology", "💭", "Психология"],
+  ["family", "💞", "Семья и отношения"],
+  ["career", "💼", "Карьера и бизнес"],
 ] as const;
 export const virtualRewards = [
   { id: "plant_basic", icon: "🪴", name: "Растение" },

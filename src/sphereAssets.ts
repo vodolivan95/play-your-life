@@ -12,6 +12,8 @@ import driving from './assets/sphere-buildings/driving-building.jpg';
 import tasks from './assets/sphere-buildings/tasks-building.jpg';
 import hobby from './assets/sphere-buildings/leisure-building.webp';
 import psychology from './assets/sphere-buildings/psychology-building.jpg';
+import family from './assets/sphere-buildings/family-building.jpg';
+import career from './assets/sphere-buildings/career-building.jpg';
 import { coastalBuildings } from './coastalCity';
 
 // Фотографии UI отделены от ресурсов игровой карты. Иконки и комнаты сохраняются.
@@ -45,4 +47,13 @@ export const sphereAssets = {
     cityBuilding: { background: cityBackground, bounds: coastalBuildings[0] },
     room: 'existing-room-preparation',
   },
-} as Record<keyof typeof thumbnails | 'psychology', SphereAsset>;
+  // «Семья и отношения» и «Карьера и бизнес» (0.88.0, фото прислал пользователь) — как «Психология»: без места на острове.
+  ...Object.fromEntries((['family', 'career'] as const).map((id) => [id, {
+    icon: { source: existingIcons, id },
+    buildingThumbnail: id === 'family' ? family : career,
+    building: id === 'family' ? family : career,
+    questCover: id === 'family' ? family : career,
+    cityBuilding: { background: cityBackground, bounds: coastalBuildings[0] },
+    room: 'existing-room-preparation',
+  }])),
+} as Record<keyof typeof thumbnails | 'psychology' | 'family' | 'career', SphereAsset>;

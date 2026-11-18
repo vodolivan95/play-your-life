@@ -10,7 +10,7 @@ export default function GameArt({ kind }: { kind: string }) {
   // вместо плоской векторной иконки — растровый неоновый значок (профиль + мозг), как у других
   // сфер нет готового флоского SVG. .game-art уже задаёт нужные width/height/filter и для <img>.
   if (kind === 'psychology') return <img className="game-art game-art-psychology" src={psychologyIcon} alt="" aria-hidden="true" />;
-  if (citySphereIds.includes(kind as (typeof citySphereIds)[number])) return <SphereIcon id={kind} />;
+  if (citySphereIds.includes(kind as (typeof citySphereIds)[number]) && kind !== 'family' && kind !== 'career') return <SphereIcon id={kind} />;
   const paint = `url(#${id})`;
   const colors: Record<string, [string, string]> = {
     health: ['#ff8fb7', '#f5286d'],
@@ -22,6 +22,8 @@ export default function GameArt({ kind }: { kind: string }) {
     driving: ['#58c7ff', '#0765b3'],
     tasks: ['#76e1d7', '#10acb4'],
     hobby: ['#aa8ef3', '#7050c1'],
+    family: ['#ff8fb7', '#e0356f'],
+    career: ['#6fb6ff', '#1f5fd0'],
     target: ['#ff8dbb', '#ed3b83'],
     coin: ['#ffe890', '#f5af08'],
     trophy: ['#ffdf64', '#eda00c'],
@@ -180,6 +182,26 @@ export default function GameArt({ kind }: { kind: string }) {
           strokeLinecap="round"
           opacity=".6"
         />
+      </>
+    ),
+    // 0.88.0: «Семья и отношения» — сердце с семьёй, «Карьера и бизнес» — портфель.
+    family: (
+      <>
+        <path d="M32 56 9 33C-4 16 17 2 32 18 47 2 68 16 55 33Z" fill={paint} />
+        <path d="M14 22c1-7 9-10 14-5" fill="none" stroke="#ffd2e2" strokeWidth="3" strokeLinecap="round" opacity=".7" />
+        <circle cx="23" cy="25" r="4" fill="#fff" />
+        <circle cx="41" cy="25" r="4" fill="#fff" />
+        <circle cx="32" cy="32" r="3.2" fill="#fff" />
+        <path d="M17 42v-7a6 6 0 0 1 12 0v7M35 42v-7a6 6 0 0 1 12 0v7M27.5 46v-5a4.5 4.5 0 0 1 9 0v5" fill="#fff" />
+      </>
+    ),
+    career: (
+      <>
+        <rect x="6" y="20" width="52" height="34" rx="7" fill={paint} />
+        <path d="M23 20v-5a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v5" fill="none" stroke="#1d4fae" strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M6 33c9 5 17 7 26 7s17-2 26-7" fill="none" stroke="#1d4fae" strokeWidth="3.5" opacity=".55" />
+        <rect x="27" y="35" width="10" height="9" rx="2.5" fill="#fff" />
+        <path d="M12 26h40" stroke="#cfe5ff" strokeWidth="3" strokeLinecap="round" opacity=".6" />
       </>
     ),
     target: (

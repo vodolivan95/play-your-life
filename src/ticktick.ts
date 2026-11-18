@@ -69,6 +69,8 @@ export const tickTickListNames: Record<string, string> = {
   tasks: 'Задачи',
   hobby: 'Досуг и хобби',
   psychology: 'Психология',
+  family: 'Семья и отношения',
+  career: 'Карьера и бизнес',
 };
 export function matchSphereLists(
   projects: { id: string; name: string }[],

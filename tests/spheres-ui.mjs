@@ -146,7 +146,7 @@ try {
       }
       const cards = page.locator(".sph-card");
       await cards.first().waitFor();
-      assert.equal(await cards.count(), 10, "Десять районов");
+      assert.equal(await cards.count(), 12, "Двенадцать районов");
       await page.waitForTimeout(600);
       await page.screenshot({
         path: `work/spheres/${name}-1-overview.png`,
@@ -163,7 +163,7 @@ try {
         `Фильтр по задачам: ${withTasks}`,
       );
       await page.getByRole("button", { name: "Все", exact: true }).click();
-      assert.equal(await cards.count(), 10);
+      assert.equal(await cards.count(), 12);
 
       // Окно сферы из паутины и закрытие по Esc.
       const label = page.locator("button.radar-label").first();

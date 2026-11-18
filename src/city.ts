@@ -12,6 +12,8 @@ export const cityRooms: Record<string, { name: string; activity: string; items: 
   tasks: { name: 'Мастерская планов', activity: 'Обсуждают и воплощают планы', items: ['Стол планирования', 'Доска проектов', 'Зона отдыха'], icons: ['💻', '📋', '🛋️'] },
   hobby: { name: 'Дом творчества', activity: 'Рисуют и играют музыку', items: ['Мольберт художника', 'Музыкальная студия', 'Галерея работ'], icons: ['🎨', '🎹', '🖼️'] },
   psychology: { name: 'Дом психологии', activity: 'Размышляют и общаются', items: ['Уютная гостиная', 'Книжный уголок', 'Сад отдыха'], icons: ['🛋️', '📚', '🌳'] },
+  family: { name: 'Дом семьи', activity: 'Проводят время с близкими', items: ['Семейная гостиная', 'Стол для ужина', 'Сад встреч'], icons: ['🛋️', '🍽️', '🌷'] },
+  career: { name: 'Бизнес-центр', activity: 'Ведут переговоры и строят карьеру', items: ['Переговорная', 'Рабочий кабинет', 'Лаунж-зона'], icons: ['🤝', '💼', '☕'] },
 };
 export const cityPrices = [30, 80, 150];
 export type CityPurchase = { id: string; sphere: string; slot: number; price: number; date: string };
@@ -38,6 +40,8 @@ export const citySphereIds = [
   'tasks',
   'hobby',
   'psychology',
+  'family',
+  'career',
 ] as const;
 export const cityStyles = ['coastal', 'tropical', 'modern'] as const;
 export type CityStyle = (typeof cityStyles)[number];

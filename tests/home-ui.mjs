@@ -60,7 +60,7 @@ try {
     assert.equal(await page.locator('.home-focus, .home-player, .home-spheres, .home-main-goal, .home-reward, .home-schedule, .home-habits').count(), 0);
     assert.equal(await page.locator('.account-bar').count(), 0, 'Панели аккаунта нет на главной');
     assert.equal(await page.locator('.home-today, .home-streak').count(), 2);
-    assert.equal(await page.locator('.hys-sphere-row').count(), 10);
+    assert.equal(await page.locator('.hys-sphere-row').count(), 12);
     assert.equal(await page.locator('.peak-focus-switch button:not(.is-empty)').count(), 3);
     assert.equal(await page.locator('.peak-card-photo').count(), 1, 'В карточке показана обложка проекта');
     assert.ok(await page.locator('.peak-card-photo').evaluate(image => image.complete && image.naturalWidth > 0), 'Обложка проекта загружена');

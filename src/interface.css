@@ -2783,3 +2783,47 @@ body {
 .project-count {
   background: #087b67;
 }
+
+/* 0.89.5: раздел «Профиль» пересобран — единые карточки, ровные отступы, аватар внутри своей карточки. */
+.app-shell .profile-page { display: flex; flex-direction: column; gap: 16px; max-width: 100%; }
+.app-shell .profile-page > .panel,
+.app-shell .profile-page .profile-section > .panel { margin: 0; border-radius: 22px; }
+.app-shell .profile-page .profile-account { padding: 12px 16px; }
+.app-shell .profile-page .profile-account .account-bar { margin: 0; padding: 4px 6px; background: transparent; gap: 10px 18px; }
+.app-shell .profile-page .profile-hero {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 22px;
+  padding: 24px 26px; overflow: hidden;
+}
+.app-shell .profile-page .profile-hero .player-avatar {
+  position: relative; width: 88px; height: 88px; flex: none; margin: 8px; box-sizing: border-box;
+  border: 3px solid #fff; outline: 2px solid #f6c44b; outline-offset: 3px;
+  box-shadow: 0 0 0 6px #2454ef, 0 8px 20px #2450d125;
+}
+.app-shell .profile-page .profile-hero h2 { margin: 0 0 4px; font-size: 24px; }
+.app-shell .profile-page .profile-hero strong { font-size: 14px; }
+.app-shell .profile-page .profile-hero small { font-size: 12px; margin: 6px 0 10px; }
+.app-shell .profile-page .profile-hero > .icon-button { align-self: start; }
+.app-shell .profile-page .profile-tip { margin: 0; padding: 14px 18px; }
+.app-shell .profile-page .profile-rewards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 0; }
+.app-shell .profile-page .profile-rewards > * {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 104px; padding: 16px;
+  border-radius: 20px; background: #fff; border: 1px solid #e2ebf7; box-shadow: 0 1px 2px rgba(40, 70, 140, 0.06), 0 12px 30px -12px rgba(40, 80, 160, 0.2);
+  font: inherit; cursor: pointer;
+}
+.app-shell .profile-page .profile-rewards > span { cursor: default; }
+.app-shell .profile-page .profile-rewards b { display: inline-flex; align-items: center; gap: 8px; font-size: 22px; }
+.app-shell .profile-page .profile-rewards .streak-dots { justify-content: center; margin-top: 2px; }
+:root[data-theme='dark'] .app-shell .profile-page .profile-rewards > * { background: #0f1a33; border-color: #22325a; box-shadow: none; }
+.app-shell .profile-page .profile-section { display: flex; flex-direction: column; gap: 8px; }
+.app-shell .profile-page .profile-section-label { padding-left: 6px; }
+.app-shell .profile-page .profile-settings { padding: 4px 0; overflow: hidden; }
+.app-shell .profile-page .profile-settings-row { padding: 14px 20px; font-size: 14px; }
+.app-shell .profile-page .profile-menu > button { padding: 16px 20px; }
+@media (max-width: 760px) {
+  .app-shell .profile-page .profile-hero { grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; padding: 18px 16px; }
+  .app-shell .profile-page .profile-hero .player-avatar { width: 64px; height: 64px; margin: 6px; box-shadow: 0 0 0 4px #2454ef, 0 6px 14px #2450d125; outline-offset: 2px; }
+  .app-shell .profile-page .profile-hero h2 { font-size: 19px; }
+  .app-shell .profile-page .profile-rewards { gap: 8px; }
+  .app-shell .profile-page .profile-rewards > * { min-height: 86px; padding: 10px 6px; }
+  .app-shell .profile-page .profile-rewards b { font-size: 18px; }
+}

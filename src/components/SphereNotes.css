@@ -132,3 +132,16 @@
 
 /* Прозрачные поля поверх общих стилей полей тёмной темы. */
 .sn .sn-title, .sn .sn-search input { background: transparent !important; border: 0 !important; box-shadow: none !important; color: inherit !important; }
+
+/* 0.89.5: все карточки заметок одного размера, как бы ни были заполнены; сама форма заметок выше. */
+.sn { min-height: max(620px, calc(100vh - 220px)); box-sizing: border-box; }
+.sn-grid { columns: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; align-items: start; }
+.sn-card { margin: 0; height: 260px; display: flex; flex-direction: column; overflow: hidden; }
+.sn-card-open { flex: 1; min-height: 0; overflow: hidden; }
+.sn-card-text { flex: 1; min-height: 0; max-height: none; }
+.sn-card footer { margin-top: auto; }
+@media (max-width: 760px) {
+  .sn { min-height: 0; }
+  .sn-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .sn-card { height: 210px; }
+}

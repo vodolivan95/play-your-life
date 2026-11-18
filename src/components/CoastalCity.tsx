@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { spheres } from '../game';
 import type { GameState } from '../game';
 import { coastalHitShapes } from '../coastalCity';
@@ -42,15 +42,17 @@ function useWide() {
 const debugDefaults:DebugFlags={road:false,water:false,pedestrian:false,hitboxes:false,spawn:false,intersections:false,fps:false};
 const debugLabels:Record<keyof DebugFlags,string>={road:'Дороги',water:'Водные пути',pedestrian:'Пути NPC',hitboxes:'Hitboxes',spawn:'Входы / выходы',intersections:'Перекрёстки',fps:'FPS'};
 
-export default function CoastalCity({ state,onOpen,paused,speed }: {
-  state:GameState;onOpen:(id:string)=>void;paused:boolean;speed:number;
+export default function CoastalCity({ state,onOpen,paused,speed,leadControls }: {
+  state:GameState;onOpen:(id:string)=>void;paused:boolean;speed:number;leadControls?:ReactNode;
 }) {
   const {zoom,setZoom,scroll}=useCityZoom();
   const wide=useWide();
   // Все десять районов, включая возвращённую психологию, используют прежний прогресс.
-  const cards=useMemo(()=>sphereCards(state).filter(card=>islandBuildings.some(building=>building.id===card.id)),[state]);
+  const allCards=useMemo(()=>sphereCards(state),[state]);
+  // Пины — только у районов со зданием на острове; список районов — все сферы, включая новые без здания.
+  const cards=useMemo(()=>allCards.filter(card=>islandBuildings.some(building=>building.id===card.id)),[allCards]);
   const [picked,setPicked]=useState<string|null>(null);
-  const current=cards.find(c=>c.id===picked)??null;
+  const current=allCards.find(c=>c.id===picked)??null;
   const pickDistrict=(id:string)=>setPicked(picked===id?null:id);
   const [preferences,setPreferences]=useState(readPreferences);
   // Одна горизонтальная карта острова для ПК и телефона; на телефоне она шире экрана и листается.
@@ -76,6 +78,7 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
   };
   return <div className="coastal-city" style={{'--city-aspect':`${profile.width} / ${profile.height}`} as CSSProperties}>
     <div className="coastal-controls" aria-label="Вид города">
+      {leadControls}
       <label>Время <select aria-label="Время города" value={preferences.time} onChange={e=>setPreferences({...preferences,time:e.target.value as CityTime})}>
         <option value="auto">Авто · цикл дня</option><option value="day">День</option><option value="sunset">Закат</option><option value="night">Ночь</option><option value="sunrise">Рассвет</option>
       </select></label>
@@ -149,12 +152,12 @@ export default function CoastalCity({ state,onOpen,paused,speed }: {
     </div>
     {wide&&<nav className="coastal-districts" aria-label="Районы острова">
       <header><b>Районы</b><small>ур. района</small></header>
-      {cards.map(card=><button key={card.id} aria-pressed={picked===card.id} onClick={()=>pickDistrict(card.id)} style={{'--pin':card.color} as CSSProperties}>
+      {allCards.map(card=><button key={card.id} aria-pressed={picked===card.id} onClick={()=>pickDistrict(card.id)} style={{'--pin':card.color} as CSSProperties}>
         <span className="dot" aria-hidden="true"/><span className="name">{card.name}<span className="bar"><span style={{width:`${card.progress}%`}}/></span></span><b>{card.level}</b>
       </button>)}
     </nav>}
     {!wide&&<div className="coastal-chips" aria-label="Районы острова">
-      {cards.map(card=><button key={card.id} aria-pressed={picked===card.id} onClick={()=>pickDistrict(card.id)} style={{'--pin':card.color} as CSSProperties}>
+      {allCards.map(card=><button key={card.id} aria-pressed={picked===card.id} onClick={()=>pickDistrict(card.id)} style={{'--pin':card.color} as CSSProperties}>
         <span className="dot" aria-hidden="true"/>{card.name} · {card.level}
       </button>)}
     </div>}

@@ -360,6 +360,8 @@
 :root[data-theme="dark"] .quest-info .quest-deadline { color: #a1b3db; }
 :root[data-theme="dark"] .quest-info .quest-deadline.is-overdue { color: #9caed9; }
 :root[data-theme="dark"] { --blue: #85d0fa; }
+:root[data-theme="dark"] .app-shell .profile-page .profile-hero .player-avatar { border: 3px solid #242f4c; }
+:root[data-theme="dark"] .app-shell .profile-page .profile-rewards > * { background: #151d33; border: 1px solid #354964; }
 
 /* account.css */
 :root[data-theme="dark"] .account-screen { background: linear-gradient(140deg, #141b30, #1b2d41); color: #cad4eb; }

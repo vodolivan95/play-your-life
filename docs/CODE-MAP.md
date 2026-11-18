@@ -16,6 +16,7 @@ Codex читает правила корневого AGENTS.md автомати�
 | Мой план, неделя, обзор | PlanningWorkspace.tsx, WeekPlanBoard.tsx, WeeklyReviewWizard.tsx | planning.ts, weekPlan.ts, weeklyReview.ts | week-plan.test.ts, weekly-review.test.ts, weekly-review-ui.mjs |
 | Фокус и таймер | FocusSection.tsx, FocusBar.tsx, FocusStats.tsx | focusCore.ts, focusSessions.ts, taskTimer.ts | focus-sessions.test.ts, task-timer.test.ts, focus-ui.mjs |
 | TickTick, входящие, привычки | TickTickConnection.tsx, TickTickInbox.tsx, TickTickHabits.tsx | ticktick.ts, useTickTick.ts, ticktickInbox.ts, ticktickHabitsSync.ts | ticktick.test.ts, ticktick-worker.test.ts, ticktick-flow-ui.mjs |
+| База знаний и заметки сфер | KnowledgeBase.tsx, SphereNotes.tsx, RichEditor.tsx, useStoredDoc.ts | knowledgeBase.ts, sphereNotes.ts, richText.ts | knowledge-base.test.ts, smoke-ui.mjs |
 | Сферы, навыки, награды | SpheresOverview.tsx, SphereHub.tsx, SkillTree.tsx | sphereProgress.ts, skillTree.ts, questEconomy.ts, game.ts | game.test.ts, skill-tree.test.ts, spheres-ui.mjs |
 | Город и погода | CoastalCity.tsx, LiveCityCanvas.tsx, city3d/ | cityLive/, coastalCity.ts, weatherSystem.ts | live-city.test.ts, weatherSystem.test.ts, live-city-ui.mjs |
 | Комнаты и магазин | room3d/, shop3d/ | roomEngine.ts, roomViews.ts, shop.ts, shopModels.ts | room-engine.test.ts, room-views.test.ts, shop.test.ts |

@@ -164,7 +164,7 @@ try {
         await page.locator('.sph-open').first().click();
         await page.locator('.sph-scene').waitFor();
         await settle();
-        for (const tab of ['Проекты', 'Задачи', 'Навыки', 'История', 'Статистика', 'Обзор']) {
+        for (const tab of ['Проекты', 'Задачи', 'Навыки', 'База знаний', 'Заметки', 'История', 'Статистика', 'Обзор']) {
           where = `Сферы жизни → ${tab}`;
           await page.locator('.sph-dock-tabs').getByRole('tab', { name: new RegExp('^' + tab) }).click();
           await settle();

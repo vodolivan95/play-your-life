@@ -163,10 +163,10 @@ export function SphereQuickView({ state, id, onClose, onOpen, onQuest, onCity, o
   );
 }
 
-export type SphereTab = 'overview' | 'projects' | 'quests' | 'skills' | 'history' | 'statistics';
+export type SphereTab = 'overview' | 'projects' | 'quests' | 'skills' | 'knowledge' | 'notes' | 'history' | 'statistics';
 
 /** Маленькие значки сцены района (обводка текущим цветом). */
-function Glyph({ name, size = 20 }: { name: 'grid' | 'flag' | 'check' | 'tree' | 'clock' | 'chart' | 'door' | 'plus' | 'back' | 'flame' | 'lock'; size?: number }) {
+function Glyph({ name, size = 20 }: { name: 'grid' | 'flag' | 'check' | 'tree' | 'clock' | 'chart' | 'door' | 'plus' | 'back' | 'flame' | 'lock' | 'book' | 'note'; size?: number }) {
   const paths: Record<string, ReactNode> = {
     grid: <><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></>,
     flag: <><path d="M5 21V4" /><path d="M5 4h11l-2 4 2 4H5" /></>,
@@ -179,6 +179,8 @@ function Glyph({ name, size = 20 }: { name: 'grid' | 'flag' | 'check' | 'tree' |
     back: <path d="M15 5l-7 7 7 7" />,
     flame: <path d="M12 2c1 4 5 6 5 11a5 5 0 01-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-6 1-9.5z" />,
     lock: <><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 018 0v3" /></>,
+    book: <><path d="M4 19.5V5a2 2 0 012-2h14v16H6.5A2.5 2.5 0 004 21.5 2.5 2.5 0 006.5 24" transform="translate(0 -2)" /><path d="M8 7h8M8 11h6" /></>,
+    note: <><path d="M15 21H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10z" /><path d="M15 21v-6h6M7 8h10M7 12h6" /></>,
   };
   const filled = name === 'flame';
   return (
@@ -220,6 +222,8 @@ export function SphereScene({ state, id, tab, onTab, onBack, onQuest, onCity, on
     ['projects', 'Проекты', 'flag', d.projects.length],
     ['quests', 'Задачи', 'check', open],
     ['skills', 'Навыки', 'tree'],
+    ['knowledge', 'База знаний', 'book'],
+    ['notes', 'Заметки', 'note'],
     ['history', 'История', 'clock'],
     ['statistics', 'Статистика', 'chart'],
   ];

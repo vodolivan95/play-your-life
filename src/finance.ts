@@ -567,3 +567,77 @@ export function importFinanceReport(state: GameState, report: FinanceReport, now
   if (kept.length + unique.length > MAX_FINANCE_TRANSACTIONS) throw new Error('Слишком много записей для импорта.');
   return { state: { ...state, financeCategories: [...own, ...cats], financeTransactions: [...kept, ...unique] }, added: unique.length };
 }
+
+// ── Сравнение по годам (вкладка «Сравнение», 0.89.8) ──────────────────────────────────────────
+export type YearSummary = {
+  year: string;
+  income: number;
+  expense: number;
+  net: number;
+  /** Доля дохода, оставшаяся после трат, %; null — дохода не было. */
+  savingsRate: number | null;
+  /** Месяцев с записями — для честного «в среднем в месяц» у неполного года. */
+  months: number;
+  incomeChange: number | null;
+  expenseChange: number | null;
+};
+
+const pctChange = (from: number, to: number) => (from > 0 ? ((to - from) / from) * 100 : null);
+
+/** Итоги всех лет с записями, по возрастанию года, с изменением к предыдущему году. */
+export function yearsSummary(state: GameState): YearSummary[] {
+  const list = transactions(state);
+  const years = [...new Set(list.map((t) => t.date.slice(0, 4)))].sort();
+  let prev: YearSummary | null = null;
+  const out: YearSummary[] = [];
+  for (const year of years) {
+    const yearList = list.filter((t) => t.date.slice(0, 4) === year);
+    const t = totals(yearList);
+    const row: YearSummary = {
+      year,
+      income: t.income,
+      expense: t.expense,
+      net: t.net,
+      savingsRate: t.income > 0 ? (t.net / t.income) * 100 : null,
+      months: new Set(yearList.map((x) => x.date.slice(0, 7))).size,
+      incomeChange: prev ? pctChange(prev.income, t.income) : null,
+      expenseChange: prev ? pctChange(prev.expense, t.expense) : null,
+    };
+    out.push(row);
+    prev = row;
+  }
+  return out;
+}
+
+export type CategoryDelta = {
+  category: FinanceCategory;
+  a: number;
+  b: number;
+  diff: number;
+  /** Изменение в %; null — в году A статьи не было. */
+  pct: number | null;
+  shareA: number;
+  shareB: number;
+};
+
+/** Статьи доходов или расходов: год A против года B, по величине изменения. */
+export function compareCategories(state: GameState, yearA: string, yearB: string, kind: FinanceKind = 'expense'): CategoryDelta[] {
+  const rowsA = categoryBreakdown(state, yearTransactions(state, yearA), kind);
+  const rowsB = categoryBreakdown(state, yearTransactions(state, yearB), kind);
+  const ids = new Set([...rowsA, ...rowsB].map((r) => r.category.id));
+  return [...ids]
+    .map((id) => {
+      const ra = rowsA.find((r) => r.category.id === id);
+      const rb = rowsB.find((r) => r.category.id === id);
+      const a = ra?.amount ?? 0;
+      const b = rb?.amount ?? 0;
+      return { category: (rb ?? ra)!.category, a, b, diff: b - a, pct: pctChange(a, b), shareA: ra?.share ?? 0, shareB: rb?.share ?? 0 };
+    })
+    .sort((x, y) => Math.abs(y.diff) - Math.abs(x.diff));
+}
+
+/** Среднегодовой темп роста (CAGR), %; null — меньше двух лет или нулевая база. */
+export function cagr(first: number, last: number, years: number): number | null {
+  if (years < 1 || first <= 0 || last <= 0) return null;
+  return (Math.pow(last / first, 1 / years) - 1) * 100;
+}

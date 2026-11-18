@@ -56,3 +56,19 @@
   .fc-movers { grid-template-columns: 1fr; }
   .fc-pick small { margin-left: 0; width: 100%; }
 }
+
+/* 0.89.9: выбор до четырёх лет — в одной строке с вкладками «Финансов»; годы в списках по убыванию. */
+.fc-pick { flex-wrap: nowrap; gap: 8px; font-size: 14px; }
+.fc-pick > span:first-child { font-weight: 700; color: #50607a; }
+.fc-pick-slot { display: inline-flex; align-items: center; gap: 2px; }
+.fc-pick-slot button, .fc-add { min-height: 38px; padding: 0 12px; border: 1px solid #d6e2f4; border-radius: 10px; background: #fff; color: #2f6bff; font: inherit; font-weight: 800; cursor: pointer; }
+.fc-pick-slot button { min-height: 30px; padding: 0 8px; border: 0; background: none; color: #8a97ad; font-size: 18px; }
+.fc-span { color: #7a879e; font-size: 12px; margin-top: -6px; }
+.fc-bars i.is-y1 { opacity: .55; }
+.fc-bars i.is-y2 { opacity: .35; }
+.fc-bars i.is-y3 { opacity: .22; }
+:root[data-theme='dark'] .fc-add { background: #0f1a33; border-color: #22325a; color: #9fc0ff; }
+@media (max-width: 760px) { .fc-pick { flex-wrap: wrap; } }
+.fin-top .fc-pick { gap: 4px; }
+.fin-top .fc-pick select { min-height: 36px; padding: 4px 6px; font-size: 14px; }
+.fin-top .fc-pick-slot button { padding: 0 4px; }

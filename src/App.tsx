@@ -33,6 +33,7 @@ import ChangeJournal from './components/ChangeJournal';
 const PsychologyPage = lazy(() => import('./components/PsychologyPage'));
 const KnowledgeBase = lazy(() => import('./components/KnowledgeBase'));
 const SphereNotes = lazy(() => import('./components/SphereNotes'));
+const AllNotes = lazy(() => import('./components/AllNotes'));
 const LifePlanner = lazy(() => import('./components/LifePlanner'));
 const QuestBoard = lazy(() => import('./components/QuestBoard'));
 const HabitsPage = lazy(() => import('./components/HabitsPage'));
@@ -545,6 +546,11 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
             {page === 'psychology' && owner && (
               <Suspense fallback={<p role="status">Загружаем «Психологию»…</p>}>
                 <PsychologyPage />
+              </Suspense>
+            )}
+            {page === 'notes' && (
+              <Suspense fallback={<p role="status">Загружаем заметки…</p>}>
+                <AllNotes ownerId={userId ?? 'local'} author={state.profile.name || 'Игрок'} spheres={spheres} notify={notify} />
               </Suspense>
             )}
             {page === 'knowledge' && (

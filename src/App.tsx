@@ -29,6 +29,7 @@ const FinancePage = lazy(() => import('./components/FinancePage'));
 const GoalsBoard = lazy(() => import('./components/GoalsBoard'));
 const SkillTree = lazy(() => import('./components/SkillTree'));
 import UpdateNotice from './components/UpdateNotice';
+import ChangeJournal from './components/ChangeJournal';
 const PsychologyPage = lazy(() => import('./components/PsychologyPage'));
 const KnowledgeBase = lazy(() => import('./components/KnowledgeBase'));
 const SphereNotes = lazy(() => import('./components/SphereNotes'));
@@ -649,6 +650,10 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
                       <Icon name="arrow" size={17} />
                     </button>
                   </section>
+                </div>
+                <div className="profile-section">
+                  <span className="profile-section-label">Журнал изменений</span>
+                  <ChangeJournal />
                 </div>
                 {(() => {
                   const taskBadge = questsForCalendarDay(state.quests, dateKey(new Date())).filter((q) => !q.done).length + incomingForToday(tickTick.incoming).length;

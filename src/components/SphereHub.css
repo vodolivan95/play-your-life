@@ -303,7 +303,7 @@ button.radar-label:focus-visible { outline: 3px solid #ffc94a; outline-offset: 2
 .sph-path-track b { font-size: 13px; color: var(--sph-text); }
 .sph-path-track small { font-size: 12px; color: var(--sph-muted); }
 .sph-path-track li:nth-child(2) small { color: var(--sph-gold); font-weight: 700; }
-.sph-game-row { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.sph-game-row { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: stretch; }
 .sph-kicker { font-size: 11px; font-weight: 800; letter-spacing: .14em; color: #c43a57; }
 :root[data-theme='dark'] .sph-kicker { color: #f59aab; }
 .sph-boss { border-color: #ef718866; }

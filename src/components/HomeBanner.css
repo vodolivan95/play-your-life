@@ -106,3 +106,26 @@
   .peak-demo { top: 12px; left: auto; right: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .peak-banner * { scroll-behavior: auto !important; transition: none !important; } }
+
+/* 0.89.7: светлая тема — карточка «Следующая вершина» белая, текст тёмный, акценты золотые. */
+:root:not([data-theme='dark']) .peak-card { background: #ffffff; border-color: #f2cf6b; box-shadow: 0 18px 40px #284e9a2e, inset 0 1px 0 #fff; -webkit-backdrop-filter: none; backdrop-filter: none; color: #1b2a44; }
+:root:not([data-theme='dark']) .home-dashboard .peak-banner .peak-card h2 { color: #b67900; }
+:root:not([data-theme='dark']) .home-dashboard .peak-card-controls button { background: #f4f7fd; border-color: #d5e0f0; color: #b67900; }
+:root:not([data-theme='dark']) .peak-card-count { background: #fff4d6; color: #8a5a00; }
+:root:not([data-theme='dark']) .home-dashboard .peak-banner p.peak-card-goal { color: #13233d; }
+:root:not([data-theme='dark']) .home-dashboard .peak-banner :is(p.peak-card-project, p.peak-card-detail, p.peak-card-neutral) { color: #5d6f8a; }
+:root:not([data-theme='dark']) .peak-card-stage { background: #fff8e3; border-color: #f2cf6b; color: #13233d; }
+:root:not([data-theme='dark']) .peak-card-stage strong, :root:not([data-theme='dark']) .peak-card-date-row b, :root:not([data-theme='dark']) .home-dashboard .peak-card-tasks p b { color: #a86e00; }
+:root:not([data-theme='dark']) .peak-card-date-row, :root:not([data-theme='dark']) .peak-card-time { color: #33425e; border-color: #e3eaf5; }
+:root:not([data-theme='dark']) .peak-clock { border-color: #5d6f8a; color: #5d6f8a; }
+:root:not([data-theme='dark']) .home-dashboard :is(.peak-card-time h3, .peak-card-tasks h3) { color: #13233d; }
+:root:not([data-theme='dark']) :is(.peak-card-time-labels, .peak-card-task-row > b) { color: #33425e; }
+:root:not([data-theme='dark']) .peak-card-time-labels small { color: #6d7f99; }
+:root:not([data-theme='dark']) .home-dashboard .peak-card-tasks p { color: #33425e; }
+:root:not([data-theme='dark']) :is(.peak-card-time-track, .peak-card-task-track) { background: #eef2f8; border-color: #d5e0f0; }
+:root:not([data-theme='dark']) .home-dashboard .peak-banner p.peak-card-hint { background: #f4f7fd; border-color: #d5e0f0; color: #33425e; }
+:root:not([data-theme='dark']) .peak-focus-head { color: #5d6f8a; }
+:root:not([data-theme='dark']) .peak-focus-head small { color: #a86e00; }
+:root:not([data-theme='dark']) .home-dashboard .peak-focus-switch button { background: #f6f9ff; border-color: #cfdcf0; color: #33425e; }
+:root:not([data-theme='dark']) .peak-focus-switch button > span { background: #e8eef8; }
+:root:not([data-theme='dark']) .home-dashboard .peak-focus-switch button.is-active { background: #fff4d6; border-color: #f2c14e; color: #8a5a00; }

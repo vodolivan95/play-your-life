@@ -3,6 +3,11 @@
 :root[data-theme='dark'] .re { --re-bg: #0f1830; --re-bar: #14203d; --re-line: #24345a; --re-text: #e8eefc; --re-muted: #8b98b8; --re-accent: #6d9bff; --re-soft: #1b2b52; }
 .re-bar { position: sticky; top: 8px; z-index: 5; display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: 18px; background: var(--re-bar); border: 1px solid var(--re-line); box-shadow: 0 6px 18px #1d3a7a12; }
 .re-row { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+.re-row:empty { display: none; }
+/* Статья: три ровные строки на всю ширину панели, «Сохранено» — в конце последней. */
+.re-kb .re-row { justify-content: space-between; }
+.re-kb .re-row:last-child { justify-content: flex-start; gap: 10px; }
+.re-kb .re-row .re-sep { margin: 0; }
 .re-sep { width: 1px; height: 26px; margin: 0 4px; background: var(--re-line); }
 .re-btn { width: 34px; height: 34px; display: inline-grid; place-items: center; border: 0; border-radius: 9px; background: none; color: var(--re-text); cursor: pointer; }
 .re-btn:hover { background: var(--re-soft); }
@@ -11,7 +16,7 @@
 .re-select { height: 36px; padding: 0 8px 0 10px; border-radius: 10px; border: 1px solid var(--re-line); background: var(--re-bg) !important; color: var(--re-text) !important; font: inherit; font-size: 14px; width: 150px; }
 .re-select + .re-select { width: 124px; }
 .re-select.is-short { width: 96px; }
-.re-status { margin-left: auto; color: var(--re-muted); font-size: 13px; }
+.re-status { margin-left: auto; color: var(--re-muted); font-size: 13px; white-space: nowrap; }
 .re-pop-wrap { position: relative; display: inline-flex; }
 .re-pop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; padding: 10px; border-radius: 14px; background: var(--re-bg); border: 1px solid var(--re-line); box-shadow: 0 16px 40px #0b1a3a33; }
 .re-swatches { display: grid; grid-template-columns: repeat(5, 26px); gap: 6px; }
@@ -82,3 +87,5 @@
 @media print {
   .re-bar { display: none; }
 }
+/* Выпадающие списки сжимаются, чтобы первая строка панели не переносилась. */
+.re-kb .re-select { flex: 1 1 0; width: auto; min-width: 84px; max-width: 160px; }

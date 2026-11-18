@@ -236,6 +236,9 @@ button.radar-label:focus-visible { outline: 3px solid #ffc94a; outline-offset: 2
 .sph-scene-stage::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, color-mix(in srgb, var(--sph-page) 85%, transparent) 0%, transparent 22%, transparent 58%, color-mix(in srgb, var(--sph-page) 95%, transparent) 100%); }
 .sph-scene { --sph-page: #f3f6fc; --sph-glass: #ffffffe6; --sph-glass-line: #1d3a7a26; }
 :root[data-theme='dark'] .sph-scene { --sph-page: #070d20; --sph-glass: #050a1add; --sph-glass-line: #ffffff33; }
+/* 0.87.1: в светлой теме без белой дымки поверх фото сцены — фото видно целиком. */
+:root:not([data-theme='dark']) .sph-scene-stage::after { display: none; }
+:root:not([data-theme='dark']) .sph-scene-name h1 { text-shadow: 0 1px 2px #ffffffcc, 0 0 12px #ffffffb3; }
 .sph-hud { position: absolute; z-index: 2; top: 16px; left: 18px; right: 18px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .sph-hud-gap { flex: 1; }
 .sph-hud-back { display: flex; align-items: center; gap: 6px; min-height: 42px; padding: 0 14px; border-radius: 14px; background: var(--sph-glass); border: 1px solid var(--sph-glass-line); color: var(--sph-text); font-weight: 800; font-size: 13px; backdrop-filter: blur(8px); }

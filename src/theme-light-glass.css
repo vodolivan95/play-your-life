@@ -10,19 +10,15 @@
   --sky-a: #cfe3ff;
   --sky-b: #e4dcff;
   --sky-c: #ffe6da;
-  --glass: rgba(255, 255, 255, 0.62);
-  --glass-strong: rgba(255, 255, 255, 0.78);
-  --glass-line: rgba(255, 255, 255, 0.92);
-  /* Объём: светлая кромка сверху, мягкая тень внутри снизу, двухслойная тень снаружи. */
+  /* 0.89.3: подложки карточек — чистый белый с мягкой тенью вместо полупрозрачного голубого стекла. */
+  --glass: rgba(255, 255, 255, 0.94);
+  --glass-strong: #ffffff;
+  --glass-line: #e2ebf7;
   --glass-shadow:
-    0 1px 2px rgba(60, 90, 180, 0.12),
-    0 8px 14px -4px rgba(80, 110, 200, 0.16),
-    0 24px 44px -8px rgba(80, 110, 200, 0.26),
-    inset 0 2px 0 #fff,
-    inset 0 -14px 22px rgba(130, 165, 235, 0.3),
-    inset 0 -2px 0 rgba(120, 150, 220, 0.18),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.55);
-  --glass-volume: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.66) 45%, rgba(222, 234, 255, 0.62) 100%);
+    0 1px 2px rgba(40, 70, 140, 0.06),
+    0 12px 30px -12px rgba(40, 80, 160, 0.2),
+    inset 0 1px 0 #fff;
+  --glass-volume: #ffffff;
   background: var(--sky-a);
 }
 :root:not([data-theme="dark"]) body {
@@ -46,8 +42,6 @@
   background: var(--glass-volume);
   border: 1px solid var(--glass-line);
   box-shadow: var(--glass-shadow);
-  -webkit-backdrop-filter: blur(20px) saturate(170%);
-  backdrop-filter: blur(20px) saturate(170%);
 }
 /* Меню и верхняя панель — чуть плотнее, чтобы текст читался на любом фоне. */
 :where(:root:not([data-theme="dark"])) :is(.sidebar, .topbar) {

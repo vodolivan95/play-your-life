@@ -391,3 +391,21 @@ export function parseKnowledgeBase(raw: string | null, spheres: SphereLike[], no
     return emptyKnowledgeBase(spheres, now);
   }
 }
+
+/** Импорт: добавляет пространства, статьи и термины, которых ещё нет (по id); существующие не перезаписываются. */
+export function mergeKnowledgeBase(kb: KnowledgeBase, incoming: KnowledgeBase): { kb: KnowledgeBase; added: number } {
+  const spaceIds = new Set(kb.spaces.map((s) => s.id));
+  const sphereSpace = new Map(kb.spaces.filter((s) => s.sphereId).map((s) => [s.sphereId!, s.id]));
+  // Пространство сферы из файла совпадает с пространством той же сферы здесь.
+  const remap = new Map<string, string>();
+  const spaces = [...kb.spaces];
+  for (const s of incoming.spaces) {
+    if (s.sphereId && sphereSpace.has(s.sphereId)) remap.set(s.id, sphereSpace.get(s.sphereId)!);
+    else if (!spaceIds.has(s.id)) { spaces.push(s); spaceIds.add(s.id); }
+  }
+  const articleIds = new Set(kb.articles.map((a) => a.id));
+  const fresh = incoming.articles.filter((a) => !articleIds.has(a.id)).map((a) => ({ ...a, spaceId: remap.get(a.spaceId) ?? a.spaceId })).filter((a) => spaceIds.has(a.spaceId) || [...remap.values()].includes(a.spaceId));
+  const termIds = new Set(kb.glossary.map((t) => t.id));
+  const terms = incoming.glossary.filter((t) => !termIds.has(t.id)).map((t) => ({ ...t, spaceId: remap.get(t.spaceId) ?? t.spaceId }));
+  return { kb: { ...kb, spaces, articles: [...kb.articles, ...fresh], glossary: [...kb.glossary, ...terms] }, added: fresh.length };
+}

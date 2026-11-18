@@ -106,3 +106,24 @@ test('заметки: создание, фильтры, папки, корзин
   assert.equal(parseNotes(JSON.stringify(data), now).notes.length, 1);
   assert.equal(parseNotes('мусор').notes.length, 0);
 });
+
+test('импорт базы знаний добавляет новое и не дублирует пространства сфер', async () => {
+  const { mergeKnowledgeBase } = await import('../src/knowledgeBase.ts');
+  const base = emptyKnowledgeBase(spheres, now);
+  const [other, page] = createArticle(emptyKnowledgeBase(spheres, now), { spaceId: spaceOfSphere(base, 'sport')!.id, title: 'Бег', author: 'Я' }, now);
+  const once = mergeKnowledgeBase(base, other);
+  assert.equal(once.added, 1);
+  assert.equal(once.kb.spaces.length, spheres.length);
+  assert.equal(mergeKnowledgeBase(once.kb, other).added, 0);
+  assert.equal(once.kb.articles[0].id, page.id);
+});
+
+test('«Что нового» и проверка версии', async () => {
+  const { shouldShowWhatsNew, versionFromHtml, whatsNew } = await import('../src/whatsNew.ts');
+  const { readFileSync } = await import('node:fs');
+  const version = JSON.parse(readFileSync('package.json', 'utf8')).version;
+  assert.ok(whatsNew[version]?.length, 'для текущей версии есть список изменений');
+  assert.equal(versionFromHtml(readFileSync('index.html', 'utf8')), version);
+  assert.equal(shouldShowWhatsNew(version, null), true);
+  assert.equal(shouldShowWhatsNew(version, version), false);
+});

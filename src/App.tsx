@@ -27,6 +27,7 @@ const KeyResults = lazy(() => import('./components/KeyResults'));
 const FinancePage = lazy(() => import('./components/FinancePage'));
 const GoalsBoard = lazy(() => import('./components/GoalsBoard'));
 const SkillTree = lazy(() => import('./components/SkillTree'));
+import UpdateNotice from './components/UpdateNotice';
 const KnowledgeBase = lazy(() => import('./components/KnowledgeBase'));
 const SphereNotes = lazy(() => import('./components/SphereNotes'));
 const LifePlanner = lazy(() => import('./components/LifePlanner'));
@@ -531,6 +532,11 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
             {page === 'shop' && (
               <RewardShop state={state} onChange={setState} notify={notify} />
             )}
+            {page === 'knowledge' && (
+              <Suspense fallback={<p role="status">Загружаем базу знаний…</p>}>
+                <KnowledgeBase ownerId={userId ?? 'local'} author={state.profile.name || 'Игрок'} photo={state.profile.photo} spheres={spheres} start="spaces" notify={notify} />
+              </Suspense>
+            )}
             {page === 'statistics' && (
               <KeyResults
                 state={state}
@@ -1014,6 +1020,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
             onIdea={(name, description) => { setState((current) => current.goals.some((g) => g.sphere === quickSphere && g.name === name) ? current : saveGoal(current, { name, description, sphere: quickSphere, target: 100, reward: 100, progressMode: 'tasks' })); notify('Проект добавлен. Открой его, чтобы настроить этапы и задачи.'); }}
           />
         )}
+        <UpdateNotice />
         {toast && (
           <div className="toast" role="status">
             <span>✦</span>

@@ -16,12 +16,13 @@ Codex читает правила корневого AGENTS.md автомати�
 | Мой план, неделя, обзор | PlanningWorkspace.tsx, WeekPlanBoard.tsx, WeeklyReviewWizard.tsx | planning.ts, weekPlan.ts, weeklyReview.ts | week-plan.test.ts, weekly-review.test.ts, weekly-review-ui.mjs |
 | Фокус и таймер | FocusSection.tsx, FocusBar.tsx, FocusStats.tsx | focusCore.ts, focusSessions.ts, taskTimer.ts | focus-sessions.test.ts, task-timer.test.ts, focus-ui.mjs |
 | TickTick, входящие, привычки | TickTickConnection.tsx, TickTickInbox.tsx, TickTickHabits.tsx | ticktick.ts, useTickTick.ts, ticktickInbox.ts, ticktickHabitsSync.ts | ticktick.test.ts, ticktick-worker.test.ts, ticktick-flow-ui.mjs |
-| База знаний и заметки сфер | KnowledgeBase.tsx, SphereNotes.tsx, RichEditor.tsx, useStoredDoc.ts | knowledgeBase.ts, sphereNotes.ts, richText.ts | knowledge-base.test.ts, smoke-ui.mjs |
+| База знаний (меню и вкладки сфер), заметки | KnowledgeBase.tsx, SphereNotes.tsx, RichEditor.tsx, useStoredDoc.ts | knowledgeBase.ts, sphereNotes.ts, richText.ts | knowledge-base.test.ts, smoke-ui.mjs |
 | Сферы, навыки, награды | SpheresOverview.tsx, SphereHub.tsx, SkillTree.tsx | sphereProgress.ts, skillTree.ts, questEconomy.ts, game.ts | game.test.ts, skill-tree.test.ts, spheres-ui.mjs |
 | Город и погода | CoastalCity.tsx, LiveCityCanvas.tsx, city3d/ | cityLive/, coastalCity.ts, weatherSystem.ts | live-city.test.ts, weatherSystem.test.ts, live-city-ui.mjs |
 | Комнаты и магазин | room3d/, shop3d/ | roomEngine.ts, roomViews.ts, shop.ts, shopModels.ts | room-engine.test.ts, room-views.test.ts, shop.test.ts |
 | Вход и сохранения | ../AccountRoot.tsx | firebaseClient.ts, firebaseSave.ts, accountPersistence.ts, stateValidation.ts, stateMerge.ts | state-roundtrip.test.ts, state-merge.test.ts, firebase-rules.test.mjs |
 | Орфография | ../spellcheck.css | spellcheck.ts, spellcheck.worker.ts, spellcheckText.ts | spellcheck.test.ts, spellcheck-ui.mjs |
+| Верхний баннер, «Что нового» | DashboardHeader.tsx, UpdateNotice.tsx | whatsNew.ts | knowledge-base.test.ts, smoke-ui.mjs |
 | Тема, общее оформление | ThemeSwitch.tsx | styles.css, interface.css, theme-dark.css, theme-light-glass.css | theme-ui.mjs |
 
 Оболочка и связи экранов: `src/App.tsx`, `src/navigation.ts`; точка входа: `src/main.tsx`. Сервер TickTick: `integrations/ticktick/worker.ts`. Правила базы: `firestore.rules`. CI: `.github/workflows/ci.yml`. Профильные требования ищи по имени раздела в `docs/`, не читай все документы подряд.

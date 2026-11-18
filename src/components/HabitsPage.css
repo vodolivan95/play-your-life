@@ -222,3 +222,6 @@
   .hb-form { padding: 14px 16px 22px; border-radius: 26px; }
   .hb-form-row { flex-direction: column; }
 }
+
+/* 0.89.7: дублирующий заголовок страницы «Привычки» и дата скрыты — остаётся заголовок раздела. */
+.app-page-quests main > .page-heading { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

@@ -123,7 +123,7 @@ try {
     await page.waitForURL(harness(uid)+'#profile');
     await panel(page).getByText('Доступ к TickTick подтверждён.',{exact:false}).waitFor();
     assert.equal(await page.getByRole('button',{name:'Восстановить из файла'}).isDisabled(),true,'confirmed connections protect restored plans from automatic export');
-    assert.equal(await panel(page).locator('select').count(),10);
+    assert.equal(await panel(page).locator('select').count(),12);
     assert.equal(await panel(page).getByLabel('Автоматически синхронизировать и проверять TickTick каждые 5 минут, пока сайт открыт').isChecked(),true);
     assert.equal(await panel(page).getByLabel('Список TickTick: Английский').locator('option').filter({hasText:'Заметки'}).count(),0);
     await panel(page).getByLabel('Список TickTick: Английский').selectOption('english');

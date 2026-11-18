@@ -68,6 +68,8 @@ const ideas: Record<string, string> = {
   tasks: "Разобрать накопившиеся дела за неделю",
   hobby: "Два полноценных дня отдыха в месяц",
   psychology: "Десять минут осознанности каждый день",
+  family: "Один семейный вечер без телефонов каждую неделю",
+  career: "Один шаг к карьерной цели каждую неделю",
 };
 export function demoSphereRecommendation(
   sphereId: string,

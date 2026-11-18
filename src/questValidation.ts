@@ -23,6 +23,8 @@ const spheres = [
   "tasks",
   "hobby",
   "psychology",
+  "family",
+  "career",
 ];
 function list(
   v: unknown,

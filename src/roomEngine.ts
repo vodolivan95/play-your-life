@@ -1,7 +1,7 @@
 import type { GameState } from './game.ts';
 import { sphereProgress } from './sphereProgress.ts';
 
-export type RoomId = 'health' | 'sport' | 'growth' | 'english' | 'finance' | 'together' | 'driving' | 'tasks' | 'hobby' | 'psychology';
+export type RoomId = 'health' | 'sport' | 'growth' | 'english' | 'finance' | 'together' | 'driving' | 'tasks' | 'hobby' | 'psychology' | 'family' | 'career';
 export type ObjectId = 'mat' | 'dumbbells' | 'bench' | 'ball' | 'plant' | 'treadmill'
   | 'bookshelf' | 'desk' | 'armchair' | 'floorLamp' | 'globe' | 'board'
   | 'massageTable' | 'waterCooler' | 'smoothieBar' | 'firstAid' | 'aquarium' | 'cedarBarrel'
@@ -113,11 +113,11 @@ const psychologyCatalog: readonly ObjectSpec[] = [
   { id: 'sandTray', name: 'Песочница для терапии', price: 260, level: 3, size: [1, 1], asset: '/models/psychology/sand-tray.glb' },
   { id: 'singingBowl', name: 'Поющая чаша', price: 180, level: 5, size: [1, 1], asset: '/models/psychology/singing-bowl.glb' },
 ];
-const catalogs: Partial<Record<RoomId, readonly ObjectSpec[]>> = { sport: sportCatalog, growth: growthCatalog, health: healthCatalog, finance: financeCatalog, english: englishCatalog, driving: drivingCatalog, together: togetherCatalog, hobby: hobbyCatalog, tasks: tasksCatalog, psychology: psychologyCatalog };
+const catalogs: Partial<Record<RoomId, readonly ObjectSpec[]>> = { sport: sportCatalog, growth: growthCatalog, health: healthCatalog, finance: financeCatalog, english: englishCatalog, driving: drivingCatalog, together: togetherCatalog, hobby: hobbyCatalog, tasks: tasksCatalog, psychology: psychologyCatalog, family: togetherCatalog, career: financeCatalog };
 
 export const roomConfigs: Record<RoomId, RoomConfig> = Object.fromEntries(
-  (['health', 'sport', 'growth', 'english', 'finance', 'together', 'driving', 'tasks', 'hobby', 'psychology'] as const)
-    .map(id => [id, { id, title: ({ health: 'Здоровье', sport: 'Спорт', growth: 'Саморазвитие', english: 'Английский', finance: 'Финансы', together: 'Общие дела', driving: 'Вождение', tasks: 'Задачи', hobby: 'Хобби', psychology: 'Психология' })[id], size: id === 'sport' ? [12, 10] : [11, 9], catalog: catalogs[id] ?? [] }]),
+  (['health', 'sport', 'growth', 'english', 'finance', 'together', 'driving', 'tasks', 'hobby', 'psychology', 'family', 'career'] as const)
+    .map(id => [id, { id, title: ({ health: 'Здоровье', sport: 'Спорт', growth: 'Саморазвитие', english: 'Английский', finance: 'Финансы', together: 'Общие дела', driving: 'Вождение', tasks: 'Задачи', hobby: 'Хобби', psychology: 'Психология', family: 'Семья и отношения', career: 'Карьера и бизнес' })[id], size: id === 'sport' ? [12, 10] : [11, 9], catalog: catalogs[id] ?? [] }]),
 ) as Record<RoomId, RoomConfig>;
 
 /** Есть ли у сферы наполненный 3D-интерьер (каталог предметов). */

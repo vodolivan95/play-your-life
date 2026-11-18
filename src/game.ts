@@ -94,6 +94,24 @@ export const spheres = [
     score: 4,
     xp: 260,
   },
+  {
+    id: 'family',
+    name: 'Семья и отношения',
+    icon: '💞',
+    coefficient: 15,
+    color: '#e0567f',
+    score: 5,
+    xp: 300,
+  },
+  {
+    id: 'career',
+    name: 'Карьера и бизнес',
+    icon: '💼',
+    coefficient: 15,
+    color: '#2f6fd6',
+    score: 5,
+    xp: 320,
+  },
 ];
 export const difficulties = {
   Micro: 5,

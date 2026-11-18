@@ -24,6 +24,8 @@ export const skillIconIds = [
   'tasks',
   'hobby',
   'psychology',
+  'family',
+  'career',
 ] as const;
 
 export type SkillBranch = { id: string; name: string };

@@ -261,3 +261,10 @@
   .kb-spaces-head h2 { font-size: 26px; }
   .kb-space-grid { grid-template-columns: 1fr; gap: 12px; }
 }
+
+/* 0.89.3: раздел «База знаний» без заголовка страницы и даты — база занимает всю рабочую область. */
+.app-page-knowledge .page-heading { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.app-page-knowledge .kb { margin-top: 0; min-height: calc(100vh - 128px); }
+@media (max-width: 760px) {
+  .app-page-knowledge .kb { min-height: calc(100vh - 170px); }
+}

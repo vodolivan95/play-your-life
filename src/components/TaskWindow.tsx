@@ -34,6 +34,7 @@ import type { TaskDetails } from "../taskDetails";
 import TaskDescription from "./TaskDescription";
 import Icon from "./Icon";
 import "./TaskWindow.css";
+import "./TaskWindow.light.css";
 const FocusSection = lazy(() => import("./FocusSection"));
 const tabs = [
   "Планирование",

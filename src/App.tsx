@@ -27,6 +27,8 @@ const KeyResults = lazy(() => import('./components/KeyResults'));
 const FinancePage = lazy(() => import('./components/FinancePage'));
 const GoalsBoard = lazy(() => import('./components/GoalsBoard'));
 const SkillTree = lazy(() => import('./components/SkillTree'));
+const KnowledgeBase = lazy(() => import('./components/KnowledgeBase'));
+const SphereNotes = lazy(() => import('./components/SphereNotes'));
 const LifePlanner = lazy(() => import('./components/LifePlanner'));
 const QuestBoard = lazy(() => import('./components/QuestBoard'));
 const HabitsPage = lazy(() => import('./components/HabitsPage'));
@@ -429,6 +431,16 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
                   />
                 )}
                 {sphereTab === 'skills' && <SphereSkills state={state} id={sphere.id} onTree={() => navigate('tree')} />}
+                {sphereTab === 'knowledge' && (
+                  <Suspense fallback={<p role="status">Загружаем базу знаний…</p>}>
+                    <KnowledgeBase ownerId={userId ?? 'local'} author={state.profile.name || 'Игрок'} photo={state.profile.photo} spheres={spheres} sphereId={sphere.id} notify={notify} />
+                  </Suspense>
+                )}
+                {sphereTab === 'notes' && (
+                  <Suspense fallback={<p role="status">Загружаем заметки…</p>}>
+                    <SphereNotes ownerId={userId ?? 'local'} sphereId={sphere.id} sphereName={sphere.name} author={state.profile.name || 'Игрок'} notify={notify} />
+                  </Suspense>
+                )}
                 {sphereTab === 'projects' && (
                   <SphereProjects
                     onMap={() => navigate('city')}

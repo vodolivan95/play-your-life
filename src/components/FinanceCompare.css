@@ -1,0 +1,58 @@
+/* Финансы → «Сравнение» (0.89.8): годы и статьи год к году. */
+.fc { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.fc-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 13px; color: #50607a; }
+.fc-pick label { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.fc-pick select { min-height: 38px; padding: 6px 10px; border: 1px solid #d6e2f4; border-radius: 10px; background: #fff; font: inherit; font-weight: 800; color: #1b2a44; }
+.fc-pick small { margin-left: auto; color: #7a879e; }
+.fc-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.fc-kpi { display: flex; flex-direction: column; gap: 4px; }
+.fc-kpi span { font-size: 11px; color: #50607a; }
+.fc-kpi b { font-size: 21px; }
+.fc-kpi em { font-size: 11px; font-style: normal; color: #7a879e; }
+.fc .negative { color: #c5423e; }
+.fc-delta { display: inline-flex; align-items: center; gap: 3px; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.fc-delta.is-good { background: #e3f7ec; color: #14865f; }
+.fc-delta.is-bad { background: #fde8e8; color: #c43a57; }
+.fc-delta.is-flat { background: #eef2f8; color: #6d7f99; }
+.fc-tag { padding: 1px 7px; border-radius: 999px; background: #eef2f8; color: #6d7f99; font-size: 11px; font-weight: 800; }
+.fc-tag.is-new { background: #fff4d6; color: #8a5a00; }
+.fc-insights h2, .fc-mover h2 { margin: 0 0 10px; font-size: 16px; }
+.fc-insights ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; line-height: 1.5; color: #33425e; }
+.fc-table-wrap { overflow-x: auto; margin: 0 -4px; }
+.fc-table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.fc-table th, .fc-table td { padding: 10px 8px; text-align: right; border-bottom: 1px solid #edf1f8; white-space: nowrap; }
+.fc-table thead th { font-size: 11px; font-weight: 800; color: #7a879e; text-transform: uppercase; letter-spacing: .04em; }
+.fc-table th:first-child { text-align: left; }
+.fc-table tbody th { font-weight: 700; color: #1b2a44; }
+.fc-table tbody th small { color: #7a879e; font-weight: 600; }
+.fc-table tr.is-picked { background: #f4f8ff; }
+.fc-num { font-weight: 800; }
+.fc-bars-head { width: 28%; min-width: 140px; }
+.fc-bars { display: grid; gap: 3px; min-width: 140px; }
+.fc-bars i { display: block; height: 7px; border-radius: 4px; min-width: 2px; }
+.fc-bars i.is-a { background: #d5deeb; }
+.fc-bars i.is-b.is-expense { background: linear-gradient(90deg, #7cc0ff, #2f6fd6); }
+.fc-bars i.is-b.is-income { background: linear-gradient(90deg, #6fe0a8, #14865f); }
+.fc-movers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.fc-mover ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.fc-mover li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px; font-size: 13px; }
+.fc-mover li span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fc-mover.is-up h2 { color: #c43a57; }
+.fc-mover.is-down h2 { color: #14865f; }
+.fc-mover p { margin: 0; color: #7a879e; font-size: 13px; }
+.fc-empty h2 { margin: 0 0 6px; }
+.fc-empty p { margin: 0; color: #50607a; }
+:root[data-theme='dark'] .fc-pick select { background: #0f1a33; border-color: #22325a; color: #e6ecfa; }
+:root[data-theme='dark'] .fc-table th, :root[data-theme='dark'] .fc-table td { border-color: #22325a; }
+:root[data-theme='dark'] .fc-table tbody th { color: #e6ecfa; }
+:root[data-theme='dark'] .fc-table tr.is-picked { background: #13224a; }
+:root[data-theme='dark'] .fc-insights ul { color: #c4d0ea; }
+:root[data-theme='dark'] .fc-bars i.is-a { background: #2c3c63; }
+:root[data-theme='dark'] .fc-delta.is-good { background: #0f3326; color: #7ee0b8; }
+:root[data-theme='dark'] .fc-delta.is-bad { background: #3a1420; color: #ffadbd; }
+:root[data-theme='dark'] .fc-delta.is-flat, :root[data-theme='dark'] .fc-tag { background: #1a2c57; color: #93a3c7; }
+@media (max-width: 900px) {
+  .fc-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fc-movers { grid-template-columns: 1fr; }
+  .fc-pick small { margin-left: 0; width: 100%; }
+}

@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
+
+const FinanceCompare = lazy(() => import('./FinanceCompare'));
 import type { Dispatch, SetStateAction } from 'react';
 import type { GameState } from '../game';
 import {
@@ -62,7 +64,7 @@ function wordDays(n: number) {
   return 'дней';
 }
 
-type View = 'month' | 'year' | 'payments';
+type View = 'month' | 'year' | 'compare' | 'payments';
 
 type FormState = {
   type: FinanceKind;
@@ -284,6 +286,7 @@ export default function FinancePage({
         <div className="fin-tabs" role="tablist" aria-label="Раздел">
           <button type="button" role="tab" aria-selected={view === 'month'} className={view === 'month' ? 'active' : ''} onClick={() => setView('month')}>Помесячно</button>
           <button type="button" role="tab" aria-selected={view === 'year'} className={view === 'year' ? 'active' : ''} onClick={() => setView('year')}>По году</button>
+          <button type="button" role="tab" aria-selected={view === 'compare'} className={view === 'compare' ? 'active' : ''} onClick={() => setView('compare')}>Сравнение</button>
           <button type="button" role="tab" aria-selected={view === 'payments'} className={view === 'payments' ? 'active' : ''} onClick={() => setView('payments')}>Платежи</button>
         </div>
         {view === 'month' && (
@@ -382,6 +385,10 @@ export default function FinancePage({
             )}
           </section>
         </>
+      ) : view === 'compare' ? (
+        <Suspense fallback={<p role="status">Считаем сравнение…</p>}>
+          <FinanceCompare state={state} />
+        </Suspense>
       ) : view === 'year' ? (
         <>
           <div className="fin-kpis">

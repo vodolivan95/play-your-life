@@ -28,8 +28,29 @@ test('раздел «Психология» виден только аккаун
   const { isOwnerEmail } = await import('../src/privateAccess.ts');
   const { visibleNavigation } = await import('../src/navigation.ts');
   assert.equal(await isOwnerEmail(' Sanek.Alex1995@Yandex.ru '), true);
+  assert.equal(await isOwnerEmail('Vodolivan95@yandex.ru'), true);
   assert.equal(await isOwnerEmail('someone@example.com'), false);
   assert.equal(await isOwnerEmail(undefined), false);
   assert.ok(visibleNavigation(true).some((i) => i.id === 'psychology'));
   assert.ok(!visibleNavigation(false).some((i) => i.id === 'psychology'));
+});
+
+test('сравнение по годам: итоги лет и статьи год к году', async () => {
+  const { yearsSummary, compareCategories, cagr } = await import('../src/finance.ts');
+  const { newAccountGame } = await import('../src/accountGame.ts');
+  let state = newAccountGame('Тест');
+  const tx = (id: string, date: string, type: 'expense' | 'income', categoryId: string, amount: number) => ({ id, date, type, categoryId, amount, createdAt: `${date}T00:00:00.000Z` });
+  state = { ...state, financeTransactions: [
+    tx('a', '2024-01-10', 'income', 'salary', 1000), tx('b', '2024-02-10', 'expense', 'food', 400),
+    tx('c', '2025-01-10', 'income', 'salary', 1500), tx('d', '2025-02-10', 'expense', 'food', 300), tx('e', '2025-03-10', 'expense', 'rent', 200),
+  ] } as typeof state;
+  const years = yearsSummary(state);
+  assert.deepEqual(years.map((y) => y.year), ['2024', '2025']);
+  assert.equal(years[1].incomeChange, 50);
+  assert.equal(years[1].expenseChange, 25);
+  assert.equal(Math.round(years[0].savingsRate ?? 0), 60);
+  const deltas = compareCategories(state, '2024', '2025', 'expense');
+  assert.equal(deltas.find((d) => d.category.id === 'rent')?.pct, null, 'новая статья без процента');
+  assert.equal(deltas.find((d) => d.category.id === 'food')?.diff, -100);
+  assert.equal(Math.round(cagr(100, 121, 2) ?? 0), 10);
 });

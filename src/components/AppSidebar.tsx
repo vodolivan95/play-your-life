@@ -1,5 +1,5 @@
 import type { GameState } from '../game';
-import { navigation } from '../navigation';
+import { visibleNavigation } from '../navigation';
 import { menuIconSrc } from '../menuIcons';
 import { useMenuTheme } from '../menuTheme';
 import SidebarReference from './SidebarReference';
@@ -8,7 +8,7 @@ import CityMiniLive from './CityMiniLive';
 import './AppMenu.css';
 
 /** Левое меню компьютера: логотип, тема (карточка игрока убрана в 0.87.1 — она есть в верхнем баннере), плоский список из 11 разделов и карта города. */
-export default function AppSidebar({ page, questCount, onNavigate }: { page: string; state: GameState; questCount: number; onNavigate: (id: string) => void }) {
+export default function AppSidebar({ page, questCount, onNavigate, owner = false }: { page: string; state: GameState; questCount: number; onNavigate: (id: string) => void; owner?: boolean }) {
   const [theme] = useMenuTheme();
   const isActive = (id: string) => page === id || (id === 'statistics' && page === 'monthly');
   return (
@@ -27,7 +27,7 @@ export default function AppSidebar({ page, questCount, onNavigate }: { page: str
         <ThemeSwitch />
       </div>
       <nav className="pyl-menu-nav" aria-label="Разделы">
-        {navigation.map((item) => (
+        {visibleNavigation(owner).map((item) => (
           <button
             key={item.id}
             type="button"

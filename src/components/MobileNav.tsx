@@ -15,7 +15,8 @@ const moreIds: MenuIconId[] = ['tasks', 'spheres', 'budget', 'tree', 'achievemen
  * Нижняя панель телефона: Главная, Привычки, выпуклая «Проекты» по центру, Город и «Ещё».
  * «Ещё» открывает шторку с остальными разделами, карточкой игрока и переключателем темы.
  */
-export default function MobileNav({ page, state, onNavigate }: { page: string; state: GameState; onNavigate: (id: string) => void }) {
+export default function MobileNav({ page, state, onNavigate, owner = false }: { page: string; state: GameState; onNavigate: (id: string) => void; owner?: boolean }) {
+  const more = owner ? [...moreIds.slice(0, -1), 'psychology' as MenuIconId, moreIds[moreIds.length - 1]] : moreIds;
   const [theme] = useMenuTheme();
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -55,7 +56,7 @@ export default function MobileNav({ page, state, onNavigate }: { page: string; s
           <span className="pyl-grabber" aria-hidden="true" />
           <PlayerCard state={state} />
           <div className="pyl-more-grid">
-            {moreIds.map((id) => (
+            {more.map((id) => (
               <button key={id} type="button" className="pyl-more-item" aria-current={page === id ? 'page' : undefined} onClick={() => go(id)}>
                 <img src={menuIconSrc(id)} alt="" width={48} height={48} />
                 <span>{navigation.find((item) => item.id === id)?.label}</span>

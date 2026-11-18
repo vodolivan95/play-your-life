@@ -5,7 +5,7 @@
  */
 export type MenuIconId =
   | 'home' | 'spheres' | 'tasks' | 'quests' | 'goals' | 'plan' | 'monthly'
-  | 'tree' | 'achievements' | 'shop' | 'city' | 'statistics' | 'profile' | 'budget' | 'knowledge';
+  | 'tree' | 'achievements' | 'shop' | 'city' | 'statistics' | 'profile' | 'budget' | 'knowledge' | 'psychology';
 import { habitsIconSvg, tasksIconSvg } from './menuIconsNew';
 type Stop = readonly [number, string, number?];
 
@@ -81,6 +81,11 @@ const SVGS: Record<MenuIconId, string> = {
     '<path d="M8 25 H52" stroke="#fff" stroke-opacity=".3" stroke-width="1.1"/>' +
     Rr(36, 29, 18, 14, 4, 'w') + Ci(45, 36, 5.2, 'c') +
     '<circle cx="45" cy="36" r="5.2" fill="none" stroke="#B9801E" stroke-width="1" stroke-opacity=".4"/>',
+  psychology:
+    LG('ph', [[0, '#C9A8FF'], [.55, '#8B5CF6'], [1, '#5B2DB8']]) + LG('pg', [[0, '#FFE7A3'], [1, '#F2A93B']]) +
+    '<path d="M32 9c-11 0-19 8-19 18 0 6 2.5 9.5 5 12.5V52a3 3 0 0 0 3 3h13a3 3 0 0 0 3-3v-5h6a3 3 0 0 0 3-3v-7l4-1.5c1.4-.5 1.8-2.2.8-3.3L50 27C50 16 43 9 32 9z" fill="url(#ph)"/>' +
+    '<path d="M24 22c2-3 5-4.5 8.5-4.5M22 30c2.5 1 5 0 6.5-2M33 27c2 2.5 6 3 8.5 1M27 36c3 1.5 6.5 1 8.5-1.5" fill="none" stroke="#efe5ff" stroke-width="2.4" stroke-linecap="round" opacity=".85"/>' +
+    Ci(46, 15, 7, 'pg') + '<path d="M46 11.5v7M42.5 15h7" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>',
   knowledge:
     LG('pg', [[0, '#FFFFFF'], [1, '#DCE4F2']]) + LG('cv', [[0, '#7FB6FF'], [.55, '#3B7CE0'], [1, '#2450A8']]) + LG('pl', [[0, '#9BE8B0'], [1, '#2E9F5B']]) +
     Rr(13, 8, 34, 46, 7, 'cv') + Rr(18, 11, 31, 43, 6, 'pg') +

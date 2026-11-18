@@ -106,3 +106,7 @@
   .fin-payment-meta { width: 100%; flex-direction: row; align-items: center; justify-content: space-between; margin-left: 0; padding-left: 42px; }
   .fin-payment-meta-top { gap: 8px; }
 }
+
+.fin-top-actions { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fin-import { cursor: pointer; display: inline-flex; align-items: center; min-height: 42px; padding: 0 16px; border-radius: 14px; border: 1px solid #d5e0f3; background: #fff; color: #2f6bff; font-weight: 800; }
+:root[data-theme='dark'] .fin-import { background: #0f1830; border-color: #24345a; color: #8fb4ff; }

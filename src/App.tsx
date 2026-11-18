@@ -10,6 +10,7 @@ import AppSidebar from './components/AppSidebar';
 import ThemeSwitch from './components/ThemeSwitch';
 import MobileNav from './components/MobileNav';
 import { navigation } from './navigation';
+import { isOwnerEmail } from './privateAccess';
 import { CityAppearanceContext } from './cityAppearanceContext';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction, ReactNode } from 'react';
@@ -28,6 +29,7 @@ const FinancePage = lazy(() => import('./components/FinancePage'));
 const GoalsBoard = lazy(() => import('./components/GoalsBoard'));
 const SkillTree = lazy(() => import('./components/SkillTree'));
 import UpdateNotice from './components/UpdateNotice';
+const PsychologyPage = lazy(() => import('./components/PsychologyPage'));
 const KnowledgeBase = lazy(() => import('./components/KnowledgeBase'));
 const SphereNotes = lazy(() => import('./components/SphereNotes'));
 const LifePlanner = lazy(() => import('./components/LifePlanner'));
@@ -104,13 +106,20 @@ function Progress({
     </div>
   );
 }
-export default function App({ state: suppliedState, onChange, userId, accountTools, tickTickToken }: {
-  state?: GameState; onChange?: Dispatch<SetStateAction<GameState>>; userId?: string; accountTools?: ReactNode; tickTickToken?: () => Promise<string>;
+export default function App({ state: suppliedState, onChange, userId, userEmail, accountTools, tickTickToken }: {
+  state?: GameState; onChange?: Dispatch<SetStateAction<GameState>>; userId?: string; userEmail?: string | null; accountTools?: ReactNode; tickTickToken?: () => Promise<string>;
 } = {}) {
   const [localState, setLocalState] = useState(() => suppliedState ?? loadState());
   const state = suppliedState ?? localState;
   const setState = onChange ?? setLocalState;
   const tickTick = useTickTick(state, setState, userId, tickTickToken);
+  // Разделы владельца (сейчас «Психология») видны только в его аккаунте.
+  const [owner, setOwner] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    void isOwnerEmail(userEmail).then((ok) => { if (alive) setOwner(ok); });
+    return () => { alive = false; };
+  }, [userEmail]);
   const [page, setPage] = useState(() =>
     readTaskRoute() ? 'tasks' : readGoalRoute() || location.hash === '#goals' ? 'goals' : location.hash === '#city'
       ? 'city'
@@ -339,7 +348,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
       <div
         className={`app-shell pyl-shell app-page-${page} ${modal === 'quest' ? 'quest-dialog-open' : ''}`}
       >
-        <AppSidebar page={page} state={state} questCount={questsForCalendarDay(state.quests, dateKey(new Date())).filter((q) => !q.done).length + incomingForToday(tickTick.incoming).length} onNavigate={navigate} />
+        <AppSidebar owner={owner} page={page} state={state} questCount={questsForCalendarDay(state.quests, dateKey(new Date())).filter((q) => !q.done).length + incomingForToday(tickTick.incoming).length} onNavigate={navigate} />
         <div className="main-wrap">
           <header className="topbar"><DashboardHeader state={state} onProfile={() => navigate('profile')} onQuests={() => navigate('tasks')} onSearchResult={openSearchResult} /></header>
           <main
@@ -531,6 +540,11 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
             )}
             {page === 'shop' && (
               <RewardShop state={state} onChange={setState} notify={notify} />
+            )}
+            {page === 'psychology' && owner && (
+              <Suspense fallback={<p role="status">Загружаем «Психологию»…</p>}>
+                <PsychologyPage />
+              </Suspense>
             )}
             {page === 'knowledge' && (
               <Suspense fallback={<p role="status">Загружаем базу знаний…</p>}>
@@ -862,7 +876,7 @@ export default function App({ state: suppliedState, onChange, userId, accountToo
             </footer>
           </main>
         </div>
-        <MobileNav page={page} state={state} onNavigate={navigate} />
+        <MobileNav owner={owner} page={page} state={state} onNavigate={navigate} />
         <TaskReminders key={userId ?? 'local'} tasks={state.quests} onOpen={setPendingTask} />
         {inboxSphereId && <TickTickInboxDialog state={state} onChange={setState} scope={{ sphereId: inboxSphereId }} onClose={() => setInboxSphereId(null)} />}
         {sphereTaskId && (

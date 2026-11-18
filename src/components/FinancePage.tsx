@@ -22,6 +22,8 @@ import {
   totals,
   updatePayment,
   updateTransaction,
+  importFinanceReport,
+  parseFinanceReport,
   yearMonthlySeries,
   yearTransactions,
 } from '../finance';
@@ -127,6 +129,7 @@ export default function FinancePage({
   const yearList = yearTransactions(state, year);
   const yearTotals = totals(yearList);
   const yearCategories = categoryBreakdown(state, yearList, 'expense');
+  const yearIncomeCategories = categoryBreakdown(state, yearList, 'income');
   const series = yearMonthlySeries(state, year);
   const maxMonthExpense = Math.max(1, ...series.map((m) => m.expense));
 
@@ -238,6 +241,20 @@ export default function FinancePage({
     if (paymentEditId === id) closePaymentForm();
   }
 
+  async function importReport(file: File) {
+    try {
+      const report = parseFinanceReport(await file.text());
+      let added = 0;
+      onChange((s) => { const result = importFinanceReport(s, report); added = result.added; return result.state; });
+      const years = [...new Set(report.items.map((i) => i.month.slice(0, 4)))].sort();
+      setYear(years[years.length - 1]);
+      setView('year');
+      notify(`Импортировано записей: ${added || report.items.length}. Годы: ${years[0]}–${years[years.length - 1]}.`);
+    } catch (e) {
+      notify((e as Error).message);
+    }
+  }
+
   return (
     <div className="fin">
       <div className="fin-top">
@@ -251,9 +268,15 @@ export default function FinancePage({
             <Icon name="plus" size={16} /> Добавить платёж
           </button>
         ) : (
-          <button type="button" className="primary-button fin-add" onClick={() => openCreate('expense')}>
-            <Icon name="plus" size={16} /> Добавить запись
-          </button>
+          <span className="fin-top-actions">
+            <label className="ghost-button fin-import" title="Файл личного отчёта (JSON), подготовленный из таблицы Excel">
+              Импорт отчёта
+              <input type="file" accept="application/json,.json" hidden onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; if (file) void importReport(file); }} />
+            </label>
+            <button type="button" className="primary-button fin-add" onClick={() => openCreate('expense')}>
+              <Icon name="plus" size={16} /> Добавить запись
+            </button>
+          </span>
         )}
       </div>
 
@@ -368,6 +391,7 @@ export default function FinancePage({
           </section>
 
           <CategoryBreakdown title="На что ушли траты за год" rows={yearCategories} total={yearTotals.expense} />
+          <CategoryBreakdown title="Откуда пришли доходы" rows={yearIncomeCategories} total={yearTotals.income} empty="Доходов пока нет." />
         </>
       ) : (
         <>
@@ -605,10 +629,12 @@ function CategoryBreakdown({
   title,
   rows,
   total,
+  empty = 'Трат пока нет.',
 }: {
   title: string;
   rows: ReturnType<typeof categoryBreakdown>;
   total: number;
+  empty?: string;
 }) {
   return (
     <section className="panel fin-categories">
@@ -616,7 +642,7 @@ function CategoryBreakdown({
         <div><h2>{title}</h2><p>Всего {money(total)}</p></div>
       </div>
       {rows.length === 0 ? (
-        <p className="fin-empty">Трат пока нет.</p>
+        <p className="fin-empty">{empty}</p>
       ) : (
         <div className="fin-category-list">
           {rows.map((row) => (

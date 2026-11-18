@@ -1,0 +1,110 @@
+/*
+ * Окно задачи в светлой теме (0.89.2). Тёмные стили из TaskWindow.css остаются для тёмной темы,
+ * а здесь те же поверхности перекрашены в белый и светло-голубой. Префикс `.twin.twin`
+ * сильнее правил вида `:root .pyl-overlay .twin …`, поэтому !important почти не нужен.
+ */
+:root[data-theme='light'] .twin.twin {
+  --tw-bg: #ffffff;
+  --tw-card: #f4f8ff;
+  --tw-ink: #13233d;
+  --tw-mute: #5d6f8a;
+  --tw-line: #cfdef0;
+  --tw-acc: #0a84ff;
+  color-scheme: light;
+  background: radial-gradient(ellipse at 40% -15%, #dcebff, transparent 55%), linear-gradient(150deg, #ffffff, #f3f8ff);
+  border-color: #d6e4f5;
+  box-shadow: 0 30px 90px #1a3a6b38;
+  color: var(--tw-ink);
+}
+:root[data-theme='light'] .twin-overlay,
+:root[data-theme='light'] .task-editor-draft::backdrop { background: #0a1a3c4d; }
+:root[data-theme='light'] .task-editor-draft { color: #13233d; }
+
+/* Кнопки, поля и списки */
+:root[data-theme='light'] .twin.twin button { background: #ffffff; border-color: var(--tw-line); color: var(--tw-ink); box-shadow: 0 1px 2px #1a3a6b14; }
+:root[data-theme='light'] .twin.twin button:hover { filter: none; background: #eef5ff; }
+:root[data-theme='light'] .twin.twin input:not([type='checkbox']):not([type='file']),
+:root[data-theme='light'] .twin.twin textarea { background: #ffffff; border-color: var(--tw-line); color: var(--tw-ink); }
+:root[data-theme='light'] .twin.twin select {
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 9'%3E%3Cpath d='m2 2 5 5 5-5' fill='none' stroke='%2313233d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-size: 13px 9px;
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  border-color: var(--tw-line);
+  color: var(--tw-ink);
+}
+:root[data-theme='light'] .twin.twin select option { background: #ffffff; color: #13233d; }
+:root[data-theme='light'] .twin.twin .twin-heading textarea { background: transparent; border-color: transparent; }
+:root[data-theme='light'] .twin.twin .twin-heading textarea::placeholder { color: #9aabc3; }
+:root[data-theme='light'] .twin.twin a { color: #0a6fd6; }
+:root[data-theme='light'] .twin.twin h3 i,
+:root[data-theme='light'] .twin.twin .twin-tabs i { background: #e3eeff; color: #2f5fa8; }
+
+/* Шапка: кнопки-кружки, кольцо XP, метка задачи */
+:root[data-theme='light'] .twin.twin .twin-toolbar button { background: #ffffff; border-color: #d6e4f5; box-shadow: 0 2px 8px #1a3a6b1a; }
+:root[data-theme='light'] .twin.twin .twin-ring {
+  background: radial-gradient(closest-side, #ffffff 81%, transparent 84%), conic-gradient(from -20deg, #00e9e7, #ed9aff, #7921ff, #086eff, #00e9e7);
+  box-shadow: 0 6px 22px #3d7bff2e;
+}
+:root[data-theme='light'] .twin.twin .twin-ring small { color: #7b3ff2; }
+:root[data-theme='light'] .twin.twin .twin-category { background: linear-gradient(90deg, #fff1c7, #dff7fb); color: #5b4a12; }
+:root[data-theme='light'] .twin.twin .twin-projects label { background: linear-gradient(150deg, #efe8ff, #f7f3ff); border-color: #d9cbff; color: #3b2a78; }
+:root[data-theme='light'] .twin.twin .twin-projects select { background-color: transparent; color: #3b2a78; }
+
+/* Карточки и панели */
+:root[data-theme='light'] .twin.twin .twin-card,
+:root[data-theme='light'] .twin.twin .focus,
+:root[data-theme='light'] .twin.twin .twin-calendar,
+:root[data-theme='light'] .twin.twin .twin-add-sub,
+:root[data-theme='light'] .twin.twin .twin-place-picker,
+:root[data-theme='light'] .twin.twin .twin-map-button { background: #f6f9ff; border-color: #d6e4f5; color: var(--tw-ink); box-shadow: 0 2px 10px #1a3a6b0f; }
+:root[data-theme='light'] .twin.twin .twin-cover { background: linear-gradient(130deg, #eef4ff, #f6f1ff); border-color: #d6e4f5; }
+:root[data-theme='light'] .twin.twin .twin-cover-empty { color: #6d7f99; }
+:root[data-theme='light'] .twin.twin .twin-cover-edit,
+:root[data-theme='light'] .twin.twin .twin-cover-next,
+:root[data-theme='light'] .twin.twin .twin-cover-prev { background: #ffffffe6 !important; border-color: #d6e4f5 !important; color: #13233d; }
+:root[data-theme='light'] .twin.twin .twin-status { background: linear-gradient(150deg, #e4fbf6, #f4fffc); border-color: #8fdccd; }
+:root[data-theme='light'] .twin.twin .twin-goal { background: #ffffff; border-color: #4cc9f0; }
+:root[data-theme='light'] .twin.twin .twin-route { background: #f2fbff; color: #13233d; }
+:root[data-theme='light'] .twin.twin .twin-route small,
+:root[data-theme='light'] .twin.twin .focus .focus-total > span,
+:root[data-theme='light'] .twin.twin .twin-field-caption,
+:root[data-theme='light'] .twin.twin .twin-map-button { color: #13233d; }
+:root[data-theme='light'] .twin.twin .twin-field-hint { color: #6d7f99; }
+:root[data-theme='light'] .twin.twin .twin-parameters label { background: #f6f9ff; border-color: #d6e4f5; }
+:root[data-theme='light'] .twin.twin .twin-parameters label > span { color: #13233d !important; }
+:root[data-theme='light'] .twin.twin .twin-symbol { color: #0a84ff; }
+:root[data-theme='light'] .twin.twin .twin-status .twin-symbol { color: #0b9c84; }
+:root[data-theme='light'] .twin.twin .twin-goal small b { color: #0b9c84; }
+:root[data-theme='light'] .twin.twin progress,
+:root[data-theme='light'] .twin.twin progress::-webkit-progress-bar { background: #e1eaf6; }
+
+/* Вкладки, метки, выбор сферы */
+:root[data-theme='light'] .twin.twin .twin-tabs [aria-selected='true'] { background: linear-gradient(120deg, #7364ff, #7021ff 85%); color: #ffffff; border-color: transparent; box-shadow: 0 4px 14px #6a3cff40; }
+:root[data-theme='light'] .twin.twin .twin-calendar-grid button:not([data-start='true']):not([data-end='true']):not([data-deadline='true']) { background: transparent; border-color: transparent; box-shadow: none; }
+:root[data-theme='light'] .twin.twin .twin-calendar-grid button:hover { background: #eaf3ff; }
+:root[data-theme='light'] .twin.twin .twin-tags > span { background: #efe8ff; color: #3b2a78; }
+:root[data-theme='light'] .twin.twin .twin-sphere-grid button { background: #ffffff; }
+:root[data-theme='light'] .twin.twin .twin-sphere-grid button[aria-pressed='true'] { background: #eaf6ff; border-color: #0a9bff; box-shadow: 0 0 0 2px #0a9bff33; }
+:root[data-theme='light'] .twin.twin .twin-reminders button[aria-pressed='true'] { background: #e3f3ff; border-color: #0a9bff; }
+:root[data-theme='light'] .twin.twin .twin-calendar-legend button { color: #0a6fd6; }
+:root[data-theme='light'] .twin.twin .twin-calendar-grid button[data-start='true'],
+:root[data-theme='light'] .twin.twin .twin-calendar-grid button[data-end='true'] { background: #dff2ff; border-color: #0a9bff; box-shadow: none; }
+:root[data-theme='light'] .twin.twin .twin-calendar-grid button[data-deadline='true'] { color: #8a5a00; background: #fff4d6; }
+:root[data-theme='light'] .twin.twin .twin-subs input[type='checkbox'] { background-color: #ffffff; border-color: #b9cbe2; }
+:root[data-theme='light'] .twin.twin .twin-subs input[type='checkbox']:checked { background-color: #0a84ff; border-color: #0a84ff; }
+
+/* Цветные кнопки действий остаются цветными, с белым текстом */
+:root[data-theme='light'] .twin.twin .twin-foot .twin-complete,
+:root[data-theme='light'] .twin.twin .focus .focus-start,
+:root[data-theme='light'] .twin.twin .focus .primary-button { background: linear-gradient(110deg, #00c2ea, #0a6bff 85%); border-color: #0a7bff; color: #ffffff; }
+:root[data-theme='light'] .twin.twin .twin-sync [aria-checked='true'] { background: #00c46f; }
+:root[data-theme='light'] .twin.twin .twin-sync button:not([aria-checked='true']) { background: #c3cede; }
+
+/* Меню «…», подсказки, нижняя панель */
+:root[data-theme='light'] .twin.twin .twin-menu,
+:root[data-theme='light'] .twin.twin .twin-place-editor,
+:root[data-theme='light'] .twin.twin .twin-notice { background: #ffffff; border-color: #cfdef0; color: #13233d; box-shadow: 0 15px 30px #1a3a6b2e; }
+:root[data-theme='light'] .twin.twin .twin-foot { background: #ffffffee; }
+:root[data-theme='light'] .task-reminder-alerts > div { background: #ffffff; color: #13233d; border-color: #9fd3f7; box-shadow: 0 8px 30px #1a3a6b33; }

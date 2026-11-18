@@ -1,4 +1,4 @@
-import player from '../assets/player.png';
+import player from '../assets/player.webp';
 import './Avatar.css';
 
 export default function Avatar({

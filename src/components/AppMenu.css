@@ -197,3 +197,15 @@
 .pyl-our-text small { font-size: 12px; color: var(--m-tagline, #6a7a99); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pyl-our-tab .pyl-tab-icon { color: #2f6cf0; display: grid; place-items: center; }
 main[class*='screen-our-'] > .page-heading { display: none; }
+
+/* 0.90.2: переключатели «Тема» и «Моя / Наша жизнь» компактнее в низких окнах — все пункты меню помещаются. */
+@media (min-width: 761px) and (max-height: 779px) {
+  .pyl-theme:not(.pyl-theme-compact), .pyl-space { padding: 3px; }
+  .pyl-theme:not(.pyl-theme-compact) button, .pyl-space button { min-height: 30px; font-size: 12px; }
+}
+@media (min-width: 761px) and (max-height: 639px) {
+  .pyl-theme:not(.pyl-theme-compact), .pyl-space { padding: 2px; }
+  .pyl-theme:not(.pyl-theme-compact) button, .pyl-space button { min-height: 26px; }
+  .app-shell.pyl-shell .sidebar.pyl-menu .pyl-nav-item { height: 28px; }
+  .pyl-menu-nav { gap: 0; }
+}

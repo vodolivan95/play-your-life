@@ -42,3 +42,30 @@ test('файл не того формата отклоняется', () => {
   assert.throws(() => parsePlanFile('{"format":"x"}', ['driving']), /не файл плана/);
   assert.throws(() => parsePlanFile('нет', ['driving']), /не JSON/);
 });
+
+test('повторяющиеся id в файле отбрасываются, сохранение остаётся корректным', () => {
+  const dup = JSON.stringify({ format: 'pyl-plan', version: 1, projects: [
+    { id: 'pi-a', name: 'A', sphere: 'sport', tasks: [{ id: 'pi-a-t1', name: 'x', difficulty: 'Simple' }, { id: 'pi-a-t1', name: 'y', difficulty: 'Simple' }] },
+    { id: 'pi-a', name: 'A2', sphere: 'sport', tasks: [{ id: 'pi-a2-t1', name: 'z', difficulty: 'Simple' }] },
+  ] });
+  const state = newAccountGame('Тест');
+  const file = parsePlanFile(dup, Object.keys(state.spheres));
+  assert.equal(file.projects.length, 1);
+  assert.equal(file.projects[0].tasks.length, 1);
+  const r = importPlan(state, file, 'uid');
+  assert.doesNotThrow(() => validateState({ ...r.state, version: 1 }));
+});
+
+test('встроенный план владельца расшифровывается только его e-mail', async () => {
+  const { decryptOwnerPlan, hasImportedPlan } = await import('../src/planImport.ts');
+  const state = newAccountGame('Тест');
+  const ids = Object.keys(state.spheres);
+  assert.equal(await decryptOwnerPlan('vodolivan95@yandex.ru', ids), null);
+  const plan = await decryptOwnerPlan('  Sanek.Alex1995@yandex.ru ', ids);
+  assert.ok(plan && plan.projects.length >= 10);
+  const r = importPlan(state, plan!, 'uid');
+  assert.equal(r.tasks, 91);
+  assert.equal(r.completed, 5);
+  assert.ok(hasImportedPlan(r.state));
+  assert.doesNotThrow(() => validateState({ ...r.state, version: 1 }));
+});

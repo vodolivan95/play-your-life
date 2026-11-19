@@ -77,6 +77,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import QuestWizard from './components/QuestWizard';
 import { saveCustomQuest, duplicateQuest, saveHabit } from './personalQuests';
 import TaskLabelBadge from './components/TaskLabelBadge';
+import { importPlan, parsePlanFile } from './planImport';
 
 function Progress({
   value,
@@ -655,6 +656,33 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
                       <strong>Настройки персонажа</strong>
                       <Icon name="arrow" size={17} />
                     </button>
+                    {owner && (
+                      <label className="profile-plan-import">
+                        <Icon name="plus" />
+                        <strong>Загрузить план: проекты и задачи из файла</strong>
+                        <Icon name="arrow" size={17} />
+                        <input
+                          type="file"
+                          accept=".json,application/json"
+                          aria-label="Загрузить план из файла"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            e.target.value = '';
+                            if (!file) return;
+                            try {
+                              const plan = parsePlanFile(await file.text(), Object.keys(state.spheres));
+                              const result = importPlan(state, plan, userId ?? 'local');
+                              setState(result.state);
+                              notify(result.tasks || result.projects
+                                ? `План загружен: проектов ${result.projects}, задач ${result.tasks}, закрыто выполненных ${result.completed}.`
+                                : 'Этот план уже загружен — новых проектов и задач нет.');
+                            } catch (error) {
+                              notify(error instanceof Error ? error.message : 'Не удалось загрузить план.');
+                            }
+                          }}
+                        />
+                      </label>
+                    )}
                   </section>
                 </div>
                 <div className="profile-section">

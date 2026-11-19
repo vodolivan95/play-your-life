@@ -230,7 +230,7 @@ button.radar-label:focus-visible { outline: 3px solid #ffc94a; outline-offset: 2
 
 /* Открытая сфера «как в игре»: сцена района, ресурсы, метки на здании, док разделов. */
 .sph-scene { position: relative; margin-bottom: 18px; color: var(--sph-text); }
-.sph-scene-stage { position: relative; height: 470px; border-radius: 26px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--sph-color) 45%, transparent); background: #0b1428; box-shadow: var(--sph-shadow); }
+.sph-scene-stage { position: relative; height: auto; aspect-ratio: 2.4 / 1; min-height: 430px; max-height: 660px; border-radius: 26px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--sph-color) 45%, transparent); background: #0b1428; box-shadow: var(--sph-shadow); }
 .sph-scene-photo { position: absolute; inset: 0; }
 .sph-scene-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .sph-scene-stage::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, color-mix(in srgb, var(--sph-page) 85%, transparent) 0%, transparent 22%, transparent 58%, color-mix(in srgb, var(--sph-page) 95%, transparent) 100%); }
@@ -254,7 +254,7 @@ button.radar-label:focus-visible { outline: 3px solid #ffc94a; outline-offset: 2
 .sph-pin::after { content: ''; width: 2px; height: 20px; background: currentColor; }
 .sph-pin:hover > span, .sph-pin:focus-visible > span { transform: translateY(-3px); }
 .sph-pin.is-projects { left: 22%; top: 120px; color: #ffd56b; } .sph-pin.is-projects > span { background: #ffd56b; color: #2a1a00; }
-.sph-pin.is-enter { left: 46%; top: 190px; color: #fff; } .sph-pin.is-enter > span { background: #fff; color: #0f1a33; }
+.sph-pin.is-enter { left: 46%; top: 54%; color: #fff; } /* 0.89.15: ниже вывески, у входа — не закрывает название здания. */ .sph-pin.is-enter > span { background: #fff; color: #0f1a33; }
 .sph-pin.is-tasks { right: 16%; top: 140px; color: #7ee0b8; } .sph-pin.is-tasks > span { background: #7ee0b8; color: #06281d; }
 /* Поднято выше (было 22px), чтобы уровень/имя сферы и шкала XP не перекрывались плавающим доком вкладок внизу сцены. */
 .sph-scene-bottom { position: absolute; z-index: 2; left: 24px; right: 24px; bottom: 50px; }

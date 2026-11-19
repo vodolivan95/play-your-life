@@ -18,13 +18,16 @@ import career from './assets/sphere-buildings/career-building.jpg';
 import healthScene from './assets/sphere-buildings/health-scene.jpg';
 import sportScene from './assets/sphere-buildings/sport-scene.jpg';
 import financeScene from './assets/sphere-buildings/finance-scene.jpg';
+import hobbyScene from './assets/sphere-buildings/hobby-scene.jpg';
+import englishScene from './assets/sphere-buildings/english-scene.jpg';
+import growthScene from './assets/sphere-buildings/growth-scene.jpg';
 import { coastalBuildings } from './coastalCity';
 
 // Фотографии UI отделены от ресурсов игровой карты. Иконки и комнаты сохраняются.
 export const cityAssets = { background: cityBackground, cleanSurfaces, preview: cityBackground, skyline: citySkyline, width: 1005, height: 1280 };
 const thumbnails = { health, sport, growth, english, finance, together, driving, tasks, hobby };
 const covers = {health,sport,growth,english,finance,together,driving,tasks,hobby};
-const scenes: Record<string, string> = { health: healthScene, sport: sportScene, finance: financeScene, family, career };
+const scenes: Record<string, string> = { health: healthScene, sport: sportScene, finance: financeScene, hobby: hobbyScene, english: englishScene, growth: growthScene, family, career };
 /** Фото для широкой шапки страницы сферы: отдельный широкий кадр, если он есть, иначе карточное фото. */
 export function sphereSceneImage(id: string): string | undefined {
   return scenes[id] ?? (sphereAssets as Record<string, SphereAsset | undefined>)[id]?.buildingThumbnail;

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { orderBy, limit } from 'firebase/firestore';
+import { orderBy, limit } from '../../ourStore';
 import { fileAttachment, newId, now, put, remove, watch } from '../../ourData';
 import type { Attachment, Comment, Ctx } from '../../ourData';
 import Ic from '../KbIcons';

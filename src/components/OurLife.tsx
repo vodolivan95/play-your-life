@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { auth, database } from '../firebaseClient';
 import rulesText from '../../firestore.rules?raw';
@@ -8,7 +8,8 @@ import { INVITE_DAYS, SPACE_MEMBER_LIMIT, inviteLink, ourNavigation } from '../o
 import type { OurPageId } from '../ourLife';
 import { acceptInvite, createInvite, createSpace, ensurePairSpace, watchMySpace } from '../sharedSpace';
 import type { Space } from '../sharedSpace';
-import { ensureSystemGroups, forUser, isPairEmail, patch, watch, PAIR_SPACE_ID } from '../ourData';
+import { ensureSystemGroups, forUser, isPairEmail, patch, watch, PAIR_EMAILS, PAIR_SPACE_ID } from '../ourData';
+import { enableDemo } from '../ourStore';
 import type { CalEvent, Ctx, Notice } from '../ourData';
 import Ic from './KbIcons';
 import { ourMenuIcon } from './ourIcons';
@@ -56,8 +57,20 @@ export default function OurLife({ page, userId: appUserId, userEmail: appEmail, 
       ? 'Сервер не пускает в общее пространство: опубликуйте новые правила Firestore (firebase deploy --only firestore:rules).'
       : 'Не удалось подключить общее пространство. Проверьте интернет.'));
   }, [userId, pair, space, userName]);
-  const ctx = useMemo<Ctx | null>(() => (space && userId ? { db: database, space, uid: userId, name: userName } : null), [space, userId, userName]);
-  const spaceId = space?.id;
+  const cloudCtx = useMemo<Ctx | null>(() => (space && userId ? { db: database, space, uid: userId, name: userName } : null), [space, userId, userName]);
+  // Пока правила Firestore не опубликованы (или нет входа), сервисы работают в демо-режиме:
+  // данные хранятся в этом браузере, второй участник показан для примера.
+  const rulesMissing = /правила|firestore/i.test(error);
+  const demo = !userId || rulesMissing;
+  const demoCtx = useMemo<Ctx | null>(() => {
+    if (!demo) return null;
+    const me = userId ?? 'guest';
+    const myName = userName.trim() || 'Я';
+    const partner = userEmail?.trim().toLowerCase() === PAIR_EMAILS[1] ? 'Александр' : 'Иван';
+    return { db: enableDemo(), uid: me, name: myName, space: { id: PAIR_SPACE_ID, name: 'Наша жизнь', ownerId: me, memberIds: [me, 'demo-partner'], members: { [me]: { name: myName }, 'demo-partner': { name: partner } } } };
+  }, [demo, userId, userEmail, userName]);
+  const ctx = demoCtx ?? cloudCtx;
+  const spaceId = ctx?.space.id;
   useEffect(() => { if (ctx && spaceId) void ensureSystemGroups(ctx); }, [spaceId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const run = async (fn: () => Promise<unknown>) => {
@@ -73,9 +86,9 @@ export default function OurLife({ page, userId: appUserId, userEmail: appEmail, 
     <header className="our-head">
       <img className="our-head-icon" src={menuIconSrc(ourMenuIcon[page])} alt="" width={56} height={56} />
       <div className="our-head-text"><small>НАША ЖИЗНЬ</small><h1>{item.label}</h1><p>{item.caption}</p></div>
-      {space && ctx && (
+      {ctx && (
         <div className="our-head-side">
-          <div className="our-members compact">{space.memberIds.map((uid) => <span key={uid} className={`our-member${uid === userId ? ' me' : ''}`} title={space.members[uid]?.name}><Avatar name={space.members[uid]?.name ?? ''} me={uid === userId} size={30} />{space.members[uid]?.name ?? 'Участник'}</span>)}</div>
+          <div className="our-members compact">{ctx.space.memberIds.map((uid) => <span key={uid} className={`our-member${uid === ctx.uid ? ' me' : ''}`} title={ctx.space.members[uid]?.name}><Avatar name={ctx.space.members[uid]?.name ?? ''} me={uid === ctx.uid} size={30} />{ctx.space.members[uid]?.name ?? 'Участник'}</span>)}</div>
           <Bell ctx={ctx} onOpen={open} />
         </div>
       )}
@@ -83,8 +96,8 @@ export default function OurLife({ page, userId: appUserId, userEmail: appEmail, 
   );
 
   let gate = null;
-  if (!userId) {
-    gate = <SignIn />;
+  if (demo) {
+    gate = null;
   } else if ((space === undefined || (pair && !space)) && !error) {
     gate = <section className="our-card our-loading" aria-busy="true">Подключаем общее пространство…</section>;
   } else if (!space) {
@@ -107,16 +120,15 @@ export default function OurLife({ page, userId: appUserId, userEmail: appEmail, 
     );
   }
 
-  const rulesMissing = /правила|firestore/i.test(error);
   const full = !!space && space.memberIds.length >= SPACE_MEMBER_LIMIT;
   return (
     <div className="our-page">
       {head}
       {error && !rulesMissing && <p className="our-error" role="alert">{error}</p>}
-      {rulesMissing && <RulesHelp onRetry={() => { setError(''); setSpace(undefined); window.location.reload(); }} />}
+      {demo && <DemoNote signedIn={!!userId} onRetry={() => { setError(''); setSpace(undefined); window.location.reload(); }} />}
       {localLogin && <p className="our-signed">Общее пространство: вы вошли как <b>{authUser!.email}</b>. Личные разделы по-прежнему хранятся в этом браузере. <button type="button" className="o-link" onClick={() => void signOut(auth)}>Выйти</button></p>}
-      {(!rulesMissing || !userId) && gate}
-      {space && userId && !full && (
+      {gate}
+      {!demo && space && userId && !full && (
         <section className="our-card our-invite-card">
           <p><b>Пока вы здесь одни.</b> {pair ? 'Второй участник подключится сам, когда войдёт в свой аккаунт.' : `Пригласите второго участника — код действует ${INVITE_DAYS} дней.`}</p>
           {!pair && (invite ? (
@@ -171,44 +183,20 @@ function Reminders({ ctx, onOpen }: { ctx: Ctx; onOpen: (page: string, id?: stri
   return <div className="our-reminder" role="status"><Ic n="bell" size={18} /><span><b>Скоро:</b> {shown.title} · {fmtIso(shown.start)}</span><button type="button" className="o-link" onClick={() => { onOpen('our-calendar', shown.id); setShown(null); }}>Открыть</button><button type="button" className="o-icon" aria-label="Закрыть" onClick={() => setShown(null)}><Ic n="close" size={14} /></button></div>;
 }
 
-const authMessage = (code?: string) => ({
-  'auth/invalid-credential': 'Неверная почта или пароль.', 'auth/wrong-password': 'Неверная почта или пароль.', 'auth/user-not-found': 'Такого аккаунта нет — зарегистрируйтесь.',
-  'auth/email-already-in-use': 'Аккаунт с этой почтой уже есть — нажмите «Войти».', 'auth/weak-password': 'Пароль — не короче 6 символов.', 'auth/invalid-email': 'Проверьте адрес почты.',
-  'auth/network-request-failed': 'Нет связи с сервером входа. Проверьте интернет.', 'auth/too-many-requests': 'Слишком много попыток. Подождите пару минут.',
-  'auth/operation-not-allowed': 'Вход по почте выключен в настройках Firebase.',
-} as Record<string, string>)[code ?? ''] ?? 'Не получилось войти. Проверьте интернет и повторите.';
-
-/** Вход в аккаунт прямо в «Нашей жизни» — работает и в HTML-файле без пароля (ТЗ 4.1: у каждого свой аккаунт). */
-function SignIn() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [mode, setMode] = useState<'in' | 'up'>('in');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const submit = async () => {
-    setBusy(true); setError('');
-    try {
-      if (mode === 'in') await signInWithEmailAndPassword(auth, email.trim(), password);
-      else await createUserWithEmailAndPassword(auth, email.trim(), password);
-    } catch (e) { setError(authMessage((e as { code?: string }).code)); } finally { setBusy(false); }
-  };
+/** Плашка демо-режима: сервисы работают локально, пока правила Firestore не опубликованы. */
+function DemoNote({ signedIn, onRetry }: { signedIn: boolean; onRetry: () => void }) {
+  const [more, setMore] = useState(false);
   return (
-    <form className="our-card our-gate our-signin" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-      <span className="our-gate-icon" aria-hidden="true"><Ic n="users" size={30} /></span>
-      <h2>{mode === 'in' ? 'Войдите, чтобы открыть «Нашу жизнь»' : 'Регистрация'}</h2>
-      <p>Общие группы, события, места и собрания хранятся в облаке и видны обоим участникам. Войдите своей почтой — аккаунты sanek.alex1995@yandex.ru и vodolivan195@gmail.com попадут в общее пространство сами.</p>
-      <div className="our-signin-fields">
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Почта" aria-label="Почта" autoComplete="email" required />
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Пароль" aria-label="Пароль" autoComplete={mode === 'in' ? 'current-password' : 'new-password'} minLength={6} required />
-        <button type="submit" className="our-primary" disabled={busy}>{busy ? 'Подождите…' : mode === 'in' ? 'Войти' : 'Зарегистрироваться'}</button>
-      </div>
-      {error && <p className="our-error" role="alert">{error}</p>}
-      <button type="button" className="o-link" onClick={() => { setMode(mode === 'in' ? 'up' : 'in'); setError(''); }}>{mode === 'in' ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'}</button>
-    </form>
+    <>
+      <p className="our-signed our-demo-note">
+        <b>Демо-режим.</b> Все сервисы работают, записи сохраняются в этом браузере. {signedIn ? 'Чтобы второй участник видел общие записи, опубликуйте правила Firestore.' : 'Войдите в аккаунт, чтобы записи стали общими.'}
+        {signedIn && <> <button type="button" className="o-link" onClick={() => setMore(!more)}>{more ? 'Скрыть' : 'Как опубликовать'}</button></>}
+      </p>
+      {more && <RulesHelp onRetry={onRetry} />}
+    </>
   );
 }
 
-/** Подсказка, если облако не пускает к общим данным: правила доступа ещё не опубликованы в Firebase. */
 function RulesHelp({ onRetry }: { onRetry: () => void }) {
   const [copied, setCopied] = useState(false);
   return (

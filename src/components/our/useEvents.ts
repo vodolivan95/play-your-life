@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { where } from 'firebase/firestore';
+import { where } from '../../ourStore';
 import { dayKey, eventVisible, now, occurrences, watch } from '../../ourData';
 import type { CalEvent, Ctx } from '../../ourData';
 import { fmtIso } from './ourFormat';

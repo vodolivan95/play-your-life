@@ -2,7 +2,7 @@
  * Все общие объекты лежат внутри `spaces/{spaceId}/…`: один объект — один документ с одним id (ТЗ 12.3). */
 import {
   collection, doc, increment, limit as qLimit, onSnapshot, orderBy, query, runTransaction, setDoc, updateDoc, deleteDoc, where,
-} from 'firebase/firestore';
+} from './ourStore.ts';
 import type { Firestore, QueryConstraint } from 'firebase/firestore';
 import type { Space } from './sharedSpace.ts';
 

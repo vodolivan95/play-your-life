@@ -30,7 +30,7 @@ jobs:
           java-version: '21'
       - run: npm ci
       - name: Check Firestore isolation with emulator
-        run: npx --yes --package firebase-tools@15.32.1 firebase emulators:exec --only firestore --project demo-play-your-life "node --experimental-strip-types --test tests/firebase-rules.test.mjs tests/shared-space-rules.test.mjs"
+        run: npx --yes --package firebase-tools@15.32.1 firebase emulators:exec --only firestore --project demo-play-your-life "node --experimental-strip-types --test --test-concurrency=1 tests/firebase-rules.test.mjs tests/shared-space-rules.test.mjs"
       - name: Show emulator details on failure
         if: failure()
         run: tail -n 120 firestore-debug.log

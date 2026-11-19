@@ -385,7 +385,7 @@ button.radar-label:focus-visible { outline: 3px solid #ffc94a; outline-offset: 2
   .sph-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 760px) {
-  .sph-scene-stage { height: 340px; border-radius: 22px; }
+  .sph-scene-stage { height: 340px; min-height: 0; aspect-ratio: auto; border-radius: 22px; }
   .sph-hud { top: 12px; left: 12px; right: 12px; gap: 6px; }
   .sph-hud-back span, .sph-res small { display: none; }
   .sph-hud-back { width: 40px; min-height: 40px; padding: 0; justify-content: center; }

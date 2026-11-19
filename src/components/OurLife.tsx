@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { database } from '../firebaseClient';
+import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import type { User } from 'firebase/auth';
+import { auth, database } from '../firebaseClient';
+import rulesText from '../../firestore.rules?raw';
 import { menuIconSrc } from '../menuIcons';
 import { INVITE_DAYS, SPACE_MEMBER_LIMIT, inviteLink, ourNavigation } from '../ourLife';
 import type { OurPageId } from '../ourLife';
@@ -25,8 +28,14 @@ type Props = {
   onJoined: () => void; onNavigate: (page: string) => void; onAddTask: (title: string, day?: string) => boolean;
 };
 
-export default function OurLife({ page, userId, userEmail, userName, joinCode, onJoined, onNavigate, onAddTask }: Props) {
+export default function OurLife({ page, userId: appUserId, userEmail: appEmail, userName, joinCode, onJoined, onNavigate, onAddTask }: Props) {
   const item = ourNavigation.find((x) => x.id === page)!;
+  // В режиме без пароля личная игра остаётся в браузере, а для «Нашей жизни» можно войти прямо здесь.
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  useEffect(() => (appUserId ? undefined : onAuthStateChanged(auth, setAuthUser)), [appUserId]);
+  const userId = appUserId ?? authUser?.uid;
+  const userEmail = appEmail ?? authUser?.email ?? undefined;
+  const localLogin = !appUserId && !!authUser;
   const [space, setSpace] = useState<Space | null | undefined>(undefined);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -75,13 +84,7 @@ export default function OurLife({ page, userId, userEmail, userName, joinCode, o
 
   let gate = null;
   if (!userId) {
-    gate = (
-      <section className="our-card our-gate">
-        <span className="our-gate-icon" aria-hidden="true"><Ic n="lock" size={30} /></span>
-        <h2>Войдите в свой аккаунт</h2>
-        <p>«Наша жизнь» — общее пространство двух аккаунтов: у Александра и Ивана свои входы, а группы, события, места и собрания общие и синхронизируются в облаке. В режиме без пароля общее пространство недоступно — нажмите «Войти» вверху страницы.</p>
-      </section>
-    );
+    gate = <SignIn />;
   } else if ((space === undefined || (pair && !space)) && !error) {
     gate = <section className="our-card our-loading" aria-busy="true">Подключаем общее пространство…</section>;
   } else if (!space) {
@@ -104,12 +107,15 @@ export default function OurLife({ page, userId, userEmail, userName, joinCode, o
     );
   }
 
+  const rulesMissing = /правила|firestore/i.test(error);
   const full = !!space && space.memberIds.length >= SPACE_MEMBER_LIMIT;
   return (
     <div className="our-page">
       {head}
-      {error && <p className="our-error" role="alert">{error}</p>}
-      {gate}
+      {error && !rulesMissing && <p className="our-error" role="alert">{error}</p>}
+      {rulesMissing && <RulesHelp onRetry={() => { setError(''); setSpace(undefined); window.location.reload(); }} />}
+      {localLogin && <p className="our-signed">Общее пространство: вы вошли как <b>{authUser!.email}</b>. Личные разделы по-прежнему хранятся в этом браузере. <button type="button" className="o-link" onClick={() => void signOut(auth)}>Выйти</button></p>}
+      {(!rulesMissing || !userId) && gate}
       {space && userId && !full && (
         <section className="our-card our-invite-card">
           <p><b>Пока вы здесь одни.</b> {pair ? 'Второй участник подключится сам, когда войдёт в свой аккаунт.' : `Пригласите второго участника — код действует ${INVITE_DAYS} дней.`}</p>
@@ -163,4 +169,62 @@ function Reminders({ ctx, onOpen }: { ctx: Ctx; onOpen: (page: string, id?: stri
   useEventReminders(ctx, events, setShown);
   if (!shown) return null;
   return <div className="our-reminder" role="status"><Ic n="bell" size={18} /><span><b>Скоро:</b> {shown.title} · {fmtIso(shown.start)}</span><button type="button" className="o-link" onClick={() => { onOpen('our-calendar', shown.id); setShown(null); }}>Открыть</button><button type="button" className="o-icon" aria-label="Закрыть" onClick={() => setShown(null)}><Ic n="close" size={14} /></button></div>;
+}
+
+const authMessage = (code?: string) => ({
+  'auth/invalid-credential': 'Неверная почта или пароль.', 'auth/wrong-password': 'Неверная почта или пароль.', 'auth/user-not-found': 'Такого аккаунта нет — зарегистрируйтесь.',
+  'auth/email-already-in-use': 'Аккаунт с этой почтой уже есть — нажмите «Войти».', 'auth/weak-password': 'Пароль — не короче 6 символов.', 'auth/invalid-email': 'Проверьте адрес почты.',
+  'auth/network-request-failed': 'Нет связи с сервером входа. Проверьте интернет.', 'auth/too-many-requests': 'Слишком много попыток. Подождите пару минут.',
+  'auth/operation-not-allowed': 'Вход по почте выключен в настройках Firebase.',
+} as Record<string, string>)[code ?? ''] ?? 'Не получилось войти. Проверьте интернет и повторите.';
+
+/** Вход в аккаунт прямо в «Нашей жизни» — работает и в HTML-файле без пароля (ТЗ 4.1: у каждого свой аккаунт). */
+function SignIn() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [mode, setMode] = useState<'in' | 'up'>('in');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const submit = async () => {
+    setBusy(true); setError('');
+    try {
+      if (mode === 'in') await signInWithEmailAndPassword(auth, email.trim(), password);
+      else await createUserWithEmailAndPassword(auth, email.trim(), password);
+    } catch (e) { setError(authMessage((e as { code?: string }).code)); } finally { setBusy(false); }
+  };
+  return (
+    <form className="our-card our-gate our-signin" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
+      <span className="our-gate-icon" aria-hidden="true"><Ic n="users" size={30} /></span>
+      <h2>{mode === 'in' ? 'Войдите, чтобы открыть «Нашу жизнь»' : 'Регистрация'}</h2>
+      <p>Общие группы, события, места и собрания хранятся в облаке и видны обоим участникам. Войдите своей почтой — аккаунты sanek.alex1995@yandex.ru и vodolivan195@gmail.com попадут в общее пространство сами.</p>
+      <div className="our-signin-fields">
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Почта" aria-label="Почта" autoComplete="email" required />
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Пароль" aria-label="Пароль" autoComplete={mode === 'in' ? 'current-password' : 'new-password'} minLength={6} required />
+        <button type="submit" className="our-primary" disabled={busy}>{busy ? 'Подождите…' : mode === 'in' ? 'Войти' : 'Зарегистрироваться'}</button>
+      </div>
+      {error && <p className="our-error" role="alert">{error}</p>}
+      <button type="button" className="o-link" onClick={() => { setMode(mode === 'in' ? 'up' : 'in'); setError(''); }}>{mode === 'in' ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'}</button>
+    </form>
+  );
+}
+
+/** Подсказка, если облако не пускает к общим данным: правила доступа ещё не опубликованы в Firebase. */
+function RulesHelp({ onRetry }: { onRetry: () => void }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <section className="our-card our-rules">
+      <h2><Ic n="lock" size={22} /> Нужно один раз опубликовать правила доступа</h2>
+      <p>Вход прошёл, но облако Firebase пока не знает про «Нашу жизнь» и не пускает к общим данным. Это делается один раз владельцем проекта:</p>
+      <ol>
+        <li>Откройте <a href="https://console.firebase.google.com/project/play-your-life-872b1/firestore/rules" target="_blank" rel="noreferrer">Firebase → Firestore Database → Правила (Rules)</a>.</li>
+        <li>Нажмите «Скопировать правила» ниже, удалите в редакторе старый текст и вставьте новый.</li>
+        <li>Нажмите «Опубликовать» (Publish), подождите минуту и нажмите «Проверить снова».</li>
+      </ol>
+      <div className="our-row">
+        <button type="button" className="our-primary" onClick={async () => { try { await navigator.clipboard.writeText(rulesText); setCopied(true); } catch { setCopied(false); } }}>{copied ? 'Скопировано ✓' : 'Скопировать правила'}</button>
+        <button type="button" onClick={onRetry}>Проверить снова</button>
+      </div>
+      <p className="o-muted">Или в терминале проекта: <code>firebase deploy --only firestore:rules</code>.</p>
+    </section>
+  );
 }

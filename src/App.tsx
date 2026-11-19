@@ -77,7 +77,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import QuestWizard from './components/QuestWizard';
 import { saveCustomQuest, duplicateQuest, saveHabit } from './personalQuests';
 import TaskLabelBadge from './components/TaskLabelBadge';
-import { importPlan, parsePlanFile } from './planImport';
+import { decryptOwnerPlan, hasImportedPlan, importPlan, parsePlanFile } from './planImport';
 
 function Progress({
   value,
@@ -123,6 +123,23 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
     void isOwnerEmail(userEmail).then((ok) => { if (alive) setOwner(ok); });
     return () => { alive = false; };
   }, [userEmail]);
+  // 0.89.11: личный план владельца загружается в его аккаунт автоматически один раз (зашифрован, см. ownerPlan.ts).
+  const planAttempted = useRef(false);
+  useEffect(() => {
+    if (!owner || !userEmail || !userId || planAttempted.current || hasImportedPlan(state)) return;
+    planAttempted.current = true;
+    void decryptOwnerPlan(userEmail, Object.keys(state.spheres)).then((plan) => {
+      if (!plan) return;
+      let summary: { projects: number; tasks: number; completed: number } | null = null;
+      setState((current) => {
+        if (hasImportedPlan(current)) return current;
+        const result = importPlan(current, plan, userId);
+        summary = result;
+        return result.state;
+      });
+      setTimeout(() => { if (summary) notify(`Личный план загружен: проектов ${summary.projects}, задач ${summary.tasks}, закрыто выполненных ${summary.completed}.`); }, 0);
+    });
+  }, [owner, userEmail, userId, state, setState]);
   const [page, setPage] = useState(() =>
     readTaskRoute() ? 'tasks' : readGoalRoute() || location.hash === '#goals' ? 'goals' : location.hash === '#city'
       ? 'city'
@@ -671,8 +688,9 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
                             if (!file) return;
                             try {
                               const plan = parsePlanFile(await file.text(), Object.keys(state.spheres));
-                              const result = importPlan(state, plan, userId ?? 'local');
-                              setState(result.state);
+                              let result = { projects: 0, tasks: 0, completed: 0 };
+                              setState((current) => { const r = importPlan(current, plan, userId ?? 'local'); result = r; return r.state; });
+                              await Promise.resolve();
                               notify(result.tasks || result.projects
                                 ? `План загружен: проектов ${result.projects}, задач ${result.tasks}, закрыто выполненных ${result.completed}.`
                                 : 'Этот план уже загружен — новых проектов и задач нет.');

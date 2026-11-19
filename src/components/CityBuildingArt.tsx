@@ -4,7 +4,7 @@ import type { BuildingState } from '../city';
 import { CityAppearanceContext } from '../cityAppearanceContext';
 import cityImage from '../assets/life-city.webp';
 import './CityBuildingArt.css';
-import { sphereAssets, sphereSceneImage } from '../sphereAssets';
+import { sphereAssets, sphereBannerImage, sphereSceneImage } from '../sphereAssets';
 import { coastalBuildings } from '../coastalCity';
 
 // У «Психологии» нет здания на острове «Города» (см. sphereAssets.ts) — её фотография сгенерирована,
@@ -26,7 +26,7 @@ function Decor({ item, x, y }: { item: string; x: number; y: number }) {
     {item === 'statue' && <><path d="M-7 2L0 -2L7 2V6H-7Z" fill="#ead7a5" /><path d="M-4 1V-13L0 -18L4 -13V1Z" fill="#e0c47f" /><circle cy="-21" r="4" fill="#f7df9c" /></>}
   </g>;
 }
-export default function CityBuildingArt({ id, building, variant = 'scene' }: { id: string; building?: BuildingState; variant?: 'scene' | 'icon' | 'map' | 'wide' }) {
+export default function CityBuildingArt({ id, building, variant = 'scene' }: { id: string; building?: BuildingState; variant?: 'scene' | 'icon' | 'map' | 'wide' | 'banner' }) {
   const city = useContext(CityAppearanceContext);
   const b = building ?? city?.buildings[id] ?? initial;
   const d = cityLandmarks[id];
@@ -34,8 +34,8 @@ export default function CityBuildingArt({ id, building, variant = 'scene' }: { i
   if (variant !== 'icon') {
     const asset = sphereAssets[id as keyof typeof sphereAssets];
     if (!asset) return null;
-    return <img className={`city-building-art ${variant === 'scene' || variant === 'wide' ? 'sphere-building' : ''} building-art-${variant}`}
-      src={variant === 'wide' ? sphereSceneImage(id) ?? asset.buildingThumbnail : asset.buildingThumbnail} alt={d.name} loading="lazy" decoding="async"
+    return <img className={`city-building-art ${variant === 'scene' || variant === 'wide' || variant === 'banner' ? 'sphere-building' : ''} building-art-${variant}`}
+      src={variant === 'wide' ? sphereSceneImage(id) ?? asset.buildingThumbnail : variant === 'banner' ? sphereBannerImage(id) ?? asset.buildingThumbnail : asset.buildingThumbnail} alt={d.name} loading="lazy" decoding="async"
       data-sphere={id} data-tier={b.tier} data-style={b.style}
       data-building-source={paintedOnIsland.has(id) ? 'master-city' : 'generated-placeholder'} />;
   }

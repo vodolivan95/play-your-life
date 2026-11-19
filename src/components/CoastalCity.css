@@ -85,7 +85,10 @@
   .coastal-districts .bar { display:block; height:4px; border-radius:4px; background:#ffffff14; overflow:hidden; }
   .coastal-districts .bar > span { display:block; height:100%; background:var(--pin); }
   .coastal-districts b { font-size:13px; }
-  .coastal-panel { position:absolute; right:12px; bottom:12px; z-index:4; width:min(300px,24%); margin:0; backdrop-filter:blur(10px); }
+  /* 0.89.16: карточка района под картой — не закрывает здания и список районов. */
+  .coastal-panel { position:relative; margin-top:12px; width:auto; grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1.2fr) auto; align-items:center; column-gap:18px; backdrop-filter:blur(10px); }
+  .coastal-panel .tag { grid-row:1; } .coastal-panel h3 { grid-column:1; } .coastal-panel p { grid-column:1; margin:0; }
+  .coastal-panel .stats { grid-column:2; grid-row:1 / span 3; } .coastal-panel .coastal-progress { grid-column:3; grid-row:1 / span 3; } .coastal-panel .enter { grid-column:4; grid-row:1 / span 3; padding:0 26px; margin-right:34px; }
 }
 .coastal-scroll { cursor:grab; }
 .coastal-scroll[data-dragging=true] { cursor:grabbing; }
@@ -101,3 +104,17 @@
 .coastal-pin[aria-pressed=true] { background:var(--pin); }
 .coastal-scroll[data-dragging=true] .coastal-pin { pointer-events:none; }
 @media (max-width:999px) { .coastal-pin { height:20px; padding:0 7px 0 5px; } .coastal-pin b { font-size:11px; } .coastal-pin small, .coastal-pin i { font-size:9px; } }
+
+/* 0.89.16: светлая тема — белые подложки у списка районов, карточки района и чипов. */
+:root:not([data-theme='dark']) .coastal-districts, :root:not([data-theme='dark']) .coastal-panel { background:#fff; border-color:#d9e3f2; color:#16233f; box-shadow:0 10px 30px #1d3a7a1a; }
+:root:not([data-theme='dark']) .coastal-districts header small, :root:not([data-theme='dark']) .coastal-panel p { color:#5d6b86; }
+:root:not([data-theme='dark']) .coastal-districts header b { color:#c7870b; }
+:root:not([data-theme='dark']) .coastal-districts .name, :root:not([data-theme='dark']) .coastal-panel h3, :root:not([data-theme='dark']) .coastal-districts b { color:#16233f; }
+:root:not([data-theme='dark']) .coastal-districts .bar { background:#e7edf7; }
+:root:not([data-theme='dark']) .coastal-districts button:hover, :root:not([data-theme='dark']) .coastal-districts button[aria-pressed=true] { background:#eef3fb; }
+:root:not([data-theme='dark']) .coastal-chips button { background:#fff; color:#16233f; border-color:#d9e3f2; }
+:root:not([data-theme='dark']) .coastal-chips button[aria-pressed=true] { background:var(--pin); color:#fff; }
+:root:not([data-theme='dark']) .coastal-panel .stats span { background:#f2f6fc; }
+:root:not([data-theme='dark']) .coastal-panel .stats b, :root:not([data-theme='dark']) .coastal-panel .coastal-progress b { color:#16233f; }
+:root:not([data-theme='dark']) .coastal-panel .coastal-progress > i { background:#e7edf7; }
+:root:not([data-theme='dark']) .coastal-panel .close { background:#eef3fb; color:#16233f; }

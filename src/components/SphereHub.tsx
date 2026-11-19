@@ -129,7 +129,7 @@ export function SphereQuickView({ state, id, onClose, onOpen, onQuest, onCity, o
     <div className="sph-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <section className="sph-quick" role="dialog" aria-modal="true" aria-label={`Сфера ${card.name}`} style={tone(card.color)}>
         <div className="sph-quick-photo">
-          <SphereBuilding id={id} />
+          <SphereBuilding id={id} banner />
           <span className={`sph-status is-${card.status}`}>{statusLabels[card.status]}</span>
           <button type="button" className="sph-close" aria-label="Закрыть окно" onClick={onClose} autoFocus><Icon name="close" size={18} /></button>
         </div>

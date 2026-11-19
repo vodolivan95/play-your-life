@@ -21,13 +21,29 @@ import financeScene from './assets/sphere-buildings/finance-scene.jpg';
 import hobbyScene from './assets/sphere-buildings/hobby-scene.jpg';
 import englishScene from './assets/sphere-buildings/english-scene.jpg';
 import growthScene from './assets/sphere-buildings/growth-scene.jpg';
+import drivingScene from './assets/sphere-buildings/driving-scene.jpg';
+import tasksScene from './assets/sphere-buildings/tasks-scene.jpg';
+// Баннеры 3:1 для окна «Коротко о сфере» (0.89.16).
+import healthBanner from './assets/sphere-buildings/health-banner.jpg';
+import sportBanner from './assets/sphere-buildings/sport-banner.jpg';
+import growthBanner from './assets/sphere-buildings/growth-banner.jpg';
+import englishBanner from './assets/sphere-buildings/english-banner.jpg';
+import hobbyBanner from './assets/sphere-buildings/hobby-banner.jpg';
+import financeBanner from './assets/sphere-buildings/finance-banner.jpg';
+import drivingBanner from './assets/sphere-buildings/driving-banner.jpg';
+import tasksBanner from './assets/sphere-buildings/tasks-banner.jpg';
 import { coastalBuildings } from './coastalCity';
 
 // Фотографии UI отделены от ресурсов игровой карты. Иконки и комнаты сохраняются.
 export const cityAssets = { background: cityBackground, cleanSurfaces, preview: cityBackground, skyline: citySkyline, width: 1005, height: 1280 };
 const thumbnails = { health, sport, growth, english, finance, together, driving, tasks, hobby };
 const covers = {health,sport,growth,english,finance,together,driving,tasks,hobby};
-const scenes: Record<string, string> = { health: healthScene, sport: sportScene, finance: financeScene, hobby: hobbyScene, english: englishScene, growth: growthScene, family, career };
+const scenes: Record<string, string> = { health: healthScene, sport: sportScene, finance: financeScene, hobby: hobbyScene, english: englishScene, growth: growthScene, driving: drivingScene, tasks: tasksScene, family, career };
+const banners: Record<string, string> = { health: healthBanner, sport: sportBanner, growth: growthBanner, english: englishBanner, hobby: hobbyBanner, finance: financeBanner, driving: drivingBanner, tasks: tasksBanner };
+/** Фото для низкого широкого блока (окно «Коротко о сфере»): баннер 3:1, иначе широкий кадр шапки. */
+export function sphereBannerImage(id: string): string | undefined {
+  return banners[id] ?? sphereSceneImage(id);
+}
 /** Фото для широкой шапки страницы сферы: отдельный широкий кадр, если он есть, иначе карточное фото. */
 export function sphereSceneImage(id: string): string | undefined {
   return scenes[id] ?? (sphereAssets as Record<string, SphereAsset | undefined>)[id]?.buildingThumbnail;

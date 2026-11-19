@@ -5,3 +5,9 @@
 .focus-bar[data-status='expired'] .focus-bar-open b{color:#c4a9ff}
 .focus-bar-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600}
 .focus-bar>button:not(.focus-bar-open){flex:none;width:36px;height:36px;border-radius:50%;background:#ffffff1f;font-size:14px}
+
+/* 0.89.16: светлая тема — белая подложка. */
+:root:not([data-theme='dark']) .focus-bar{background:#fff;color:#16233f;border-color:#d9e3f2;box-shadow:0 8px 24px #1d3a7a1f}
+:root:not([data-theme='dark']) .focus-bar-open b{color:#2f7cf6}
+:root:not([data-theme='dark']) .focus-bar[data-status='expired'] .focus-bar-open b{color:#7b4fe0}
+:root:not([data-theme='dark']) .focus-bar>button:not(.focus-bar-open){background:#eef3fb;color:#16233f}

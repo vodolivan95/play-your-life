@@ -14,12 +14,21 @@ import hobby from './assets/sphere-buildings/leisure-building.webp';
 import psychology from './assets/sphere-buildings/psychology-building.jpg';
 import family from './assets/sphere-buildings/family-building.jpg';
 import career from './assets/sphere-buildings/career-building.jpg';
+// Широкие кадры 3:1 для шапки страницы сферы (0.89.14, прислал пользователь); остальные сферы используют карточное фото.
+import healthScene from './assets/sphere-buildings/health-scene.jpg';
+import sportScene from './assets/sphere-buildings/sport-scene.jpg';
+import financeScene from './assets/sphere-buildings/finance-scene.jpg';
 import { coastalBuildings } from './coastalCity';
 
 // Фотографии UI отделены от ресурсов игровой карты. Иконки и комнаты сохраняются.
 export const cityAssets = { background: cityBackground, cleanSurfaces, preview: cityBackground, skyline: citySkyline, width: 1005, height: 1280 };
 const thumbnails = { health, sport, growth, english, finance, together, driving, tasks, hobby };
 const covers = {health,sport,growth,english,finance,together,driving,tasks,hobby};
+const scenes: Record<string, string> = { health: healthScene, sport: sportScene, finance: financeScene, family, career };
+/** Фото для широкой шапки страницы сферы: отдельный широкий кадр, если он есть, иначе карточное фото. */
+export function sphereSceneImage(id: string): string | undefined {
+  return scenes[id] ?? (sphereAssets as Record<string, SphereAsset | undefined>)[id]?.buildingThumbnail;
+}
 type SphereAsset = {
   icon: { source: string; id: string }; buildingThumbnail: string; building: string; questCover: string;
   cityBuilding: { background: string; bounds: typeof coastalBuildings[number] }; room: string;

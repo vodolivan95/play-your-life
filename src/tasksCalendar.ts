@@ -193,6 +193,11 @@ export function calendarSegmentsForDay(items: CalendarItem[], day: string): Cale
 }
 
 /** Tasks scheduled on one exact calendar day, in the same order as the calendar. */
+/** Все открытые задачи (0.89.14): счётчик «Мои задачи» в меню — без выполненных, «не буду делать» и архива. */
+export function openTaskCount(quests: Quest[]) {
+  return quests.filter((q) => !q.done && !q.wontDo && !q.planning?.archivedAt).length;
+}
+
 export function questsForCalendarDay(quests: Quest[], day: string): Quest[] {
   return itemsForDay(calendarItems(quests), day).map((item) => item.quest);
 }

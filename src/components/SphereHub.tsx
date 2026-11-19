@@ -230,7 +230,7 @@ export function SphereScene({ state, id, tab, onTab, onBack, onQuest, onCity, on
   return (
     <section className="sph-scene" style={tone(d.info.color)} aria-label={`Район ${d.info.name}`}>
       <div className="sph-scene-stage">
-        <div className="sph-scene-photo"><SphereBuilding id={id} /></div>
+        <div className="sph-scene-photo"><SphereBuilding id={id} wide /></div>
         <div className="sph-hud">
           <button type="button" className="sph-hud-back" onClick={onBack} aria-label="← Все сферы"><Glyph name="back" size={16} /><span>Все сферы</span></button>
           <span className="sph-hud-gap" />

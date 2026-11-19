@@ -109,7 +109,9 @@ try {
     assert.equal(await homeToday.locator(".home-section-title h2 span").textContent(), "1", "счётчик блока главной совпадает со списком");
     assert.equal(await homeToday.locator(".quest-row").filter({ hasText: "Тестовая задача сегодня" }).count(), 1);
     assert.equal(await homeToday.locator(".quest-row").filter({ hasText: /вчера|завтра|без даты/ }).count(), 0);
-    assert.equal(await page.locator(".pyl-nav-count").textContent(), "1", "счётчик меню включает только задачи на текущую дату");
+    const openTotal = await page.evaluate(() => JSON.parse(localStorage.getItem("play-your-life-v1")).quests.filter((q) => !q.done && !q.wontDo && !q.planning?.archivedAt).length);
+    assert.ok(openTotal >= 4);
+    assert.equal(await page.locator(".pyl-nav-count").textContent(), String(openTotal), "счётчик меню показывает все открытые задачи, а не только на сегодня (0.89.14)");
     assert.equal(await page.locator(".dashboard-notifications summary span").textContent(), "1", "счётчик уведомлений не включает просрочку или задачи без даты");
     await openTasks(page, mobile);
     assert.equal(await page.locator(".pyl-quest-modes>button").count(), 6);

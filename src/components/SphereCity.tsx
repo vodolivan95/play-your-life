@@ -11,8 +11,8 @@ import ProjectArt from './ProjectArt';
 import { projectStyle } from './projectStyle';
 import './SphereCity.css';
 
-export function SphereBuilding({ id }: { id: string }) {
-  return <CityBuildingArt id={id} />;
+export function SphereBuilding({ id, wide = false }: { id: string; wide?: boolean }) {
+  return <CityBuildingArt id={id} variant={wide ? 'wide' : 'scene'} />;
 }
 
 export function SphereDistricts({

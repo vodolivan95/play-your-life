@@ -50,6 +50,10 @@ const P = {
   copy: 'M8 8h11v12H8ZM5 16V4h11',
   pencil: 'M4 20l1-4L16 5l3 3L8 19ZM13 7l3 3',
   home: 'M4 11 12 4l8 7M6 10v10h12V10',
+  users: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 21a7 7 0 0 1 14 0M16 3.5a4 4 0 0 1 0 7.5M18 14a6 6 0 0 1 4 7',
+  mapPin: 'M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12ZM12 11.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
+  chat: 'M4 5h16v11H9l-5 4ZM8 9h8M8 12.5h5',
+  meeting: 'M4 4h16v12H4ZM8 20h8M12 16v4M8 9h8M8 12h5',
 } as const;
 export type IconName = keyof typeof P;
 export default function Ic({ n, size = 18 }: { n: IconName; size?: number }) {

@@ -179,3 +179,21 @@
 @media (min-width: 761px) and (max-height: 779px) { .pyl-menu .pyl-nav-item { height: 35px; } }
 @media (min-width: 761px) and (max-height: 719px) { .pyl-menu .pyl-nav-item { height: 33px; } .pyl-nav-icon { width: 28px; height: 28px; } }
 @media (min-width: 761px) and (max-height: 639px) { .pyl-menu .pyl-nav-item { height: 30px; font-size: 13px; } .pyl-menu-nav { gap: 1px; } .pyl-nav-icon { width: 24px; height: 24px; } }
+/* PLAY YOUR LIFE 2.0: «2.0» в логотипе, переключатели темы и пространства как на образце, меню «Нашей жизни». */
+.play-wordmark-ver { font: inherit; color: inherit; }
+.pyl-menu-theme { display: grid; gap: 8px; }
+.pyl-theme:not(.pyl-theme-compact), .pyl-space { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--m-toggle); border: 1px solid var(--m-line); }
+.pyl-theme:not(.pyl-theme-compact) button, .pyl-space button { flex: 1 1 0; min-height: 36px; padding: 0 8px; border: 1.5px solid transparent; border-radius: 999px; background: transparent; color: var(--m-nav); font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background .15s, color .15s, border-color .15s; }
+.pyl-theme:not(.pyl-theme-compact) button.on, .pyl-space button.on { background: var(--m-toggle-on, #fff); color: var(--m-text); border-color: #f5b800; box-shadow: 0 3px 10px rgba(245, 184, 0, .22); }
+.pyl-theme-emoji { font-size: 15px; line-height: 1; }
+.pyl-more .pyl-space { margin: 4px 0 12px; }
+.pyl-our-nav { gap: 4px; }
+.pyl-our-item { display: flex; align-items: center; gap: 12px; text-align: left; min-height: 58px; }
+.pyl-our-icon { flex: none; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: #e6efff; color: #2f6cf0; }
+.pyl-our-item.active .pyl-our-icon { background: #2f6cf0; color: #fff; }
+:root[data-theme='dark'] .pyl-our-icon { background: #1d3166; color: #8fb3ff; }
+.pyl-our-text { display: grid; gap: 2px; min-width: 0; }
+.pyl-our-text strong { font-size: 15px; font-weight: 800; }
+.pyl-our-text small { font-size: 12px; color: var(--m-tagline, #6a7a99); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pyl-our-tab .pyl-tab-icon { color: #2f6cf0; display: grid; place-items: center; }
+main[class*='screen-our-'] > .page-heading { display: none; }

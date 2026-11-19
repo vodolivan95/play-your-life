@@ -6,6 +6,11 @@ import type { MenuIconId } from '../menuIcons';
 import { useMenuTheme } from '../menuTheme';
 import PlayerCard from './PlayerCard';
 import ThemeSwitch from './ThemeSwitch';
+import SpaceSwitch from './SpaceSwitch';
+import Ic from './KbIcons';
+import { ourIcons } from './ourIcons';
+import { lifeModeOf, ourNavigation } from '../ourLife';
+import type { LifeMode } from '../ourLife';
 import './AppMenu.css';
 
 /** Разделы, которые не помещаются в нижнюю панель и открываются шторкой «Ещё». */
@@ -15,7 +20,8 @@ const moreIds: MenuIconId[] = ['tasks', 'spheres', 'budget', 'tree', 'achievemen
  * Нижняя панель телефона: Главная, Привычки, выпуклая «Проекты» по центру, Город и «Ещё».
  * «Ещё» открывает шторку с остальными разделами, карточкой игрока и переключателем темы.
  */
-export default function MobileNav({ page, state, onNavigate, owner = false }: { page: string; state: GameState; onNavigate: (id: string) => void; owner?: boolean }) {
+export default function MobileNav({ page, state, onNavigate, owner = false, onMode }: { page: string; state: GameState; onNavigate: (id: string) => void; owner?: boolean; onMode: (mode: LifeMode) => void }) {
+  const mode = lifeModeOf(page);
   const more = owner ? [...moreIds.slice(0, -1), 'psychology' as MenuIconId, moreIds[moreIds.length - 1]] : moreIds;
   const [theme] = useMenuTheme();
   const [open, setOpen] = useState(false);
@@ -54,6 +60,7 @@ export default function MobileNav({ page, state, onNavigate, owner = false }: { 
       {open && (
         <section className="pyl-more" data-theme={theme} role="dialog" aria-label="Ещё">
           <span className="pyl-grabber" aria-hidden="true" />
+          <SpaceSwitch mode={mode} onChange={(m) => { setOpen(false); onMode(m); }} />
           <PlayerCard state={state} />
           <div className="pyl-more-grid">
             {more.map((id) => (
@@ -70,6 +77,12 @@ export default function MobileNav({ page, state, onNavigate, owner = false }: { 
         </section>
       )}
       <nav className="pyl-tabbar" data-theme={theme} aria-label="Разделы">
+        {mode === 'our' ? ourNavigation.map((item) => (
+          <button key={item.id} type="button" className="pyl-tab pyl-our-tab" aria-current={!open && page === item.id ? 'page' : undefined} onClick={() => go(item.id)}>
+            <span className="pyl-tab-icon"><Ic n={ourIcons[item.id]} size={24} /></span>
+            {item.short}
+          </button>
+        )) : <>
         {tab('home', 'Главная')}
         {tab('quests', 'Привычки')}
         <button
@@ -82,6 +95,7 @@ export default function MobileNav({ page, state, onNavigate, owner = false }: { 
           Проекты
         </button>
         {tab('city', 'Город')}
+        </>}
         <button
           type="button"
           className="pyl-tab"

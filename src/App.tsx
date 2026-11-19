@@ -11,6 +11,8 @@ import ThemeSwitch from './components/ThemeSwitch';
 import MobileNav from './components/MobileNav';
 import { navigation } from './navigation';
 import { isOwnerEmail } from './privateAccess';
+import { isOurPage, lastPageOf, ourRoute, readOurRoute, rememberPage, storedMode } from './ourLife';
+import type { LifeMode } from './ourLife';
 import { CityAppearanceContext } from './cityAppearanceContext';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction, ReactNode } from 'react';
@@ -37,6 +39,7 @@ const AllNotes = lazy(() => import('./components/AllNotes'));
 const LifePlanner = lazy(() => import('./components/LifePlanner'));
 const QuestBoard = lazy(() => import('./components/QuestBoard'));
 const HabitsPage = lazy(() => import('./components/HabitsPage'));
+const OurLife = lazy(() => import('./components/OurLife'));
 import GameArt from './components/GameArt';
 import Avatar from './components/Avatar';
 import DataBackup from './components/DataBackup';
@@ -143,12 +146,15 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
     });
   }, [owner, userEmail, userId, state, setState]);
   const [page, setPage] = useState(() =>
-    readTaskRoute() ? 'tasks' : readGoalRoute() || location.hash === '#goals' ? 'goals' : location.hash === '#city'
+    readOurRoute(location.hash)?.page ?? (readTaskRoute() ? 'tasks' : !location.hash && storedMode() === 'our' ? lastPageOf('our') : readGoalRoute() || location.hash === '#goals' ? 'goals' : location.hash === '#city'
       ? 'city'
       : location.hash.startsWith('#ticktick=') || location.hash === '#profile'
         ? 'profile'
-        : 'home',
+        : 'home'),
   );
+  /** Код приглашения из ссылки `#our/join/КОД` (ТЗ 4.3). */
+  const [joinCode, setJoinCode] = useState(() => readOurRoute(location.hash)?.joinCode ?? null);
+  useEffect(() => { rememberPage(page); }, [page]);
   const [goalOrigin, setGoalOrigin] = useState<string | null>(null);
   const [today, setToday] = useState(dateKey);
   const tickTickHabits = useTickTickHabits(tickTick, state, setState, userId ?? 'local', today);
@@ -168,6 +174,8 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
   }, [userId, state.profile.onboardingComplete]);
   useEffect(() => {
     const changed = () => {
+      const our = readOurRoute(location.hash);
+      if (our) { setPage(our.page); if (our.joinCode) setJoinCode(our.joinCode); return; }
       const taskId = readTaskRoute();
       if (taskId) { setPendingTask(taskId); setFocusedGoalId(null); setGoalLocation(null); setPage('tasks'); return; }
       const route = readGoalRoute(); setGoalLocation(route);
@@ -250,8 +258,13 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
         return;
     }
   }
+  function switchMode(mode: LifeMode) {
+    navigate(lastPageOf(mode));
+  }
   function navigate(id: string) {
-    if (id === 'profile') window.history.pushState(null, '', location.pathname + location.search + '#profile');
+    if (isOurPage(id)) { if (location.hash !== ourRoute(id)) window.history.pushState(null, '', location.pathname + location.search + ourRoute(id)); }
+    else if (location.hash.startsWith('#our/')) window.history.pushState(null, '', location.pathname + location.search + (id === 'profile' ? '#profile' : id === 'city' ? '#city' : ''));
+    else if (id === 'profile') window.history.pushState(null, '', location.pathname + location.search + '#profile');
     else if (readGoalRoute() || readTaskRoute() || location.hash === '#goals' || location.hash === '#profile' || location.hash.startsWith('#ticktick=')) window.history.pushState(null, '', location.pathname + location.search + (id === 'city' ? '#city' : ''));
     setGoalLocation(null);
     setPage(id);
@@ -370,7 +383,7 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
       <div
         className={`app-shell pyl-shell app-page-${page} ${modal === 'quest' ? 'quest-dialog-open' : ''}`}
       >
-        <AppSidebar owner={owner} page={page} state={state} questCount={openTaskCount(state.quests) + tickTick.incoming.length} onNavigate={navigate} />
+        <AppSidebar owner={owner} page={page} state={state} questCount={openTaskCount(state.quests) + tickTick.incoming.length} onNavigate={navigate} onMode={switchMode} />
         <div className="main-wrap">
           <header className="topbar"><DashboardHeader state={state} onProfile={() => navigate('profile')} onQuests={() => navigate('tasks')} onSearchResult={openSearchResult} /></header>
           <main
@@ -586,6 +599,7 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
                 notify={notify}
               />
             )}
+            {isOurPage(page) && <OurLife page={page} userId={userId} userName={state.profile.name} joinCode={joinCode} onJoined={() => setJoinCode(null)} />}
             {page === 'budget' && (
               <FinancePage state={state} onChange={setState} notify={notify} />
             )}
@@ -931,11 +945,11 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
             </ErrorBoundary>
             <MobileCityFooter />
           <footer className="footer">
-              PLAY YOUR LIFE <span>✦</span> Маленькие шаги делают большую жизнь.
+              PLAY YOUR LIFE 2.0 <span>✦</span> Маленькие шаги делают большую жизнь.
             </footer>
           </main>
         </div>
-        <MobileNav owner={owner} page={page} state={state} onNavigate={navigate} />
+        <MobileNav owner={owner} page={page} state={state} onNavigate={navigate} onMode={switchMode} />
         <TaskReminders key={userId ?? 'local'} tasks={state.quests} onOpen={setPendingTask} />
         {inboxSphereId && <TickTickInboxDialog state={state} onChange={setState} scope={{ sphereId: inboxSphereId }} onClose={() => setInboxSphereId(null)} />}
         {sphereTaskId && (

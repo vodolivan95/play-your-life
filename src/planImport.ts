@@ -161,7 +161,7 @@ export function cleanStageName(name: string) {
 }
 
 export function hasDuplicatedStageNames(state: GameState) {
-  return state.goals.some((g) => g.id.startsWith('pi-') && g.stages?.some((s) => STAGE_PREFIX.test(s.name)));
+  return state.goals.some((g) => g.id.startsWith('pi-') && g.stages?.some((s) => cleanStageName(s.name) !== s.name));
 }
 
 export function tidyPlanStageNames(state: GameState): GameState {
@@ -169,7 +169,7 @@ export function tidyPlanStageNames(state: GameState): GameState {
   return {
     ...state,
     goals: state.goals.map((g) =>
-      g.id.startsWith('pi-') && g.stages?.some((s) => STAGE_PREFIX.test(s.name))
+      g.id.startsWith('pi-') && g.stages?.some((s) => cleanStageName(s.name) !== s.name)
         ? { ...g, stages: (g.stages ?? []).map((s) => ({ ...s, name: cleanStageName(s.name) })) }
         : g,
     ),

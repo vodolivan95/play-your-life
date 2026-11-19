@@ -2,7 +2,7 @@ import { dateKey, spheres } from './game.ts';
 import type { Event, GameState, Quest } from './game.ts';
 import { questsForCalendarDay } from './tasksCalendar.ts';
 import { sphereMetrics } from './sphereAnalytics.ts';
-import { sphereProgress } from './sphereProgress.ts';
+import { sphereProgress, shownSphereProgress } from './sphereProgress.ts';
 
 /** Положение сферы относительно среднего уровня активных сфер. */
 export type SphereStatus = 'strong' | 'normal' | 'weak';
@@ -115,7 +115,7 @@ export function nextSteps(state: GameState, limit = 4, now = new Date()): { ques
 export function sphereDetail(state: GameState, id: string, now = new Date()) {
   const events = sphereEvents(state, id);
   const info = spheres.find((s) => s.id === id)!;
-  const progress = sphereProgress(state.spheres[id]?.xp ?? 0);
+  const progress = shownSphereProgress(state, id);
   return {
     info,
     progress,

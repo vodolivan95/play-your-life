@@ -82,7 +82,7 @@ export function importPlan(state: GameState, plan: PlanFile, ownerId: string, no
   for (const p of plan.projects) {
     if (!next.spheres[p.sphere]) continue;
     if (!next.goals.some((g) => g.id === p.id)) {
-      const stages: GoalStage[] = (p.stages ?? []).map((s) => ({ id: s.id, name: s.name, status: 'active', completionMode: 'tasks', createdAt: created }));
+      const stages: GoalStage[] = (p.stages ?? []).map((s) => ({ id: s.id, name: cleanStageName(s.name), status: 'active', completionMode: 'tasks', createdAt: created }));
       const goal: Goal = {
         id: p.id,
         name: p.name,
@@ -150,4 +150,28 @@ export async function decryptOwnerPlan(email: string, sphereIds: string[]): Prom
   } catch {
     return null;
   }
+}
+
+/** В первом импорте этапы назывались «Этап 1 · Раздел», а интерфейс сам пишет «Этап 1.», — убираем дубль. */
+const STAGE_PREFIX = /^Этап\s+\d+\s*[·.:—-]\s*/u;
+
+export function cleanStageName(name: string) {
+  const cleaned = name.replace(STAGE_PREFIX, '').trim();
+  return cleaned || name;
+}
+
+export function hasDuplicatedStageNames(state: GameState) {
+  return state.goals.some((g) => g.id.startsWith('pi-') && g.stages?.some((s) => STAGE_PREFIX.test(s.name)));
+}
+
+export function tidyPlanStageNames(state: GameState): GameState {
+  if (!hasDuplicatedStageNames(state)) return state;
+  return {
+    ...state,
+    goals: state.goals.map((g) =>
+      g.id.startsWith('pi-') && g.stages?.some((s) => STAGE_PREFIX.test(s.name))
+        ? { ...g, stages: (g.stages ?? []).map((s) => ({ ...s, name: cleanStageName(s.name) })) }
+        : g,
+    ),
+  };
 }

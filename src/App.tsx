@@ -77,7 +77,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import QuestWizard from './components/QuestWizard';
 import { saveCustomQuest, duplicateQuest, saveHabit } from './personalQuests';
 import TaskLabelBadge from './components/TaskLabelBadge';
-import { decryptOwnerPlan, hasImportedPlan, importPlan, parsePlanFile } from './planImport';
+import { decryptOwnerPlan, hasDuplicatedStageNames, hasImportedPlan, importPlan, parsePlanFile, tidyPlanStageNames } from './planImport';
 
 function Progress({
   value,
@@ -125,6 +125,9 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
   }, [userEmail]);
   // 0.89.11: личный план владельца загружается в его аккаунт автоматически один раз (зашифрован, см. ownerPlan.ts).
   const planAttempted = useRef(false);
+  useEffect(() => {
+    if (owner && hasDuplicatedStageNames(state)) setState((current) => tidyPlanStageNames(current));
+  }, [owner, state, setState]);
   useEffect(() => {
     if (!owner || !userEmail || !userId || planAttempted.current || hasImportedPlan(state)) return;
     planAttempted.current = true;
@@ -882,7 +885,7 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
                           (achievementFilter === 'open'
                             ? a.unlocked(state)
                             : !a.unlocked(state))),
-                    );
+                    ).sort((a, b) => Number(b.unlocked(state)) - Number(a.unlocked(state)));
                     if (!items.length) return null;
                     return (
                       <div key={category}>

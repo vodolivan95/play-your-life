@@ -5,6 +5,7 @@ import type { GameState } from '../game';
 import icons from '../assets/sphere-icons.png';
 import GameArt from './GameArt';
 import { nodeLevel, nodeStatus, practiceLevelInfo, skillTreeOf, sphereLevelOf } from '../skillTree';
+import { shownSphereProgress } from '../sphereProgress';
 import type { SkillNode } from '../skillTree';
 import { useMenuTheme } from '../menuTheme';
 import './SkillTree.css';
@@ -110,7 +111,7 @@ export default function SkillTree({
       <div className="skt-spheres" role="tablist" aria-label="Сферы">
         {spheres.map((item) => (
           <button type="button" role="tab" aria-selected={item.id === sphere} key={item.id} className={item.id === sphere ? 'selected' : ''} style={{ '--skt-color': item.color } as CSSProperties} onClick={() => chooseSphere(item.id)}>
-            <span className="skt-sphere-icon"><SkillIcon id={item.id} /></span><strong>{item.name}</strong><small>Ур. {sphereLevelOf(state, item.id)}</small>
+            <span className="skt-sphere-icon"><SkillIcon id={item.id} /></span><strong>{item.name}</strong><small>Ур. {shownSphereProgress(state, item.id).level}</small>
           </button>
         ))}
       </div>

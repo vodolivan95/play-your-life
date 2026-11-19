@@ -1,4 +1,4 @@
-import { MAX_SPHERE_LEVEL, sphereProgress } from '../sphereProgress';
+import { MAX_SPHERE_LEVEL, shownSphereProgress } from '../sphereProgress';
 import { sphereMetrics } from '../sphereAnalytics';
 import { achievements, playerProgress, spheres } from '../game';
 import type { GameState } from '../game';
@@ -46,13 +46,13 @@ export default function LifeScoreChart({ state }: { state: GameState }) {
           </g>
 
           <polygon
-            points={polygon(spheres.map((s) => sphereProgress(state.spheres[s.id].xp).level))}
+            points={polygon(spheres.map((s) => shownSphereProgress(state, s.id).level))}
             fill="#275cf52a"
             stroke="#275cf5"
             strokeWidth="3"
           />
           {spheres.map((s, i) => {
-            const p = point(i, sphereProgress(state.spheres[s.id].xp).level);
+            const p = point(i, shownSphereProgress(state, s.id).level);
             const label = point(i, MAX_SPHERE_LEVEL, 146);
             return (
               <g key={s.id}>
@@ -86,8 +86,8 @@ export default function LifeScoreChart({ state }: { state: GameState }) {
                 <span>
                   {s.icon} {s.name}
                 </span>
-                <strong>LVL {sphereProgress(state.spheres[s.id].xp).level} / {MAX_SPHERE_LEVEL}</strong>
-                <small>{sphereProgress(state.spheres[s.id].xp).maxed ? "Максимальный уровень" : `${sphereProgress(state.spheres[s.id].xp).currentXP} / ${sphereProgress(state.spheres[s.id].xp).requiredXP} XP`}</small>
+                <strong>LVL {shownSphereProgress(state, s.id).level} / {MAX_SPHERE_LEVEL}</strong>
+                <small>{shownSphereProgress(state, s.id).maxed ? "Максимальный уровень" : `${shownSphereProgress(state, s.id).currentXP} / ${shownSphereProgress(state, s.id).requiredXP} XP`}</small>
               </p>
             ))}
           </div>

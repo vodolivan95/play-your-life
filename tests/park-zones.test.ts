@@ -6,16 +6,9 @@ import { initialState } from '../src/game.ts';
 import { buildingState, changeBuildingStyle, validCity, cityRooms } from '../src/city.ts';
 import { backupText, restoreBackup } from '../src/backup.ts';
 
-test('Парк: изолированная терраса, одиннадцать фонтанов и вход психологии сохранены без экранных точек', () => {
-  const psychology = islandBuildings.find(building => building.id === 'psychology')!;
+test('Новая карта: здание психологии есть, отдельных парковых зон и маркеров нет', () => {
   assert.equal(islandBuildings.filter(building => building.id === 'psychology').length, 1);
-  assert.equal(islandProfile.fountains.length, 11);
-  const fountain = islandProfile.fountains.find(value => value.id === 'park-front')!;
-  const buildingFountain = islandProfile.fountains.find(value => value.id === 'psychology')!;
-  assert.ok(Math.hypot(fountain.center.x - buildingFountain.center.x, fountain.center.y - buildingFountain.center.y) > .1);
-  const walk = islandProfile.routes.find(route => route.id === 'islands-walk-park')!;
-  assert.equal(walk.kind, 'pedestrian');
-  assert.ok(walk.points.every(point => point.x < psychology.x / 100), 'Пешеходный маршрут парка отделён от входа психологии');
+  assert.ok(islandProfile.routes.some(route => route.kind === 'pedestrian'));
   const source = readFileSync(new URL('../src/components/CoastalCity.tsx', import.meta.url), 'utf8');
   assert.doesNotMatch(source, /\b(?:ParkZones|ParkMarkers|ParkPanel|parkZones)\b/);
   assert.doesNotMatch(source, /(?:park-marker|park-tooltip|park-panel|park-walk-path|data-park-zone)/);

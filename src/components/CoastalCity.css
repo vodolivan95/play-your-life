@@ -74,13 +74,8 @@
   /* На ПК и телефоне изображение, транспорт, пешеходы и входы используют один профиль без обрезки. */
   .coastal-stage > .coastal-map { position:absolute; inset:0; aspect-ratio:auto; }
   .coastal-stage > .coastal-map > img { height:100%; object-fit:fill; }
-  .coastal-pin { position:absolute; z-index:3; transform:translateX(-50%); display:flex; align-items:center; gap:6px; height:30px; padding:0 10px 0 6px; border-radius:999px; border:2px solid var(--pin); background:var(--glass); color:#fff; font-family:inherit; font-size:12px; font-weight:800; line-height:1; white-space:nowrap; box-shadow:0 6px 16px #00000070; cursor:pointer; }
-  .coastal-pin small { font-size:10px; color:#ffffffb3; font-weight:800; }
-  .coastal-pin i { font-style:normal; width:18px; height:18px; border-radius:50%; display:grid; place-items:center; background:#ffc94a; color:#2a1a00; font-size:10px; }
-  .coastal-pin:not(:has(i))::before { content:''; width:9px; height:9px; margin-left:2px; border-radius:50%; background:var(--pin); }
-  .coastal-pin[aria-pressed=true] { background:var(--pin); }
-  .coastal-districts { position:absolute; left:12px; bottom:12px; z-index:4; width:min(360px,25%); padding:8px 6px; border-radius:18px; background:var(--glass); border:1px solid var(--line); backdrop-filter:blur(10px); display:grid; grid-template-columns:1fr 1fr; gap:0 4px; color:#e6ecfa; }
-  /* Список лежит в левом нижнем углу моря: на горизонтальной карте там нет зданий, входы не перекрываются. */
+  /* 0.89.15: на новой карте левый нижний угол — водопады и здания, поэтому список районов стоит под картой. */
+  .coastal-districts { position:static; margin-top:12px; width:auto; padding:8px 6px; border-radius:18px; background:var(--glass); border:1px solid var(--line); backdrop-filter:blur(10px); display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:0 4px; color:#e6ecfa; }
   .coastal-districts header { grid-column:1 / -1; display:flex; justify-content:space-between; padding:0 8px 6px; font-size:12px; }
   .coastal-districts header b { letter-spacing:.1em; color:#ffc94a; text-transform:uppercase; }
   .coastal-districts header small { color:#9fb2db; }
@@ -95,3 +90,14 @@
 .coastal-scroll { cursor:grab; }
 .coastal-scroll[data-dragging=true] { cursor:grabbing; }
 .coastal-scroll[data-dragging=true] .coastal-building { pointer-events:none; }
+
+/* 0.89.15: уровень района у таблички с названием здания — на ПК и телефоне. */
+.coastal-pin { position:absolute; z-index:3; transform:translate(-38%,-92%); display:inline-flex; align-items:center; gap:3px; height:clamp(18px,1.9vw,26px); padding:0 clamp(6px,.7vw,9px) 0 clamp(5px,.6vw,8px); border-radius:999px; border:1.5px solid color-mix(in srgb,var(--pin) 80%,#fff); background:linear-gradient(180deg,#14234a,#0a1430); color:#fff; font-family:inherit; line-height:1; white-space:nowrap; box-shadow:0 3px 10px #0000005c,0 0 0 2px #ffffff26; cursor:pointer; transition:transform .15s ease, box-shadow .15s ease; }
+.coastal-pin::before { content:''; width:clamp(5px,.55vw,7px); height:clamp(5px,.55vw,7px); border-radius:50%; background:var(--pin); box-shadow:0 0 6px var(--pin); }
+.coastal-pin b { font-size:clamp(10px,1.05vw,14px); font-weight:900; }
+.coastal-pin small { font-size:clamp(8px,.75vw,10px); font-weight:800; color:#ffffffb8; }
+.coastal-pin i { font-style:normal; min-width:clamp(13px,1.3vw,17px); height:clamp(13px,1.3vw,17px); margin-left:2px; border-radius:50%; display:grid; place-items:center; background:#ffc94a; color:#2a1a00; font-size:clamp(8px,.75vw,10px); font-weight:900; }
+.coastal-pin:hover { transform:translate(-38%,-92%) scale(1.08); box-shadow:0 5px 14px #00000070,0 0 0 2px var(--pin); }
+.coastal-pin[aria-pressed=true] { background:var(--pin); }
+.coastal-scroll[data-dragging=true] .coastal-pin { pointer-events:none; }
+@media (max-width:999px) { .coastal-pin { height:20px; padding:0 7px 0 5px; } .coastal-pin b { font-size:11px; } .coastal-pin small, .coastal-pin i { font-size:9px; } }

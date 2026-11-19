@@ -42,8 +42,8 @@ async function checkBuildingTooltips(page) {
    };
   });
  });
- assert.equal(contract.length,10,'десять оболочек подсказок зданий');
- assert.deepEqual(contract.map(item=>item.id).sort(),['driving','english','finance','growth','health','hobby','psychology','sport','tasks','together']);
+ assert.equal(contract.length,12,'двенадцать оболочек подсказок зданий (0.89.15)');
+ assert.deepEqual(contract.map(item=>item.id).sort(),['career','driving','english','family','finance','growth','health','hobby','psychology','sport','tasks','together']);
  for(const item of contract) {
   assert.ok(item.buttonDirect,`${item.id}: кнопка — прямой потомок оболочки`);
   assert.equal(item.tooltipCount,1,`${item.id}: одна явная подсказка`);
@@ -59,14 +59,14 @@ async function checkBuildingTooltips(page) {
   assert.ok(item.fullRectInMap,`${item.id}: прямоугольник подсказки целиком в карте`);
   assert.ok(item.reachesMap&&item.unclipped,`${item.id}: до карты нет clip-path или mask (${JSON.stringify(item.chain)})`);
  }
- const togetherZone=page.locator('.coastal-building-zone:has(> .coastal-building[data-building="together"])'),together=togetherZone.locator(':scope > .coastal-building'),togetherTooltip=togetherZone.locator(':scope > .coastal-building-tooltip');
+ const togetherZone=page.locator('.coastal-building-zone:has(> .coastal-building[data-building="career"])'),together=togetherZone.locator(':scope > .coastal-building'),togetherTooltip=togetherZone.locator(':scope > .coastal-building-tooltip');
  const psychologyZone=page.locator('.coastal-building-zone:has(> .coastal-building[data-building="psychology"])'),psychology=psychologyZone.locator(':scope > .coastal-building'),psychologyTooltip=psychologyZone.locator(':scope > .coastal-building-tooltip');
  const scrollPosition=await page.locator('.coastal-scroll').evaluate(node=>({left:node.scrollLeft,top:node.scrollTop}));
  try {
   if(await page.evaluate(()=>innerWidth>=1000)) {
-   const box=await together.boundingBox();assert.ok(box,'Общие дела видны на desktop');
+   const box=await together.boundingBox();assert.ok(box,'Карьера видна на desktop');
    await together.hover({position:{x:box.width*.5,y:box.height*.5}});
-   await waitForTooltipOpacity(page,togetherTooltip,'hover Общих дел');
+   await waitForTooltipOpacity(page,togetherTooltip,'hover Карьеры');
    await togetherZone.screenshot({path:'work/live-city/together-tooltip.png'});
    const corner=await togetherZone.evaluate(zone=>{
     const button=zone.querySelector('.coastal-building'),tooltip=zone.querySelector('.coastal-building-tooltip'),rect=zone.getBoundingClientRect(),hit=document.elementFromPoint(rect.left+2,rect.top+2);
@@ -93,7 +93,8 @@ try {
  const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:5175/?room-demo=sport');
  await page.locator('.live-city-canvas[data-ready=true]').waitFor();
- assert.equal(await page.locator('.coastal-building').count(),10);
+ assert.equal(await page.locator('.coastal-building').count(),12);
+ assert.equal(await page.locator('.coastal-pin').count(),12,'уровни подписаны над всеми зданиями');
  assert.equal(await page.locator('[data-building="psychology"], [data-pin="psychology"]').count(),2);
  assert.equal(await page.locator('.coastal-districts').getByText('Психология',{exact:true}).count(),1);
  assert.equal(await page.locator('.park-marker,.park-tooltip,.park-panel,.park-walk-path,[data-park-zone]').count(),0,'park UI absent desktop');
@@ -181,7 +182,7 @@ try {
  await page.locator('.coastal-map').scrollIntoViewIfNeeded();await page.waitForTimeout(1200);const paused=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));
  await page.waitForTimeout(1200);const paused2=JSON.parse(await page.locator('.live-city-canvas').getAttribute('data-stats'));assert.equal(paused.elapsed,paused2.elapsed);
  await page.getByRole('button',{name:'▶ Продолжить',exact:true}).click();
- for(const [id,title] of [['growth','Саморазвитие'],['health','Здоровье'],['finance','Финансы'],['english','Английский'],['driving','Вождение'],['together','Общие дела'],['hobby','Хобби'],['tasks','Задачи'],['psychology','Психология']]) {const button=page.locator('[data-building="'+id+'"]');await button.scrollIntoViewIfNeeded();await button.click();
+ for(const [id,title] of [['growth','Саморазвитие'],['health','Здоровье'],['finance','Финансы'],['english','Английский'],['driving','Вождение'],['together','Общие дела'],['career','Карьера и бизнес'],['family','Семья и отношения'],['hobby','Хобби'],['tasks','Задачи'],['psychology','Психология']]) {const button=page.locator('[data-building="'+id+'"]');await button.scrollIntoViewIfNeeded();await button.click();
   await page.locator('section[aria-label="3D-комната '+title+'"]').waitFor();await page.getByRole('button',{name:'Вернуться из комнаты',exact:true}).click();}
  await page.goto('http://127.0.0.1:5175/?room-demo=sport&city-dev=1');
  await page.locator('.city-dev-tools summary').click();await page.getByLabel('Дороги',{exact:true}).check();await page.getByLabel('FPS',{exact:true}).check();

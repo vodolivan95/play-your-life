@@ -2,13 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { spheres } from '../game';
 import type { GameState } from '../game';
-import { coastalHitShapes } from '../coastalCity';
 import { buildingState } from '../city';
 import islandMapUrl from '../assets/city-islands.webp';
 import { validRoutes } from '../cityLive/paths';
 import type { CityRoute, Point, RouteKind } from '../cityLive/paths';
 import { readRoutes } from '../cityLive/simulation';
-import { islandBuildings, islandProfile, ISLAND_IMAGE_WIDTH, ISLAND_IMAGE_HEIGHT } from '../cityLive/islandMap';
+import { islandBuildings, islandHitShape, islandLevelBadges, islandProfile, ISLAND_IMAGE_WIDTH, ISLAND_IMAGE_HEIGHT } from '../cityLive/islandMap';
 import type { Quality } from '../cityLive/simulation';
 import type { CityTime, DebugFlags } from '../cityLive/render';
 import LiveCityCanvas from './LiveCityCanvas';
@@ -126,7 +125,7 @@ export default function CoastalCity({ state,onOpen,paused,speed,leadControls }: 
       <div className="coastal-stage" style={wide?{width:`${zoom*100}%`}:undefined}>
       <div className="coastal-map" data-time={preferences.time} data-weather={preferences.weather} data-paused={paused} data-editing={editing}
         style={{...(wide?{}:{width:`${zoom*175}%`}),'--city-rate':speed} as unknown as CSSProperties}>
-        <img src={islandMapUrl} width={ISLAND_IMAGE_WIDTH} height={ISLAND_IMAGE_HEIGHT} fetchPriority="high" decoding="async" alt="Карта города: десять зданий сфер жизни, включая психологию, и отдельный цветущий парк с прогулочной дорожкой, скамейками и фонтаном" draggable={false}/>
+        <img src={islandMapUrl} width={ISLAND_IMAGE_WIDTH} height={ISLAND_IMAGE_HEIGHT} fetchPriority="high" decoding="async" alt="Карта города: двенадцать зданий сфер жизни вокруг центрального глобуса с фонтанами и водопадами" draggable={false}/>
         <LiveCityCanvas profile={profile} routes={routes} paused={paused} speed={speed} quality={preferences.quality} time={preferences.time} weather={preferences.weather}
           debug={debug} draft={draft} editing={editing} onPoint={point=>setDraft([...draft,point])}/>
         {buildings.map(building=>{
@@ -135,16 +134,17 @@ export default function CoastalCity({ state,onOpen,paused,speed,leadControls }: 
             style={{left:`${building.x}%`,top:`${building.y}%`,width:`${building.width}%`,height:`${building.height}%`}}>
             <button className="coastal-building" data-building={building.id}
               aria-label={`Войти: ${sphere.name}`} onClick={()=>onOpen(building.id)}
-              style={{clipPath:coastalHitShapes[building.id]}}/>
+              style={{clipPath:islandHitShape}}/>
             <span className="coastal-building-tooltip" aria-hidden="true">{sphere.icon} {sphere.name}{tier>1?` · Здание ${tier} ур.`:''}</span>
           </div>;
         })}
-        {wide&&buildings.map(building=>{
-          const card=cards.find(c=>c.id===building.id);if(!card)return null;
+        {/* Уровень района — маленькая плашка у правого верхнего угла таблички с названием: не закрывает здания и открывает карточку района. */}
+        {buildings.map(building=>{
+          const card=cards.find(c=>c.id===building.id),spot=islandLevelBadges[building.id];if(!card||!spot)return null;
           return <button key={building.id} className="coastal-pin" data-pin={building.id} aria-pressed={picked===building.id}
             aria-label={`Район ${card.name}, уровень ${card.level}`} onClick={()=>pickDistrict(building.id)}
-            style={{left:`${building.x+building.width*.78}%`,top:`${building.y+building.height*.3}%`,'--pin':card.color} as CSSProperties}>
-            {card.tasksToday>0&&<i aria-hidden="true">{card.tasksToday}</i>}<small>ур. {card.level}</small>
+            style={{left:`${spot[0]}%`,top:`${spot[1]}%`,'--pin':card.color} as CSSProperties}>
+            <b>{card.maxed?'MAX':card.level}</b><small>ур.</small>{card.tasksToday>0&&<i aria-hidden="true" title="Задачи на сегодня">{card.tasksToday}</i>}
           </button>;
         })}
       </div>

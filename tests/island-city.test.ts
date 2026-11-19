@@ -1,20 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { islandBuildings, islandProfile, ISLAND_HEIGHT, ISLAND_WIDTH, ISLAND_IMAGE_WIDTH, ISLAND_IMAGE_HEIGHT } from '../src/cityLive/islandMap.ts';
+import { islandBuildings, islandLevelBadges, islandProfile, ISLAND_HEIGHT, ISLAND_WIDTH, ISLAND_IMAGE_WIDTH, ISLAND_IMAGE_HEIGHT } from '../src/cityLive/islandMap.ts';
 import { validRoutes } from '../src/cityLive/paths.ts';
 import { CitySimulation, LanePath, QualityManager, readRoutes, routeStorageKey } from '../src/cityLive/simulation.ts';
 import { boatsByRoute } from '../src/cityLive/vehicles.ts';
 
 test('Острова: валидные маршруты, точный ratio и отдельное хранилище', () => {
   assert.equal(ISLAND_WIDTH, 2000);
-  assert.equal(ISLAND_IMAGE_WIDTH, 1678);
-  assert.equal(ISLAND_IMAGE_HEIGHT, 937);
+  assert.equal(ISLAND_IMAGE_WIDTH, 1672);
+  assert.equal(ISLAND_IMAGE_HEIGHT, 941);
   assert.equal(ISLAND_HEIGHT, 2000 * ISLAND_IMAGE_HEIGHT / ISLAND_IMAGE_WIDTH);
   assert.equal(islandProfile.width, ISLAND_WIDTH);
   assert.equal(islandProfile.height, ISLAND_HEIGHT);
   assert.equal(islandProfile.id, 'islands');
   assert.equal(validRoutes(islandProfile.routes), true);
-  assert.equal(islandProfile.storageKey, 'play-your-life-live-city-routes-islands-v2');
+  assert.equal(islandProfile.storageKey, 'play-your-life-live-city-routes-islands-v3');
   assert.notEqual(islandProfile.storageKey, routeStorageKey);
 
   let usedKey = '';
@@ -28,32 +28,35 @@ test('Острова: валидные маршруты, точный ratio и �
   }
 });
 
-test('Острова: десять фасадов с психологией и отдельным парком; формы эффектов корректны', () => {
-  assert.equal(islandBuildings.length, 10);
+test('Острова: двенадцать зданий новой карты с подписями уровней; формы эффектов корректны', () => {
+  assert.equal(islandBuildings.length, 12);
   const ids = islandBuildings.map(building => building.id);
-  assert.equal(new Set(ids).size, 10);
-  assert.deepEqual([...ids].sort(), ['driving', 'english', 'finance', 'growth', 'health', 'hobby', 'psychology', 'sport', 'tasks', 'together']);
+  assert.equal(new Set(ids).size, 12);
+  assert.deepEqual([...ids].sort(), ['career', 'driving', 'english', 'family', 'finance', 'growth', 'health', 'hobby', 'psychology', 'sport', 'tasks', 'together']);
+  for (const id of ids) {
+    const spot = islandLevelBadges[id];
+    assert.ok(spot && spot[0] > 0 && spot[0] < 100 && spot[1] > 0 && spot[1] < 100, `${id}: нет места для уровня`);
+  }
   assert.ok(ids.includes('psychology'));
   for (const box of islandBuildings) {
     assert.ok(box.x >= 0 && box.y >= 0 && box.width > 0 && box.height > 0, box.id);
     assert.ok(box.x + box.width <= 100 && box.y + box.height <= 100, box.id);
   }
 
-  assert.equal(islandProfile.fountains.length, 11);
-  assert.ok(islandProfile.fountains.some(fountain => fountain.id === 'park-front'));
-  assert.ok(islandProfile.fountains.some(fountain => fountain.id === 'psychology'));
+  assert.ok(islandProfile.fountains.some(fountain => fountain.id === 'central-globe'));
+  assert.ok(islandProfile.fountains.some(fountain => fountain.id === 'tasks'));
   for (const fountain of islandProfile.fountains) {
     assert.ok(fountain.center.x >= 0 && fountain.center.x <= 1 && fountain.center.y >= 0 && fountain.center.y <= 1, fountain.id);
     assert.ok(fountain.rx > 0 && fountain.ry > 0 && fountain.height > 0, fountain.id);
   }
-  assert.ok(islandProfile.waterfalls.length >= 10);
+  assert.ok(islandProfile.waterfalls.length >= 4);
   assert.ok(islandProfile.waterRegions.length >= 3);
   for (const region of islandProfile.waterRegions) {
     assert.ok(region.length >= 3);
     for (const [x, y] of region) assert.ok(x >= 0 && x <= ISLAND_WIDTH && y >= 0 && y <= ISLAND_HEIGHT);
   }
   assert.deepEqual(islandProfile.bridgeMasks, []);
-  assert.ok(islandProfile.occluders?.some(([x, y, rx, ry]) => x / ISLAND_WIDTH > .44 && x / ISLAND_WIDTH < .52 && y / ISLAND_HEIGHT > .38 && y / ISLAND_HEIGHT < .46 && rx > 0 && ry > 0));
+  assert.ok(islandProfile.occluders?.some(([x, y, rx, ry]) => x / ISLAND_WIDTH > .44 && x / ISLAND_WIDTH < .52 && y / ISLAND_HEIGHT > .33 && y / ISLAND_HEIGHT < .42 && rx > 0 && ry > 0));
 });
 
 test('Острова: траектории не выходят за карту и остаются непрерывными', () => {

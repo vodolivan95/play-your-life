@@ -52,8 +52,7 @@ import TickTickConnection from './components/TickTickConnection';
 import TickTickInboxDialog from './components/TickTickInboxDialog';
 import { TickTickContext, TickTickHabitsContext } from './tickTickContext';
 import useTickTickHabits from './useTickTickHabits';
-import { incomingForToday } from './ticktickInbox';
-import { questsForCalendarDay } from './tasksCalendar';
+import { openTaskCount } from './tasksCalendar';
 import {
   achievements,
   completeQuest,
@@ -371,7 +370,7 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
       <div
         className={`app-shell pyl-shell app-page-${page} ${modal === 'quest' ? 'quest-dialog-open' : ''}`}
       >
-        <AppSidebar owner={owner} page={page} state={state} questCount={questsForCalendarDay(state.quests, dateKey(new Date())).filter((q) => !q.done).length + incomingForToday(tickTick.incoming).length} onNavigate={navigate} />
+        <AppSidebar owner={owner} page={page} state={state} questCount={openTaskCount(state.quests) + tickTick.incoming.length} onNavigate={navigate} />
         <div className="main-wrap">
           <header className="topbar"><DashboardHeader state={state} onProfile={() => navigate('profile')} onQuests={() => navigate('tasks')} onSearchResult={openSearchResult} /></header>
           <main
@@ -711,7 +710,7 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
                   <ChangeJournal />
                 </div>
                 {(() => {
-                  const taskBadge = questsForCalendarDay(state.quests, dateKey(new Date())).filter((q) => !q.done).length + incomingForToday(tickTick.incoming).length;
+                  const taskBadge = openTaskCount(state.quests) + tickTick.incoming.length;
                   const byId = (id: string) => navigation.find((n) => n.id === id)!;
                   const quickIds = ['tasks', 'quests', 'goals', 'spheres'];
                   const progressIds = ['tree', 'achievements', 'statistics'];

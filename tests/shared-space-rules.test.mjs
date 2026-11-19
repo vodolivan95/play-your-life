@@ -69,3 +69,53 @@ test('личный документ игрока второму участник
   await assertSucceeds(updateDoc(doc(db('ivan'), 'spaces', 's_alex'), join('ivan')));
   await assertFails(getDoc(doc(db('ivan'), 'players', 'alex')));
 });
+
+const dbMail = (uid, email) => env.authenticatedContext(uid, { email }).firestore();
+const PAIR = 'pair-alexander-ivan';
+
+test('пара Александр — Иван: общее пространство по почте, без кода; чужая почта не входит', async () => {
+  const alex = dbMail('alex', 'Sanek.alex1995@yandex.ru'), ivan = dbMail('ivan', 'vodolivan195@gmail.com'), petr = dbMail('petr', 'petr@mail.ru');
+  await assertFails(setDoc(doc(petr, 'spaces', PAIR), space('petr')));
+  await assertSucceeds(setDoc(doc(alex, 'spaces', PAIR), space('alex')));
+  await assertFails(updateDoc(doc(petr, 'spaces', PAIR), { memberIds: arrayUnion('petr'), 'members.petr': { name: 'Пётр', joinedAt: serverTimestamp() }, updatedAt: serverTimestamp() }));
+  await assertSucceeds(updateDoc(doc(ivan, 'spaces', PAIR), { memberIds: arrayUnion('ivan'), 'members.ivan': { name: 'Иван', joinedAt: serverTimestamp() }, updatedAt: serverTimestamp() }));
+  await assertSucceeds(getDoc(doc(ivan, 'spaces', PAIR)));
+});
+
+test('общие объекты: участники читают и пишут, чужой — нет; автор не подменяется; чужие сообщения только реакции', async () => {
+  await alexWithInvite();
+  await assertSucceeds(updateDoc(doc(db('ivan'), 'spaces', 's_alex'), join('ivan')));
+  const g = (uid) => doc(db(uid), 'spaces', 's_alex', 'groups', 'general');
+  await assertSucceeds(setDoc(g('alex'), { name: 'Общие вопросы', system: true, authorId: 'alex', at: 1, count: 0 }));
+  await assertSucceeds(getDoc(g('ivan')));
+  await assertFails(getDoc(g('petr')));
+  await assertSucceeds(updateDoc(g('ivan'), { count: 1, lastText: 'Привет' }));
+  await assertFails(updateDoc(g('ivan'), { authorId: 'ivan' }));
+  await assertFails(deleteDoc(g('alex')));
+  const m = (uid) => doc(db(uid), 'spaces', 's_alex', 'groups', 'general', 'messages', 'm1');
+  await assertFails(setDoc(m('ivan'), { authorId: 'alex', text: 'подделка', at: 1 }));
+  await assertSucceeds(setDoc(m('alex'), { authorId: 'alex', text: 'Привет', at: 1, reactions: {}, pinned: false }));
+  await assertSucceeds(updateDoc(m('ivan'), { reactions: { '👍': ['ivan'] } }));
+  await assertFails(updateDoc(m('ivan'), { text: 'исправил чужое' }));
+  await assertFails(deleteDoc(m('ivan')));
+  await assertSucceeds(updateDoc(m('alex'), { text: 'Привет!' }));
+  await assertFails(setDoc(doc(db('petr'), 'spaces', 's_alex', 'groups', 'general', 'messages', 'm2'), { authorId: 'petr', text: 'x', at: 1 }));
+});
+
+test('личные события и чужие уведомления не видны второму участнику', async () => {
+  await alexWithInvite();
+  await assertSucceeds(updateDoc(doc(db('ivan'), 'spaces', 's_alex'), join('ivan')));
+  const ev = (uid, id) => doc(db(uid), 'spaces', 's_alex', 'events', id);
+  await assertSucceeds(setDoc(ev('alex', 'p1'), { authorId: 'alex', at: 1, access: 'personal', title: 'Врач' }));
+  await assertSucceeds(setDoc(ev('alex', 's1'), { authorId: 'alex', at: 1, access: 'shared', title: 'Кино', rsvp: { alex: 'yes', ivan: 'pending' } }));
+  await assertFails(getDoc(ev('ivan', 'p1')));
+  await assertSucceeds(getDoc(ev('ivan', 's1')));
+  await assertSucceeds(updateDoc(ev('ivan', 's1'), { 'rsvp.ivan': 'yes' }));
+  await assertSucceeds(getDocs(query(collection(db('ivan'), 'spaces', 's_alex', 'events'), where('access', '==', 'shared'))));
+  const n = (uid) => doc(db(uid), 'spaces', 's_alex', 'notifications', 'n1');
+  await assertSucceeds(setDoc(n('alex'), { authorId: 'alex', at: 1, to: 'ivan', read: false, text: 'Приглашение' }));
+  await assertFails(getDoc(n('alex')));
+  await assertSucceeds(getDoc(n('ivan')));
+  await assertSucceeds(updateDoc(n('ivan'), { read: true }));
+  await assertFails(setDoc(doc(db('alex'), 'spaces', 's_alex', 'notifications', 'n2'), { authorId: 'alex', at: 1, to: 'petr', read: false }));
+});

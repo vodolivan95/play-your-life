@@ -7,8 +7,7 @@ import { useMenuTheme } from '../menuTheme';
 import PlayerCard from './PlayerCard';
 import ThemeSwitch from './ThemeSwitch';
 import SpaceSwitch from './SpaceSwitch';
-import Ic from './KbIcons';
-import { ourIcons } from './ourIcons';
+import { ourMenuIcon } from './ourIcons';
 import { lifeModeOf, ourNavigation } from '../ourLife';
 import type { LifeMode } from '../ourLife';
 import './AppMenu.css';
@@ -79,7 +78,7 @@ export default function MobileNav({ page, state, onNavigate, owner = false, onMo
       <nav className="pyl-tabbar" data-theme={theme} aria-label="Разделы">
         {mode === 'our' ? ourNavigation.map((item) => (
           <button key={item.id} type="button" className="pyl-tab pyl-our-tab" aria-current={!open && page === item.id ? 'page' : undefined} onClick={() => go(item.id)}>
-            <span className="pyl-tab-icon"><Ic n={ourIcons[item.id]} size={24} /></span>
+            <span className="pyl-tab-icon"><img className="pyl-tab-art" src={menuIconSrc(ourMenuIcon[item.id])} alt="" width={28} height={28} /></span>
             {item.short}
           </button>
         )) : <>

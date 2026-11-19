@@ -11,6 +11,7 @@ import ThemeSwitch from './components/ThemeSwitch';
 import MobileNav from './components/MobileNav';
 import { navigation } from './navigation';
 import { isOwnerEmail } from './privateAccess';
+import { quickPlanningTask } from './planner';
 import { isOurPage, lastPageOf, ourRoute, readOurRoute, rememberPage, storedMode } from './ourLife';
 import type { LifeMode } from './ourLife';
 import { CityAppearanceContext } from './cityAppearanceContext';
@@ -599,7 +600,7 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
                 notify={notify}
               />
             )}
-            {isOurPage(page) && <OurLife page={page} userId={userId} userName={state.profile.name} joinCode={joinCode} onJoined={() => setJoinCode(null)} />}
+            {isOurPage(page) && <OurLife page={page} userId={userId} userEmail={userEmail ?? undefined} userName={state.profile.name} joinCode={joinCode} onJoined={() => setJoinCode(null)} onNavigate={navigate} onAddTask={(title, day) => { try { const next = quickPlanningTask(state, title.slice(0, 120), userId ?? 'local', day && /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : undefined); setState(next); notify('Задача добавлена в «Мои задачи»'); return true; } catch { return false; } }} />}
             {page === 'budget' && (
               <FinancePage state={state} onChange={setState} notify={notify} />
             )}

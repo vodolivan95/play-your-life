@@ -11,13 +11,15 @@ import { INVITE_DAYS, SPACE_MEMBER_LIMIT, isInviteCode, makeInviteCode, normaliz
 export type SpaceMember = { name: string; joinedAt?: unknown };
 export type Space = { id: string; name: string; ownerId: string; memberIds: string[]; members: Record<string, SpaceMember> };
 
+const PAIR_ID = 'pair-alexander-ivan';
+
 /** Пространство, созданное пользователем, всегда имеет id `s_<uid>`: повторное создание не плодит копий. */
 export const ownSpaceId = (uid: string) => `s_${uid}`;
 const cleanName = (name: string) => name.trim().slice(0, 60) || 'Участник';
 
 /** Выбирает основное пространство: где больше участников, при равенстве — созданное раньше всех (по id). */
 export function pickSpace(spaces: Space[]): Space | null {
-  return [...spaces].sort((a, b) => b.memberIds.length - a.memberIds.length || a.id.localeCompare(b.id))[0] ?? null;
+  return [...spaces].sort((a, b) => Number(b.id === PAIR_ID) - Number(a.id === PAIR_ID) || b.memberIds.length - a.memberIds.length || a.id.localeCompare(b.id))[0] ?? null;
 }
 
 export function toSpace(id: string, data: Record<string, unknown>): Space | null {
@@ -95,3 +97,23 @@ export async function acceptInvite(db: Firestore, rawCode: string, uid: string, 
 /** Обновляет своё имя в пространстве (видно второму участнику). */
 export const renameMe = (db: Firestore, space: Space, uid: string, name: string) =>
   updateDoc(doc(db, 'spaces', space.id), { [`members.${uid}.name`]: cleanName(name), updatedAt: serverTimestamp() });
+
+/**
+ * Аккаунты Александра и Ивана попадают в общее пространство `pair-alexander-ivan` сами, без кода (правила проверяют почту).
+ * Первый вошедший создаёт его, второй — присоединяется. Повторный вызов ничего не меняет.
+ */
+export async function ensurePairSpace(db: Firestore, uid: string, name: string): Promise<void> {
+  const ref = doc(db, 'spaces', PAIR_ID);
+  const join = () => updateDoc(ref, { memberIds: arrayUnion(uid), [`members.${uid}`]: { name: cleanName(name), joinedAt: serverTimestamp() }, updatedAt: serverTimestamp() });
+  let snap;
+  try { snap = await getDoc(ref); } catch (error) {
+    if ((error as { code?: string }).code === 'permission-denied') { await join(); return; }
+    throw error;
+  }
+  if (snap.exists()) { if (!(snap.data().memberIds as string[]).includes(uid)) await join(); return; }
+  try {
+    await setDoc(ref, { name: 'Наша жизнь', ownerId: uid, memberIds: [uid], members: { [uid]: { name: cleanName(name), joinedAt: serverTimestamp() } }, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  } catch {
+    await join(); // второй участник успел создать пространство одновременно
+  }
+}

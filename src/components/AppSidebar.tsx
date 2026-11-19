@@ -6,8 +6,7 @@ import SidebarReference from './SidebarReference';
 import ThemeSwitch from './ThemeSwitch';
 import CityMiniLive from './CityMiniLive';
 import SpaceSwitch from './SpaceSwitch';
-import Ic from './KbIcons';
-import { ourIcons } from './ourIcons';
+import { ourMenuIcon } from './ourIcons';
 import { lifeModeOf, ourNavigation } from '../ourLife';
 import type { LifeMode } from '../ourLife';
 import './AppMenu.css';
@@ -37,7 +36,7 @@ export default function AppSidebar({ page, questCount, onNavigate, owner = false
         <nav className="pyl-menu-nav pyl-our-nav" aria-label="Наша жизнь">
           {ourNavigation.map((item) => (
             <button key={item.id} type="button" className={page === item.id ? 'pyl-nav-item pyl-our-item active' : 'pyl-nav-item pyl-our-item'} aria-current={page === item.id ? 'page' : undefined} onClick={() => onNavigate(item.id)}>
-              <span className="pyl-our-icon" aria-hidden="true"><Ic n={ourIcons[item.id]} size={20} /></span>
+              <img className="pyl-nav-icon" src={menuIconSrc(ourMenuIcon[item.id])} alt="" width={32} height={32} />
               <span className="pyl-our-text"><strong>{item.label}</strong><small>{item.caption}</small></span>
             </button>
           ))}

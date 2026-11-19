@@ -231,7 +231,7 @@ service cloud.firestore {
         return signedIn() && request.auth.uid in get(/databases/$(database)/documents/spaces/$(spaceId)).data.memberIds;
       }
       match /{coll}/{docId} {
-        function known() { return coll in ['groups','agreements','summaries','reads','events','places','meetings','questions','decisions','notifications']; }
+        function known() { return coll in ['profiles','groups','agreements','summaries','reads','events','places','meetings','questions','decisions','notifications']; }
         allow read: if isMember() && known()
           && (coll != 'notifications' || resource.data.to == request.auth.uid)
           && (coll != 'reads' || docId == request.auth.uid)
@@ -239,12 +239,14 @@ service cloud.firestore {
         allow create: if isMember() && known()
           && request.resource.data.authorId == request.auth.uid && request.resource.data.at is number
           && (coll != 'reads' || docId == request.auth.uid)
+          && (coll != 'profiles' || docId == request.auth.uid)
           && (coll != 'events' || request.resource.data.access in ['shared','personal'])
           && (coll != 'notifications' || (request.resource.data.read == false
             && request.resource.data.to in get(/databases/$(database)/documents/spaces/$(spaceId)).data.memberIds));
         allow update: if isMember() && known()
           && request.resource.data.authorId == resource.data.authorId
           && (coll != 'reads' || docId == request.auth.uid)
+          && (coll != 'profiles' || docId == request.auth.uid)
           && (coll != 'events' || resource.data.access == 'shared' || resource.data.authorId == request.auth.uid)
           && (coll != 'events' || request.resource.data.access in ['shared','personal'])
           && (coll != 'notifications' || (resource.data.to == request.auth.uid

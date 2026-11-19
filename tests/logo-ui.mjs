@@ -49,7 +49,7 @@ try {
     page.on('pageerror', e => errors.push(e.message));
     await page.goto(home);
     await page.locator('.account-brand img').waitFor();
-    assert.equal(await page.title(), 'PLAY YOUR LIFE');
+    assert.equal(await page.title(), 'PLAY YOUR LIFE 2.0');
     assert.equal(await page.locator('meta[name="description"]').getAttribute('content'), 'PLAY YOUR LIFE — игровая система развития жизни, проектов, привычек и достижений.');
     assert.equal(await page.locator('meta[name="theme-color"]').getAttribute('content'), '#070d20', 'По умолчанию тёмная тема');
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
@@ -68,8 +68,8 @@ try {
     }
     const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
     const manifest = await (await page.request.get(new URL(manifestHref, page.url()).href)).json();
-    assert.equal(manifest.name, 'PLAY YOUR LIFE');
-    assert.equal(manifest.short_name, 'PLAY YOUR LIFE');
+    assert.equal(manifest.name, 'PLAY YOUR LIFE 2.0');
+    assert.equal(manifest.short_name, 'PLAY YOUR LIFE 2.0');
     assert.equal(manifest.display, 'standalone');
     assert.equal(new URL(manifest.id, new URL(manifestHref, page.url())).href, home);
     assert.equal(new URL(manifest.start_url, new URL(manifestHref, page.url())).href, home);

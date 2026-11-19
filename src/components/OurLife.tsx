@@ -8,7 +8,7 @@ import { INVITE_DAYS, SPACE_MEMBER_LIMIT, inviteLink, ourNavigation } from '../o
 import type { OurPageId } from '../ourLife';
 import { acceptInvite, createInvite, createSpace, ensurePairSpace, watchMySpace } from '../sharedSpace';
 import type { Space } from '../sharedSpace';
-import { ensureSystemGroups, forUser, isPairEmail, patch, watch, PAIR_EMAILS, PAIR_SPACE_ID } from '../ourData';
+import { compressImage, ensureSystemGroups, forUser, isPairEmail, patch, put, watch, PAIR_EMAILS, PAIR_SPACE_ID } from '../ourData';
 import { enableDemo } from '../ourStore';
 import type { CalEvent, Ctx, Notice } from '../ourData';
 import Ic from './KbIcons';
@@ -19,17 +19,18 @@ import { useEventReminders, useEvents } from './our/useEvents';
 import OurPlaces from './our/OurPlaces';
 import OurMeetings from './our/OurMeetings';
 import { Avatar } from './our/OurUi';
+import { OurPhotos } from './our/ourPhotos';
 import { fmtDateTime, fmtIso } from './our/ourFormat';
 import './OurLife.css';
 
 /* ---------- «Наша жизнь»: общее пространство и четыре сервиса (ТЗ 3.4–8) ---------- */
 
 type Props = {
-  page: OurPageId; userId?: string; userEmail?: string; userName: string; joinCode: string | null;
+  page: OurPageId; userId?: string; userEmail?: string; userName: string; userPhoto?: string; joinCode: string | null;
   onJoined: () => void; onNavigate: (page: string) => void; onAddTask: (title: string, day?: string) => boolean;
 };
 
-export default function OurLife({ page, userId: appUserId, userEmail: appEmail, userName, joinCode, onJoined, onNavigate, onAddTask }: Props) {
+export default function OurLife({ page, userId: appUserId, userEmail: appEmail, userName, userPhoto, joinCode, onJoined, onNavigate, onAddTask }: Props) {
   const item = ourNavigation.find((x) => x.id === page)!;
   // В режиме без пароля личная игра остаётся в браузере, а для «Нашей жизни» можно войти прямо здесь.
   const [authUser, setAuthUser] = useState<User | null>(null);
@@ -71,6 +72,33 @@ export default function OurLife({ page, userId: appUserId, userEmail: appEmail, 
   }, [demo, userId, userEmail, userName]);
   const ctx = demoCtx ?? cloudCtx;
   const spaceId = ctx?.space.id;
+  // Аватары: каждый участник публикует своё фото профиля (уменьшенное) в spaces/{id}/profiles/{uid}.
+  const [profiles, setProfiles] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!ctx) return;
+    return watch<{ id: string; photo?: string }>(ctx, 'profiles', [], (rows) => setProfiles(Object.fromEntries(rows.filter((r) => r.photo).map((r) => [r.id, r.photo!]))), () => undefined);
+  }, [ctx]);
+  useEffect(() => {
+    if (!ctx || !userPhoto) return;
+    let off = false;
+    void (async () => {
+      try {
+        const photo = userPhoto.startsWith('data:') ? await compressImage(await (await fetch(userPhoto)).blob(), 160, 60_000) : userPhoto.slice(0, 2000);
+        if (!off) await put(ctx, 'profiles', ctx.uid, { name: ctx.name, photo });
+      } catch { /* без фото останутся инициалы */ }
+    })();
+    return () => { off = true; };
+  }, [ctx, userPhoto]);
+  const photos = useMemo(() => {
+    const out: Record<string, string> = {};
+    if (!ctx) return out;
+    for (const uid of ctx.space.memberIds) {
+      const name = ctx.space.members[uid]?.name;
+      const photo = profiles[uid] ?? (uid === ctx.uid ? userPhoto : undefined);
+      if (name && photo) out[name] = photo;
+    }
+    return out;
+  }, [ctx, profiles, userPhoto]);
   useEffect(() => { if (ctx && spaceId) void ensureSystemGroups(ctx); }, [spaceId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const run = async (fn: () => Promise<unknown>) => {
@@ -122,6 +150,7 @@ export default function OurLife({ page, userId: appUserId, userEmail: appEmail, 
 
   const full = !!space && space.memberIds.length >= SPACE_MEMBER_LIMIT;
   return (
+    <OurPhotos.Provider value={photos}>
     <div className="our-page">
       {head}
       {error && !rulesMissing && <p className="our-error" role="alert">{error}</p>}
@@ -146,6 +175,7 @@ export default function OurLife({ page, userId: appUserId, userEmail: appEmail, 
       {ctx && page === 'our-places' && <OurPlaces ctx={ctx} focusId={focus?.page === page ? focus.id : null} onOpen={open} />}
       {ctx && page === 'our-meetings' && <OurMeetings ctx={ctx} focusId={focus?.page === page ? focus.id : null} onOpen={open} onAddTask={onAddTask} />}
     </div>
+    </OurPhotos.Provider>
   );
 }
 

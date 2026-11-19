@@ -101,6 +101,8 @@ main[class*='screen-our-'] { max-width: none; }
 .o-checks input, .o-check input { width: 18px; height: 18px; accent-color: var(--o-blue); }
 .oa { flex: none; border-radius: 50%; display: inline-grid; place-items: center; background: var(--o-blue); color: #fff; font-weight: 800; }
 .oa.me { background: linear-gradient(135deg, #f5b800, #f08c00); }
+.oa.photo { background: #fff; overflow: hidden; box-shadow: 0 0 0 2px #fff, 0 2px 6px rgba(30, 60, 120, .18); }
+.oa.photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .oe { display: grid; justify-items: center; gap: 6px; padding: 36px 16px; text-align: center; color: var(--o-muted); }
 .oe > span { width: 56px; height: 56px; border-radius: 18px; display: grid; place-items: center; background: var(--o-soft); color: var(--o-blue); }
 .oe strong { color: var(--o-text); font-size: 17px; }

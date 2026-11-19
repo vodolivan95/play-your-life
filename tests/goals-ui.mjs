@@ -221,7 +221,7 @@ try {
     assert.equal(await workspace.locator('.pw-countdown').count(), 0);
 
     assert.equal(await workspace.locator('.gw-roadmap-stage').count(), 3);
-    assert.deepEqual(await workspace.locator('.gw-roadmap-stage').evaluateAll((els) => els.map((el) => el.getAttribute('data-stage'))), [ids.c, ids.b, ids.a], 'маршрут проекта идёт снизу вверх, сохраняя номера этапов');
+    assert.deepEqual(await workspace.locator('.gw-roadmap-stage').evaluateAll((els) => els.map((el) => el.getAttribute('data-stage'))), [ids.a, ids.b, ids.c], 'маршрут проекта идёт от первого этапа к последнему (0.89.12)');
     assert.equal(await workspace.locator('.gw-stage-tasks').count(), 1);
     await workspace.locator('.gw-reward-content').click();
     await workspace

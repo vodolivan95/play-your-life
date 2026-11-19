@@ -2836,3 +2836,9 @@ body {
 @media (max-width: 560px) {
   .app-shell .profile-page .profile-menu:not(.profile-settings) { grid-template-columns: 1fr; gap: 8px; }
 }
+
+/* 0.89.10: «Загрузить план» в настройках профиля (только для аккаунтов с личными разделами). */
+.app-shell .profile-page .profile-plan-import { position: relative; display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-top: 1px solid #edf1f8; cursor: pointer; }
+.app-shell .profile-page .profile-plan-import strong { flex: 1; font-size: 14px; }
+.app-shell .profile-page .profile-plan-import input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.app-shell .profile-page .profile-plan-import:focus-within { outline: 2px solid #2f6bff; outline-offset: -2px; }

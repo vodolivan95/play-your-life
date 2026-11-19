@@ -364,6 +364,7 @@
 :root[data-theme="dark"] .app-shell .profile-page .profile-rewards > * { background: #151d33; border: 1px solid #354964; }
 :root[data-theme="dark"] .app-shell .profile-page .profile-menu:not(.profile-settings) > button { border: 1px solid #354964; background: #151d33; }
 :root[data-theme="dark"] .app-shell .profile-page .profile-menu:not(.profile-settings) > button:hover { background: #141c31; }
+:root[data-theme="dark"] .app-shell .profile-page .profile-plan-import { border-top: 1px solid #273352; }
 
 /* account.css */
 :root[data-theme="dark"] .account-screen { background: linear-gradient(140deg, #141b30, #1b2d41); color: #cad4eb; }

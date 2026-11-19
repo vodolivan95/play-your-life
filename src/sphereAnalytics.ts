@@ -1,4 +1,4 @@
-import { sphereProgress } from './sphereProgress.ts';
+import { shownSphereProgress } from './sphereProgress.ts';
 import { spheres } from "./game.ts";
 import type { GameState } from "./game.ts";
 export type SphereFilter = "all" | "active" | "working" | "completed";
@@ -18,7 +18,7 @@ export function sphereMetrics(state: GameState) {
       projects.some((g) => g.current >= g.target) || tasks.some((q) => q.done);
     return {
       ...info,
-      ...sphereProgress(state.spheres[info.id].xp),
+      ...shownSphereProgress(state, info.id),
       projects: projects.length,
       tasks: tasks.length,
       working,

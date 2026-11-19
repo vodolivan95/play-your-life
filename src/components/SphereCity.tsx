@@ -1,4 +1,4 @@
-import { sphereProgress, MAX_SPHERE_LEVEL } from '../sphereProgress';
+import { shownSphereProgress, MAX_SPHERE_LEVEL } from '../sphereProgress';
 import CityBuildingArt from './CityBuildingArt';
 import type { CSSProperties } from 'react';
 import { spheres } from '../game';
@@ -48,11 +48,11 @@ export function SphereDistricts({
               <>{s.id === 'english' ? <CityBuildingArt id={s.id} variant="icon" /> : <GameArt kind={s.id} />}</>
               <div>
                 <strong>{s.name}</strong>
-                <span>LVL {sphereProgress(state.spheres[s.id].xp).level} / {MAX_SPHERE_LEVEL}</span></div>
+                <span>LVL {shownSphereProgress(state, s.id).level} / {MAX_SPHERE_LEVEL}</span></div>
             </div>
             <div className="district-meter">
               <span
-                style={{ width: `${sphereProgress(state.spheres[s.id].xp).progress}%` }}
+                style={{ width: `${shownSphereProgress(state, s.id).progress}%` }}
               />
             </div>
           </button>

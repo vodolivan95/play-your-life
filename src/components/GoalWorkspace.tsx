@@ -1095,7 +1095,7 @@ export default function GoalWorkspace(p: Props) {
           </div>
         </div>
         <div className="gw-roadmap">
-          {stages.slice().reverse().map((s) => {
+          {stages.map((s) => {
             const index = stages.indexOf(s);
             const m = stageMetrics(state, goal, s),
               status = stageState(state, goal, s),

@@ -24,7 +24,7 @@ import type { GameState } from './game';
 import './account.css';
 
 function AccountBrand() {
-  return <div className="account-brand"><BrandLogo size={44} decorative /><span>PLAY YOUR LIFE</span></div>;
+  return <div className="account-brand"><BrandLogo size={44} decorative /><span>PLAY YOUR LIFE 2.0</span></div>;
 }
 
 function errorCode(error: unknown) {

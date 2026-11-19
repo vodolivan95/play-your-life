@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "PLAY YOUR LIFE",
-  "short_name": "PLAY YOUR LIFE",
-  "description": "PLAY YOUR LIFE — игровая система развития жизни, целей, привычек и достижений.",
+  "name": "PLAY YOUR LIFE 2.0",
+  "short_name": "PLAY YOUR LIFE 2.0",
+  "description": "PLAY YOUR LIFE 2.0 — твоя жизнь и наши общие моменты.",
   "lang": "ru",
   "start_url": "./",
   "scope": "./",

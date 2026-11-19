@@ -5,7 +5,8 @@
  */
 export type MenuIconId =
   | 'home' | 'spheres' | 'tasks' | 'quests' | 'goals' | 'plan' | 'monthly'
-  | 'tree' | 'achievements' | 'shop' | 'city' | 'statistics' | 'profile' | 'budget' | 'knowledge' | 'notes' | 'psychology';
+  | 'tree' | 'achievements' | 'shop' | 'city' | 'statistics' | 'profile' | 'budget' | 'knowledge' | 'notes' | 'psychology'
+  | 'ourChat' | 'ourCalendar' | 'ourPlaces' | 'ourMeetings';
 import { habitsIconSvg, tasksIconSvg } from './menuIconsNew';
 type Stop = readonly [number, string, number?];
 
@@ -86,6 +87,30 @@ const SVGS: Record<MenuIconId, string> = {
     '<path d="M32 9c-11 0-19 8-19 18 0 6 2.5 9.5 5 12.5V52a3 3 0 0 0 3 3h13a3 3 0 0 0 3-3v-5h6a3 3 0 0 0 3-3v-7l4-1.5c1.4-.5 1.8-2.2.8-3.3L50 27C50 16 43 9 32 9z" fill="url(#ph)"/>' +
     '<path d="M24 22c2-3 5-4.5 8.5-4.5M22 30c2.5 1 5 0 6.5-2M33 27c2 2.5 6 3 8.5 1M27 36c3 1.5 6.5 1 8.5-1.5" fill="none" stroke="#efe5ff" stroke-width="2.4" stroke-linecap="round" opacity=".85"/>' +
     Ci(46, 15, 7, 'pg') + '<path d="M46 11.5v7M42.5 15h7" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>',
+  // PLAY YOUR LIFE 2.0 — объёмные иконки разделов «Нашей жизни» в том же стиле.
+  ourChat:
+    LG('b', [[0, '#7CC4FF'], [.55, '#3B82F0'], [1, '#1E4FB8']]) + LG('w', [[0, '#FFFFFF'], [1, '#D9E4F5']]) +
+    P('M8 12 a7 7 0 0 1 7-7 H41 a7 7 0 0 1 7 7 V31 a7 7 0 0 1-7 7 H24 L14 46 V38 H15 a7 7 0 0 1-7-7z', 'b') +
+    '<circle cx="19" cy="21.5" r="2.6" fill="#fff"/><circle cx="28" cy="21.5" r="2.6" fill="#fff"/><circle cx="37" cy="21.5" r="2.6" fill="#fff"/>' +
+    P('M27 33 a6 6 0 0 1 6-6 H50 a6 6 0 0 1 6 6 V45 a6 6 0 0 1-6 6 H49 V58 L41 51 H33 a6 6 0 0 1-6-6z', 'w') +
+    '<path d="M34 37 H49 M34 43 H44" stroke="#3B82F0" stroke-width="2.6" stroke-linecap="round"/>',
+  ourCalendar:
+    LG('w', [[0, '#FFFFFF'], [.6, '#E8EEF8'], [1, '#C3CEE0']]) + LG('r', [[0, '#FF8A80'], [.5, '#E5484D'], [1, '#A82A36']]) + LG('m', [[0, '#F4F6FA'], [1, '#8E98AB']], 'h') + LG('d', [[0, '#7CC4FF'], [1, '#2F64F0']]) +
+    Rr(8, 11, 48, 46, 9, 'w') + P('M8 20 a9 9 0 0 1 9-9 H47 a9 9 0 0 1 9 9 V25 H8z', 'r') +
+    Rr(18, 5, 6, 12, 3, 'm') + Rr(40, 5, 6, 12, 3, 'm') +
+    '<rect x="15" y="31" width="8" height="7" rx="2" fill="#C9D4E6"/><rect x="28" y="31" width="8" height="7" rx="2" fill="#C9D4E6"/><rect x="41" y="31" width="8" height="7" rx="2" fill="#C9D4E6"/><rect x="15" y="43" width="8" height="7" rx="2" fill="#C9D4E6"/>' +
+    Rr(28, 42, 9, 9, 2.4, 'd') + '<rect x="41" y="43" width="8" height="7" rx="2" fill="#C9D4E6"/>',
+  ourPlaces:
+    LG('g', [[0, '#A8EBB8'], [1, '#2E9F5B']]) + LG('g2', [[0, '#7DD89A'], [1, '#1F7A45']]) + RG('p', [[0, '#FF9A8F'], [.5, '#E5484D'], [1, '#9E2230']], .38, .3, .9) +
+    P('M5 20 L21 14 L37 20 L59 13 V48 L37 55 L21 49 L5 55z', 'g') + '<path d="M21 14 V49 M37 20 V55" stroke="#fff" stroke-opacity=".55" stroke-width="1.4"/>' +
+    '<path d="M9 40 Q20 32 30 40 T52 36" stroke="#fff" stroke-width="2.2" stroke-dasharray="3 3" fill="none" opacity=".85"/>' +
+    P('M40 6 a11 11 0 0 1 11 11 c0 8-11 20-11 20 s-11-12-11-20 a11 11 0 0 1 11-11z', 'p') + '<circle cx="40" cy="17" r="4.2" fill="#fff"/>',
+  ourMeetings:
+    LG('b', [[0, '#7CC4FF'], [1, '#2F64F0']]) + LG('w', [[0, '#FFFFFF'], [1, '#DCE6F6']]) + RG('o', [[0, '#FFD08A'], [1, '#E8872A']]) + RG('e', [[0, '#9BE8B0'], [1, '#2E9F5B']]) + LG('t', [[0, '#C9A27A'], [1, '#7E5634']]) +
+    Rr(10, 5, 44, 30, 6, 'b') + '<rect x="14" y="9" width="36" height="22" rx="3" fill="url(#w)"/>' +
+    '<path d="M19 26 V20 M25 26 V16 M31 26 V22 M37 26 V14" stroke="#2F64F0" stroke-width="3.2" stroke-linecap="round"/><path d="M41 15 l3 3 5-6" stroke="#34B36A" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' +
+    Ci(18, 44, 7, 'o') + P('M7 59 a11 9 0 0 1 22 0z', 'o') + Ci(46, 44, 7, 'e') + P('M35 59 a11 9 0 0 1 22 0z', 'e') +
+    P('M24 52 H40 L42 59 H22z', 't'),
   knowledge:
     LG('pg', [[0, '#FFFFFF'], [1, '#DCE4F2']]) + LG('cv', [[0, '#7FB6FF'], [.55, '#3B7CE0'], [1, '#2450A8']]) + LG('pl', [[0, '#9BE8B0'], [1, '#2E9F5B']]) +
     Rr(13, 8, 34, 46, 7, 'cv') + Rr(18, 11, 31, 43, 6, 'pg') +

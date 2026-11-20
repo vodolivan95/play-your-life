@@ -1,7 +1,7 @@
 /* PLAY YOUR LIFE 2.0 — общие данные «Нашей жизни»: справочники, чистые правила и операции Firestore.
  * Все общие объекты лежат внутри `spaces/{spaceId}/…`: один объект — один документ с одним id (ТЗ 12.3). */
 import {
-  collection, doc, increment, limit as qLimit, onSnapshot, orderBy, query, runTransaction, setDoc, updateDoc, deleteDoc, where,
+  collection, doc, increment, limit as qLimit, onSnapshot, orderBy, query, runTransaction, setDoc, updateDoc, deleteDoc, where, getDoc,
 } from './ourStore.ts';
 import type { Firestore, QueryConstraint } from 'firebase/firestore';
 import type { Space } from './sharedSpace.ts';
@@ -28,6 +28,8 @@ export const eventCategories = { personal: 'Личные дела', family: 'С�
 export const eventColors: Record<keyof typeof eventCategories, string> = { personal: '#8a94a8', family: '#e0679a', fun: '#f39a3d', work: '#2f6cf0', trips: '#1fa8a0', holidays: '#e5484d', meetings: '#7a4fd6', other: '#6a7a99' };
 export const rsvpLabels = { yes: 'Приму участие', maybe: 'Возможно', no: 'Не смогу', pending: 'Ждёт ответа' } as const;
 export const placeCategories = { food: 'Рестораны и кафе', cinema: 'Кино и театры', concerts: 'Концерты', parks: 'Парки и прогулки', fun: 'Развлечения', trips: 'Путешествия', sights: 'Интересные места', other: 'Другое' } as const;
+export const placeIcons: Record<keyof typeof placeCategories, string> = { food: '🍽️', cinema: '🎭', concerts: '🎤', parks: '🌳', fun: '🎡', trips: '✈️', sights: '🏛️', other: '📍' };
+export const placeIcon = (c: keyof typeof placeCategories) => placeIcons[c] ?? '📍';
 export const placeStatuses = { want: 'Хотим посетить', planned: 'Запланировано', visited: 'Посетили' } as const;
 export const proposalStatuses = { proposed: 'Предложено', discussing: 'Обсуждаем', agreed: 'Согласовано', declined: 'Отклонено', done: 'Реализовано' } as const;
 export const questionCategories = { flats: 'Квартиры', family: 'Семья', work: 'Работа и бизнес', rest: 'Отдых', finance: 'Финансы', ideas: 'Идеи и планы', other: 'Другое' } as const;
@@ -53,7 +55,7 @@ export type Comment = Base & { pending?: boolean; text: string; attachment?: Att
 export type Visit = { date: string; rating: number; comment: string; photo?: string; by: string };
 export type Place = Base & {
   kind: 'place' | 'proposal'; title: string; description: string; category: keyof typeof placeCategories; address: string; mapUrl: string; site: string; eventUrl: string;
-  budget: string; photos: string[]; status: keyof typeof placeStatuses; proposalStatus: keyof typeof proposalStatuses; eventId?: string | null; visits: Visit[]; commentsCount: number;
+  icon?: string; budget: string; photos: string[]; status: keyof typeof placeStatuses; proposalStatus: keyof typeof proposalStatuses; eventId?: string | null; visits: Visit[]; commentsCount: number;
 };
 export type Question = Base & { title: string; description: string; category: keyof typeof questionCategories; priority: keyof typeof priorities; status: keyof typeof questionStatuses; meetingId?: string | null; comments: { by: string; text: string; at: number }[] };
 export type AgendaItem = { questionId: string; done: boolean };
@@ -177,6 +179,23 @@ export function watch<T>(ctx: Ctx, path: string, constraints: QueryConstraint[],
 export const put = <T extends object>(ctx: Ctx, path: string, id: string, data: T) => setDoc(doc(col(ctx, path), id), { ...data, authorId: ctx.uid, at: (data as { at?: number }).at ?? now(), updatedAt: now() });
 export const patch = (ctx: Ctx, path: string, id: string, data: Record<string, unknown>) => updateDoc(doc(col(ctx, path), id), { ...data, updatedAt: now() });
 export const remove = (ctx: Ctx, path: string, id: string) => deleteDoc(doc(col(ctx, path), id));
+
+/** Два стартовых места в Москве — добавляются в общее пространство один раз, дальше их можно править или удалить. */
+export const starterPlaces = [
+  { id: 'moscow-vdnh', icon: '🎡', category: 'parks' as const, title: 'Прогулка по ВДНХ', description: 'Фонтан «Дружба народов», исторические павильоны, колесо обозрения «Солнце Москвы» и Москвариум. Хорошо гулять в выходные и вечером, когда включают подсветку.', address: 'Москва, проспект Мира, 119 (ВДНХ)', site: 'https://vdnh.ru', budget: 'Вход свободный' },
+  { id: 'moscow-zaryadye', icon: '🏞️', category: 'parks' as const, title: 'Парк «Зарядье»', description: 'Парящий мост над Москвой-рекой с видом на Кремль, природные зоны и набережная. Красиво на закате, рядом Красная площадь и Китай-город.', address: 'Москва, улица Варварка, 6 (парк «Зарядье»)', site: 'https://www.zaryadyepark.ru', budget: 'Вход свободный' },
+];
+export async function seedStarterPlaces(ctx: Ctx) {
+  const key = `play-your-life-our-seed:${ctx.space.id}`;
+  try { if (localStorage.getItem(key)) return; } catch { /* без localStorage проверяем только облако */ }
+  for (const [i, p] of starterPlaces.entries()) {
+    const snap = await getDoc(doc(col(ctx, 'places'), p.id));
+    if (snap.exists()) continue;
+    const { id, ...rest } = p;
+    await put(ctx, 'places', id, { kind: 'place', ...rest, mapUrl: '', eventUrl: '', photos: [], status: 'want', proposalStatus: 'proposed', eventId: null, visits: [], commentsCount: 0, at: now() - i });
+  }
+  try { localStorage.setItem(key, '1'); } catch { /* не важно */ }
+}
 export const byTime = (n = 300) => [orderBy('at', 'desc'), qLimit(n)];
 export const forUser = (uid: string) => [where('to', '==', uid), orderBy('at', 'desc'), qLimit(60)];
 

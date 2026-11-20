@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { auth, database } from '../firebaseClient';
-import rulesText from '../../firestore.rules?raw';
 import { menuIconSrc } from '../menuIcons';
 import { INVITE_DAYS, SPACE_MEMBER_LIMIT, inviteLink, ourNavigation } from '../ourLife';
 import type { OurPageId } from '../ourLife';
@@ -19,25 +18,25 @@ import { useEventReminders, useEvents } from './our/useEvents';
 import OurPlaces from './our/OurPlaces';
 import OurMeetings from './our/OurMeetings';
 import { Avatar } from './our/OurUi';
-import { OurPhotos } from './our/ourPhotos';
+import { isImageSrc, OurPhotos } from './our/ourPhotos';
+import playerImg from '../assets/player.webp';
 import { fmtDateTime, fmtIso } from './our/ourFormat';
 import './OurLife.css';
 
 /* ---------- «Наша жизнь»: общее пространство и четыре сервиса (ТЗ 3.4–8) ---------- */
 
 type Props = {
-  page: OurPageId; userId?: string; userEmail?: string; userName: string; userPhoto?: string; joinCode: string | null;
+  page: OurPageId; userId?: string; userEmail?: string; userName: string; userPhoto?: string; userAvatar?: string; joinCode: string | null;
   onJoined: () => void; onNavigate: (page: string) => void; onAddTask: (title: string, day?: string) => boolean;
 };
 
-export default function OurLife({ page, userId: appUserId, userEmail: appEmail, userName, userPhoto, joinCode, onJoined, onNavigate, onAddTask }: Props) {
+export default function OurLife({ page, userId: appUserId, userEmail: appEmail, userName, userPhoto: profilePhoto, userAvatar, joinCode, onJoined, onNavigate, onAddTask }: Props) {
   const item = ourNavigation.find((x) => x.id === page)!;
   // В режиме без пароля личная игра остаётся в браузере, а для «Нашей жизни» можно войти прямо здесь.
   const [authUser, setAuthUser] = useState<User | null>(null);
   useEffect(() => (appUserId ? undefined : onAuthStateChanged(auth, setAuthUser)), [appUserId]);
   const userId = appUserId ?? authUser?.uid;
   const userEmail = appEmail ?? authUser?.email ?? undefined;
-  const localLogin = !appUserId && !!authUser;
   const [space, setSpace] = useState<Space | null | undefined>(undefined);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -58,6 +57,8 @@ export default function OurLife({ page, userId: appUserId, userEmail: appEmail, 
       ? 'Сервер не пускает в общее пространство: опубликуйте новые правила Firestore (firebase deploy --only firestore:rules).'
       : 'Не удалось подключить общее пространство. Проверьте интернет.'));
   }, [userId, pair, space, userName]);
+  // Аватар участника: фото профиля, иначе выбранный персонаж или смайлик из профиля.
+  const userPhoto = profilePhoto || (userAvatar === 'character' || userAvatar === '🐼' ? playerImg : userAvatar) || undefined;
   const cloudCtx = useMemo<Ctx | null>(() => (space && userId ? { db: database, space, uid: userId, name: userName } : null), [space, userId, userName]);
   // Пока правила Firestore не опубликованы (или нет входа), сервисы работают в демо-режиме:
   // данные хранятся в этом браузере, второй участник показан для примера.
@@ -83,7 +84,7 @@ export default function OurLife({ page, userId: appUserId, userEmail: appEmail, 
     let off = false;
     void (async () => {
       try {
-        const photo = userPhoto.startsWith('data:') ? await compressImage(await (await fetch(userPhoto)).blob(), 160, 60_000) : userPhoto.slice(0, 2000);
+        const photo = isImageSrc(userPhoto) && !/^https?:/.test(userPhoto) ? await compressImage(await (await fetch(userPhoto)).blob(), 160, 60_000) : userPhoto.slice(0, 2000);
         if (!off) await put(ctx, 'profiles', ctx.uid, { name: ctx.name, photo });
       } catch { /* без фото останутся инициалы */ }
     })();
@@ -154,8 +155,6 @@ export default function OurLife({ page, userId: appUserId, userEmail: appEmail, 
     <div className="our-page">
       {head}
       {error && !rulesMissing && <p className="our-error" role="alert">{error}</p>}
-      {demo && <DemoNote signedIn={!!userId} onRetry={() => { setError(''); setSpace(undefined); window.location.reload(); }} />}
-      {localLogin && <p className="our-signed">Общее пространство: вы вошли как <b>{authUser!.email}</b>. Личные разделы по-прежнему хранятся в этом браузере. <button type="button" className="o-link" onClick={() => void signOut(auth)}>Выйти</button></p>}
       {gate}
       {!demo && space && userId && !full && (
         <section className="our-card our-invite-card">
@@ -213,36 +212,3 @@ function Reminders({ ctx, onOpen }: { ctx: Ctx; onOpen: (page: string, id?: stri
   return <div className="our-reminder" role="status"><Ic n="bell" size={18} /><span><b>Скоро:</b> {shown.title} · {fmtIso(shown.start)}</span><button type="button" className="o-link" onClick={() => { onOpen('our-calendar', shown.id); setShown(null); }}>Открыть</button><button type="button" className="o-icon" aria-label="Закрыть" onClick={() => setShown(null)}><Ic n="close" size={14} /></button></div>;
 }
 
-/** Плашка демо-режима: сервисы работают локально, пока правила Firestore не опубликованы. */
-function DemoNote({ signedIn, onRetry }: { signedIn: boolean; onRetry: () => void }) {
-  const [more, setMore] = useState(false);
-  return (
-    <>
-      <p className="our-signed our-demo-note">
-        <b>Демо-режим.</b> Все сервисы работают, записи сохраняются в этом браузере. {signedIn ? 'Чтобы второй участник видел общие записи, опубликуйте правила Firestore.' : 'Войдите в аккаунт, чтобы записи стали общими.'}
-        {signedIn && <> <button type="button" className="o-link" onClick={() => setMore(!more)}>{more ? 'Скрыть' : 'Как опубликовать'}</button></>}
-      </p>
-      {more && <RulesHelp onRetry={onRetry} />}
-    </>
-  );
-}
-
-function RulesHelp({ onRetry }: { onRetry: () => void }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <section className="our-card our-rules">
-      <h2><Ic n="lock" size={22} /> Нужно один раз опубликовать правила доступа</h2>
-      <p>Вход прошёл, но облако Firebase пока не знает про «Нашу жизнь» и не пускает к общим данным. Это делается один раз владельцем проекта:</p>
-      <ol>
-        <li>Откройте <a href="https://console.firebase.google.com/project/play-your-life-872b1/firestore/rules" target="_blank" rel="noreferrer">Firebase → Firestore Database → Правила (Rules)</a>.</li>
-        <li>Нажмите «Скопировать правила» ниже, удалите в редакторе старый текст и вставьте новый.</li>
-        <li>Нажмите «Опубликовать» (Publish), подождите минуту и нажмите «Проверить снова».</li>
-      </ol>
-      <div className="our-row">
-        <button type="button" className="our-primary" onClick={async () => { try { await navigator.clipboard.writeText(rulesText); setCopied(true); } catch { setCopied(false); } }}>{copied ? 'Скопировано ✓' : 'Скопировать правила'}</button>
-        <button type="button" onClick={onRetry}>Проверить снова</button>
-      </div>
-      <p className="o-muted">Или в терминале проекта: <code>firebase deploy --only firestore:rules</code>.</p>
-    </section>
-  );
-}

@@ -600,7 +600,7 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
                 notify={notify}
               />
             )}
-            {isOurPage(page) && <OurLife page={page} userId={userId} userEmail={userEmail ?? undefined} userName={state.profile.name} userPhoto={state.profile.photo} joinCode={joinCode} onJoined={() => setJoinCode(null)} onNavigate={navigate} onAddTask={(title, day) => { try { const next = quickPlanningTask(state, title.slice(0, 120), userId ?? 'local', day && /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : undefined); setState(next); notify('Задача добавлена в «Мои задачи»'); return true; } catch { return false; } }} />}
+            {isOurPage(page) && <OurLife page={page} userId={userId} userEmail={userEmail ?? undefined} userName={state.profile.name} userPhoto={state.profile.photo} userAvatar={state.profile.avatar} joinCode={joinCode} onJoined={() => setJoinCode(null)} onNavigate={navigate} onAddTask={(title, day) => { try { const next = quickPlanningTask(state, title.slice(0, 120), userId ?? 'local', day && /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : undefined); setState(next); notify('Задача добавлена в «Мои задачи»'); return true; } catch { return false; } }} />}
             {page === 'budget' && (
               <FinancePage state={state} onChange={setState} notify={notify} />
             )}

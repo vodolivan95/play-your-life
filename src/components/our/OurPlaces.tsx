@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { compressImage, matches, newId, notify, patch, placeCategories, placeStatuses, proposalStatuses, put, byTime, watch, dayKey } from '../../ourData';
+import { compressImage, matches, placeIcon, seedStarterPlaces, newId, notify, patch, placeCategories, placeStatuses, proposalStatuses, put, byTime, watch, dayKey } from '../../ourData';
 import type { Ctx, Place, Visit } from '../../ourData';
 import Ic from '../KbIcons';
 import { EventForm } from './OurCalendar';
@@ -25,6 +25,7 @@ export default function OurPlaces({ ctx, focusId, onOpen }: { ctx: Ctx; focusId:
   const [prevFocus, setPrevFocus] = useState(focusId);
   if (focusId !== prevFocus) { setPrevFocus(focusId); setOpenId(focusId); }
   useEffect(() => watch<Place>(ctx, 'places', byTime(500), setPlaces, setError), [ctx]);
+  useEffect(() => { seedStarterPlaces(ctx).catch(() => undefined); }, [ctx]);
   const list = places.filter((p) => (tab === 'all' ? p.kind === 'place' : tab === 'proposals' ? p.kind === 'proposal' : p.kind === 'place' && (tab === 'want' ? p.status !== 'visited' : p.status === 'visited'))
     && (category === 'any' || p.category === category) && (matches(p.title, q) || matches(p.description, q) || matches(p.address, q)));
   const open = places.find((p) => p.id === openId) ?? null;
@@ -35,20 +36,17 @@ export default function OurPlaces({ ctx, focusId, onOpen }: { ctx: Ctx; focusId:
       {error && <p className="o-err">{error}</p>}
       <div className="ok-bar">
         <Tabs value={tab} onChange={setTab} items={[['all', 'Все места', count('all')], ['proposals', 'Предложения', count('proposals')], ['want', 'Хотим посетить', count('want')], ['visited', 'Посетили', count('visited')]]} />
-        <div className="ok-filters">
+        <div className="ok-filters ok-one">
+          <label className="o-search slim"><Ic n="search" size={15} /><input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск мест" aria-label="Поиск мест" /></label>
+          <select value={category} onChange={(e) => setCategory(e.target.value as typeof category)} aria-label="Категория"><option value="any">Все категории</option>{Object.entries(placeCategories).map(([k, v]) => <option key={k} value={k}>{placeIcon(k as keyof typeof placeCategories)} {v}</option>)}</select>
           <button type="button" onClick={() => setForm({ kind: 'proposal' })}><Ic n="chat" size={15} /> Предложить</button>
           <button type="button" className="o-primary" onClick={() => setForm({ kind: 'place' })}><Ic n="plus" size={15} /> Место</button>
         </div>
       </div>
-      <div className="ok-bar">
-        <label className="o-search slim"><Ic n="search" size={15} /><input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск мест и предложений" aria-label="Поиск мест" /></label>
-        <select value={category} onChange={(e) => setCategory(e.target.value as typeof category)} aria-label="Категория"><option value="any">Все категории</option>{Object.entries(placeCategories).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-        <span className="o-muted">Карта: адреса открываются в Яндекс Картах.</span>
-      </div>
       {list.length === 0 ? <Empty icon="mapPin" title={tab === 'proposals' ? 'Предложений пока нет' : 'Мест пока нет'} text={tab === 'proposals' ? 'Предложите сходить в кафе, на концерт или съездить на выходные.' : 'Сохраните место, куда хочется сходить вместе.'} /> : (
         <div className="op-grid">{list.map((p) => (
           <button key={p.id} type="button" className="op-card" onClick={() => setOpenId(p.id)}>
-            <span className="op-photo">{p.photos[0] ? <img src={p.photos[0]} alt="" loading="lazy" /> : <Ic n="mapPin" size={34} />}<em className={`op-status s-${p.kind === 'proposal' ? p.proposalStatus : p.status}`}>{p.kind === 'proposal' ? proposalStatuses[p.proposalStatus] : placeStatuses[p.status]}</em></span>
+            <span className={`op-photo op-art-${p.category}`}>{p.photos[0] ? <img src={p.photos[0]} alt="" loading="lazy" /> : <span className="op-emoji" aria-hidden="true">{p.icon || placeIcon(p.category)}</span>}<em className={`op-status s-${p.kind === 'proposal' ? p.proposalStatus : p.status}`}>{p.kind === 'proposal' ? proposalStatuses[p.proposalStatus] : placeStatuses[p.status]}</em></span>
             <span className="op-body">
               <small>{placeCategories[p.category]}</small>
               <strong>{p.title}</strong>
@@ -119,6 +117,7 @@ function PlaceCard({ ctx, p, onClose, onEdit, onOpen }: { ctx: Ctx; p: Place; on
       <Tabs value={tab} onChange={setTab} items={[['info', p.kind === 'proposal' ? 'Предложение' : 'Место'], ['talk', 'Обсуждение', p.commentsCount], ['visits', 'Посещения', p.visits.length]]} />
       {tab === 'info' && (
         <div className="ok-detail">
+          {p.photos.length === 0 && <div className={`op-photo op-hero op-art-${p.category}`}><span className="op-emoji" aria-hidden="true">{p.icon || placeIcon(p.category)}</span></div>}
           {p.photos.length > 0 && <div className="op-gallery">{p.photos.map((ph, i) => <a key={i} href={ph} target="_blank" rel="noreferrer"><img src={ph} alt="" /></a>)}</div>}
           <dl>
             <dt>Категория</dt><dd>{placeCategories[p.category]}</dd>

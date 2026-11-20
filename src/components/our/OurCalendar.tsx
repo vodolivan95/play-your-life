@@ -67,19 +67,19 @@ export default function OurCalendar({ ctx, focusId, onOpen }: { ctx: Ctx; focusI
         <div className="ok-invites" role="status"><strong><Ic n="bell" size={15} /> Вас пригласили:</strong>{invites.map((e) => <button key={e.id} type="button" onClick={() => setOpenId(e.id)}>{e.title} · {fmtIso(e.start)}</button>)}</div>
       )}
       <div className="ok-bar">
-        <Tabs value={mode} onChange={setMode} items={[['mine', 'Мой календарь'], ['shared', 'Совместный'], ['all', 'Все события']]} />
+        <Tabs value={mode} onChange={setMode} items={[['mine', '👤 Мой'], ['shared', '👥 Совместный'], ['all', '✨ Все']]} />
+        <div className="ok-filters ok-one">
+          <label className="o-search slim"><Ic n="search" size={15} /><input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск" aria-label="Поиск мероприятий" /></label>
+          <select value={category} onChange={(e) => setCategory(e.target.value as typeof category)} aria-label="Категория"><option value="any">Все категории</option>{Object.entries(eventCategories).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+          <select value={person} onChange={(e) => setPerson(e.target.value)} aria-label="Участник"><option value="any">Все участники</option>{ctx.space.memberIds.map((u) => <option key={u} value={u}>{who(u)}</option>)}</select>
+        </div>
         <button type="button" className="o-primary" onClick={() => setDraft({ start: `${dayKey(view === 'list' ? new Date() : cursor)}T19:00`, access: 'shared' })}><Ic n="plus" size={15} /> Мероприятие</button>
       </div>
       <div className="ok-bar">
         <div className="ok-nav">
           {view !== 'list' && <><button type="button" className="o-icon" aria-label="Назад" onClick={() => step(-1)}>‹</button><button type="button" className="o-link" onClick={() => setCursor(new Date())}>Сегодня</button><button type="button" className="o-icon" aria-label="Вперёд" onClick={() => step(1)}>›</button></>}
           <h3>{title}</h3>
-        </div>
-        <div className="ok-filters">
-          <label className="o-search slim"><Ic n="search" size={15} /><input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск" aria-label="Поиск мероприятий" /></label>
-          <select value={category} onChange={(e) => setCategory(e.target.value as typeof category)} aria-label="Категория"><option value="any">Все категории</option>{Object.entries(eventCategories).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-          <select value={person} onChange={(e) => setPerson(e.target.value)} aria-label="Участник"><option value="any">Все участники</option>{ctx.space.memberIds.map((u) => <option key={u} value={u}>{who(u)}</option>)}</select>
-          <Tabs value={view} onChange={setView} items={[['month', 'Месяц'], ['week', 'Неделя'], ['day', 'День'], ['list', 'Список']]} />
+          <Tabs value={view} onChange={setView} items={[['month', '🗓️ Месяц'], ['week', '📆 Неделя'], ['day', '☀️ День'], ['list', '📋 Список']]} />
         </div>
       </div>
       {view === 'month' && (

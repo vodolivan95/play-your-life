@@ -372,3 +372,72 @@ main[class*='screen-our-'] { max-width: none; }
 .our-rules a { color: var(--o-blue); font-weight: 700; }
 .our-rules code { padding: 2px 6px; border-radius: 6px; background: var(--o-soft); }
 @media (max-width: 760px) { .our-signin-fields { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- 0.90.3: оформление сервисов «Нашей жизни» ---------- */
+/* Иконки групп: один размер, светлая подложка, крупный смайлик */
+.our-page .oc-gicon { width: 46px; height: 46px; border-radius: 15px; background: linear-gradient(145deg, #ffffff, #eaf2ff) !important; border: 1px solid #d6e4fb; box-shadow: 0 4px 12px rgba(47, 108, 240, .10); font-size: 25px; line-height: 1; }
+.our-page .oc-gicon.big { width: 48px; height: 48px; font-size: 26px; }
+:root[data-theme='dark'] .our-page .oc-gicon { background: linear-gradient(145deg, #1d2c55, #14204a) !important; border-color: #2a3c6c; }
+
+/* Смайлики в сообщении */
+.occ-emoji-wrap { position: relative; flex: none; }
+.occ-emoji { position: absolute; bottom: calc(100% + 8px); left: 0; z-index: 20; width: 292px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 8px; border: 1px solid var(--o-line); border-radius: 16px; background: var(--o-bg); box-shadow: var(--o-shadow); }
+.our-page .occ-emoji button { height: 36px; padding: 0; border: 0; border-radius: 10px; background: transparent; font-size: 21px; line-height: 1; cursor: pointer; }
+.our-page .occ-emoji button:hover { background: var(--o-hover); }
+
+/* Ближайшее собрание */
+.omt-next h4 { margin-bottom: 12px; }
+.our-page .omt-hero { width: 100%; display: flex; align-items: center; gap: 18px; padding: 18px 22px; border: 0; border-radius: 22px; background: radial-gradient(120% 140% at 0% 0%, #5aa2ff 0%, #2f6cf0 55%, #2350c8 100%); color: #fff; text-align: left; cursor: pointer; box-shadow: 0 14px 32px rgba(47, 108, 240, .28); transition: transform .15s, box-shadow .15s; }
+.our-page .omt-hero:hover { transform: translateY(-2px); box-shadow: 0 18px 38px rgba(47, 108, 240, .34); }
+.omt-date { flex: none; width: 74px; padding: 8px 0; border-radius: 16px; background: rgba(255, 255, 255, .95); color: #1d3d8f; display: grid; justify-items: center; line-height: 1.1; box-shadow: 0 6px 14px rgba(10, 30, 90, .18); }
+.omt-date b { font-size: 30px; }
+.omt-date small { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: #4b6bb8; }
+.omt-hero-main { flex: 1; min-width: 0; display: grid; gap: 10px; }
+.omt-hero-main strong { font-size: 21px; color: #fff; }
+.omt-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.omt-chips span { padding: 5px 11px; border-radius: 999px; background: rgba(255, 255, 255, .18); border: 1px solid rgba(255, 255, 255, .28); color: #fff; font-size: 13px; font-weight: 700; }
+.omt-hero-side { flex: none; display: grid; justify-items: end; gap: 10px; }
+.omt-people { display: flex; }
+.omt-people .oa { margin-left: -8px; box-shadow: 0 0 0 3px #3b78f2; }
+.omt-open { padding: 7px 14px; border-radius: 999px; background: #fff; color: #2350c8; font-size: 13px; font-weight: 800; }
+.omt-sub-h { margin-top: 16px !important; }
+@media (max-width: 760px) { .our-page .omt-hero { flex-wrap: wrap; padding: 16px; } .omt-hero-side { width: 100%; grid-auto-flow: column; justify-content: space-between; align-items: center; } }
+
+/* Календарь: вид рядом с месяцем, всё в одну строку */
+.ok-nav { flex-wrap: wrap; gap: 10px; }
+.ok-nav h3 { margin-right: 8px; }
+.ok-nav .ot { margin-left: 4px; }
+
+/* Наши места: обложки с крупной иконкой на всю карточку */
+.op-photo { height: 170px; overflow: hidden; }
+.op-emoji { font-size: 104px; line-height: 1; filter: drop-shadow(0 14px 18px rgba(20, 40, 90, .28)); transform: translateY(4px); transition: transform .25s; }
+.op-card:hover .op-emoji { transform: translateY(-2px) scale(1.06); }
+.op-photo[class*='op-art-']::before, .op-photo[class*='op-art-']::after { content: ''; position: absolute; border-radius: 50%; background: rgba(255, 255, 255, .28); }
+.op-photo[class*='op-art-']::before { width: 210px; height: 210px; right: -60px; top: -80px; }
+.op-photo[class*='op-art-']::after { width: 140px; height: 140px; left: -40px; bottom: -70px; background: rgba(255, 255, 255, .2); }
+.op-photo:has(img)::before, .op-photo:has(img)::after { display: none; }
+.op-art-parks { background: linear-gradient(140deg, #c9f2d6 0%, #7fd9a4 55%, #3fb47a 100%); }
+.op-art-food { background: linear-gradient(140deg, #ffe7c7 0%, #ffbd7a 55%, #f28b4b 100%); }
+.op-art-cinema { background: linear-gradient(140deg, #eadcff 0%, #b996ff 55%, #8a5cf0 100%); }
+.op-art-concerts { background: linear-gradient(140deg, #ffd9ec 0%, #ff92c2 55%, #e2508f 100%); }
+.op-art-fun { background: linear-gradient(140deg, #fff3c2 0%, #ffd45c 55%, #f5a623 100%); }
+.op-art-trips { background: linear-gradient(140deg, #d6f1ff 0%, #8fd3ff 55%, #3d9bf0 100%); }
+.op-art-sights { background: linear-gradient(140deg, #dfe8ff 0%, #9db6ff 55%, #5a7cf0 100%); }
+.op-art-other { background: linear-gradient(140deg, #eef2f8 0%, #c9d4e6 55%, #9aa8c2 100%); }
+.op-photo img { position: relative; z-index: 1; }
+.op-photo .op-emoji, .op-status { position: relative; z-index: 1; }
+.op-status { position: absolute; }
+.op-hero { height: 200px; border-radius: 18px; }
+.op-hero .op-emoji { font-size: 130px; }
+.op-body { gap: 6px; padding: 14px 16px 16px; }
+.op-body strong { font-size: 17px; }
+.oa-emoji { font-style: normal; font-size: 1.35em; line-height: 1; }
+.oa:has(.oa-emoji) { background: linear-gradient(145deg, #fff, #eaf2ff); }
+/* Фильтры в одну строку: поле поиска сжимается, списки компактнее */
+.ok-bar:has(> .ok-one) { flex-wrap: nowrap; }
+.ok-one { flex: 1 1 auto; flex-wrap: nowrap; justify-content: flex-end; min-width: 0; }
+.ok-one .o-search.slim { flex: 1 1 200px; min-width: 120px; max-width: 280px; }
+.ok-one select { flex: 0 1 180px; min-width: 156px; }
+.our-page .ok-one > button, .our-page .op .ok-bar > button { flex: none; white-space: nowrap; font-size: 14px; height: 38px; padding: 0 14px; }
+.ok-bar > .ot { flex: none; }
+@media (max-width: 1100px) { .ok-bar:has(> .ok-one) { flex-wrap: wrap; } .ok-one { flex-wrap: wrap; justify-content: flex-start; } }

@@ -12,3 +12,5 @@
 @media(prefers-reduced-motion:reduce) { .city-exteriors { transition:none; } }
 
 img.city-building-art { object-fit:cover; object-position:center; aspect-ratio:1.5; }
+/* 0.90.3: у «Финансов» и «Задач» эмблема стоит у самого верха кадра — показываем фото от верхнего края, чтобы здание входило целиком. */
+img.city-building-art[data-sphere='finance'], img.city-building-art[data-sphere='tasks'] { object-position:center top; }

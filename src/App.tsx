@@ -1,5 +1,7 @@
 import { changeJournal, journalDate } from './changeJournal';
 import TaskReminders from './components/TaskReminders';
+import { NotifyPrompt, PsychologyReminder } from './components/SystemReminders';
+import { readOpenRoute } from './systemNotify';
 import { isTaskReviewMode } from './taskReviewMode';
 import { dependencyBlockMessage } from './taskDependencies';
 import { readGoalRoute, goalRoute } from './goalRoutes';
@@ -13,7 +15,7 @@ import MobileNav from './components/MobileNav';
 import { navigation } from './navigation';
 import { isOwnerEmail } from './privateAccess';
 import { quickPlanningTask } from './planner';
-import { isOurPage, lastPageOf, ourRoute, readOurRoute, rememberPage, storedMode } from './ourLife';
+import { isOurPage, isPairAccount, lastPageOf, ourRoute, readOurRoute, rememberPage, storedMode } from './ourLife';
 import type { LifeMode } from './ourLife';
 import { CityAppearanceContext } from './cityAppearanceContext';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
@@ -21,6 +23,7 @@ import type { Dispatch, SetStateAction, ReactNode } from 'react';
 import Icon from './components/Icon';
 import './components/Overlay.css';
 const LifeCity = lazy(() => import('./components/LifeCity'));
+const OurBackground = lazy(() => import('./components/OurBackground'));
 const FocusBar = lazy(() => import('./components/FocusBar'));
 // Страницы разделов грузятся по требованию: при первом открытии сайта виден
 // только «Главная», остальные разделы не нужны и не должны лежать в главном
@@ -148,7 +151,7 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
     });
   }, [owner, userEmail, userId, state, setState]);
   const [page, setPage] = useState(() =>
-    readOurRoute(location.hash)?.page ?? (readTaskRoute() ? 'tasks' : !location.hash && storedMode() === 'our' ? lastPageOf('our') : readGoalRoute() || location.hash === '#goals' ? 'goals' : location.hash === '#city'
+    readOpenRoute(location.hash) ?? readOurRoute(location.hash)?.page ?? (readTaskRoute() ? 'tasks' : !location.hash && storedMode() === 'our' ? lastPageOf('our') : readGoalRoute() || location.hash === '#goals' ? 'goals' : location.hash === '#city'
       ? 'city'
       : location.hash.startsWith('#ticktick=') || location.hash === '#profile'
         ? 'profile'
@@ -176,6 +179,9 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
   }, [userId, state.profile.onboardingComplete]);
   useEffect(() => {
     const changed = () => {
+      // «#open=<раздел>» — переход из системного уведомления.
+      const opened = readOpenRoute(location.hash);
+      if (opened) { window.history.replaceState(null, '', location.pathname + location.search); setPage(opened); return; }
       const our = readOurRoute(location.hash);
       if (our) { setPage(our.page); if (our.joinCode) setJoinCode(our.joinCode); return; }
       const taskId = readTaskRoute();
@@ -259,6 +265,10 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
         navigate('achievements');
         return;
     }
+  }
+  /** Задача из «Нашей жизни» (решение собрания, задача от второго участника) → «Мои задачи». */
+  function addTaskFromOur(title: string, day?: string): boolean {
+    try { setState(quickPlanningTask(state, title.slice(0, 120), userId ?? 'local', day && /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : undefined)); return true; } catch { return false; }
   }
   function switchMode(mode: LifeMode) {
     navigate(lastPageOf(mode));
@@ -601,7 +611,7 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
                 notify={notify}
               />
             )}
-            {isOurPage(page) && <OurLife page={page} userId={userId} userEmail={userEmail ?? undefined} userName={state.profile.name} userPhoto={state.profile.photo} userAvatar={state.profile.avatar} joinCode={joinCode} onJoined={() => setJoinCode(null)} onNavigate={navigate} onAddTask={(title, day) => { try { const next = quickPlanningTask(state, title.slice(0, 120), userId ?? 'local', day && /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : undefined); setState(next); notify('Задача добавлена в «Мои задачи»'); return true; } catch { return false; } }} />}
+            {isOurPage(page) && <OurLife page={page} userId={userId} userEmail={userEmail ?? undefined} userName={state.profile.name} userPhoto={state.profile.photo} userAvatar={state.profile.avatar} joinCode={joinCode} onJoined={() => setJoinCode(null)} onNavigate={navigate} onAddTask={(title, day) => { const ok = addTaskFromOur(title, day); if (ok) notify('Задача добавлена в «Мои задачи»'); return ok; }} />}
             {page === 'budget' && (
               <FinancePage state={state} onChange={setState} notify={notify} />
             )}
@@ -953,6 +963,9 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
         </div>
         <MobileNav owner={owner} page={page} state={state} onNavigate={navigate} onMode={switchMode} />
         <TaskReminders key={userId ?? 'local'} tasks={state.quests} onOpen={setPendingTask} />
+        {userId && isPairAccount(userEmail) && <Suspense fallback={null}><OurBackground userId={userId} userEmail={userEmail!} userName={state.profile.name} onAddTask={addTaskFromOur} onNotify={notify} /></Suspense>}
+        {owner && <PsychologyReminder onOpen={() => navigate('psychology')} />}
+        {userId && <NotifyPrompt owner={owner} />}
         {inboxSphereId && <TickTickInboxDialog state={state} onChange={setState} scope={{ sphereId: inboxSphereId }} onClose={() => setInboxSphereId(null)} />}
         {sphereTaskId && (
           <TaskWindow

@@ -409,3 +409,17 @@ export function mergeKnowledgeBase(kb: KnowledgeBase, incoming: KnowledgeBase): 
   const terms = incoming.glossary.filter((t) => !termIds.has(t.id)).map((t) => ({ ...t, spaceId: remap.get(t.spaceId) ?? t.spaceId }));
   return { kb: { ...kb, spaces, articles: [...kb.articles, ...fresh], glossary: [...kb.glossary, ...terms] }, added: fresh.length };
 }
+
+/* ---------- 0.90.5: статьи, которыми поделился второй участник «Нашей жизни» ---------- */
+export const KB_SHARED_SPACE_ID = 'space-shared-with-me';
+/** Добавляет полученную статью в пространство «Поделились со мной» (создаёт его при необходимости). */
+export function importSharedArticle(kb: KnowledgeBase, input: { title: string; html: string; from: string; icon?: string }, now = new Date()): KnowledgeBase {
+  let next = kb;
+  if (!next.spaces.some((s) => s.id === KB_SHARED_SPACE_ID)) {
+    next = { ...next, spaces: [...next.spaces, { id: KB_SHARED_SPACE_ID, name: 'Поделились со мной', icon: '📨', color: '#7a4fd6', description: 'Статьи, которые прислали из «Нашей жизни».', quickLinks: [], createdAt: now.toISOString() }] };
+  }
+  const [withArticle, article] = createArticle(next, { spaceId: KB_SHARED_SPACE_ID, title: input.title, author: input.from, icon: input.icon || '📨' }, now);
+  return { ...withArticle, articles: withArticle.articles.map((a) => (a.id === article.id ? { ...a, html: input.html, status: 'published' as const } : a)) };
+}
+/** Слушатели открытой базы знаний: если она на экране, полученная статья добавляется прямо в неё. */
+export const kbImportListeners = new Set<(input: { title: string; html: string; from: string; icon?: string }) => void>();

@@ -495,3 +495,6 @@ main[class*='screen-our-'] { max-width: none; }
 .ok .ok-one select { min-width: 140px; flex-basis: 150px; }
 .ok-cell { min-height: 108px; }
 .ok-one select { font-size: 13px; padding-left: 10px; padding-right: 26px; }
+.our-page .our-partner-task { height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid #dfe9fa; background: #fff; color: #15223d; font-weight: 800; font-size: 13px; cursor: pointer; box-shadow: 0 4px 12px rgba(40, 80, 160, .08); }
+.our-page .our-partner-task:hover { background: #eef4ff; }
+:root[data-theme='dark'] .our-page .our-partner-task { background: #101a36; border-color: #26345e; color: #e6ecff; }

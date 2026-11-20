@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Quest } from '../game';
 import { dueTaskReminders } from '../taskReminders';
+import { showSystemNotification } from '../systemNotify';
 export default function TaskReminders({ tasks, onOpen }: { tasks: Quest[]; onOpen: (id: string) => void }) {
   const latest = useRef(tasks);
   useEffect(() => { latest.current = tasks; }, [tasks]);
@@ -10,7 +11,7 @@ export default function TaskReminders({ tasks, onOpen }: { tasks: Quest[]; onOpe
     function check() {
       const next = dueTaskReminders(latest.current, Date.now()).filter(r => !fired.current.has(r.key));
       if (!next.length) return;
-      next.forEach(r => fired.current.add(r.key));
+      next.forEach(r => { fired.current.add(r.key); void showSystemNotification('⏰ Напоминание о задаче', r.name, '#open=tasks', `task-${r.key}`); });
       setAlerts(old => [...old, ...next].slice(-10));
     }
     const interval = window.setInterval(check, 15000);

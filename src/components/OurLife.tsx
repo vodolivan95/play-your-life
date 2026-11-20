@@ -17,7 +17,8 @@ import OurCalendar from './our/OurCalendar';
 import { useEventReminders, useEvents } from './our/useEvents';
 import OurPlaces from './our/OurPlaces';
 import OurMeetings from './our/OurMeetings';
-import { Avatar } from './our/OurUi';
+import { Avatar, Field, Modal } from './our/OurUi';
+import { usePartner } from '../ourInbox';
 import { isImageSrc, OurPhotos } from './our/ourPhotos';
 import { publishUpcoming } from '../ourUpcoming';
 import type { UpcomingItem } from '../ourUpcoming';
@@ -120,6 +121,7 @@ export default function OurLife({ page, userId: appUserId, userEmail: appEmail, 
       {ctx && (
         <div className="our-head-side">
           <div className="our-members compact">{ctx.space.memberIds.map((uid) => <span key={uid} className={`our-member${uid === ctx.uid ? ' me' : ''}`} title={ctx.space.members[uid]?.name}><Avatar name={ctx.space.members[uid]?.name ?? ''} me={uid === ctx.uid} size={30} />{ctx.space.members[uid]?.name ?? 'Участник'}</span>)}</div>
+          <PartnerTask />
           <Bell ctx={ctx} onOpen={open} />
         </div>
       )}
@@ -230,3 +232,32 @@ function Reminders({ ctx, onOpen, photos }: { ctx: Ctx; onOpen: (page: string, i
   return <div className="our-reminder" role="status"><Ic n="bell" size={18} /><span><b>Скоро:</b> {shown.title} · {fmtIso(shown.start)}</span><button type="button" className="o-link" onClick={() => { onOpen('our-calendar', shown.id); setShown(null); }}>Открыть</button><button type="button" className="o-icon" aria-label="Закрыть" onClick={() => setShown(null)}><Ic n="close" size={14} /></button></div>;
 }
 
+
+/** «Задача для …»: поставить задачу второму участнику — она появится у него в «Моих задачах» с уведомлением. */
+function PartnerTask() {
+  const partner = usePartner();
+  const [open, setOpen] = useState(false);
+  const [f, setF] = useState({ title: '', due: '', note: '' });
+  const [state, setState] = useState<'' | 'sending' | 'sent' | 'error'>('');
+  if (!partner) return null;
+  const send = async () => {
+    if (!f.title.trim()) return;
+    setState('sending');
+    try { await partner.send({ kind: 'task', title: f.title.trim(), due: f.due || undefined, note: f.note.trim() || undefined }); setState('sent'); setF({ title: '', due: '', note: '' }); setTimeout(() => { setOpen(false); setState(''); }, 900); }
+    catch { setState('error'); }
+  };
+  return (
+    <>
+      <button type="button" className="our-partner-task" onClick={() => setOpen(true)}>📌 Задача для {partner.name}</button>
+      {open && (
+        <Modal title={`Задача для ${partner.name}`} onClose={() => setOpen(false)} footer={<><button type="button" onClick={() => setOpen(false)}>Отмена</button><button type="button" className="o-primary" disabled={!f.title.trim() || state === 'sending'} onClick={() => void send()}>{state === 'sent' ? 'Отправлено ✓' : 'Поставить задачу'}</button></>}>
+          <Field label="Что сделать"><input autoFocus value={f.title} maxLength={200} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="Например: забрать документы" /></Field>
+          <Field label="Срок"><input type="date" value={f.due} onChange={(e) => setF({ ...f, due: e.target.value })} /></Field>
+          <Field label="Комментарий"><textarea rows={2} value={f.note} maxLength={300} onChange={(e) => setF({ ...f, note: e.target.value })} /></Field>
+          <p className="o-muted">Задача появится у {partner.name} в «Моих задачах», придёт уведомление.</p>
+          {state === 'error' && <p className="o-err">Не удалось отправить. Проверьте интернет и правила Firestore.</p>}
+        </Modal>
+      )}
+    </>
+  );
+}

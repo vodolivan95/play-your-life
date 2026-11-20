@@ -10,29 +10,31 @@ ROOT = Path(__file__).resolve().parent.parent
 PUBLIC = ROOT / 'public'
 MASTER = PUBLIC / 'brand' / 'emblem-master.png'
 data = MASTER.read_bytes()
-revision = hashlib.sha256(data).hexdigest()[:12]
+# 0.90.5: «-bg1» — у значка для Android (maskable) и iOS непрозрачный светлый фон, иначе система подкладывает чёрный/серый.
+BG = (237, 248, 255, 255)  # #edf8ff — как background_color в манифесте
+revision = hashlib.sha256(data + b'opaque-bg-v1').hexdigest()[:12]
 rel = f'brand/emblem-{revision}/'
 out = PUBLIC / rel
 out.mkdir(parents=True, exist_ok=True)
 master = Image.open(BytesIO(data)).convert('RGBA')
 
-def render(size, pad=0.0):
+def render(size, pad=0.0, bg=None):
   """Эмблема по центру квадрата size×size; pad — доля пустого поля с каждой стороны."""
   inner = max(1, round(size * (1 - 2 * pad)))
   em = master.resize((inner, inner), Image.LANCZOS)
   if size <= 48:  # мелкие значки — чуть резче
     em = em.filter(ImageFilter.UnsharpMask(radius=0.6, percent=60, threshold=0))
-  canvas = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+  canvas = Image.new('RGBA', (size, size), bg or (0, 0, 0, 0))
   canvas.alpha_composite(em, ((size - inner) // 2, (size - inner) // 2))
   return canvas
 
 files = {
   'favicon-16x16.png': render(16), 'favicon-32x32.png': render(32), 'favicon-48x48.png': render(48),
   'logo-96.png': render(96), 'logo-256.png': render(256),
-  'apple-touch-icon.png': render(180, 0.04),
+  'apple-touch-icon.png': render(180, 0.08, BG),
   'icon-192.png': render(192), 'icon-512.png': render(512),
   # Maskable: вся эмблема внутри центральной безопасной окружности (80 %).
-  'icon-maskable-512.png': render(512, 0.14),
+  'icon-maskable-512.png': render(512, 0.14, BG),
 }
 pngs = {}
 for name, img in files.items():

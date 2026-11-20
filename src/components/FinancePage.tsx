@@ -409,6 +409,7 @@ export default function FinancePage({
               <b className={yearTotals.net < 0 ? 'negative' : ''}>{yearTotals.net >= 0 ? '+' : ''}{money(yearTotals.net)}</b>
               <em>доход минус траты</em>
             </div>
+            <div className="panel fin-kpi fin-kpi-plus"><span>Месяцев в плюсе</span><b>{activeMonths.length ? `${plusMonths} из ${activeMonths.length}` : '—'}</b><em>доход больше трат</em></div>
           </div>
 
           <div className="fin-kpis fin-kpis-more">
@@ -417,7 +418,6 @@ export default function FinancePage({
             <div className="panel fin-kpi"><span>Самый дорогой месяц</span><b>{priciestMonth ? money(priciestMonth.expense) : '—'}</b><em>{priciestMonth ? priciestMonth.label : 'данных пока нет'}</em></div>
             <div className="panel fin-kpi"><span>Самый экономный месяц</span><b>{cheapestMonth ? money(cheapestMonth.expense) : '—'}</b><em>{cheapestMonth ? cheapestMonth.label : 'данных пока нет'}</em></div>
             <div className="panel fin-kpi"><span>Средний доход в месяц</span><b>{activeMonths.length ? money(avgIncomeMonth) : '—'}</b><em>по {activeMonths.length} {activeMonths.length === 1 ? 'месяцу' : 'месяцам'} с записями</em></div>
-            <div className="panel fin-kpi"><span>Месяцев в плюсе</span><b>{activeMonths.length ? `${plusMonths} из ${activeMonths.length}` : '—'}</b><em>доход больше трат</em></div>
           </div>
 
           <section className="panel fin-chart">

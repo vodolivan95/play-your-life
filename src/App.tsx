@@ -701,7 +701,6 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
                   </section>
                 )}
                 <div className="profile-section">
-                  <span className="profile-section-label">Настройки</span>
                   <section className="panel profile-menu profile-settings">
                     <div className="profile-settings-row">
                       <span>Тема оформления</span>

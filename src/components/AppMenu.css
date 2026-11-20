@@ -234,3 +234,6 @@ main[class*='screen-our-'] > .page-heading { display: none; }
 :root[data-theme='dark'] .pyl-up-item { background: color-mix(in srgb, var(--c) 14%, #101a36); border-color: #26345e; }
 :root[data-theme='dark'] .pyl-up-date { background: #0c1430; }
 @media (min-width: 761px) and (max-height: 699px) { .pyl-up { display: none; } }
+/* 0.90.8: отступ между логотипом и переключателем «Моя / Наша жизнь». */
+.pyl-menu .pyl-brand { margin-bottom: 10px; }
+@media (min-width: 761px) and (max-height: 699px) { .pyl-menu .pyl-brand { margin-bottom: 4px; } }

@@ -7,7 +7,7 @@ import { INVITE_DAYS, SPACE_MEMBER_LIMIT, inviteLink, ourNavigation } from '../o
 import type { OurPageId } from '../ourLife';
 import { acceptInvite, createInvite, createSpace, ensurePairSpace, watchMySpace } from '../sharedSpace';
 import type { Space } from '../sharedSpace';
-import { compressImage, ensureSystemGroups, forUser, isPairEmail, patch, put, watch, PAIR_EMAILS, PAIR_SPACE_ID } from '../ourData';
+import { compressImage, dayKey, ensureSystemGroups, eventColors, eventIcons, eventVisible, forUser, isPairEmail, occurrences, patch, put, watch, PAIR_EMAILS, PAIR_SPACE_ID } from '../ourData';
 import { enableDemo } from '../ourStore';
 import type { CalEvent, Ctx, Notice } from '../ourData';
 import Ic from './KbIcons';
@@ -19,8 +19,10 @@ import OurPlaces from './our/OurPlaces';
 import OurMeetings from './our/OurMeetings';
 import { Avatar } from './our/OurUi';
 import { isImageSrc, OurPhotos } from './our/ourPhotos';
+import { publishUpcoming } from '../ourUpcoming';
+import type { UpcomingItem } from '../ourUpcoming';
 import playerImg from '../assets/player.webp';
-import { fmtDateTime, fmtIso } from './our/ourFormat';
+import { fmtDateTime, fmtIso, nameIn } from './our/ourFormat';
 import './OurLife.css';
 
 /* ---------- «Наша жизнь»: общее пространство и четыре сервиса (ТЗ 3.4–8) ---------- */
@@ -168,7 +170,7 @@ export default function OurLife({ page, userId: appUserId, userEmail: appEmail, 
           ) : <button type="button" className="our-primary" disabled={busy} onClick={() => run(async () => setInvite(await createInvite(database, space, userId)))}><Ic n="plus" size={16} /> Пригласить участника</button>)}
         </section>
       )}
-      {ctx && <Reminders ctx={ctx} onOpen={open} />}
+      {ctx && <Reminders ctx={ctx} onOpen={open} photos={photos} />}
       {ctx && page === 'our-chat' && <OurChat ctx={ctx} focusId={focus?.page === page ? focus.id : null} onOpenEvent={(id) => open('our-calendar', id)} />}
       {ctx && page === 'our-calendar' && <OurCalendar ctx={ctx} focusId={focus?.page === page ? focus.id : null} onOpen={open} />}
       {ctx && page === 'our-places' && <OurPlaces ctx={ctx} focusId={focus?.page === page ? focus.id : null} onOpen={open} />}
@@ -204,10 +206,26 @@ function Bell({ ctx, onOpen }: { ctx: Ctx; onOpen: (page: string, id?: string) =
   );
 }
 
-function Reminders({ ctx, onOpen }: { ctx: Ctx; onOpen: (page: string, id?: string) => void }) {
+function Reminders({ ctx, onOpen, photos }: { ctx: Ctx; onOpen: (page: string, id?: string) => void; photos: Record<string, string> }) {
   const { events } = useEvents(ctx);
   const [shown, setShown] = useState<CalEvent | null>(null);
   useEventReminders(ctx, events, setShown);
+  // «Ближайшие» в левом меню: два ближайших мероприятия (повторы учитываются, отменённые и прошедшие — нет).
+  useEffect(() => {
+    const who = nameIn(ctx.space);
+    const from = new Date(), to = new Date(from.getTime() + 120 * 864e5);
+    const list: UpcomingItem[] = [];
+    for (const ev of events) {
+      if (ev.status === 'cancelled' || !eventVisible(ev, ctx.uid, 'all')) continue;
+      for (const o of occurrences(ev, dayKey(from), dayKey(to))) {
+        if (new Date(o.end || o.start).getTime() < from.getTime()) continue;
+        list.push({ id: ev.id, title: ev.title, start: o.start, place: ev.place ?? '', icon: eventIcons[ev.category] ?? '⭐', color: eventColors[ev.category] ?? '#2f6cf0', people: ev.participants.map((u) => ({ name: who(u), photo: photos[who(u)] })) });
+      }
+    }
+    list.sort((a, b) => a.start.localeCompare(b.start));
+    publishUpcoming(list.slice(0, 2), (id) => onOpen('our-calendar', id));
+  }, [ctx, events, photos, onOpen]);
+  useEffect(() => () => publishUpcoming([], () => undefined), []);
   if (!shown) return null;
   return <div className="our-reminder" role="status"><Ic n="bell" size={18} /><span><b>Скоро:</b> {shown.title} · {fmtIso(shown.start)}</span><button type="button" className="o-link" onClick={() => { onOpen('our-calendar', shown.id); setShown(null); }}>Открыть</button><button type="button" className="o-icon" aria-label="Закрыть" onClick={() => setShown(null)}><Ic n="close" size={14} /></button></div>;
 }

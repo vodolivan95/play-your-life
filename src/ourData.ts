@@ -25,6 +25,7 @@ export const systemGroups: { id: string; name: string; caption: string; icon: st
 export const reactionSet = ['👍', '❤️', '😂', '🔥', '✅', '🙏'];
 export const agreementStatuses = { active: 'Актуальна', done: 'Выполнена', cancelled: 'Отменена' } as const;
 export const eventCategories = { personal: 'Личные дела', family: 'Семья', fun: 'Отдых и развлечения', work: 'Работа', trips: 'Поездки', holidays: 'Праздники', meetings: 'Общие собрания', other: 'Другое' } as const;
+export const eventIcons: Record<keyof typeof eventCategories, string> = { personal: '📌', family: '❤️', fun: '🎉', work: '💼', trips: '✈️', holidays: '🎂', meetings: '👥', other: '⭐' };
 export const eventColors: Record<keyof typeof eventCategories, string> = { personal: '#8a94a8', family: '#e0679a', fun: '#f39a3d', work: '#2f6cf0', trips: '#1fa8a0', holidays: '#e5484d', meetings: '#7a4fd6', other: '#6a7a99' };
 export const rsvpLabels = { yes: 'Приму участие', maybe: 'Возможно', no: 'Не смогу', pending: 'Ждёт ответа' } as const;
 export const placeCategories = { food: 'Рестораны и кафе', cinema: 'Кино и театры', concerts: 'Концерты', parks: 'Парки и прогулки', fun: 'Развлечения', trips: 'Путешествия', sights: 'Интересные места', other: 'Другое' } as const;

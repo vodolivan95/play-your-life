@@ -2,6 +2,7 @@ import { changeJournal, journalDate } from './changeJournal';
 import TaskReminders from './components/TaskReminders';
 import { NotifyPrompt, PsychologyReminder } from './components/SystemReminders';
 import { readOpenRoute } from './systemNotify';
+import { backfillTaskCoins } from './coinBackfill';
 import { isTaskReviewMode } from './taskReviewMode';
 import { dependencyBlockMessage } from './taskDependencies';
 import { readGoalRoute, goalRoute } from './goalRoutes';
@@ -150,6 +151,16 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
       setTimeout(() => { if (summary) notify(`Личный план загружен: проектов ${summary.projects}, задач ${summary.tasks}, закрыто выполненных ${summary.completed}.`); }, 0);
     });
   }, [owner, userEmail, userId, state, setState]);
+  // 0.90.7: лайфкоины за ранее закрытые задачи без награды — один раз; открытым задачам — награда по умолчанию.
+  useEffect(() => {
+    if (!userId || !state.profile.onboardingComplete) return;
+    let result: ReturnType<typeof backfillTaskCoins>;
+    try { result = backfillTaskCoins(state, userId); } catch { return; }
+    if (result.state === state) return;
+    setState(result.state);
+    if (result.coins) setTimeout(() => notify(`🪙 Начислено ${result.coins} лайфкоинов за ${result.tasks} закрытых задач`), 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- проверяем при изменении задач
+  }, [userId, state.quests, state.profile.onboardingComplete]);
   const [page, setPage] = useState(() =>
     readOpenRoute(location.hash) ?? readOurRoute(location.hash)?.page ?? (readTaskRoute() ? 'tasks' : !location.hash && storedMode() === 'our' ? lastPageOf('our') : readGoalRoute() || location.hash === '#goals' ? 'goals' : location.hash === '#city'
       ? 'city'

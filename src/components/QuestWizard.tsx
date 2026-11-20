@@ -74,7 +74,7 @@ export default function QuestWizard({
     difficulty: base?.difficulty ?? "Simple",
     targetValue: habit?.targetValue ?? base?.targetValue ?? 1,
     unit: habit?.unit ?? base?.unit ?? "",
-    rewardCoins: habit?.rewardCoins ?? base?.rewardCoins ?? 0,
+    rewardCoins: habit?.rewardCoins ?? base?.rewardCoins ?? (habit ? 0 : 2), // 0.90.7: задача по умолчанию даёт лайфкоины
     virtualRewardId: base?.virtualRewardId ?? "",
     startsAt: base?.startsAt?.slice(0, 10) ?? "",
     dueAt: base?.dueAt?.slice(0, 10) ?? "",

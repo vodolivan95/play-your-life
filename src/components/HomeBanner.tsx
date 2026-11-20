@@ -10,10 +10,10 @@ import { useMenuTheme } from '../menuTheme';
 import './HomeBanner.css';
 
 const FEATURES = [
-  ['tree', '▥', 'Развивай', 'навыки'],
-  ['goals', '◎', 'Выполняй', 'проекты'],
+  ['tree', '📊', 'Развивай', 'навыки'],
+  ['goals', '🎯', 'Выполняй', 'проекты'],
   ['achievements', '🏆', 'Получай', 'достижения'],
-  ['profile', '♥', 'Создавай', 'лучшую версию себя'],
+  ['profile', '💛', 'Создавай', 'лучшую версию себя'],
 ] as const;
 
 function pluralDays(value: number) {

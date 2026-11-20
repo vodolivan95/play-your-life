@@ -438,3 +438,11 @@ button.radar-label:focus-visible { outline: 3px solid #ffc94a; outline-offset: 2
 :root:not([data-theme='dark']) .sph-boss-next { background: #ffffff; }
 :root:not([data-theme='dark']) .sph-glass.is-green,
 :root:not([data-theme='dark']) .sph-glass.is-blue { border-color: #e2ebf7; box-shadow: 0 8px 24px -10px #284e9a33; }
+
+/* 0.90.3: кнопки карточки сферы компактнее; в светлой теме метки LVL и статус — светлые. */
+.sph-open { min-height: 40px; font-size: 13px; }
+.sph-icon-btn { width: 40px; height: 40px; }
+:root:not([data-theme='dark']) .sph-lvl { background: rgba(255, 255, 255, .92); color: #15223d; border-color: rgba(255, 255, 255, .9); box-shadow: 0 4px 12px rgba(20, 40, 90, .18); }
+:root:not([data-theme='dark']) .sph-status { background: rgba(255, 255, 255, .92); color: #2f6cf0; border-color: rgba(255, 255, 255, .9); box-shadow: 0 4px 12px rgba(20, 40, 90, .18); }
+:root:not([data-theme='dark']) .sph-status.is-strong { background: rgba(226, 247, 239, .95); color: #1d8c66; }
+:root:not([data-theme='dark']) .sph-status.is-weak { background: rgba(253, 232, 237, .95); color: #c43d5a; }

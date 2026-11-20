@@ -1,3 +1,4 @@
+import { changeJournal, journalDate } from './changeJournal';
 import TaskReminders from './components/TaskReminders';
 import { isTaskReviewMode } from './taskReviewMode';
 import { dependencyBlockMessage } from './taskDependencies';
@@ -946,7 +947,7 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
             </ErrorBoundary>
             <MobileCityFooter />
           <footer className="footer">
-              PLAY YOUR LIFE 2.0 <span>✦</span> Маленькие шаги делают большую жизнь.
+              PLAY YOUR LIFE 2.0 <span>✦</span> Маленькие шаги делают большую жизнь. <span>✦</span> Версия {changeJournal[0].version} <span>✦</span> Последнее обновление {journalDate(changeJournal[0].at)}
             </footer>
           </main>
         </div>

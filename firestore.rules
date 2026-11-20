@@ -231,9 +231,10 @@ service cloud.firestore {
         return signedIn() && request.auth.uid in get(/databases/$(database)/documents/spaces/$(spaceId)).data.memberIds;
       }
       match /{coll}/{docId} {
-        function known() { return coll in ['profiles','groups','agreements','summaries','reads','events','places','meetings','questions','decisions','notifications']; }
+        function known() { return coll in ['inbox','profiles','groups','agreements','summaries','reads','events','places','meetings','questions','decisions','notifications']; }
         allow read: if isMember() && known()
           && (coll != 'notifications' || resource.data.to == request.auth.uid)
+          && (coll != 'inbox' || resource.data.to == request.auth.uid || resource.data.authorId == request.auth.uid)
           && (coll != 'reads' || docId == request.auth.uid)
           && (coll != 'events' || resource.data.access == 'shared' || resource.data.authorId == request.auth.uid);
         allow create: if isMember() && known()
@@ -242,6 +243,8 @@ service cloud.firestore {
           && (coll != 'profiles' || docId == request.auth.uid)
           && (coll != 'events' || request.resource.data.access in ['shared','personal'])
           && (coll != 'notifications' || (request.resource.data.read == false
+            && request.resource.data.to in get(/databases/$(database)/documents/spaces/$(spaceId)).data.memberIds))
+          && (coll != 'inbox' || (request.resource.data.status == 'new'
             && request.resource.data.to in get(/databases/$(database)/documents/spaces/$(spaceId)).data.memberIds));
         allow update: if isMember() && known()
           && request.resource.data.authorId == resource.data.authorId
@@ -250,7 +253,9 @@ service cloud.firestore {
           && (coll != 'events' || resource.data.access == 'shared' || resource.data.authorId == request.auth.uid)
           && (coll != 'events' || request.resource.data.access in ['shared','personal'])
           && (coll != 'notifications' || (resource.data.to == request.auth.uid
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read','updatedAt'])));
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read','updatedAt'])))
+          && (coll != 'inbox' || resource.data.authorId == request.auth.uid || (resource.data.to == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt'])));
         allow delete: if isMember() && known() && resource.data.authorId == request.auth.uid
           && !(coll == 'groups' && resource.data.get('system', false) == true)
           && (coll != 'events' || resource.data.access == 'shared' || resource.data.authorId == request.auth.uid);

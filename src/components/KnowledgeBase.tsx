@@ -4,8 +4,9 @@ import {
   addComment, addSpace, archiveArticle, breadcrumbs, childrenOf, createArticle, deleteForever, duplicateArticle, emptyTrash, htmlToMarkdown,
   isAlive, kbStorageKey, kbTemplates, markViewed, moveArticle, parseKnowledgeBase, removeSpace, removeTerm, restoreArticle, restoreVersion,
   saveTerm, searchArticles, spaceAnalytics, spaceOfSphere, tableOfContents, trashArticle, unarchiveArticle, updateArticle, updateComment,
-  updateSpace, wordCount, mergeKnowledgeBase, KB_TRASH_DAYS,
+  updateSpace, wordCount, mergeKnowledgeBase, importSharedArticle, kbImportListeners, KB_TRASH_DAYS,
 } from '../knowledgeBase';
+import { usePartner } from '../ourInbox';
 import type { KbArticle, KbSpace, KnowledgeBase as KbData } from '../knowledgeBase';
 import RichEditor, { Svg } from './RichEditor';
 import { EMOJI, readImage, sanitizeHtml } from '../richText';
@@ -147,6 +148,19 @@ export default function KnowledgeBase({ ownerId, author, photo, spheres, sphereI
 
   // eslint-disable-next-line react-hooks/exhaustive-deps -- notify из App пересоздаётся на каждом рендере
   useEffect(() => { if (error) notify(error); }, [error]);
+  // 0.90.5: статья от второго участника «Нашей жизни», пока база знаний открыта, добавляется прямо сюда.
+  useEffect(() => {
+    const add = (input: { title: string; html: string; from: string; icon?: string }) => update((d) => importSharedArticle(d, input));
+    kbImportListeners.add(add);
+    return () => { kbImportListeners.delete(add); };
+  }, [update]);
+  const partner = usePartner();
+  const shareToPartner = async (a: KbArticle) => {
+    if (!partner) return;
+    if (a.html.length > 700_000) { notify('Статья слишком большая для отправки (много картинок). Уменьшите изображения.'); return; }
+    try { await partner.send({ kind: 'article', title: a.title || 'Без названия', html: a.html, icon: a.icon }); notify(`Статья отправлена: ${partner.name} получит её в «Поделились со мной»`); }
+    catch { notify('Не удалось отправить статью. Проверьте интернет.'); }
+  };
   // Смена сферы во вкладке — переход в её пространство.
   useEffect(() => {
     const target = spaceOfSphere(kb, sphereId ?? '')?.id;
@@ -570,6 +584,7 @@ export default function KnowledgeBase({ ownerId, author, photo, spheres, sphereI
         : <button type="button" className="kb-secondary" disabled={page.locked} title={page.locked ? 'Статья закреплена от правок — снимите замок в «Доступ»' : undefined} onClick={() => setEditing(true)}>✎ Редактировать</button>}
       <button type="button" className="kb-secondary" onClick={() => setDialog('access')}>🔒 Доступ</button>
       <button type="button" className={`kb-icon-btn${page.favorite ? ' fav' : ''}`} aria-label={page.favorite ? 'Убрать из избранного' : 'В избранное'} aria-pressed={page.favorite} onClick={() => update((d) => updateArticle(d, page.id, { favorite: !page.favorite }))}>{page.favorite ? '★' : '☆'}</button>
+      {partner && <button type="button" className="kb-secondary" onClick={() => void shareToPartner(page)}>📤 Поделиться с {partner.name}</button>}
       <button type="button" className="kb-icon-btn" aria-label="Скопировать ссылку на статью" title="Скопировать ссылку на статью" onClick={() => void copyLink(page)}><Svg name="link" size={18} /></button>
       <span className="kb-menu-wrap">
         <button type="button" className="kb-icon-btn" aria-label="Ещё действия" aria-expanded={menu === 'page'} onClick={() => setMenu(menu === 'page' ? '' : 'page')}>•••</button>

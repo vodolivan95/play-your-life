@@ -5,7 +5,7 @@ import {
 } from '../../ourData';
 import type { Ctx, Decision, Meeting, Question } from '../../ourData';
 import Ic from '../KbIcons';
-import { Empty, Field, Linkify, Modal, Tabs } from './OurUi';
+import { Avatar, Empty, Field, Linkify, Modal, Tabs } from './OurUi';
 import { fmtDateTime, fmtDay, nameIn } from './ourFormat';
 
 /* ---------- Общие собрания (ТЗ 8): вопросы, повестка, заметки, решения, протокол, связь с календарём ---------- */
@@ -32,8 +32,6 @@ export default function OurMeetings({ ctx, focusId, onOpen, onAddTask }: Props) 
   const upcoming = meetings.filter((m) => m.status === 'planned').sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
   const done = meetings.filter((m) => m.status === 'done').sort((a, b) => `${b.date}${b.time}`.localeCompare(`${a.date}${a.time}`))
     .filter((m) => !q.trim() || matches(m.title, q) || matches(m.date, q) || matches(m.protocol, q) || m.agenda.some((a) => matches(questions.find((x) => x.id === a.questionId)?.title, q)) || decisions.some((d) => d.meetingId === m.id && matches(d.title, q)) || m.participants.some((u) => matches(who(u), q)));
-  const pool = questions.filter((x) => x.status === 'proposed' || x.status === 'agenda').sort((a, b) => ['high', 'mid', 'low'].indexOf(a.priority) - ['high', 'mid', 'low'].indexOf(b.priority));
-  const unresolved = questions.filter((x) => x.status === 'postponed' || (x.status === 'discussed' && !decisions.some((d) => d.questionId === x.id)));
   const open = meetings.find((m) => m.id === openId) ?? null;
   const next = upcoming[0];
 
@@ -47,26 +45,30 @@ export default function OurMeetings({ ctx, focusId, onOpen, onAddTask }: Props) 
           <button type="button" className="o-primary" onClick={() => setForm('new')}><Ic n="plus" size={15} /> Создать собрание</button>
         </div>
       </div>
-      <div className="omt-grid">
-        <section className="our-card omt-next">
-          <h4>Ближайшее собрание</h4>
-          {next ? (
-            <button type="button" className="omt-next-card" onClick={() => setOpenId(next.id)}>
-              <strong>{next.title}</strong><span>{fmtDay(next.date)}{next.time ? `, ${next.time}` : ''} · {next.format === 'online' ? 'онлайн' : next.location || 'лично'}</span>
-              <span>В повестке: {next.agenda.length} · участники: {next.participants.map(who).join(', ')}</span>
+      <section className="our-card omt-next">
+        <h4>Ближайшее собрание</h4>
+        {next ? (() => {
+          const d = new Date(`${next.date}T12:00`);
+          return (
+            <button type="button" className="omt-hero" onClick={() => setOpenId(next.id)}>
+              <span className="omt-date"><b>{d.getDate()}</b><small>{d.toLocaleDateString('ru-RU', { month: 'short' }).replace('.', '')}</small><small>{d.toLocaleDateString('ru-RU', { weekday: 'short' })}</small></span>
+              <span className="omt-hero-main">
+                <strong>{next.title}</strong>
+                <span className="omt-chips">
+                  <span>🕖 {next.time || 'время не указано'}</span>
+                  <span>{next.format === 'online' ? '💻 онлайн' : `📍 ${next.location || 'лично'}`}</span>
+                  <span>📋 в повестке: {next.agenda.length}</span>
+                </span>
+              </span>
+              <span className="omt-hero-side">
+                <span className="omt-people">{next.participants.map((u) => <Avatar key={u} name={who(u)} me={u === ctx.uid} size={34} />)}</span>
+                <span className="omt-open">Открыть →</span>
+              </span>
             </button>
-          ) : <p className="o-muted">Не назначено. Вопросы можно копить заранее.</p>}
-          {upcoming.length > 1 && <><h4>Предстоящие</h4><ul className="omt-list">{upcoming.slice(1).map((m) => <li key={m.id}><button type="button" onClick={() => setOpenId(m.id)}><strong>{m.title}</strong><small>{fmtDay(m.date)} {m.time}</small></button></li>)}</ul></>}
-        </section>
-        <section className="our-card">
-          <h4>Вопросы для обсуждения <em>{pool.length}</em></h4>
-          {pool.length === 0 ? <p className="o-muted">Пока нет. Нажмите «Предложить вопрос».</p> : <QuestionList ctx={ctx} items={pool} onOpen={setQForm} />}
-        </section>
-        <section className="our-card">
-          <h4>Вопросы без решения <em>{unresolved.length}</em></h4>
-          {unresolved.length === 0 ? <p className="o-muted">Отложенных и открытых вопросов нет.</p> : <QuestionList ctx={ctx} items={unresolved} onOpen={setQForm} />}
-        </section>
-      </div>
+          );
+        })() : <p className="o-muted">Не назначено. Нажмите «Создать собрание».</p>}
+        {upcoming.length > 1 && <><h4 className="omt-sub-h">Предстоящие</h4><ul className="omt-list">{upcoming.slice(1).map((m) => <li key={m.id}><button type="button" onClick={() => setOpenId(m.id)}><strong>{m.title}</strong><small>{fmtDay(m.date)} {m.time}</small></button></li>)}</ul></>}
+      </section>
       <section className="our-card">
         <div className="ok-bar"><h4>История собраний</h4><label className="o-search slim"><Ic n="search" size={15} /><input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Название, дата, вопрос, решение, участник" aria-label="Поиск по собраниям" /></label></div>
         {done.length === 0 ? <p className="o-muted">{q ? 'Ничего не найдено.' : 'Проведённых собраний пока нет.'}</p> : <ul className="omt-list">{done.map((m) => <li key={m.id}><button type="button" onClick={() => setOpenId(m.id)}><strong>{m.title}</strong><small>{fmtDay(m.date)} · решений: {decisions.filter((d) => d.meetingId === m.id).length}</small></button></li>)}</ul>}
@@ -76,11 +78,6 @@ export default function OurMeetings({ ctx, focusId, onOpen, onAddTask }: Props) 
       {open && !form && <MeetingCard ctx={ctx} m={open} meetings={upcoming} questions={questions} decisions={decisions} onClose={() => setOpenId(null)} onEdit={() => setForm(open)} onOpen={onOpen} onAddTask={onAddTask} />}
     </div>
   );
-}
-
-function QuestionList({ ctx, items, onOpen }: { ctx: Ctx; items: Question[]; onOpen: (q: Question) => void }) {
-  const who = nameIn(ctx.space);
-  return <ul className="omt-list">{items.map((x) => <li key={x.id}><button type="button" onClick={() => onOpen(x)}><span className={`omt-prio p-${x.priority}`} title={priorities[x.priority]} /><strong>{x.title}</strong><small>{questionCategories[x.category]} · {questionStatuses[x.status]} · {who(x.authorId)}{x.comments.length ? ` · 💬 ${x.comments.length}` : ''}</small></button></li>)}</ul>;
 }
 
 function QuestionForm({ ctx, question, meetings, onClose }: { ctx: Ctx; question: Question | null; meetings: Meeting[]; onClose: () => void }) {

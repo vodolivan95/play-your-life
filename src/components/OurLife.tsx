@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { auth, database } from '../firebaseClient';
-import rulesText from '../../firestore.rules?raw';
 import { menuIconSrc } from '../menuIcons';
 import { INVITE_DAYS, SPACE_MEMBER_LIMIT, inviteLink, ourNavigation } from '../ourLife';
 import type { OurPageId } from '../ourLife';
 import { acceptInvite, createInvite, createSpace, ensurePairSpace, watchMySpace } from '../sharedSpace';
 import type { Space } from '../sharedSpace';
-import { compressImage, ensureSystemGroups, forUser, isPairEmail, patch, put, watch, PAIR_EMAILS, PAIR_SPACE_ID } from '../ourData';
+import { compressImage, dayKey, ensureSystemGroups, eventColors, eventIcons, eventVisible, forUser, isPairEmail, occurrences, patch, put, watch, PAIR_EMAILS, PAIR_SPACE_ID } from '../ourData';
 import { enableDemo } from '../ourStore';
 import type { CalEvent, Ctx, Notice } from '../ourData';
 import Ic from './KbIcons';
@@ -18,26 +17,29 @@ import OurCalendar from './our/OurCalendar';
 import { useEventReminders, useEvents } from './our/useEvents';
 import OurPlaces from './our/OurPlaces';
 import OurMeetings from './our/OurMeetings';
-import { Avatar } from './our/OurUi';
-import { OurPhotos } from './our/ourPhotos';
-import { fmtDateTime, fmtIso } from './our/ourFormat';
+import { Avatar, Field, Modal } from './our/OurUi';
+import { usePartner } from '../ourInbox';
+import { isImageSrc, OurPhotos } from './our/ourPhotos';
+import { publishUpcoming } from '../ourUpcoming';
+import type { UpcomingItem } from '../ourUpcoming';
+import playerImg from '../assets/player.webp';
+import { fmtDateTime, fmtIso, nameIn } from './our/ourFormat';
 import './OurLife.css';
 
 /* ---------- «Наша жизнь»: общее пространство и четыре сервиса (ТЗ 3.4–8) ---------- */
 
 type Props = {
-  page: OurPageId; userId?: string; userEmail?: string; userName: string; userPhoto?: string; joinCode: string | null;
+  page: OurPageId; userId?: string; userEmail?: string; userName: string; userPhoto?: string; userAvatar?: string; joinCode: string | null;
   onJoined: () => void; onNavigate: (page: string) => void; onAddTask: (title: string, day?: string) => boolean;
 };
 
-export default function OurLife({ page, userId: appUserId, userEmail: appEmail, userName, userPhoto, joinCode, onJoined, onNavigate, onAddTask }: Props) {
+export default function OurLife({ page, userId: appUserId, userEmail: appEmail, userName, userPhoto: profilePhoto, userAvatar, joinCode, onJoined, onNavigate, onAddTask }: Props) {
   const item = ourNavigation.find((x) => x.id === page)!;
   // В режиме без пароля личная игра остаётся в браузере, а для «Нашей жизни» можно войти прямо здесь.
   const [authUser, setAuthUser] = useState<User | null>(null);
   useEffect(() => (appUserId ? undefined : onAuthStateChanged(auth, setAuthUser)), [appUserId]);
   const userId = appUserId ?? authUser?.uid;
   const userEmail = appEmail ?? authUser?.email ?? undefined;
-  const localLogin = !appUserId && !!authUser;
   const [space, setSpace] = useState<Space | null | undefined>(undefined);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -58,6 +60,8 @@ export default function OurLife({ page, userId: appUserId, userEmail: appEmail, 
       ? 'Сервер не пускает в общее пространство: опубликуйте новые правила Firestore (firebase deploy --only firestore:rules).'
       : 'Не удалось подключить общее пространство. Проверьте интернет.'));
   }, [userId, pair, space, userName]);
+  // Аватар участника: фото профиля, иначе выбранный персонаж или смайлик из профиля.
+  const userPhoto = profilePhoto || (userAvatar === 'character' || userAvatar === '🐼' ? playerImg : userAvatar) || undefined;
   const cloudCtx = useMemo<Ctx | null>(() => (space && userId ? { db: database, space, uid: userId, name: userName } : null), [space, userId, userName]);
   // Пока правила Firestore не опубликованы (или нет входа), сервисы работают в демо-режиме:
   // данные хранятся в этом браузере, второй участник показан для примера.
@@ -83,7 +87,7 @@ export default function OurLife({ page, userId: appUserId, userEmail: appEmail, 
     let off = false;
     void (async () => {
       try {
-        const photo = userPhoto.startsWith('data:') ? await compressImage(await (await fetch(userPhoto)).blob(), 160, 60_000) : userPhoto.slice(0, 2000);
+        const photo = isImageSrc(userPhoto) && !/^https?:/.test(userPhoto) ? await compressImage(await (await fetch(userPhoto)).blob(), 160, 60_000) : userPhoto.slice(0, 2000);
         if (!off) await put(ctx, 'profiles', ctx.uid, { name: ctx.name, photo });
       } catch { /* без фото останутся инициалы */ }
     })();
@@ -117,6 +121,7 @@ export default function OurLife({ page, userId: appUserId, userEmail: appEmail, 
       {ctx && (
         <div className="our-head-side">
           <div className="our-members compact">{ctx.space.memberIds.map((uid) => <span key={uid} className={`our-member${uid === ctx.uid ? ' me' : ''}`} title={ctx.space.members[uid]?.name}><Avatar name={ctx.space.members[uid]?.name ?? ''} me={uid === ctx.uid} size={30} />{ctx.space.members[uid]?.name ?? 'Участник'}</span>)}</div>
+          <PartnerTask />
           <Bell ctx={ctx} onOpen={open} />
         </div>
       )}
@@ -154,8 +159,6 @@ export default function OurLife({ page, userId: appUserId, userEmail: appEmail, 
     <div className="our-page">
       {head}
       {error && !rulesMissing && <p className="our-error" role="alert">{error}</p>}
-      {demo && <DemoNote signedIn={!!userId} onRetry={() => { setError(''); setSpace(undefined); window.location.reload(); }} />}
-      {localLogin && <p className="our-signed">Общее пространство: вы вошли как <b>{authUser!.email}</b>. Личные разделы по-прежнему хранятся в этом браузере. <button type="button" className="o-link" onClick={() => void signOut(auth)}>Выйти</button></p>}
       {gate}
       {!demo && space && userId && !full && (
         <section className="our-card our-invite-card">
@@ -169,7 +172,7 @@ export default function OurLife({ page, userId: appUserId, userEmail: appEmail, 
           ) : <button type="button" className="our-primary" disabled={busy} onClick={() => run(async () => setInvite(await createInvite(database, space, userId)))}><Ic n="plus" size={16} /> Пригласить участника</button>)}
         </section>
       )}
-      {ctx && <Reminders ctx={ctx} onOpen={open} />}
+      {ctx && <Reminders ctx={ctx} onOpen={open} photos={photos} />}
       {ctx && page === 'our-chat' && <OurChat ctx={ctx} focusId={focus?.page === page ? focus.id : null} onOpenEvent={(id) => open('our-calendar', id)} />}
       {ctx && page === 'our-calendar' && <OurCalendar ctx={ctx} focusId={focus?.page === page ? focus.id : null} onOpen={open} />}
       {ctx && page === 'our-places' && <OurPlaces ctx={ctx} focusId={focus?.page === page ? focus.id : null} onOpen={open} />}
@@ -205,44 +208,56 @@ function Bell({ ctx, onOpen }: { ctx: Ctx; onOpen: (page: string, id?: string) =
   );
 }
 
-function Reminders({ ctx, onOpen }: { ctx: Ctx; onOpen: (page: string, id?: string) => void }) {
+function Reminders({ ctx, onOpen, photos }: { ctx: Ctx; onOpen: (page: string, id?: string) => void; photos: Record<string, string> }) {
   const { events } = useEvents(ctx);
   const [shown, setShown] = useState<CalEvent | null>(null);
   useEventReminders(ctx, events, setShown);
+  // «Ближайшие» в левом меню: два ближайших мероприятия (повторы учитываются, отменённые и прошедшие — нет).
+  useEffect(() => {
+    const who = nameIn(ctx.space);
+    const from = new Date(), to = new Date(from.getTime() + 120 * 864e5);
+    const list: UpcomingItem[] = [];
+    for (const ev of events) {
+      if (ev.status === 'cancelled' || !eventVisible(ev, ctx.uid, 'all')) continue;
+      for (const o of occurrences(ev, dayKey(from), dayKey(to))) {
+        if (new Date(o.end || o.start).getTime() < from.getTime()) continue;
+        list.push({ id: ev.id, title: ev.title, start: o.start, place: ev.place ?? '', icon: eventIcons[ev.category] ?? '⭐', color: eventColors[ev.category] ?? '#2f6cf0', people: ev.participants.map((u) => ({ name: who(u), photo: photos[who(u)] })) });
+      }
+    }
+    list.sort((a, b) => a.start.localeCompare(b.start));
+    publishUpcoming(list.slice(0, 2), (id) => onOpen('our-calendar', id));
+  }, [ctx, events, photos, onOpen]);
+  useEffect(() => () => publishUpcoming([], () => undefined), []);
   if (!shown) return null;
   return <div className="our-reminder" role="status"><Ic n="bell" size={18} /><span><b>Скоро:</b> {shown.title} · {fmtIso(shown.start)}</span><button type="button" className="o-link" onClick={() => { onOpen('our-calendar', shown.id); setShown(null); }}>Открыть</button><button type="button" className="o-icon" aria-label="Закрыть" onClick={() => setShown(null)}><Ic n="close" size={14} /></button></div>;
 }
 
-/** Плашка демо-режима: сервисы работают локально, пока правила Firestore не опубликованы. */
-function DemoNote({ signedIn, onRetry }: { signedIn: boolean; onRetry: () => void }) {
-  const [more, setMore] = useState(false);
+
+/** «Задача для …»: поставить задачу второму участнику — она появится у него в «Моих задачах» с уведомлением. */
+function PartnerTask() {
+  const partner = usePartner();
+  const [open, setOpen] = useState(false);
+  const [f, setF] = useState({ title: '', due: '', note: '' });
+  const [state, setState] = useState<'' | 'sending' | 'sent' | 'error'>('');
+  if (!partner) return null;
+  const send = async () => {
+    if (!f.title.trim()) return;
+    setState('sending');
+    try { await partner.send({ kind: 'task', title: f.title.trim(), due: f.due || undefined, note: f.note.trim() || undefined }); setState('sent'); setF({ title: '', due: '', note: '' }); setTimeout(() => { setOpen(false); setState(''); }, 900); }
+    catch { setState('error'); }
+  };
   return (
     <>
-      <p className="our-signed our-demo-note">
-        <b>Демо-режим.</b> Все сервисы работают, записи сохраняются в этом браузере. {signedIn ? 'Чтобы второй участник видел общие записи, опубликуйте правила Firestore.' : 'Войдите в аккаунт, чтобы записи стали общими.'}
-        {signedIn && <> <button type="button" className="o-link" onClick={() => setMore(!more)}>{more ? 'Скрыть' : 'Как опубликовать'}</button></>}
-      </p>
-      {more && <RulesHelp onRetry={onRetry} />}
+      <button type="button" className="our-partner-task" onClick={() => setOpen(true)}>📌 Задача для {partner.name}</button>
+      {open && (
+        <Modal title={`Задача для ${partner.name}`} onClose={() => setOpen(false)} footer={<><button type="button" onClick={() => setOpen(false)}>Отмена</button><button type="button" className="o-primary" disabled={!f.title.trim() || state === 'sending'} onClick={() => void send()}>{state === 'sent' ? 'Отправлено ✓' : 'Поставить задачу'}</button></>}>
+          <Field label="Что сделать"><input autoFocus value={f.title} maxLength={200} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="Например: забрать документы" /></Field>
+          <Field label="Срок"><input type="date" value={f.due} onChange={(e) => setF({ ...f, due: e.target.value })} /></Field>
+          <Field label="Комментарий"><textarea rows={2} value={f.note} maxLength={300} onChange={(e) => setF({ ...f, note: e.target.value })} /></Field>
+          <p className="o-muted">Задача появится у {partner.name} в «Моих задачах», придёт уведомление.</p>
+          {state === 'error' && <p className="o-err">Не удалось отправить. Проверьте интернет и правила Firestore.</p>}
+        </Modal>
+      )}
     </>
-  );
-}
-
-function RulesHelp({ onRetry }: { onRetry: () => void }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <section className="our-card our-rules">
-      <h2><Ic n="lock" size={22} /> Нужно один раз опубликовать правила доступа</h2>
-      <p>Вход прошёл, но облако Firebase пока не знает про «Нашу жизнь» и не пускает к общим данным. Это делается один раз владельцем проекта:</p>
-      <ol>
-        <li>Откройте <a href="https://console.firebase.google.com/project/play-your-life-872b1/firestore/rules" target="_blank" rel="noreferrer">Firebase → Firestore Database → Правила (Rules)</a>.</li>
-        <li>Нажмите «Скопировать правила» ниже, удалите в редакторе старый текст и вставьте новый.</li>
-        <li>Нажмите «Опубликовать» (Publish), подождите минуту и нажмите «Проверить снова».</li>
-      </ol>
-      <div className="our-row">
-        <button type="button" className="our-primary" onClick={async () => { try { await navigator.clipboard.writeText(rulesText); setCopied(true); } catch { setCopied(false); } }}>{copied ? 'Скопировано ✓' : 'Скопировать правила'}</button>
-        <button type="button" onClick={onRetry}>Проверить снова</button>
-      </div>
-      <p className="o-muted">Или в терминале проекта: <code>firebase deploy --only firestore:rules</code>.</p>
-    </section>
   );
 }

@@ -1,7 +1,7 @@
 import { useContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { initials } from './ourFormat';
-import { OurPhotos } from './ourPhotos';
+import { isImageSrc, OurPhotos } from './ourPhotos';
 import type { Attachment } from '../../ourData';
 import Ic from '../KbIcons';
 import type { IconName } from '../KbIcons';
@@ -11,7 +11,7 @@ import type { IconName } from '../KbIcons';
 
 export function Avatar({ name, me = false, size = 34 }: { name: string; me?: boolean; size?: number }) {
   const photo = useContext(OurPhotos)[name];
-  return <span className={`oa${me ? ' me' : ''}${photo ? ' photo' : ''}`} style={{ width: size, height: size, fontSize: size * 0.38 }} aria-hidden="true">{photo ? <img src={photo} alt="" draggable={false} /> : initials(name)}</span>;
+  return <span className={`oa${me ? ' me' : ''}${photo ? ' photo' : ''}`} style={{ width: size, height: size, fontSize: size * 0.38 }} aria-hidden="true">{photo ? (isImageSrc(photo) ? <img src={photo} alt="" draggable={false} /> : <i className="oa-emoji">{photo}</i>) : initials(name)}</span>;
 }
 
 export function Modal({ title, onClose, children, wide = false, footer }: { title: ReactNode; onClose: () => void; children: ReactNode; wide?: boolean; footer?: ReactNode }) {

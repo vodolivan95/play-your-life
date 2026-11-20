@@ -119,7 +119,7 @@ export function importPlan(state: GameState, plan: PlanFile, ownerId: string, no
         createdAt: created,
         targetValue: 1,
         currentValue: 0,
-        rewardCoins: 0,
+        rewardCoins: Math.max(1, Math.ceil(difficulties[t.difficulty] / 5)),
       });
       if (t.done) toComplete.push(t.id);
     }

@@ -6,6 +6,7 @@ import SidebarReference from './SidebarReference';
 import ThemeSwitch from './ThemeSwitch';
 import CityMiniLive from './CityMiniLive';
 import SpaceSwitch from './SpaceSwitch';
+import OurUpcoming from './OurUpcoming';
 import { ourMenuIcon } from './ourIcons';
 import { lifeModeOf, ourNavigation } from '../ourLife';
 import type { LifeMode } from '../ourLife';
@@ -58,6 +59,7 @@ export default function AppSidebar({ page, questCount, onNavigate, owner = false
         ))}
       </nav>
       )}
+      {mode === 'our' && <OurUpcoming onCalendar={() => onNavigate('our-calendar')} />}
       {mode === 'my' && <button type="button" className="pyl-city-card" onClick={() => onNavigate('city')}>
         <CityMiniLive />
         <span className="pyl-city-label">

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { dayKey, now, eventCategories, eventColors, eventVisible, matches, newId, notify, occurrences, patch, put, rsvpLabels } from '../../ourData';
+import { dayKey, now, eventCategories, eventColors, eventIcons, eventVisible, matches, newId, notify, occurrences, patch, put, rsvpLabels } from '../../ourData';
 import type { CalEvent, Ctx } from '../../ourData';
 import Ic from '../KbIcons';
 import OurThread from './OurThread';
@@ -55,7 +55,7 @@ export default function OurCalendar({ ctx, focusId, onOpen }: { ctx: Ctx; focusI
   const invites = events.filter((e) => e.access === 'shared' && e.status !== 'cancelled' && e.rsvp?.[ctx.uid] === 'pending' && new Date(e.end || e.start).getTime() > now());
   const chip = (x: { ev: CalEvent; start: string }) => (
     <button key={`${x.ev.id}${x.start}`} type="button" className={`ok-chip${x.ev.status === 'cancelled' ? ' cancelled' : ''}${x.ev.access === 'personal' ? ' personal' : ''}`} style={{ ['--c' as string]: eventColors[x.ev.category] }} onClick={() => setOpenId(x.ev.id)} title={x.ev.title}>
-      <b>{local(x.start).time}</b> {x.ev.title}
+      <i aria-hidden="true">{eventIcons[x.ev.category]}</i><span><b>{x.ev.title}</b><small>{local(x.start).time}</small></span>
     </button>
   );
   const title = view === 'month' ? cursor.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }) : view === 'week' ? `${range.from.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })} — ${addDays(range.from, 6).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}` : view === 'day' ? cursor.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }) : past ? 'Прошедшие мероприятия' : 'Предстоящие мероприятия';
@@ -66,36 +66,43 @@ export default function OurCalendar({ ctx, focusId, onOpen }: { ctx: Ctx; focusI
       {invites.length > 0 && (
         <div className="ok-invites" role="status"><strong><Ic n="bell" size={15} /> Вас пригласили:</strong>{invites.map((e) => <button key={e.id} type="button" onClick={() => setOpenId(e.id)}>{e.title} · {fmtIso(e.start)}</button>)}</div>
       )}
-      <div className="ok-bar">
-        <Tabs value={mode} onChange={setMode} items={[['mine', 'Мой календарь'], ['shared', 'Совместный'], ['all', 'Все события']]} />
-        <button type="button" className="o-primary" onClick={() => setDraft({ start: `${dayKey(view === 'list' ? new Date() : cursor)}T19:00`, access: 'shared' })}><Ic n="plus" size={15} /> Мероприятие</button>
+      <div className="ok-top">
+        <div className="ok-nav">
+          {view !== 'list' && <button type="button" className="o-icon ok-arrow" aria-label="Назад" onClick={() => step(-1)}>‹</button>}
+          <h3 className="ok-title">{title}</h3>
+          {view !== 'list' && <button type="button" className="o-icon ok-arrow" aria-label="Вперёд" onClick={() => step(1)}>›</button>}
+          {view !== 'list' && <button type="button" className="ok-today" onClick={() => setCursor(new Date())}>Сегодня</button>}
+        </div>
+        <Tabs value={view} onChange={setView} items={[['month', '🗓️ Месяц'], ['week', '📆 Неделя'], ['day', '☀️ День'], ['list', '📋 Список']]} />
       </div>
       <div className="ok-bar">
-        <div className="ok-nav">
-          {view !== 'list' && <><button type="button" className="o-icon" aria-label="Назад" onClick={() => step(-1)}>‹</button><button type="button" className="o-link" onClick={() => setCursor(new Date())}>Сегодня</button><button type="button" className="o-icon" aria-label="Вперёд" onClick={() => step(1)}>›</button></>}
-          <h3>{title}</h3>
+        <div className="ok-modes" role="tablist">
+          {([['all', '📅', 'Все события'], ['mine', '👤', 'Мои события'], ['shared', '👥', 'Совместные']] as [Mode, string, string][]).map(([id, icon, label]) => (
+            <button key={id} type="button" role="tab" aria-selected={mode === id} className={mode === id ? 'on' : ''} onClick={() => setMode(id)}><i aria-hidden="true">{icon}</i>{label}</button>
+          ))}
         </div>
-        <div className="ok-filters">
+        <div className="ok-filters ok-one">
           <label className="o-search slim"><Ic n="search" size={15} /><input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск" aria-label="Поиск мероприятий" /></label>
-          <select value={category} onChange={(e) => setCategory(e.target.value as typeof category)} aria-label="Категория"><option value="any">Все категории</option>{Object.entries(eventCategories).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+          <select value={category} onChange={(e) => setCategory(e.target.value as typeof category)} aria-label="Категория"><option value="any">Все категории</option>{Object.entries(eventCategories).map(([k, v]) => <option key={k} value={k}>{eventIcons[k as keyof typeof eventIcons]} {v}</option>)}</select>
           <select value={person} onChange={(e) => setPerson(e.target.value)} aria-label="Участник"><option value="any">Все участники</option>{ctx.space.memberIds.map((u) => <option key={u} value={u}>{who(u)}</option>)}</select>
-          <Tabs value={view} onChange={setView} items={[['month', 'Месяц'], ['week', 'Неделя'], ['day', 'День'], ['list', 'Список']]} />
         </div>
+        <button type="button" className="o-primary" onClick={() => setDraft({ start: `${dayKey(view === 'list' ? new Date() : cursor)}T19:00`, access: 'shared' })}><Ic n="plus" size={15} /> Добавить событие</button>
       </div>
       {view === 'month' && (
         <div className="ok-month">
-          {WD.map((d) => <div key={d} className="ok-wd">{d}</div>)}
+          {WD.map((d, i) => <div key={d} className={`ok-wd${i === 5 ? ' sat' : i === 6 ? ' sun' : ''}`}>{d}</div>)}
           {Array.from({ length: 42 }, (_, i) => {
             const d = addDays(range.from, i), key = dayKey(d), list = byDay(key);
             return (
-              <div key={key} className={`ok-cell${d.getMonth() !== cursor.getMonth() ? ' out' : ''}${key === today ? ' today' : ''}`} onDoubleClick={() => setDraft({ start: `${key}T19:00`, access: 'shared' })}>
+              <div key={key} className={`ok-cell${d.getMonth() !== cursor.getMonth() ? ' out' : ''}${key === today ? ' today' : ''}${d.getDay() === 0 ? ' sun' : d.getDay() === 6 ? ' sat' : ''}`} onDoubleClick={() => setDraft({ start: `${key}T19:00`, access: 'shared' })}>
                 <button type="button" className="ok-num" onClick={() => { setCursor(d); setView('day'); }}>{d.getDate()}</button>
-                {list.slice(0, 3).map(chip)}{list.length > 3 && <button type="button" className="o-link ok-more" onClick={() => { setCursor(d); setView('day'); }}>ещё {list.length - 3}</button>}
+                {list.slice(0, 2).map(chip)}{list.length > 2 && <button type="button" className="o-link ok-more" onClick={() => { setCursor(d); setView('day'); }}>ещё {list.length - 2}</button>}
               </div>
             );
           })}
         </div>
       )}
+      {view !== 'list' && <div className="ok-legend">{Object.entries(eventCategories).map(([k, v]) => <button key={k} type="button" className={category === k ? 'on' : ''} style={{ ['--c' as string]: eventColors[k as keyof typeof eventColors] }} onClick={() => setCategory(category === k ? 'any' : k as CalEvent['category'])}><span />{v}</button>)}</div>}
       {(view === 'week' || view === 'day') && (
         <div className={`ok-week${view === 'day' ? ' one' : ''}`}>
           {Array.from({ length: range.days }, (_, i) => {

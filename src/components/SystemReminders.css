@@ -1,0 +1,14 @@
+.sys-card { position: fixed; right: 20px; bottom: 20px; z-index: 60; width: min(380px, calc(100vw - 24px)); display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 18px; background: #fff; border: 1px solid #dfe9fa; box-shadow: 0 18px 44px rgba(30, 60, 130, .22); color: #15223d; animation: sys-in .25s ease-out; }
+.sys-prompt { bottom: 96px; }
+.sys-card-icon { flex: none; width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; background: #eef4ff; font-size: 24px; }
+.sys-card-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.sys-card-text b { font-size: 14px; }
+.sys-card-text small { font-size: 12px; color: #5b6b8a; line-height: 1.35; }
+.sys-card-go { flex: none; height: 36px; padding: 0 14px; border: 0; border-radius: 12px; background: #2f6cf0; color: #fff; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+.sys-card-close { flex: none; width: 28px; height: 28px; border: 0; border-radius: 50%; background: #f1f5fc; color: #5b6b8a; font-size: 18px; line-height: 1; cursor: pointer; }
+:root[data-theme='dark'] .sys-card { background: #101a36; border-color: #26345e; color: #e6ecff; box-shadow: 0 18px 44px rgba(0, 0, 0, .45); }
+:root[data-theme='dark'] .sys-card-icon, :root[data-theme='dark'] .sys-card-close { background: #1d2c55; color: #c8d3f0; }
+:root[data-theme='dark'] .sys-card-text small { color: #9aa8cc; }
+@media (max-width: 760px) { .sys-card { right: 12px; left: 12px; width: auto; bottom: calc(96px + env(safe-area-inset-bottom)); } .sys-prompt { bottom: calc(176px + env(safe-area-inset-bottom)); } }
+@keyframes sys-in { from { opacity: 0; transform: translateY(12px); } }
+@media (prefers-reduced-motion: reduce) { .sys-card { animation: none; } }

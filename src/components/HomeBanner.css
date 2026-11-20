@@ -129,3 +129,54 @@
 :root:not([data-theme='dark']) .home-dashboard .peak-focus-switch button { background: #f6f9ff; border-color: #cfdcf0; color: #33425e; }
 :root:not([data-theme='dark']) .peak-focus-switch button > span { background: #e8eef8; }
 :root:not([data-theme='dark']) .home-dashboard .peak-focus-switch button.is-active { background: #fff4d6; border-color: #f2c14e; color: #8a5a00; }
+
+/* ---------- 0.90.7: главный баннер в светлой теме — вечерняя гора, светлая карточка, стеклянные плитки ---------- */
+:root:not([data-theme='dark']) .peak-stage { background: linear-gradient(160deg, #1d4296, #0e2463 70%); border-color: #ffffff40; box-shadow: 0 22px 54px rgba(20, 50, 120, .28), inset 0 1px 0 #ffffff30; }
+:root:not([data-theme='dark']) .peak-art-light { top: -3%; left: 50%; width: auto; max-width: none; height: 106%; transform: translateX(-57%); filter: saturate(1.3) brightness(.95) contrast(1.08); }
+:root:not([data-theme='dark']) .peak-stage::after { background:
+  linear-gradient(90deg, rgba(10, 30, 84, .88) 0%, rgba(12, 36, 96, .6) 28%, rgba(14, 40, 104, .08) 50%, rgba(14, 40, 104, 0) 62%),
+  linear-gradient(180deg, rgba(24, 60, 150, .42) 0%, rgba(24, 60, 150, 0) 35%),
+  linear-gradient(0deg, rgba(8, 24, 70, .55) 0%, rgba(8, 24, 70, 0) 40%); }
+:root:not([data-theme='dark']) .home-dashboard .peak-features { gap: 12px; }
+:root:not([data-theme='dark']) .home-dashboard .peak-features button { flex-direction: column; justify-content: center; gap: 8px; width: 112px; min-height: 112px; padding: 12px 8px; border: 1px solid rgba(255, 255, 255, .3); border-radius: 18px; background: rgba(255, 255, 255, .13); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); text-align: center; box-shadow: 0 8px 20px rgba(6, 20, 60, .25); transition: transform .15s, background .15s; }
+:root:not([data-theme='dark']) .home-dashboard .peak-features button:hover { transform: translateY(-2px); background: rgba(255, 255, 255, .2); }
+:root:not([data-theme='dark']) .peak-feature-icon { width: 40px; height: 40px; border: 0; background: none; font-size: 30px; color: #ffd36b; text-shadow: 0 4px 12px rgba(255, 190, 60, .45); }
+:root:not([data-theme='dark']) .peak-features button > span:last-child { font-size: 12.5px; color: #fff; }
+
+:root:not([data-theme='dark']) .peak-card { border: 2px solid #ffd774; background: linear-gradient(180deg, rgba(255, 255, 255, .98), rgba(244, 248, 255, .97)); box-shadow: 0 24px 50px rgba(8, 24, 70, .35), 0 0 30px rgba(255, 200, 80, .25); }
+:root:not([data-theme='dark']) .home-dashboard .peak-banner .peak-card h2 { color: #d98200; }
+:root:not([data-theme='dark']) .home-dashboard .peak-card-controls button { background: #fff; border-color: #dde6f4; color: #2b3a5c; }
+:root:not([data-theme='dark']) .peak-card-count { background: #ffe9b0; color: #8a5a00; }
+:root:not([data-theme='dark']) .home-dashboard .peak-banner p.peak-card-goal { color: #15223d; }
+:root:not([data-theme='dark']) .home-dashboard .peak-banner p.peak-card-project, :root:not([data-theme='dark']) .home-dashboard .peak-banner p.peak-card-detail { color: #4f5f80; }
+:root:not([data-theme='dark']) .peak-card-stage { background: #fff8e6; border-color: #f3d27a; color: #33415f; }
+:root:not([data-theme='dark']) .peak-card-stage strong { color: #b46d00; }
+:root:not([data-theme='dark']) .peak-card-date-row, :root:not([data-theme='dark']) .peak-card-time { color: #33415f; border-bottom-color: #e3e9f5; }
+:root:not([data-theme='dark']) .peak-card-date-row b, :root:not([data-theme='dark']) .home-dashboard .peak-card-tasks p b { color: #c27700; }
+:root:not([data-theme='dark']) .peak-clock { border-color: #33415f; color: #33415f; }
+:root:not([data-theme='dark']) .home-dashboard .peak-card-time h3, :root:not([data-theme='dark']) .home-dashboard .peak-card-tasks h3 { color: #15223d; }
+:root:not([data-theme='dark']) .peak-card-time-track, :root:not([data-theme='dark']) .peak-card-task-track { background: #e9eff9; border-color: #d3ddef; }
+:root:not([data-theme='dark']) .peak-card-time-marker { box-shadow: 0 0 0 2px #fff, 0 2px 6px rgba(0, 0, 0, .2); }
+:root:not([data-theme='dark']) .peak-card-time-labels, :root:not([data-theme='dark']) .home-dashboard .peak-card-tasks p, :root:not([data-theme='dark']) .peak-card-task-row > b { color: #33415f; }
+:root:not([data-theme='dark']) .peak-card-time-labels small, :root:not([data-theme='dark']) .home-dashboard .peak-banner p.peak-card-neutral { color: #6a7a99; }
+:root:not([data-theme='dark']) .home-dashboard .peak-banner p.peak-card-hint { background: #eef4ff; border-color: #d6e3fb; color: #2b3a5c; }
+:root:not([data-theme='dark']) .peak-card-hint > span { color: #e0a000; }
+:root:not([data-theme='dark']) .peak-focus-head { color: #33415f; font-size: 12px; }
+:root:not([data-theme='dark']) .peak-focus-head small { color: #d98200; font-size: 13px; font-weight: 800; }
+:root:not([data-theme='dark']) .home-dashboard .peak-focus-switch button { border-color: #c9d8f5; background: #f6f9ff; color: #15223d; }
+:root:not([data-theme='dark']) .peak-focus-switch button > span { background: #e8effc; }
+:root:not([data-theme='dark']) .home-dashboard .peak-focus-switch button.is-active { border-color: #f5b72e; background: #fff4d6; color: #8a5a00; }
+/* Пустая карточка: проекты месяца — списком, как в макете */
+:root:not([data-theme='dark']) .peak-card:has(.peak-card-empty) .peak-card-empty { min-height: 0; padding: 14px 4px 6px; }
+:root:not([data-theme='dark']) .home-dashboard .peak-banner .peak-card:has(.peak-card-empty) p.peak-card-goal { font-size: 24px; }
+:root:not([data-theme='dark']) .home-dashboard .peak-banner .peak-card:has(.peak-card-empty) p.peak-card-detail { font-size: 14px; }
+:root:not([data-theme='dark']) .home-dashboard .peak-card:has(.peak-card-empty) .peak-card-button { align-self: stretch; min-height: 50px; margin-top: 10px; border-radius: 999px; font-size: 16px; }
+:root:not([data-theme='dark']) .peak-card:has(.peak-card-empty) .peak-focus-head { padding: 14px 4px 4px; font-size: 14px; }
+:root:not([data-theme='dark']) .peak-card:has(.peak-card-empty) .peak-focus-switch { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+:root:not([data-theme='dark']) .home-dashboard .peak-card:has(.peak-card-empty) .peak-focus-switch button { grid-template-columns: 34px minmax(0, 1fr); min-height: 54px; padding: 8px 14px; border: 1.5px dashed #a9c1ee; border-radius: 16px; background: #f4f8ff; }
+:root:not([data-theme='dark']) .peak-card:has(.peak-card-empty) .peak-focus-switch button > b { grid-row: auto; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #e3ecfc; color: #2b3a5c; font-size: 18px; }
+:root:not([data-theme='dark']) .peak-card:has(.peak-card-empty) .peak-focus-switch button > small { grid-column: 2; font-size: 15px; color: #15223d; }
+@container peak (max-width: 700px) {
+  :root:not([data-theme='dark']) .peak-art-light { width: 100%; left: 0; }
+  :root:not([data-theme='dark']) .home-dashboard .peak-features button { width: calc(50% - 6px); min-height: 92px; }
+}

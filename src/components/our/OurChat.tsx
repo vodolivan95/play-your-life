@@ -202,7 +202,7 @@ function Messages({ ctx, group, messages, hasMore, onMore, onAgreement, searchin
         const mine = m.authorId === ctx.uid;
         return [sep, (
           <div key={m.id} id={`msg-${m.id}`} className={`ocm-msg${mine ? ' mine' : ''}${active === m.id ? ' active' : ''}`} onClick={() => setActive(m.id)}>
-            {!mine && <Avatar name={who(m.authorId)} size={32} />}
+            <Avatar name={who(m.authorId)} me={mine} size={32} />
             <div className="ocm-bubble">
               {!mine && <strong className="ocm-author">{who(m.authorId)}</strong>}
               {m.replyTo && <button type="button" className="o-quote" onClick={() => document.getElementById(`msg-${m.replyTo!.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>↩ {who(m.replyTo.authorId)}: {m.replyTo.text || 'вложение'}</button>}
@@ -304,6 +304,7 @@ function Composer({ ctx, group, muted }: { ctx: Ctx; group: Group; muted: boolea
     } catch { setError('Нет доступа к микрофону. Разрешите его в браузере.'); }
   };
 
+  const [emojiOpen, setEmojiOpen] = useState(false);
   return (
     <div className="occ">
       {error && <p className="o-err">{error}</p>}
@@ -314,6 +315,10 @@ function Composer({ ctx, group, muted }: { ctx: Ctx; group: Group; muted: boolea
       <form className="occ-form" onSubmit={(e) => { e.preventDefault(); void send(); }}>
         <button type="button" className="o-icon" aria-label="Прикрепить фото или файл" title="Фото или файл" disabled={!!editing || !!recording} onClick={() => fileRef.current?.click()}><Ic n="upload" size={19} /></button>
         <input ref={fileRef} type="file" hidden onChange={async (e) => { const f = e.target.files?.[0]; e.target.value = ''; if (!f) return; try { setAtt(await fileAttachment(f)); setError(''); } catch (er) { setError((er as Error).message); } }} />
+        <div className="occ-emoji-wrap">
+          <button type="button" className="o-icon" aria-label="Смайлики" title="Смайлики" aria-expanded={emojiOpen} disabled={!!recording} onClick={() => setEmojiOpen(!emojiOpen)}>😊</button>
+          {emojiOpen && <div className="occ-emoji" role="menu">{EMOJI.map((e) => <button key={e} type="button" role="menuitem" onClick={() => { setText((t) => t + e); setEmojiOpen(false); }}>{e}</button>)}</div>}
+        </div>
         {recording
           ? <div className="occ-rec" role="status">● Запись {seconds} с из {MAX_VOICE_SECONDS}</div>
           : <textarea value={text} rows={1} onChange={(e) => setText(e.target.value)} placeholder={`Сообщение в «${group.name}»`} aria-label="Сообщение" onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send(); } }} />}
@@ -324,6 +329,8 @@ function Composer({ ctx, group, muted }: { ctx: Ctx; group: Group; muted: boolea
     </div>
   );
 }
+
+const EMOJI = ['😀', '😂', '😍', '🥰', '😘', '😎', '🤔', '😅', '😢', '😡', '👍', '👏', '🙏', '💪', '🔥', '❤️', '🎉', '✅', '👌', '🤝', '🏠', '💰', '✈️', '🍽️', '☕', '🎁', '⭐', '😴'];
 
 function AgreementForm({ ctx, groupId, from, agreement, onClose }: { ctx: Ctx; groupId: string; from: Message | null; agreement?: Agreement; onClose: () => void }) {
   const [title, setTitle] = useState(agreement?.title ?? from?.text.slice(0, 80) ?? '');

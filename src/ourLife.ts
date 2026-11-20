@@ -62,3 +62,6 @@ export function makeInviteCode(random: (n: number) => Uint8Array = (n) => crypto
 export const normalizeInviteCode = (raw: string) => raw.toUpperCase().replace(/[^A-Z0-9]/g, '');
 export const isInviteCode = (code: string) => new RegExp(`^[${ALPHABET}]{${INVITE_CODE_LENGTH}}$`).test(code);
 export const inviteLink = (code: string, base = `${location.origin}${location.pathname}`) => `${base}#our/join/${code}`;
+
+/** Пара «Александр — Иван» (дублирует PAIR_EMAILS из ourData, чтобы не тянуть Firebase в основной код). */
+export const isPairAccount = (email?: string | null) => !!email && ['sanek.alex1995@yandex.ru', 'vodolivan195@gmail.com'].includes(email.trim().toLowerCase());

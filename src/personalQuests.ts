@@ -142,7 +142,7 @@ export function saveCustomQuest(
     throw new Error("Дедлайн не может быть раньше начала.");
   const locked = !!old && (old.rewardLocked || (old.currentValue ?? 0) > 0);
   const rewardCoins = checkCoins(
-    input.rewardCoins ?? (old ? questCoins(old) : 0),
+    input.rewardCoins ?? (old ? questCoins(old) : Math.max(1, Math.ceil(xp / 5))), // 0.90.7: по умолчанию XP / 5
     100,
   );
   if (

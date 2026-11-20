@@ -2856,3 +2856,20 @@ body {
   .footer-sep, .footer-tagline { display: none; }
   .footer-meta { font-size: 12px; }
 }
+
+/* 0.90.8: лайфкоины, серия и достижения — одной строкой в карточке профиля, справа от имени. */
+.app-shell .profile-page .profile-hero { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+.app-shell .profile-page .profile-hero .profile-rewards { display: flex; gap: 10px; margin: 0; }
+.app-shell .profile-page .profile-hero .profile-rewards > * { min-width: 112px; padding: 12px 16px; border-radius: 18px; gap: 4px; }
+.app-shell .profile-page .profile-hero .profile-rewards b { font-size: 20px; }
+.app-shell .profile-page .profile-hero .profile-rewards small { font-size: 12px; }
+@media (max-width: 1100px) {
+  .app-shell .profile-page .profile-hero { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .app-shell .profile-page .profile-hero .profile-rewards { grid-column: 1 / -1; grid-row: 2; }
+  .app-shell .profile-page .profile-hero .profile-rewards > * { flex: 1 1 0; min-width: 0; }
+}
+@media (max-width: 760px) {
+  .app-shell .profile-page .profile-hero .profile-rewards { gap: 8px; }
+  .app-shell .profile-page .profile-hero .profile-rewards > * { padding: 10px 6px; }
+  .app-shell .profile-page .profile-hero .profile-rewards b { font-size: 17px; }
+}

@@ -2842,3 +2842,17 @@ body {
 .app-shell .profile-page .profile-plan-import strong { flex: 1; font-size: 14px; }
 .app-shell .profile-page .profile-plan-import input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .app-shell .profile-page .profile-plan-import:focus-within { outline: 2px solid #2f6bff; outline-offset: -2px; }
+
+/* 0.90.8: подвал — логотип, название игры, версия и дата последнего обновления (на телефоне — по центру, вместо карты города). */
+.footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 8px; }
+.footer-logo { width: 28px; height: 28px; object-fit: contain; flex: none; }
+.footer-name { font-weight: 900; letter-spacing: .02em; }
+.footer-meta span { margin: 0 4px; }
+@media (max-width: 760px) {
+  .footer, .screen-home .footer { display: flex; flex-direction: column; gap: 4px; margin: 26px 0 8px; padding: 18px 12px 22px; text-align: center; font-size: 12px; line-height: 1.4; border-radius: 22px; background: linear-gradient(180deg, #e7f1ff, #f6faff00); }
+  :root[data-theme='dark'] .footer, :root[data-theme='dark'] .screen-home .footer { background: linear-gradient(180deg, #13264f, #0b173600); }
+  .footer-logo { width: 64px; height: 64px; margin-bottom: 4px; }
+  .footer-name { font-size: 18px; }
+  .footer-sep, .footer-tagline { display: none; }
+  .footer-meta { font-size: 12px; }
+}

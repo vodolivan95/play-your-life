@@ -9,7 +9,7 @@ import { readGoalRoute, goalRoute } from './goalRoutes';
 import { readTaskRoute } from './taskRoutes';
 import HomeDashboard from './components/HomeDashboard';
 import DashboardHeader from './components/DashboardHeader';
-import MobileCityFooter from './components/MobileCityFooter';
+import footerEmblem from './assets/brand/emblem-128.png';
 import AppSidebar from './components/AppSidebar';
 import ThemeSwitch from './components/ThemeSwitch';
 import MobileNav from './components/MobileNav';
@@ -966,9 +966,11 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
             )}
             </Suspense>
             </ErrorBoundary>
-            <MobileCityFooter />
           <footer className="footer">
-              PLAY YOUR LIFE 2.0 <span>✦</span> Маленькие шаги делают большую жизнь. <span>✦</span> Версия {changeJournal[0].version} <span>✦</span> Последнее обновление {journalDate(changeJournal[0].at)}
+              <img className="footer-logo" src={footerEmblem} width={28} height={28} alt="" aria-hidden="true" draggable={false} />
+              <b className="footer-name">PLAY YOUR LIFE 2.0</b>
+              <span className="footer-sep">✦</span><span className="footer-tagline">Маленькие шаги делают большую жизнь.</span>
+              <span className="footer-sep">✦</span><span className="footer-meta">Версия {changeJournal[0].version} <span>·</span> Последнее обновление {journalDate(changeJournal[0].at)}</span>
             </footer>
           </main>
         </div>

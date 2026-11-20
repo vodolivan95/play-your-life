@@ -3,7 +3,6 @@ import { visibleNavigation } from '../navigation';
 import { menuIconSrc } from '../menuIcons';
 import { useMenuTheme } from '../menuTheme';
 import SidebarReference from './SidebarReference';
-import ThemeSwitch from './ThemeSwitch';
 import CityMiniLive from './CityMiniLive';
 import SpaceSwitch from './SpaceSwitch';
 import OurUpcoming from './OurUpcoming';
@@ -30,7 +29,6 @@ export default function AppSidebar({ page, questCount, onNavigate, owner = false
         <SidebarReference />
       </a>
       <div className="pyl-menu-theme">
-        <ThemeSwitch />
         <SpaceSwitch mode={mode} onChange={onMode} />
       </div>
       {mode === 'our' ? (

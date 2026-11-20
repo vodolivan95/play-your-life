@@ -48,10 +48,11 @@ try {
     for (const name of ['dark', 'light']) {
       if (mobile) {
         await page.locator('.pyl-tabbar').getByRole('button', { name: /^Ещё/ }).click();
-        await page.getByRole('button', { name: name === 'dark' ? 'Тёмная тема' : 'Светлая тема' }).click();
+        await page.locator('.pyl-more').getByRole('button', { name: name === 'dark' ? 'Тёмная тема' : 'Светлая тема' }).click();
         await page.locator('.pyl-more-backdrop').click({ position: { x: 20, y: 20 } });
       } else {
-        await page.locator('.sidebar .pyl-theme').getByRole('button', { name: name === 'dark' ? 'Тёмная' : 'Светлая' }).click();
+        // 0.90.8: переключатель темы — в шапке.
+        await page.locator('.dashboard-header .dashboard-theme').getByRole('button', { name: name === 'dark' ? 'Тёмная тема' : 'Светлая тема' }).click();
       }
       assert.equal(await theme(), name);
       assert.equal(await bodyLight(), name === 'light', `Фон страницы соответствует теме ${name}`);

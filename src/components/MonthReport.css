@@ -102,3 +102,10 @@
 :root[data-theme='dark'] .mrep-value em{background:rgba(255,255,255,.08)}:root[data-theme='dark'] .mrep-value em.focus{background:rgba(255,217,128,.16);color:#ffd980}:root[data-theme='dark'] .mrep-value em.overload{background:rgba(195,168,255,.16);color:#d3c0ff}:root[data-theme='dark'] .mrep-value em.ok{background:rgba(70,211,154,.16);color:#6fe3b3}
 :root[data-theme='dark'] .mrep-focus-note{background:rgba(195,168,255,.1);border-color:rgba(195,168,255,.25)}
 :root[data-theme='dark'] .mrep-track.sphere i{background:var(--sphere)}
+/* 0.90.10: карточки «XP по дням» и «Из чего сложился XP» — одной высоты. */
+.mrep-two { align-items: stretch; }
+.mrep-two > .mrep-card { align-content: start; }
+.mrep-summary-column { align-items: stretch; }
+/* 0.90.10: показатели месяца — одной строкой на широком экране, на белых плитках. */
+@media(min-width:1200px){.mrep-kpis{grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}.mrep-kpis>div{padding:14px}}
+:root:not([data-theme='dark']) .mrep-kpis>div{background:#fff;border-color:#e3eaf6;box-shadow:0 6px 16px rgba(36,66,120,.06)}

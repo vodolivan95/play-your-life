@@ -107,3 +107,6 @@
 :root:not([data-theme='dark']) .fm [data-level='0']{background:#eef3fb}
 :root:not([data-theme='dark']) .fm [data-level='1']{background:#cfe6ff}
 :root:not([data-theme='dark']) .fm [data-level='2']{background:#8cc4ff}
+/* 0.90.10: календарь фокуса в светлой теме — белые клетки с тонкой рамкой. */
+:root:not([data-theme='dark']) .fm{background:#fff}
+:root:not([data-theme='dark']) .fm-cal button[data-level='0']{background:#fff;border-color:#e3eaf6;box-shadow:0 2px 6px rgba(36,66,120,.05)}

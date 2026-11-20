@@ -188,3 +188,8 @@
   :root:not([data-theme='dark']) .home-dashboard .peak-features button { width: 100%; min-width: 0; min-height: 88px; }
   :root:not([data-theme='dark']) .peak-stage::after { background: linear-gradient(180deg, rgba(14, 40, 104, 0) 0, rgba(14, 40, 104, 0) 135px, rgba(12, 34, 92, .6) 190px, rgba(12, 34, 92, .97) 245px); }
 }
+/* 0.90.10: плитки баннера одной высоты, текст «Создавай лучшую версию себя» помещается целиком. */
+:root:not([data-theme='dark']) .home-dashboard .peak-features { align-items: stretch; }
+:root:not([data-theme='dark']) .home-dashboard .peak-features > li { display: flex; }
+:root:not([data-theme='dark']) .home-dashboard .peak-features button { height: 100%; overflow: visible; }
+:root:not([data-theme='dark']) .home-dashboard .peak-features button > span:last-child { overflow-wrap: anywhere; hyphens: auto; }

@@ -87,3 +87,26 @@
   .fm > .fm-filters, .fm > .fm-stats, .fm > .fm-empty, .fm > .fm-spheres, .fm > .fm-panel { grid-column: 2; }
   .fm > .fm-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+/* 0.90.8: «Фокус месяца» в светлой теме — светлый (в тёмной остаётся тёмным). */
+:root:not([data-theme='dark']) .fm{background:linear-gradient(160deg,#ffffff 0%,#f1f6ff 60%,#e8f0ff 100%);border-color:#d8e4f8;color:#15223d;box-shadow:0 14px 40px #2d5bb514}
+:root:not([data-theme='dark']) .fm h3,:root:not([data-theme='dark']) .fm-block summary,:root:not([data-theme='dark']) .fm-donut-center b{color:#15223d}
+:root:not([data-theme='dark']) .fm h4,:root:not([data-theme='dark']) .fm-row-value,:root:not([data-theme='dark']) .fm-toggle,:root:not([data-theme='dark']) .fm-empty{color:#4f5f80}
+:root:not([data-theme='dark']) .fm small,:root:not([data-theme='dark']) .fm-head p,:root:not([data-theme='dark']) .fm-filters label,:root:not([data-theme='dark']) .fm-panel-head span,:root:not([data-theme='dark']) .fm-cal-head,:root:not([data-theme='dark']) .fm-legend,:root:not([data-theme='dark']) .fm-axis,:root:not([data-theme='dark']) .fm-chart small{color:#6a7a99}
+:root:not([data-theme='dark']) .fm-compare{background:#eaf2ff;border-color:#cfe0ff;color:#1d4fc4}
+:root:not([data-theme='dark']) .fm-filters select{background:#fff;border-color:#d3dff3;color:#15223d}
+:root:not([data-theme='dark']) .fm-reset{background:#f1ebff;border-color:#cbb8ff;color:#5b34c9}
+:root:not([data-theme='dark']) .fm-stats>div,:root:not([data-theme='dark']) .fm-panel{background:#fff;border-color:#dce6f7;box-shadow:0 6px 16px #2d5bb50f}
+:root:not([data-theme='dark']) .fm-empty{background:#f6f9ff;border-color:#c9d8f2}
+:root:not([data-theme='dark']) .fm-donut-bg{stroke:#e3ebf8}
+:root:not([data-theme='dark']) .fm-track,:root:not([data-theme='dark']) .fm-chips span,:root:not([data-theme='dark']) .fm-sessions li{background:#edf2fb}
+:root:not([data-theme='dark']) .fm-panel-head button{background:#eef3fc;color:#15223d}
+:root:not([data-theme='dark']) .fm-block{border-top-color:#e1e9f6}
+:root:not([data-theme='dark']) .fm-cal button{color:#33415f}
+:root:not([data-theme='dark']) .fm-cal button[aria-pressed='true']{border-color:#2f6cf0}
+:root:not([data-theme='dark']) .fm-chart button{border-bottom-color:#dce6f7}
+:root:not([data-theme='dark']) .fm [data-level='0']{background:#eef3fb}
+:root:not([data-theme='dark']) .fm [data-level='1']{background:#cfe6ff}
+:root:not([data-theme='dark']) .fm [data-level='2']{background:#8cc4ff}
+/* 0.90.10: календарь фокуса в светлой теме — белые клетки с тонкой рамкой. */
+:root:not([data-theme='dark']) .fm{background:#fff}
+:root:not([data-theme='dark']) .fm-cal button[data-level='0']{background:#fff;border-color:#e3eaf6;box-shadow:0 2px 6px rgba(36,66,120,.05)}

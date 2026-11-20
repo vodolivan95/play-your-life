@@ -13,7 +13,7 @@
 @media (min-width: 761px) {
   .topbar .dashboard-header { flex-wrap: nowrap; gap: 12px; max-width: none; }
   .topbar .dashboard-header-left { flex-wrap: nowrap; }
-  .topbar .dashboard-search-wrap { flex: 1 1 220px; min-width: 220px; max-width: none; margin: 0; }
+  .topbar .dashboard-search-wrap { flex: 1 1 220px; min-width: 150px; max-width: none; margin: 0; } /* 0.90.8: место под переключатель темы */
   .topbar .dashboard-header-right { flex-wrap: nowrap; gap: 10px; }
   .topbar .dashboard-search input { text-overflow: ellipsis; }
 }
@@ -45,3 +45,23 @@
 
 /* 0.89.9: колокольчик уведомлений скрыт по просьбе пользователя (пока не нужен); счётчик задач остаётся в «Мои задачи». */
 .dashboard-header .dashboard-notifications, .dashboard-notifications { display: none !important; }
+
+/* 0.90.8: переключатель темы — в шапке (на компьютере справа, на телефоне в верхней строке рядом с аватаром). */
+.dashboard-theme { flex: none; display: flex; }
+.dashboard-theme .pyl-theme { width: auto; height: auto; display: flex; gap: 3px; padding: 3px; border-radius: 999px; background: #fff; border: 1px solid #dfe8f6; box-shadow: 0 4px 12px #234c8d14; }
+.dashboard-theme .pyl-theme button { width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #6a7a99; display: grid; place-items: center; cursor: pointer; transition: background .15s, color .15s; }
+.dashboard-theme .pyl-theme button:hover { background: #eef4ff; }
+.dashboard-theme .pyl-theme button.on { background: linear-gradient(145deg, #ffe08a, #ffc23d); color: #7a4b00; box-shadow: 0 3px 10px rgba(245, 184, 0, .3); }
+:root[data-theme='dark'] .dashboard-theme .pyl-theme { background: #0f1830; border-color: #22325a; box-shadow: none; }
+:root[data-theme='dark'] .dashboard-theme .pyl-theme button { color: #9aa8cc; }
+:root[data-theme='dark'] .dashboard-theme .pyl-theme button:hover { background: #1a2748; }
+:root[data-theme='dark'] .dashboard-theme .pyl-theme button.on { background: linear-gradient(145deg, #3b6cf0, #2448b8); color: #fff; box-shadow: 0 3px 10px rgba(47, 108, 240, .35); }
+@media (max-width: 760px) {
+  .dashboard-theme { order: 3; margin-left: auto; }
+  .dashboard-theme .pyl-theme button { width: 32px; height: 32px; }
+}
+@media (max-width: 380px) {
+  .dashboard-theme .pyl-theme { gap: 1px; padding: 2px; }
+  .dashboard-theme .pyl-theme button { width: 28px; height: 28px; }
+  .dashboard-theme .pyl-theme svg { width: 15px; height: 15px; }
+}

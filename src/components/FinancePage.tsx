@@ -123,6 +123,7 @@ export default function FinancePage({
   const monthList = monthTransactions(state, month);
   const monthSorted = [...monthList].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.createdAt.localeCompare(a.createdAt)));
   const monthTotals = totals(monthList);
+  const monthExpenseCount = monthList.filter((t) => t.type === 'expense').length;
   const prevMonthTotals = totals(monthTransactions(state, moveMonth(month, -1)));
   const monthExpenseChange = prevMonthTotals.expense
     ? Math.round(((monthTotals.expense - prevMonthTotals.expense) / prevMonthTotals.expense) * 100)
@@ -343,6 +344,7 @@ export default function FinancePage({
               <b className={monthTotals.net < 0 ? 'negative' : ''}>{monthTotals.net >= 0 ? '+' : ''}{money(monthTotals.net)}</b>
               <em>доход минус траты</em>
             </div>
+            <div className="panel fin-kpi fin-kpi-avg"><span>Средняя трата</span><b>{monthExpenseCount ? money(monthTotals.expense / monthExpenseCount) : '—'}</b><em>{monthExpenseCount ? `по ${monthExpenseCount} ${wordRecords(monthExpenseCount)}` : 'трат пока нет'}</em></div>
           </div>
 
           <div className="fin-kpis fin-kpis-more">
@@ -409,6 +411,8 @@ export default function FinancePage({
               <b className={yearTotals.net < 0 ? 'negative' : ''}>{yearTotals.net >= 0 ? '+' : ''}{money(yearTotals.net)}</b>
               <em>доход минус траты</em>
             </div>
+            <div className="panel fin-kpi fin-kpi-plus"><span>Месяцев в плюсе</span><b>{activeMonths.length ? `${plusMonths} из ${activeMonths.length}` : '—'}</b><em>доход больше трат</em></div>
+            <div className="panel fin-kpi fin-kpi-avg"><span>Остаток в среднем</span><b className={activeMonths.length && yearTotals.net < 0 ? 'negative' : ''}>{activeMonths.length ? `${yearTotals.net >= 0 ? '+' : ''}${money(yearTotals.net / activeMonths.length)}` : '—'}</b><em>{activeMonths.length ? 'в месяц с записями' : 'данных пока нет'}</em></div>
           </div>
 
           <div className="fin-kpis fin-kpis-more">
@@ -417,7 +421,6 @@ export default function FinancePage({
             <div className="panel fin-kpi"><span>Самый дорогой месяц</span><b>{priciestMonth ? money(priciestMonth.expense) : '—'}</b><em>{priciestMonth ? priciestMonth.label : 'данных пока нет'}</em></div>
             <div className="panel fin-kpi"><span>Самый экономный месяц</span><b>{cheapestMonth ? money(cheapestMonth.expense) : '—'}</b><em>{cheapestMonth ? cheapestMonth.label : 'данных пока нет'}</em></div>
             <div className="panel fin-kpi"><span>Средний доход в месяц</span><b>{activeMonths.length ? money(avgIncomeMonth) : '—'}</b><em>по {activeMonths.length} {activeMonths.length === 1 ? 'месяцу' : 'месяцам'} с записями</em></div>
-            <div className="panel fin-kpi"><span>Месяцев в плюсе</span><b>{activeMonths.length ? `${plusMonths} из ${activeMonths.length}` : '—'}</b><em>доход больше трат</em></div>
           </div>
 
           <section className="panel fin-chart">
@@ -481,6 +484,11 @@ export default function FinancePage({
               <span>Платежей в реестре</span>
               <b>{allPayments.length}</b>
               <em>регулярных и разовых</em>
+            </div>
+            <div className="panel fin-kpi fin-kpi-avg">
+              <span>Нагрузка за год</span>
+              <b>{monthlyLoad ? money(monthlyLoad * 12) : '—'}</b>
+              <em>{monthlyLoad ? 'регулярные платежи за 12 месяцев' : 'регулярных платежей нет'}</em>
             </div>
           </div>
 

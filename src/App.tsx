@@ -9,7 +9,7 @@ import { readGoalRoute, goalRoute } from './goalRoutes';
 import { readTaskRoute } from './taskRoutes';
 import HomeDashboard from './components/HomeDashboard';
 import DashboardHeader from './components/DashboardHeader';
-import MobileCityFooter from './components/MobileCityFooter';
+import footerEmblem from './assets/brand/emblem-128.png';
 import AppSidebar from './components/AppSidebar';
 import ThemeSwitch from './components/ThemeSwitch';
 import MobileNav from './components/MobileNav';
@@ -648,31 +648,7 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
                       label={playerMaxed ? 'Максимальный уровень 100' : 'XP до следующего уровня'}
                     />
                   </div>
-                  <button
-                    className="icon-button"
-                    aria-label="Изменить профиль"
-                    onClick={() => setModal('profile')}
-                  >
-                    <Icon name="settings" />
-                  </button>
-                </section>
-                {state.xp === 0 && !profileTipDismissed && (
-                  <section className="panel profile-tip">
-                    <span className="profile-tip-icon">
-                      <Icon name="bolt" size={18} />
-                    </span>
-                    <p>Выполни первое задание — получи первые XP и лайфкоины.</p>
-                    <button
-                      type="button"
-                      className="icon-button profile-tip-dismiss"
-                      aria-label="Скрыть подсказку"
-                      onClick={() => setProfileTipDismissed(true)}
-                    >
-                      <Icon name="close" size={14} />
-                    </button>
-                  </section>
-                )}
-                <div className="player-rewards profile-rewards">
+                  <div className="player-rewards profile-rewards">
                   <span>
                     <b>
                       <GameArt kind="coin" /> {state.coins}
@@ -700,8 +676,31 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
                     <small>Достижения</small>
                   </button>
                 </div>
+                  <button
+                    className="icon-button"
+                    aria-label="Изменить профиль"
+                    onClick={() => setModal('profile')}
+                  >
+                    <Icon name="settings" />
+                  </button>
+                </section>
+                {state.xp === 0 && !profileTipDismissed && (
+                  <section className="panel profile-tip">
+                    <span className="profile-tip-icon">
+                      <Icon name="bolt" size={18} />
+                    </span>
+                    <p>Выполни первое задание — получи первые XP и лайфкоины.</p>
+                    <button
+                      type="button"
+                      className="icon-button profile-tip-dismiss"
+                      aria-label="Скрыть подсказку"
+                      onClick={() => setProfileTipDismissed(true)}
+                    >
+                      <Icon name="close" size={14} />
+                    </button>
+                  </section>
+                )}
                 <div className="profile-section">
-                  <span className="profile-section-label">Настройки</span>
                   <section className="panel profile-menu profile-settings">
                     <div className="profile-settings-row">
                       <span>Тема оформления</span>
@@ -966,9 +965,11 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
             )}
             </Suspense>
             </ErrorBoundary>
-            <MobileCityFooter />
           <footer className="footer">
-              PLAY YOUR LIFE 2.0 <span>✦</span> Маленькие шаги делают большую жизнь. <span>✦</span> Версия {changeJournal[0].version} <span>✦</span> Последнее обновление {journalDate(changeJournal[0].at)}
+              <img className="footer-logo" src={footerEmblem} width={28} height={28} alt="" aria-hidden="true" draggable={false} />
+              <b className="footer-name">PLAY YOUR LIFE 2.0</b>
+              <span className="footer-sep">✦</span><span className="footer-tagline">Маленькие шаги делают большую жизнь.</span>
+              <span className="footer-sep">✦</span><span className="footer-meta">Версия {changeJournal[0].version} <span>·</span> Последнее обновление {journalDate(changeJournal[0].at)}</span>
             </footer>
           </main>
         </div>

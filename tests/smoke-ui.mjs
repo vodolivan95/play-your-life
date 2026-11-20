@@ -155,9 +155,10 @@ try {
       await open(label);
       if (label === 'Город') assert.ok(cityChunkRequests.length > 0, 'городской чанк загружается при переходе в «Город»');
       if (mobile && label === 'Главная') {
-        const footerImage = page.locator('.mobile-footer-map img');
-        assert.equal(await footerImage.count(), 1, 'на мобильной главной отображается мини-карта в футере');
-        assert.match(await footerImage.getAttribute('src') ?? '', /mobile-footer-islands/, 'мини-карта показывает актуальный остров с психологией');
+        // 0.90.8: в подвале телефона вместо мини-карты — логотип, название, версия и дата обновления.
+        const footer = page.locator('main.screen-home .footer');
+        assert.equal(await footer.locator('.footer-logo').count(), 1, 'в подвале мобильной главной есть логотип');
+        assert.match(await footer.innerText(), /Версия \d+\.\d+\.\d+[\s\S]*Последнее обновление/, 'в подвале версия и дата обновления');
       }
 
       if (label === 'Сферы жизни') {

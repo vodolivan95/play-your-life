@@ -8,6 +8,7 @@ import type { SearchResult } from '../globalSearch';
 import Avatar from './Avatar';
 import Icon from './Icon';
 import LyubertsyWeather from './LyubertsyWeather';
+import ThemeSwitch from './ThemeSwitch';
 import './DashboardHeader.css';
 
 const mskTimeFormatter = new Intl.DateTimeFormat('ru-RU', {
@@ -116,6 +117,7 @@ export default function DashboardHeader({ state, onProfile, onQuests, onSearchRe
           <i aria-hidden="true"><b style={{ width: `${Math.min(100, Math.max(0, player.progress))}%` }} /></i>
         </span>
       </button>
+      <div className="dashboard-theme"><ThemeSwitch compact /></div>
     </div>
   </div>;
 }

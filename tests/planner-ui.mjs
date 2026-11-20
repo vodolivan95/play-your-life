@@ -179,9 +179,9 @@ try {
     for (const theme of ['light', 'dark']) {
       if (mobile) {
         await page.locator('.pyl-tabbar').getByRole('button', { name: /^Ещё/ }).click();
-        await page.getByRole('button', { name: theme === 'dark' ? 'Тёмная тема' : 'Светлая тема', exact: true }).click();
+        await page.locator('.pyl-more').getByRole('button', { name: theme === 'dark' ? 'Тёмная тема' : 'Светлая тема', exact: true }).click();
         await page.locator('.pyl-more-backdrop').click({ position: { x: 20, y: 20 } });
-      } else await page.locator('.sidebar .pyl-theme').getByRole('button', { name: theme === 'dark' ? 'Тёмная' : 'Светлая', exact: true }).click();
+      } else await page.locator('.dashboard-header .dashboard-theme').getByRole('button', { name: theme === 'dark' ? 'Тёмная тема' : 'Светлая тема', exact: true }).click(); // 0.90.8: тема в шапке
       assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), theme);
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
       await page.screenshot({ path: `work/planner/${mobile ? 'mobile' : 'desktop'}-${theme}.png`, fullPage: true });

@@ -2842,3 +2842,114 @@ body {
 .app-shell .profile-page .profile-plan-import strong { flex: 1; font-size: 14px; }
 .app-shell .profile-page .profile-plan-import input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .app-shell .profile-page .profile-plan-import:focus-within { outline: 2px solid #2f6bff; outline-offset: -2px; }
+
+/* 0.90.8: подвал — логотип, название игры, версия и дата последнего обновления (на телефоне — по центру, вместо карты города). */
+.footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 8px; }
+.footer-logo { width: 28px; height: 28px; object-fit: contain; flex: none; }
+.footer-name { font-weight: 900; letter-spacing: .02em; }
+.footer-meta span { margin: 0 4px; }
+@media (max-width: 760px) {
+  .footer, .screen-home .footer { display: flex; flex-direction: column; gap: 4px; margin: 26px 0 8px; padding: 18px 12px 22px; text-align: center; font-size: 12px; line-height: 1.4; border-radius: 22px; background: linear-gradient(180deg, #e7f1ff, #f6faff00); }
+  :root[data-theme='dark'] .footer, :root[data-theme='dark'] .screen-home .footer { background: linear-gradient(180deg, #13264f, #0b173600); }
+  .footer-logo { width: 64px; height: 64px; margin-bottom: 4px; }
+  .footer-name { font-size: 18px; }
+  .footer-sep, .footer-tagline { display: none; }
+  .footer-meta { font-size: 12px; }
+}
+
+/* 0.90.8: лайфкоины, серия и достижения — одной строкой в карточке профиля, справа от имени. */
+.app-shell .profile-page .profile-hero { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+.app-shell .profile-page .profile-hero .profile-rewards { display: flex; gap: 10px; margin: 0; }
+.app-shell .profile-page .profile-hero .profile-rewards > * { min-width: 112px; padding: 12px 16px; border-radius: 18px; gap: 4px; }
+.app-shell .profile-page .profile-hero .profile-rewards b { font-size: 20px; }
+.app-shell .profile-page .profile-hero .profile-rewards small { font-size: 12px; }
+@media (max-width: 1100px) {
+  .app-shell .profile-page .profile-hero { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .app-shell .profile-page .profile-hero .profile-rewards { grid-column: 1 / -1; grid-row: 2; }
+  .app-shell .profile-page .profile-hero .profile-rewards > * { flex: 1 1 0; min-width: 0; }
+}
+@media (max-width: 760px) {
+  .app-shell .profile-page .profile-hero .profile-rewards { gap: 8px; }
+  .app-shell .profile-page .profile-hero .profile-rewards > * { padding: 10px 6px; }
+  .app-shell .profile-page .profile-hero .profile-rewards b { font-size: 17px; }
+}
+
+/* 0.90.8: дашборды-карточки с цветом — группами по три одного цвета (задачи, финансы, платежи). */
+.pplan-stats > *, .fin-kpis > *, .tsum > div { --k: #2f6cf0; }
+.tsum > div:nth-child(n+4) { --k: #1fa463; }
+.pplan-stats > :nth-child(n+4), .fin-kpis > :nth-child(n+4) { --k: #1fa463; }
+.pplan-stats > :nth-child(n+7), .fin-kpis > :nth-child(n+7) { --k: #7c4dff; }
+.pplan-stats > :nth-child(n+10), .fin-kpis > :nth-child(n+10) { --k: #f08c00; }
+.fin-kpis-more > :nth-child(-n+3) { --k: #7c4dff; }
+.fin-kpis-more > :nth-child(n+4) { --k: #f08c00; }
+.fin-kpis > .fin-kpi-expense { --k: #e5484d; }
+.fin-kpis > .fin-kpi-income { --k: #1fa463; }
+.fin-kpis > .fin-kpi-net, .fin-kpis > .fin-kpi-plus { --k: #2f6cf0; }
+.app-shell .pplan-stats > span, .app-shell .pplan-stats > .pplan-stat, .app-shell .fin-kpis > .fin-kpi, .app-shell .tsum > div {
+  position: relative; overflow: hidden; border-radius: 20px; padding: 18px 18px 16px;
+  border: 1px solid color-mix(in srgb, var(--k) 22%, #e3ebf8);
+  background: linear-gradient(180deg, #fff 0%, color-mix(in srgb, var(--k) 7%, #fff) 100%);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--k) 10%, transparent);
+}
+.app-shell .pplan-stats > span::before, .app-shell .pplan-stats > .pplan-stat::before, .app-shell .fin-kpis > .fin-kpi::before, .app-shell .tsum > div::before {
+  content: ''; position: absolute; left: 14%; right: 14%; top: 0; height: 4px; border-radius: 0 0 6px 6px;
+  background: linear-gradient(90deg, var(--k), color-mix(in srgb, var(--k) 35%, #fff));
+}
+.app-shell .pplan-stats > span::after, .app-shell .pplan-stats > .pplan-stat::after, .app-shell .fin-kpis > .fin-kpi::after, .app-shell .tsum > div::after {
+  content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--k); opacity: .85;
+}
+.app-shell .pplan-stats b { color: #15223d; font-size: 28px; line-height: 1.1; }
+.app-shell .pplan-stats > span, .app-shell .pplan-stats > .pplan-stat { color: #33415f; font-size: 14px; font-weight: 700; }
+.app-shell .fin-kpis > .fin-kpi span { font-size: 13px; font-weight: 700; color: color-mix(in srgb, var(--k) 70%, #33415f); }
+.app-shell .fin-kpis > .fin-kpi b { font-size: 26px; }
+.app-shell .fin-kpis > .fin-kpi em { font-size: 12.5px; }
+.app-shell .pplan-stats { grid-template-columns: repeat(auto-fill, minmax(min(210px, 100%), 1fr)); gap: 14px; }
+.app-shell .fin-kpis:not(.fin-kpis-more) { grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); }
+:root[data-theme='dark'] .app-shell .pplan-stats > span, :root[data-theme='dark'] .app-shell .pplan-stats > .pplan-stat, :root[data-theme='dark'] .app-shell .fin-kpis > .fin-kpi, :root[data-theme='dark'] .app-shell .tsum > div {
+  border-color: color-mix(in srgb, var(--k) 35%, #22325a);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--k) 10%, #0f1830) 0%, color-mix(in srgb, var(--k) 20%, #0b142b) 100%);
+  box-shadow: none; color: #c8d3f0;
+}
+:root[data-theme='dark'] .app-shell .pplan-stats b { color: #fff; }
+:root[data-theme='dark'] .app-shell .fin-kpis > .fin-kpi span { color: color-mix(in srgb, var(--k) 55%, #e6ecff); }
+
+/* 0.90.8: достижения — шрифт на 2 пункта крупнее, текст не обрезается. */
+.app-shell .achievement { align-content: start; }
+.app-shell .achievement h2 { font-size: 15px; line-height: 1.3; overflow: visible; }
+.app-shell .achievement p { font-size: 13px; line-height: 1.45; margin-top: 4px; overflow: visible; white-space: normal; }
+.app-shell .tsum > div small { color: color-mix(in srgb, var(--k) 70%, #33415f); font-weight: 800; font-size: 13px; }
+.app-shell .tsum > div b { color: #15223d; font-size: 26px; }
+:root[data-theme='dark'] .app-shell .tsum > div b { color: #fff; }
+:root[data-theme='dark'] .app-shell .tsum > div small { color: color-mix(in srgb, var(--k) 55%, #e6ecff); }
+
+/* 0.90.9: показатели финансов ровными рядами (5 / 4 / 4) на белых карточках. */
+.fin-kpis > .fin-kpi-avg { --k: #7c4dff; }
+@media (min-width: 1180px) {
+  .app-shell .fin-kpis:not(.fin-kpis-more) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .app-shell .fin-kpis:has(> :nth-child(5)) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .app-shell .fin-kpis.fin-kpis-more:not(:has(> :nth-child(5))) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (min-width: 761px) and (max-width: 1179px) {
+  .app-shell .fin-kpis, .app-shell .fin-kpis.fin-kpis-more { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .app-shell .fin-kpis:not(.fin-kpis-more) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+:root:not([data-theme='dark']) .app-shell .pplan-stats > span,
+:root:not([data-theme='dark']) .app-shell .pplan-stats > .pplan-stat,
+:root:not([data-theme='dark']) .app-shell .fin-kpis > .fin-kpi,
+:root:not([data-theme='dark']) .app-shell .tsum > div {
+  background: #fff; border-color: #e6edf8; box-shadow: 0 8px 22px rgba(36, 66, 120, .07);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+
+/* 0.90.9: переключатели-вкладки в светлой теме — на белом фоне, выбранная — голубая «пилюля». */
+:root:not([data-theme='dark']) :is(.tabs, .lpm-seg, .hb-seg, .sph-segment, .account-tabs, .fin-tabs, .pyl-quest-modes),
+:root:not([data-theme='dark']) .reward-shop .shop-tabs {
+  background: #fff; border: 1px solid #e3eaf6; box-shadow: 0 6px 18px rgba(36, 66, 120, .06);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+:root:not([data-theme='dark']) :is(.tabs, .lpm-seg, .hb-seg, .sph-segment, .account-tabs, .fin-tabs, .pyl-quest-modes) button:is(.selected, .active, .on, .is-on, [aria-pressed='true'], [aria-selected='true']),
+:root:not([data-theme='dark']) .reward-shop .shop-tabs button.selected {
+  background: #eaf2ff; color: #1f5fd6; box-shadow: inset 0 0 0 1px #cfe0ff;
+}

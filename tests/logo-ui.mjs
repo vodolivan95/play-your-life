@@ -120,11 +120,10 @@ try {
       await page.screenshot({ path: `work/logo-menu-${suffix}.png`, fullPage: true });
       await page.locator('.sidebar').screenshot({ path: `work/logo-sidebar-${suffix}.png` });
     } else {
-      await page.addStyleTag({ content:'.mfm-pan, .mfm-car, .mfm-boat, .mfm-bird { animation:none !important; }' });
-      await cityArtwork(page, '.mobile-footer-map .mfm-pan', 1200, 670);
-      const image = await page.locator('.mobile-footer-map').boundingBox();
-      assert.ok(Math.abs(image.width / image.height - 16 / 9) < .02, 'Footer map must keep the 16:9 frame');
-      assert.equal(await page.locator('.mobile-city-footer .play-wordmark').count(), 1);
+      // 0.90.8: карта города в подвале убрана — в подвале логотип, название, версия и дата обновления.
+      assert.equal(await page.locator('.mobile-city-footer').count(), 0);
+      assert.match(await page.locator('main.screen-home .footer').innerText(), /PLAY YOUR LIFE 2\.0[\s\S]*Версия \d+\.\d+\.\d+[\s\S]*Последнее обновление/);
+      assert.equal(await page.locator('.dashboard-header .dashboard-theme .pyl-theme button').count(), 2);
       assert.equal(await page.locator('.pyl-tabbar .pyl-tab').count(), 5);
       await page.locator('.pyl-tabbar').getByRole('button', { name:'Проекты', exact:true }).click();
       await page.locator('main.screen-goals').waitFor();
@@ -143,13 +142,13 @@ try {
       });
       await page.locator('main.screen-home').evaluate(element => element.scrollIntoView({ block: 'end' }));
       await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-      const wordmark = await page.locator('.mobile-city-footer .play-wordmark').boundingBox();
+      const wordmark = await page.locator('main.screen-home .footer').boundingBox();
       const nav = await page.locator('.pyl-tabbar').boundingBox();
       assert.ok(
         wordmark && nav && wordmark.y + wordmark.height <= nav.y,
         `Fixed navigation must not cover the footer wordmark (wordmark=${JSON.stringify(wordmark)}, nav=${JSON.stringify(nav)})`,
       );
-      await page.locator('.mobile-city-footer').screenshot({ path: `work/logo-menu-${suffix}.png` });
+      await page.locator('main.screen-home .footer').screenshot({ path: `work/logo-menu-${suffix}.png` });
       await page.screenshot({ path:`work/logo-footer-screen-${suffix}.png` });
     }
     assert.equal(await page.evaluate(() => {

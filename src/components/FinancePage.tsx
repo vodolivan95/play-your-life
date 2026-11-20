@@ -123,6 +123,7 @@ export default function FinancePage({
   const monthList = monthTransactions(state, month);
   const monthSorted = [...monthList].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.createdAt.localeCompare(a.createdAt)));
   const monthTotals = totals(monthList);
+  const monthExpenseCount = monthList.filter((t) => t.type === 'expense').length;
   const prevMonthTotals = totals(monthTransactions(state, moveMonth(month, -1)));
   const monthExpenseChange = prevMonthTotals.expense
     ? Math.round(((monthTotals.expense - prevMonthTotals.expense) / prevMonthTotals.expense) * 100)
@@ -343,6 +344,7 @@ export default function FinancePage({
               <b className={monthTotals.net < 0 ? 'negative' : ''}>{monthTotals.net >= 0 ? '+' : ''}{money(monthTotals.net)}</b>
               <em>доход минус траты</em>
             </div>
+            <div className="panel fin-kpi fin-kpi-avg"><span>Средняя трата</span><b>{monthExpenseCount ? money(monthTotals.expense / monthExpenseCount) : '—'}</b><em>{monthExpenseCount ? `по ${monthExpenseCount} ${wordRecords(monthExpenseCount)}` : 'трат пока нет'}</em></div>
           </div>
 
           <div className="fin-kpis fin-kpis-more">
@@ -410,6 +412,7 @@ export default function FinancePage({
               <em>доход минус траты</em>
             </div>
             <div className="panel fin-kpi fin-kpi-plus"><span>Месяцев в плюсе</span><b>{activeMonths.length ? `${plusMonths} из ${activeMonths.length}` : '—'}</b><em>доход больше трат</em></div>
+            <div className="panel fin-kpi fin-kpi-avg"><span>Остаток в среднем</span><b className={activeMonths.length && yearTotals.net < 0 ? 'negative' : ''}>{activeMonths.length ? `${yearTotals.net >= 0 ? '+' : ''}${money(yearTotals.net / activeMonths.length)}` : '—'}</b><em>{activeMonths.length ? 'в месяц с записями' : 'данных пока нет'}</em></div>
           </div>
 
           <div className="fin-kpis fin-kpis-more">
@@ -481,6 +484,11 @@ export default function FinancePage({
               <span>Платежей в реестре</span>
               <b>{allPayments.length}</b>
               <em>регулярных и разовых</em>
+            </div>
+            <div className="panel fin-kpi fin-kpi-avg">
+              <span>Нагрузка за год</span>
+              <b>{monthlyLoad ? money(monthlyLoad * 12) : '—'}</b>
+              <em>{monthlyLoad ? 'регулярные платежи за 12 месяцев' : 'регулярных платежей нет'}</em>
             </div>
           </div>
 

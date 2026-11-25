@@ -5,7 +5,7 @@
  */
 export type MenuIconId =
   | 'home' | 'spheres' | 'tasks' | 'quests' | 'goals' | 'plan' | 'monthly'
-  | 'tree' | 'achievements' | 'shop' | 'city' | 'statistics' | 'profile' | 'budget' | 'knowledge' | 'notes' | 'psychology'
+  | 'tree' | 'achievements' | 'future' | 'shop' | 'city' | 'statistics' | 'profile' | 'budget' | 'knowledge' | 'notes' | 'psychology'
   | 'ourChat' | 'ourCalendar' | 'ourPlaces' | 'ourMeetings';
 import { habitsIconSvg, tasksIconSvg } from './menuIconsNew';
 type Stop = readonly [number, string, number?];
@@ -72,6 +72,11 @@ const SVGS: Record<MenuIconId, string> = {
     '<path d="M25 44 L39 48.5 M25 36 L39 40.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><path d="M10 35 L19 31.5 M10 44 L19 40.5" stroke="#fff" stroke-opacity=".7" stroke-width="2" stroke-linecap="round"/><path d="M45 36 Q50 31 54 33" stroke="#fff" stroke-opacity=".8" stroke-width="2" fill="none" stroke-linecap="round"/>' +
     '<ellipse cx="32" cy="43" rx="5" ry="1.8" fill="#0A1A3C" opacity=".3" filter="url(#bl)"/>' +
     P('M32 44 C32 44 21.5 33.5 21.5 25 a10.5 10.5 0 0 1 21 0 C42.5 33.5 32 44 32 44z', 'pin') + '<circle cx="32" cy="25" r="4.2" fill="#fff"/><path d="M25.5 21 a8 8 0 0 1 7-4.5" stroke="#fff" stroke-opacity=".6" stroke-width="1.8" fill="none" stroke-linecap="round"/>',
+  future:
+    LG('fu', [[0, '#8FDCFF'], [.55, '#2F7BEA'], [1, '#1B3F8F']], 'd') + LG('fg', [[0, '#FFF3C2'], [1, '#EDB93F']]) +
+    '<path d="M8 27 L40 15 L46 27 L14 39 Z" fill="url(#fu)"/><path d="M8 27 L40 15 L46 27 L14 39 Z" fill="url(#sh)"/><path d="M8 27 L40 15 L46 27 L14 39 Z" fill="none" stroke="url(#rim)" stroke-width="1.1"/>' +
+    '<path d="M30 33 L24 56 M30 33 L40 56 M30 33 L32 58" stroke="#5A6478" stroke-width="2.6" stroke-linecap="round"/>' +
+    Ci(54, 12, 4.2, 'fg'),
   statistics:
     LG('a', [[0, '#8FE6EE'], [1, '#1E9DB8']]) + LG('b', [[0, '#8FC4FF'], [1, '#2F6FD8']]) + LG('c', [[0, '#B6A2F5'], [1, '#5A3FC4']]) +
     Rr(7, 35, 14, 21, 5, 'a') + Rr(25, 23, 14, 33, 5, 'b') + Rr(43, 11, 14, 45, 5, 'c') +

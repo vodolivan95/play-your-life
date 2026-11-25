@@ -16,6 +16,7 @@ import MobileNav from './components/MobileNav';
 import { navigation } from './navigation';
 import { isOwnerEmail } from './privateAccess';
 import { quickPlanningTask } from './planner';
+import FutureVision from './components/FutureVision';
 import { isOurPage, isPairAccount, lastPageOf, ourRoute, readOurRoute, rememberPage, storedMode } from './ourLife';
 import type { LifeMode } from './ourLife';
 import { CityAppearanceContext } from './cityAppearanceContext';
@@ -604,6 +605,7 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
                 <PsychologyPage />
               </Suspense>
             )}
+            {page === 'future' && <FutureVision />}
             {page === 'notes' && (
               <Suspense fallback={<p role="status">Загружаем заметки…</p>}>
                 <AllNotes ownerId={userId ?? 'local'} author={state.profile.name || 'Игрок'} spheres={spheres} notify={notify} />

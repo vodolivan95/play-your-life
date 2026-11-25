@@ -11,6 +11,7 @@ export const navigation: { id: MenuIconId; label: string; icon: string; ownerOnl
   { id: 'budget', label: 'Финансы', icon: 'budget' },
   { id: 'tree', label: 'Дерево навыков', icon: 'tree' },
   { id: 'achievements', label: 'Достижения', icon: 'trophy' },
+  { id: 'future', label: 'Моё будущее', icon: 'future' },
   { id: 'shop', label: 'Магазин', icon: 'shop' },
   { id: 'city', label: 'Город', icon: 'city' },
   { id: 'psychology', label: 'Психология', icon: 'psychology', ownerOnly: true },

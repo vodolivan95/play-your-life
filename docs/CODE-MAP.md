@@ -23,6 +23,7 @@ Codex читает правила корневого AGENTS.md автомати�
 | Вход и сохранения | ../AccountRoot.tsx | firebaseClient.ts, firebaseSave.ts, accountPersistence.ts, stateValidation.ts, stateMerge.ts | state-roundtrip.test.ts, state-merge.test.ts, firebase-rules.test.mjs |
 | Орфография | ../spellcheck.css | spellcheck.ts, spellcheck.worker.ts, spellcheckText.ts | spellcheck.test.ts, spellcheck-ui.mjs |
 | Верхний баннер, «Что нового» | DashboardHeader.tsx, UpdateNotice.tsx | whatsNew.ts | knowledge-base.test.ts, smoke-ui.mjs |
+| Моё будущее (каркас, этап 1) | FutureVision.tsx, FutureVision.css | navigation.ts, menuIcons.ts | — (проверки меню: logo-ui.mjs, smoke-ui.mjs) |
 | Тема, общее оформление | ThemeSwitch.tsx | styles.css, interface.css, theme-dark.css, theme-light-glass.css | theme-ui.mjs |
 
 Оболочка и связи экранов: `src/App.tsx`, `src/navigation.ts`; точка входа: `src/main.tsx`. Сервер TickTick: `integrations/ticktick/worker.ts`. Правила базы: `firestore.rules`. CI: `.github/workflows/ci.yml`. Профильные требования ищи по имени раздела в `docs/`, не читай все документы подряд.

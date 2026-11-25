@@ -128,7 +128,7 @@ try {
       await page.locator('.pyl-tabbar').getByRole('button', { name:'Проекты', exact:true }).click();
       await page.locator('main.screen-goals').waitFor();
       await page.locator('.pyl-tabbar').getByRole('button', { name:'Ещё', exact:true }).click();
-      assert.equal(await page.locator('.pyl-more .pyl-more-item').count(), 10); // 0.87.0: + «База знаний»; 0.89.9: + «Заметки»
+      assert.equal(await page.locator('.pyl-more .pyl-more-item').count(), 11); // 0.87.0: + «База знаний»; 0.89.9: + «Заметки»; 0.91.0: + «Моё будущее»
       await page.locator('.pyl-more').getByRole('button', { name:'Ключевые итоги', exact:true }).click();
       await page.locator('main.screen-statistics').waitFor();
       assert.equal(await page.locator('.pyl-more').count(), 0);

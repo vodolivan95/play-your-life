@@ -25,7 +25,7 @@ try {
   await map.waitFor();
   await page.waitForFunction(() => { const image = document.querySelector('.coastal-map > img'); return image?.complete && image.naturalWidth > 0; });
   assert.deepEqual(await map.locator(':scope > img').evaluate(image => [image.naturalWidth, image.naturalHeight]), [ISLAND_IMAGE_WIDTH, ISLAND_IMAGE_HEIGHT], 'Размер горизонтальной карты острова на ПК');
-  assert.equal(await page.locator('.coastal-building').count(), 10);
+  assert.equal(await page.locator('.coastal-building').count(), 12);
   assert.equal(await page.locator('.city3d-scene canvas').count(), 0, 'Внешний город заменён картой');
   await page.screenshot({ path: 'room-preview/coastal-desktop.png', fullPage: true });
   const ids = ['health', 'sport', 'growth', 'finance', 'english', 'driving', 'together', 'tasks', 'hobby', 'psychology'];
@@ -43,7 +43,7 @@ try {
       await page.getByText('3D-интерьер этой сферы готовится.', { exact: false }).waitFor();
       await page.getByRole('button', { name: '← Вернуться в город', exact: true }).click();
     }
-    assert.equal(await page.locator('.coastal-building').count(), 10);
+    assert.equal(await page.locator('.coastal-building').count(), 12);
   }
   for (const time of ['day', 'sunset', 'night']) {
     await page.getByRole('combobox', { name: 'Время города', exact: true }).selectOption(time);
@@ -84,7 +84,7 @@ try {
   await map.waitFor();
   await page.reload();
   await map.waitFor();
-  assert.equal(await page.locator('.coastal-building').count(), 10);
+  assert.equal(await page.locator('.coastal-building').count(), 12);
   assert.deepEqual(errors, []);
   assert.deepEqual(failedAssets, []);
   await writeFile('room-preview/coastal-result.json', JSON.stringify({ passed: true, buildings: ids, combinations: 21, mobileEntry: true, errors }, null, 2));

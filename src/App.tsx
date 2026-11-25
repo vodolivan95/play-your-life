@@ -605,7 +605,7 @@ export default function App({ state: suppliedState, onChange, userId, userEmail,
                 <PsychologyPage />
               </Suspense>
             )}
-            {page === 'future' && <FutureVision />}
+            {page === 'future' && <FutureVision state={state} />}
             {page === 'notes' && (
               <Suspense fallback={<p role="status">Загружаем заметки…</p>}>
                 <AllNotes ownerId={userId ?? 'local'} author={state.profile.name || 'Игрок'} spheres={spheres} notify={notify} />

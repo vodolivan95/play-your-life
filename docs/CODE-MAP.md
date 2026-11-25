@@ -63,3 +63,5 @@ uv tool install graphifyy==0.9.111
 ```
 
 После checkout/pull или изменения исходников повтори `graphify extract . --code-only --no-cluster`. Индекс в `graphify-out/` локальный, не отслеживается Git. Не читай весь graph.json: используй query/explain/affected. Если Graphify недоступен или символ не найден, переходи к `rg`, не блокируй задачу. Русские названия разделов сопоставляй с именами файлов по таблице выше.
+
+- Моё будущее, расчёт темпа (этап 2–3): `src/futureForecast.ts` (окна, уровень данных), тесты `tests/future-forecast.test.ts`, подключение в `src/components/FutureVision.tsx`.

@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import './FutureVision.css';
+import type { GameState } from '../game.ts';
+import { qualityMessage, summarizePace, FORECAST_WINDOWS } from '../futureForecast.ts';
 
 /**
  * «Моё будущее» (0.91.0, этап 1 из ТЗ «PLAY YOUR LIFE 2.0 — Моё будущее»).
@@ -47,8 +49,12 @@ const blocks: Record<Tab, string[]> = {
 
 const wordFor = (h: Horizon) => (h === 1 ? 'год' : h === 3 ? 'года' : 'лет');
 
-export default function FutureVision() {
+export default function FutureVision({ state }: { state: GameState }) {
   const [tab, setTab] = useState<Tab>('picture');
+  const pace = useMemo(
+    () => summarizePace({ quests: state.quests, activeDates: state.activeDates, habitCompletions: state.habitCompletions }, new Date()),
+    [state.quests, state.activeDates, state.habitCompletions],
+  );
   const [horizon, setHorizon] = useState<Horizon>(3);
 
   const onTabKey = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
@@ -109,6 +115,23 @@ export default function FutureVision() {
           <h3>{current.label}</h3>
           <p>{current.hint}</p>
           <p className="fv-status">{NOT_ENOUGH}</p>
+        </article>
+
+        <article className="fv-card">
+          <h3>Твой темп</h3>
+          <p className="fv-status">{qualityMessage(pace.dataQuality)}</p>
+          {pace.limitations.length > 0 && (
+            <ul>
+              {pace.limitations.map((line) => <li key={line}>{line}</li>)}
+            </ul>
+          )}
+          <ul>
+            {FORECAST_WINDOWS.map((days) => (
+              <li key={days}>
+                За {days} дней: задач {pace.windows[days].tasksDone}, в неделю {pace.windows[days].tasksPerWeek}, активных дней {pace.windows[days].activeDays}, дней с привычками {pace.windows[days].habitDays}
+              </li>
+            ))}
+          </ul>
         </article>
 
         <article className="fv-card">

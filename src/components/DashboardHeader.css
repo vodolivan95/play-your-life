@@ -1,4 +1,4 @@
-/* Верхний баннер 0.87.0: одна строка на компьютере, карточка игрока с именем, титулом и полосой XP. */
+/* Карточка игрока в общей верхней панели. */
 .dashboard-profile { display: flex; align-items: center; gap: 12px; flex-shrink: 0; min-width: 0; padding: 6px 16px 6px 6px; border: 0; border-radius: 16px; background: #fff; color: inherit; cursor: pointer; text-align: left; }
 .dashboard-profile:hover { box-shadow: 0 6px 18px #234c8d1f; }
 .dashboard-profile-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; max-width: 200px; }
@@ -10,43 +10,10 @@
 :root[data-theme='dark'] .dashboard-profile-text small { color: #8fb4ff; }
 :root[data-theme='dark'] .dashboard-profile-text i { background: #22325a; }
 
-@media (min-width: 761px) {
-  .topbar .dashboard-header { flex-wrap: nowrap; gap: 12px; max-width: none; }
-  .topbar .dashboard-header-left { flex-wrap: nowrap; }
-  .topbar .dashboard-search-wrap { flex: 1 1 220px; min-width: 150px; max-width: none; margin: 0; } /* 0.90.8: место под переключатель темы */
-  .topbar .dashboard-header-right { flex-wrap: nowrap; gap: 10px; }
-  .topbar .dashboard-search input { text-overflow: ellipsis; }
-}
-/* Сначала прячется дата и подписи, чтобы всё помещалось в одну строку. */
-@media (min-width: 761px) and (max-width: 1700px) {
-  .topbar .dashboard-date { display: none; }
-  .topbar .dashboard-clock { border-radius: 14px; }
-  .topbar .home-weather .weather-source { display: none; }
-}
-@media (min-width: 761px) and (max-width: 1360px) {
-  .topbar .dashboard-metric small, .topbar .home-weather small { display: none; }
-  .topbar .dashboard-metric { padding: 8px 12px 8px 8px; }
-  .topbar .dashboard-profile-text { display: none; }
-  .topbar .dashboard-profile { padding: 4px; }
-  .topbar .home-weather { padding: 9px 12px; }
-}
-/* Узкий планшет: поиск уходит на вторую строку во всю ширину. */
-@media (min-width: 761px) and (max-width: 1120px) {
-  .topbar .dashboard-header { flex-wrap: wrap; }
-  .topbar .dashboard-search-wrap { order: 3; flex-basis: 100%; }
-  .topbar .dashboard-header-right { margin-left: auto; }
-  .topbar .dashboard-profile-text { display: none; }
-  .topbar .dashboard-profile { padding: 0; background: none; }
-}
-@media (max-width: 760px) {
-  .dashboard-profile { order: 3; padding: 0; background: none !important; }
-  .dashboard-profile-text { display: none; }
-}
-
 /* 0.89.9: колокольчик уведомлений скрыт по просьбе пользователя (пока не нужен); счётчик задач остаётся в «Мои задачи». */
 .dashboard-header .dashboard-notifications, .dashboard-notifications { display: none !important; }
 
-/* 0.90.8: переключатель темы — в шапке (на компьютере справа, на телефоне в верхней строке рядом с аватаром). */
+/* Переключатель темы. */
 .dashboard-theme { flex: none; display: flex; }
 .dashboard-theme .pyl-theme { width: auto; height: auto; display: flex; gap: 3px; padding: 3px; border-radius: 999px; background: #fff; border: 1px solid #dfe8f6; box-shadow: 0 4px 12px #234c8d14; }
 .dashboard-theme .pyl-theme button { width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #6a7a99; display: grid; place-items: center; cursor: pointer; transition: background .15s, color .15s; }
@@ -56,12 +23,62 @@
 :root[data-theme='dark'] .dashboard-theme .pyl-theme button { color: #9aa8cc; }
 :root[data-theme='dark'] .dashboard-theme .pyl-theme button:hover { background: #1a2748; }
 :root[data-theme='dark'] .dashboard-theme .pyl-theme button.on { background: linear-gradient(145deg, #3b6cf0, #2448b8); color: #fff; box-shadow: 0 3px 10px rgba(47, 108, 240, .35); }
-@media (max-width: 760px) {
-  .dashboard-theme { order: 3; margin-left: auto; }
-  .dashboard-theme .pyl-theme button { width: 32px; height: 32px; }
+
+/* Ширина панели учитывает место, занятое боковым меню. */
+.topbar { container: dashboard-bar / inline-size; }
+.topbar .dashboard-header {
+  --tile-height: 52px;
+  display: grid;
+  grid-template-columns: auto auto minmax(96px, 1fr) minmax(120px, 164px) auto auto minmax(140px, 200px) auto;
+  grid-template-areas: "clock date search weather coins level profile theme";
+  grid-auto-rows: var(--tile-height);
+  gap: 8px;
+  max-width: none;
 }
-@media (max-width: 380px) {
-  .dashboard-theme .pyl-theme { gap: 1px; padding: 2px; }
-  .dashboard-theme .pyl-theme button { width: 28px; height: 28px; }
-  .dashboard-theme .pyl-theme svg { width: 15px; height: 15px; }
+.topbar .dashboard-header-left, .topbar .dashboard-header-right { display: contents; }
+.topbar .dashboard-clock { grid-area: clock; }
+.topbar .dashboard-date { grid-area: date; width: auto; }
+.topbar .dashboard-search-wrap { grid-area: search; margin: 0; max-width: none; }
+.topbar .home-weather { grid-area: weather; }
+.topbar .dashboard-metric-coins { grid-area: coins; }
+.topbar .dashboard-metric-level { grid-area: level; }
+.topbar .dashboard-profile { grid-area: profile; }
+.topbar .dashboard-theme { grid-area: theme; }
+.topbar .dashboard-header :is(.dashboard-clock, .dashboard-date, .dashboard-search, .home-weather, .dashboard-metric, .dashboard-profile, .pyl-theme) {
+  box-sizing: border-box;
+  height: var(--tile-height);
+  min-width: 0;
+  border-radius: 12px;
+  padding: 0 10px;
+  gap: 8px;
+}
+.topbar .dashboard-theme .pyl-theme { width: 100%; align-items: center; justify-content: center; padding: 3px; gap: 2px; }
+.topbar .dashboard-theme button { min-width: 0; border-radius: 9px; }
+.topbar .dashboard-avatar { order: 0; width: 34px; height: 34px; }
+.topbar .dashboard-profile-text { flex: 1; gap: 2px; }
+.topbar .dashboard-profile-text small { font-size: 11px; }
+.topbar .dashboard-clock { font-size: 16px; }
+.topbar .dashboard-date { font-size: 12px; white-space: nowrap; }
+.topbar .dashboard-metric small, .topbar .home-weather small { display: block; font-size: 11px; }
+.topbar .home-weather strong { font-size: 12px; line-height: 1.3; }
+.topbar .home-weather > div, .topbar .dashboard-metric > div { min-width: 0; }
+.topbar .home-weather strong, .topbar .home-weather .weather-source, .topbar .dashboard-metric strong, .topbar .dashboard-search input {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.topbar .home-weather .weather-source { display: block; }
+.topbar :is(.metric-badge, .home-weather-icon) { width: 30px; height: 30px; flex: none; }
+
+@container dashboard-bar (max-width: 899px) {
+  .topbar .dashboard-header {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-areas: "clock date search search" "weather weather coins level" "profile profile profile theme";
+  }
+}
+@container dashboard-bar (max-width: 760px) {
+  .topbar .dashboard-header {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-areas: "clock clock date date" "search search search search" "weather weather weather weather" "coins coins level level" "profile profile profile theme";
+  }
 }

@@ -28,7 +28,7 @@ for (const id of ids.slice(0, 3)) seed = toggleMonthlyFocus(seed, id);
 const seedJson = JSON.stringify(seed);
 const port = 5194;
 const url = `http://127.0.0.1:${port}/`;
-const viewportWidths = process.env.PYL_VIEWPORTS ? process.env.PYL_VIEWPORTS.split(',').map(Number) : [1920, 1440, 900, 761, 760, 700, 651, 650, 390, 320];
+const viewportWidths = process.env.PYL_VIEWPORTS ? process.env.PYL_VIEWPORTS.split(',').map(Number) : [1920, 1440, 1280, 900, 761, 760, 700, 651, 650, 390, 320];
 if (process.env.PYL_SCREENSHOT_DIR) mkdirSync(process.env.PYL_SCREENSHOT_DIR, { recursive: true });
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { stdio: ['ignore', 'pipe', 'pipe'] });
 server.stdout.on('data', () => {});
@@ -57,6 +57,24 @@ try {
     };
     await page.goto(url);
     await enter();
+    const tiles = await page.locator('.dashboard-header').locator(
+      '.dashboard-clock, .dashboard-date, .dashboard-search, .home-weather, .dashboard-metric, .dashboard-profile, .dashboard-theme .pyl-theme',
+    ).evaluateAll(elements => elements.map(element => {
+      const { top, left, right, height } = element.getBoundingClientRect();
+      return { top, left, right, height };
+    }));
+    assert.equal(tiles.length, 8);
+    assert.ok(tiles.every(tile => tile.height === 52 && tile.left >= 0 && tile.right <= width + 1), `Размеры плиток верхней панели (${width}px)`);
+    const rows = [...new Set(tiles.map(tile => tile.top))];
+    if (width >= 1280) assert.equal(rows.length, 1);
+    if (width <= 760) {
+      assert.deepEqual(tiles.map(tile => rows.indexOf(tile.top)), [0, 0, 1, 2, 3, 3, 4, 4]);
+      assert.ok(rows.slice(1).every((top, i) => top - rows[i] === 60));
+      assert.equal(tiles[2].left, tiles[0].left);
+      assert.equal(tiles[2].right, tiles[1].right);
+      assert.equal(tiles[3].left, tiles[2].left);
+      assert.equal(tiles[3].right, tiles[2].right);
+    }
     assert.equal(await page.locator('.home-focus, .home-player, .home-spheres, .home-main-goal, .home-reward, .home-schedule, .home-habits').count(), 0);
     assert.equal(await page.locator('.account-bar').count(), 0, 'Панели аккаунта нет на главной');
     assert.equal(await page.locator('.home-today, .home-streak').count(), 2);

@@ -178,7 +178,7 @@ function iso(value?: string | null) {
   // неверно показанных дат из TickTick (20 октября 2026, см. AGENTS.md). Если время не полночь —
   // это задача с настоящим временем выполнения, и момент переводим в UTC как обычно: так же
   // хранятся локальные задачи со временем, и это даёт верный час при показе в любом часовом поясе.
-  return midnightAt.test(value) ? value.slice(0, 10) : date.toISOString();
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) || midnightAt.test(value) ? value.slice(0, 10) : date.toISOString();
 }
 function notes(content?: string) {
   return (content ?? '')
@@ -482,13 +482,17 @@ async function syncTickTickProject(
     const currentRemote = fingerprintFields(remoteFingerprint(remote));
     const baseRemote = fingerprintFields(link.remote);
     const remoteValues = remoteFields(remote);
+    // Старые связи могли запомнить разные даты игры и TickTick как уже сверенные.
+    // Сравниваем нормализованные даты, чтобы другой формат того же момента не вызвал запись.
+    const localSchedule = remoteFields({ ...remote, startDate: local.startsAt, dueDate: local.dueAt });
+    const scheduleDiffers = localSchedule.startsAt !== remoteValues.startsAt || localSchedule.dueAt !== remoteValues.dueAt;
     const merged = { ...local };
     const conflicts: string[] = [];
     if (localValues && baseLocal && currentRemote && baseRemote) {
       for (const field of syncFields) {
         const changedHere = localValues[field] !== baseLocal[field];
         const changedThere = currentRemote[field] !== baseRemote[field];
-        if (changedThere && !changedHere)
+        if (!changedHere && (changedThere || (scheduleDiffers && (field === 'startsAt' || field === 'dueAt'))))
           Object.assign(merged, { [field]: remoteValues[field] });
         else if (changedThere && changedHere && localValues[field] !== currentRemote[field])
           conflicts.push(field);
@@ -541,7 +545,7 @@ async function syncTickTickProject(
       remote.status === 2 ||
       remoteWasCompleted
     );
-    if (remoteChanged || wasCompleted)
+    if (remoteChanged || wasCompleted || (!localChanged && scheduleDiffers))
       result.changes.push({
         id: localId,
         snapshot,
@@ -596,7 +600,9 @@ async function syncTickTickProject(
         goalId: local.goalId,
         projectId: connection.projectId,
       };
-      if (remote.status === 2)
+      const localDates = remoteFields({ ...remote, startDate: local.startsAt, dueDate: local.dueAt });
+      const returnedDates = remoteFields(remote);
+      if (remote.status === 2 || localDates.startsAt !== returnedDates.startsAt || localDates.dueAt !== returnedDates.dueAt)
         result.changes.push({
           id: local.id,
           snapshot: localFingerprint(local, state),

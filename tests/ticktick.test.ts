@@ -8,6 +8,7 @@ import {
   syncTickTick,
   matchSphereLists,
   remoteFields,
+  remoteFingerprint,
   remotePayload,
   TICKTICK_AUTO_LINK_FROM,
 } from '../src/ticktick.ts';
@@ -356,6 +357,20 @@ test('перенос срока и переименование в TickTick от
   connection = result.connection;
   await syncTickTick(state, connection, api.request);
   assert.match(String(api.tasks.get(connection.links[id].remoteId)!.dueDate), /^2026-12-01/);
+});
+test('разные даты, ранее записанные в базу связи, исправляются без повторной записи в TickTick', async () => {
+  const { state, connection } = setup();
+  const api = upstream();
+  const linked = applyTickTickResult(state, await syncTickTick(state, connection, api.request));
+  const id = linked.state.quests[0].id;
+  const link = linked.connection.links[id];
+  const task = api.tasks.get(link.remoteId)!;
+  task.dueDate = '2026-11-28T17:00:00+0300';
+  link.remote = remoteFingerprint(task);
+  api.calls.length = 0;
+  const next = applyTickTickResult(linked.state, await syncTickTick(linked.state, linked.connection, api.request));
+  assert.equal(next.state.quests[0].dueAt, '2026-11-28T14:00:00.000Z');
+  assert.ok(api.calls.every(call => call.method === 'GET'));
 });
 test('удалённая в TickTick задача удаляется и в игре, без награды и повторного создания', async () => {
   let { state, connection } = setup();

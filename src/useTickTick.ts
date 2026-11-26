@@ -9,6 +9,7 @@ import type { TickTickSettings } from './ticktickSettings';
 import type { TickTickManager } from './tickTickContext';
 import { acceptIncomingTask, dismissIncomingTask, findIncomingTasks, findTickTickCalendarTasks, mappedProjectIds } from './ticktickInbox';
 import type { IncomingChoice, IncomingTask } from './ticktickInbox';
+import type { CalendarLinkSnapshot } from './tasksCalendar';
 import { isTickTickAutoSyncDue, TICKTICK_AUTO_SYNC_INTERVAL_MS } from './ticktickScheduler';
 
 function readConnection(storageKey: string): TickTickConnection | null {
@@ -65,6 +66,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     try { const raw = JSON.parse(localStorage.getItem(calendarKey) ?? '[]'); return Array.isArray(raw) ? raw as IncomingTask[] : []; } catch { return []; }
   });
   useEffect(() => { try { localStorage.setItem(calendarKey, JSON.stringify(calendarTasks)); } catch { /* cache is optional */ } }, [calendarTasks, calendarKey]);
+  const [linkedCalendar, setLinkedCalendar] = useState<Map<string, CalendarLinkSnapshot>>(new Map());
   const [inboxBusy, setInboxBusy] = useState(false);
   const [inboxNew, setInboxNew] = useState(0);
   const [inboxError, setInboxError] = useState('');
@@ -172,7 +174,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     if (held && !automatic) await sync(taskIds, false, window.confirm(describeHeldRemovals(held)) ? 'confirm' : 'keep');
   }
   // Входящие: новые задачи сопоставленных списков. В игру они попадают только после выбора сферы, цели и этапа.
-  async function loadIncoming() {
+  async function loadIncoming(calendar = false) {
     const current = latest.current;
     if (working.current || !current.connection || !current.connected || current.dirty || current.state.profile.mode === 'demo') return;
     if (!navigator.onLine) return;
@@ -182,7 +184,15 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
       if (c.auth === 'firebase') c = { ...c, ...validateTickTickSettings(await request(c, '/settings')) };
       setConnection(c);
       const byProject: Record<string, RemoteTask[]> = {};
-      for (const projectId of mappedProjectIds(c)) {
+      const projectIds = new Set(mappedProjectIds(c));
+      if (calendar) {
+        for (const project of projects) projectIds.add(project.id);
+        for (const link of Object.values(c.links)) {
+          const project = link.projectId || c.projectId;
+          if (project) projectIds.add(project);
+        }
+      }
+      for (const projectId of projectIds) {
         const data = await request<{ tasks?: RemoteTask[] }>(c, `/api/project/${encodeURIComponent(projectId)}/data`);
         if (!Array.isArray(data?.tasks)) throw new Error('TickTick не вернул список задач.');
         byProject[projectId] = data.tasks;
@@ -190,7 +200,32 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
       // Передаём идентичность локальных задач: метка [PYL:id] сама по себе не делает копию новой.
       const localTasks = new Map(latest.current.state.quests.map(q => [q.id, { name: q.name, notes: q.notes }]));
       const fresh = findIncomingTasks(c, byProject, localTasks);
-      setCalendarTasks(findTickTickCalendarTasks(c, byProject, localTasks));
+      if (calendar) {
+        const listed = new Map(Object.values(byProject).flat().map(task => [task.id, task]));
+        const confirmed = new Map<string, CalendarLinkSnapshot>();
+        const quests = new Map(current.state.quests.map(q => [q.id, q]));
+        for (const [id, link] of Object.entries(c.links)) {
+          const quest = quests.get(id);
+          if (!quest) continue;
+          const local = { localStart: quest.startsAt, localDue: quest.dueAt, localDone: quest.done };
+          const remote = listed.get(link.remoteId);
+          if (remote) confirmed.set(link.remoteId, { ...local, remote });
+          else if (quest.startsAt || quest.dueAt) {
+            // Список активных задач не включает историю. Только ответ 404 подтверждает удаление.
+            const project = link.projectId || c.projectId;
+            if (!project) continue;
+            try {
+              const task = await request<RemoteTask>(c, `/api/project/${encodeURIComponent(project)}/task/${encodeURIComponent(link.remoteId)}`);
+              if (task?.id === link.remoteId) confirmed.set(link.remoteId, { ...local, remote: task });
+            } catch (error) {
+              if (!isNotFound(error)) throw error;
+              confirmed.set(link.remoteId, { ...local, remote: null });
+            }
+          }
+        }
+        setLinkedCalendar(confirmed);
+        setCalendarTasks(findTickTickCalendarTasks(c, byProject, localTasks, [...projectIds]));
+      }
       // Подгружаем только новое: уже известные задачи остаются как есть, исчезнувшие из TickTick убираются.
       const known = new Set(latest.current.incoming.map(i => i.remote.id));
       setInboxNew(fresh.filter(i => !known.has(i.remote.id)).length);
@@ -201,7 +236,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     } finally { working.current = false; setBusy(false); setInboxBusy(false); }
   }
   // «Обновить»: изменения и удаления в обе стороны только по связанным задачам, затем новые задачи из списков.
-  async function refreshAll() { await sync(); await loadIncoming(); }
+  async function refreshAll() { await sync(); await loadIncoming(true); }
   async function acceptIncoming(remoteId: string, choice: IncomingChoice): Promise<string> {
     const current = latest.current;
     const item = incoming.find(i => i.remote.id === remoteId);
@@ -267,7 +302,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     working.current = true; setBusy(true);
     try {
       await request(c, '/disconnect', 'POST');
-      setConnection(null); setProjects([]); setIncoming([]); setCalendarTasks([]); setConnected(false); setDirty(false); setLastSyncError(false);
+      setLinkedCalendar(new Map()); setConnection(null); setProjects([]); setIncoming([]); setCalendarTasks([]); setConnected(false); setDirty(false); setLastSyncError(false);
       onChange(current => ({
         ...current,
         quests: current.quests.map(task => {
@@ -340,7 +375,7 @@ export default function useTickTick(state: GameState, onChange: Dispatch<SetStat
     const c = latest.current.connection;
     return c ? request<T>(c, path, method, data) : Promise.reject(new Error('TickTick не подключён.'));
   };
-  return { request: bridge, connection, status, lastSyncError, busy, projects, connected, signedIn, dirty, restoreBlocked, configure, refresh, sync, save, disconnect, incoming, calendarTasks, inboxBusy, inboxError, inboxNew, loadIncoming, refreshAll, acceptIncoming, dismissIncoming, deleteIncoming,
+  return { request: bridge, connection, status, lastSyncError, busy, projects, connected, signedIn, dirty, restoreBlocked, configure, refresh, sync, save, disconnect, incoming, calendarTasks, linkedCalendar, inboxBusy, inboxError, inboxNew, loadIncoming, refreshAll, acceptIncoming, dismissIncoming, deleteIncoming,
     update: patch => { if (!working.current) { setConnection(c => c ? { ...c, ...patch } : c); setDirty(true); } },
     suggest: () => { const c = latest.current.connection; if (c && !working.current) { setConnection({ ...c, sphereLists: matchSphereLists(projects, c.sphereLists) }); setDirty(true); } },
   };

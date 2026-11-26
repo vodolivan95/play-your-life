@@ -235,15 +235,15 @@ export function findTickTickCalendarTasks(
   connection: TickTickConnection,
   remoteByProject: Record<string, RemoteTask[]>,
   localTasks?: LocalTaskIndex,
+  calendarProjects = mappedProjectIds(connection),
 ): IncomingTask[] {
   const linked = new Set(Object.values(connection.links).map((link) => link.remoteId));
   const seen = new Set<string>();
   const classify = gameOwnedFilter(connection, remoteByProject, localTasks);
   const hasContentPeer = duplicateContentFilter(remoteByProject);
   const found: IncomingTask[] = [];
-  for (const sphere of spheres) {
-    const projectId = connection.sphereLists?.[sphere.id];
-    if (!projectId) continue;
+  for (const projectId of calendarProjects) {
+    const sphere = spheres.find(s => connection.sphereLists?.[s.id] === projectId);
     for (const remote of remoteByProject[projectId] ?? []) {
       if (!remote || typeof remote.id !== 'string' || !idPattern.test(remote.id) || seen.has(remote.id) ||
         linked.has(remote.id) || typeof remote.title !== 'string' || !remote.title.trim() ||
@@ -254,7 +254,7 @@ export function findTickTickCalendarTasks(
       try { fields = remoteFields(remote); } catch { continue; }
       if (!fields.dueAt && !fields.startsAt) continue;
       seen.add(remote.id);
-      found.push({ remote: { ...remote, projectId: remote.projectId || projectId }, projectId, sphere: sphere.id });
+      found.push({ remote: { ...remote, projectId: remote.projectId || projectId }, projectId, sphere: sphere?.id ?? 'tasks' });
     }
   }
   return found;

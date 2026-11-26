@@ -1,8 +1,8 @@
-import { lazy, Suspense, useContext, useEffect, useState } from "react";
+import { lazy, Suspense, useContext, useEffect, useRef, useState } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { removeQuest, reopenQuest } from "../game";
 import type { GameState, Quest } from "../game";
-import { calendarItems, itemsForDay } from "../tasksCalendar";
+import { calendarItems, itemsForDay, reconcileCalendar } from "../tasksCalendar";
 import {
   duplicateQuest,
   progressQuest,
@@ -86,6 +86,40 @@ export default function QuestBoard({
   const connected = Boolean(
     manager?.connection && manager.connected && state.profile.mode !== "demo",
   );
+  const managerRef = useRef(manager);
+  useEffect(() => { managerRef.current = manager; }, [manager]);
+  useEffect(() => {
+    if (mode !== "calendar" || !connected) return;
+    let timer: ReturnType<typeof setTimeout>;
+    let stopped = false;
+    let reading = false;
+    const read = async () => {
+      if (stopped || reading) return;
+      clearTimeout(timer);
+      const current = managerRef.current;
+      const busy = current?.busy || current?.dirty;
+      if (current && !busy && navigator.onLine && document.visibilityState === "visible") {
+        reading = true;
+        try { await current.loadIncoming(true); } finally { reading = false; }
+      }
+      if (!stopped) timer = setTimeout(read, busy ? 1000 : 60000);
+    };
+    timer = setTimeout(read, 0);
+    window.addEventListener("focus", read);
+    window.addEventListener("online", read);
+    document.addEventListener("visibilitychange", read);
+    return () => {
+      stopped = true;
+      clearTimeout(timer);
+      window.removeEventListener("focus", read);
+      window.removeEventListener("online", read);
+      document.removeEventListener("visibilitychange", read);
+    };
+  }, [mode, connected]);
+  const calendar = mode === "calendar" && connected && manager?.connection
+    ? reconcileCalendar(quests, manager.connection.links, manager.linkedCalendar)
+    : { local: quests, remote: [] };
+  const calendarEntries = connected ? [...calendar.remote, ...(manager?.calendarTasks ?? [])] : [];
   function apply(action: (s: GameState) => GameState, message: string) {
     onChange(action(state));
     notify(message);
@@ -200,14 +234,15 @@ export default function QuestBoard({
           onChange={onChange}
         />
       )}
+      {mode === "calendar" && connected && manager?.inboxError && <p role="status">Календарь не обновился. {manager.inboxError}</p>}
       {mode === "calendar" && (
         <TasksCalendar
-          quests={quests}
+          quests={calendar.local}
           today={today}
-          incoming={connected ? manager?.calendarTasks ?? [] : []}
+          incoming={calendarEntries}
           onOpenIncoming={(remoteId) => {
             const incomingTask = manager?.incoming.find((task) => task.remote.id === remoteId);
-            const item = incomingTask ?? manager?.calendarTasks.find((task) => task.remote.id === remoteId);
+            const item = calendarEntries.find((task) => task.remote.id === remoteId);
             if (item) setCalendarTask({ item, canAccept: Boolean(incomingTask) });
           }}
           onOpen={(q) => setOpenTask(q.id)}

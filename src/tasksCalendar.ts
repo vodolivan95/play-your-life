@@ -1,5 +1,6 @@
 import { dateKey, difficulties } from './game.ts';
 import type { Quest } from './game.ts';
+import type { RemoteTask, TickTickConnection } from './ticktick.ts';
 import { remoteFields } from './ticktick.ts';
 import type { IncomingTask } from './ticktickInbox.ts';
 
@@ -141,6 +142,37 @@ export function calendarItem(quest: Quest): CalendarItem | undefined {
 
 export function calendarItems(quests: Quest[]): CalendarItem[] {
   return quests.filter((q) => !q.planning?.archivedAt).map(calendarItem).filter((item): item is CalendarItem => !!item);
+}
+
+export type CalendarLinkSnapshot = {
+  localStart?: string;
+  localDue?: string;
+  localDone: boolean;
+  remote: RemoteTask | null;
+};
+
+/** Старая локальная дата не должна занимать ячейку после подтверждённого ответа TickTick. */
+export function reconcileCalendar(quests: Quest[], links: TickTickConnection['links'], snapshot: Map<string, CalendarLinkSnapshot>) {
+  const local: Quest[] = [];
+  const remote: IncomingTask[] = [];
+  for (const quest of quests) {
+    const link = links[quest.id];
+    const record = link && snapshot.get(link.remoteId);
+    if (!record || record.localStart !== quest.startsAt || record.localDue !== quest.dueAt || record.localDone !== quest.done) {
+      local.push(quest);
+      continue;
+    }
+    const task = record.remote;
+    if (!task || (task.status ?? 0) < 0) continue;
+    const fields = remoteFields(task);
+    const localDates = remoteFields({ ...task, startDate: quest.startsAt, dueDate: quest.dueAt });
+    if (localDates.startsAt === fields.startsAt && localDates.dueAt === fields.dueAt && quest.done === (task.status === 2)) {
+      local.push(quest);
+    } else {
+      remote.push({ remote: task, projectId: task.projectId, sphere: quest.sphere });
+    }
+  }
+  return { local, remote };
 }
 
 /** Датированные входящие TickTick как read-only записи календаря; связанные задачи сюда не дублируются. */

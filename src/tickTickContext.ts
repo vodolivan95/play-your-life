@@ -1,4 +1,5 @@
 import { createContext } from 'react';
+import type { CalendarLinkSnapshot } from './tasksCalendar';
 import type { TickTickConnection } from './ticktick';
 import type { IncomingChoice, IncomingTask } from './ticktickInbox';
 export type TickTickManager = {
@@ -22,9 +23,10 @@ export type TickTickManager = {
   incoming: IncomingTask[];
   /** Датированные записи сопоставленных списков для календаря, включая даты за пределами inbox-окна. */
   calendarTasks: IncomingTask[];
+  linkedCalendar: Map<string, CalendarLinkSnapshot>;
   inboxBusy: boolean;
   inboxError: string;
-  loadIncoming: () => Promise<void>;
+  loadIncoming: (calendar?: boolean) => Promise<void>;
   refreshAll: () => Promise<void>;
   inboxNew: number;
   acceptIncoming: (remoteId: string, choice: IncomingChoice) => Promise<string>;

@@ -355,6 +355,8 @@ try {
     id: 'phone-remote', projectId: 'english', title: 'Задача TickTick на телефоне',
     status: 0, dueDate: phoneDay + 'T00:00:00+0000',
   });
+  phoneAccount.settings.links['phone-local'] = { remoteId:'phone-linked', projectId:'english', local:'[]', remote:'[]' };
+  phoneAccount.tasks.set('phone-linked', { id:'phone-linked', projectId:'english', title:'Игровая задача на телефоне', status:0, dueDate:phoneDay + 'T00:00:00+0000' });
   const phoneCtx = await context(390);
   const phone = await phoneCtx.newPage();
   activePage = phone;
@@ -365,7 +367,7 @@ try {
   await phone.getByRole('button', { name: 'Календарь', exact: true }).tap();
   const phoneCalendar = phone.getByRole('region', { name: 'Календарь задач' });
 
-  await phoneCalendar.getByRole('button', { name: 'Игровая задача на телефоне', exact: true }).tap();
+  await phoneCalendar.getByRole('button', { name: /Игровая задача на телефоне/ }).tap();
   const phoneTask = phone.getByRole('dialog', { name: 'Игровая задача на телефоне', exact: true });
   await phoneTask.waitFor();
   await phoneTask.getByRole('button', { name: 'Закрыть', exact: true }).tap();
@@ -379,6 +381,18 @@ try {
   await phoneEditor.waitFor({ state: 'detached' });
   assert.equal(await phoneCalendar.getByRole('button', { name: 'Месяц', exact: true }).getAttribute('aria-pressed'), 'true');
   assert.equal((await stateOf(phone, phoneUid)).quests.length, 1, 'касание и отмена не импортируют задачу TickTick');
+  // Обмен игровыми задачами выключен. Чтение календаря всё равно отражает перенос и удаление.
+  const alternate = phoneDay.slice(0, 8) + (phoneDay.endsWith('10') ? '11' : '10');
+  phoneAccount.tasks.get('phone-linked').dueDate = alternate + 'T09:00:00+0000';
+  const linkedChip = day => phoneCalendar.locator(`.tcal-cell[data-day="${day}"] .tcal-chip`).filter({hasText:'Игровая задача на телефоне'});
+  await phone.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await linkedChip(alternate).waitFor();
+  assert.equal(await linkedChip(phoneDay).count(), 0);
+  phoneAccount.tasks.delete('phone-linked');
+  await phone.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await linkedChip(alternate).waitFor({ state:'detached' });
+  assert.equal(await linkedChip(phoneDay).count(), 0);
+  assert.equal((await stateOf(phone, phoneUid)).quests.length, 1);
   await phoneCtx.close();
   activePage = page;
 
